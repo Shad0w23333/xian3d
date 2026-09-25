@@ -6,3 +6,6 @@ data-src/
 shots/
 .venv-tools/
 shots/
+dist-standalone/
+.standalone-build/
+__pycache__/

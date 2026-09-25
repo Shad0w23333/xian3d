@@ -315,69 +315,180 @@ def load_extra(pattern):
     return list(seen.values())
 
 
+ROAD_CLASSES = ('motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'service',
+                'unclassified', 'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'pedestrian', 'footway')
+ROAD_ALIAS = {'living_street': 'residential', 'road': 'unclassified'}
+# 单车道宽（米）：高速/快速路 3.75，城市主次干道 3.5，支路 3.25，其余 3.0（JTG B01 / CJJ 37 常用值）
+ROAD_LANE_W = {'motorway': 3.75, 'trunk': 3.75, 'primary': 3.5, 'secondary': 3.5, 'tertiary': 3.25,
+               'motorway_link': 3.75, 'trunk_link': 3.75, 'primary_link': 3.5, 'secondary_link': 3.5,
+               'residential': 3.0, 'unclassified': 3.0, 'service': 3.0}
+# 缺 lanes 标签时的车道数：单向 way（双幅路的一幅）与双向 way 分开估
+ROAD_LANES_ONEWAY = {'motorway': 3, 'trunk': 3, 'primary': 3, 'secondary': 2, 'tertiary': 2, 'motorway_link': 1,
+                     'trunk_link': 1, 'primary_link': 1, 'secondary_link': 1, 'residential': 1, 'unclassified': 1,
+                     'service': 1}
+ROAD_LANES_TWOWAY = {'motorway': 6, 'trunk': 6, 'primary': 4, 'secondary': 4, 'tertiary': 2, 'motorway_link': 2,
+                     'trunk_link': 2, 'primary_link': 2, 'secondary_link': 2, 'residential': 2, 'unclassified': 2,
+                     'service': 1}
+# 车道以外的路面（路肩、路缘带、中央分隔带的铺装部分）
+ROAD_EXTRA_ONEWAY = {'motorway': 3.75, 'trunk': 2.5, 'primary': 1.0, 'secondary': 0.8, 'tertiary': 0.5,
+                     'motorway_link': 2.5, 'trunk_link': 2.0, 'primary_link': 1.0, 'secondary_link': 0.8}
+ROAD_EXTRA_TWOWAY = {'motorway': 9.5, 'trunk': 6.0, 'primary': 2.5, 'secondary': 1.5, 'tertiary': 1.0,
+                     'motorway_link': 4.0, 'trunk_link': 3.0, 'primary_link': 1.5, 'secondary_link': 1.0,
+                     'residential': 0.5, 'unclassified': 0.5}
+
+
+def road_lanes_width(hw, tags):
+    """返回 (车道数, 路面宽 m)。一个 OSM way 若单行（双幅路的一幅）只算这一幅的宽度。"""
+    oneway = tags.get('oneway') in ('yes', '1', '-1', 'true') or tags.get('junction') in ('roundabout', 'circular')
+    if hw in ('motorway', 'motorway_link') and tags.get('oneway') not in ('no', '0', 'false', 'reversible'):
+        oneway = True   # OSM 约定：高速默认单行
+    lanes = numeric(tags.get('lanes'), 0)
+    if not (1 <= lanes <= 12):
+        fw, bw = numeric(tags.get('lanes:forward'), 0), numeric(tags.get('lanes:backward'), 0)
+        lanes = fw + bw if fw + bw >= 1 else 0
+    if not (1 <= lanes <= 12):
+        lanes = (ROAD_LANES_ONEWAY if oneway else ROAD_LANES_TWOWAY).get(hw, 1)
+    lanes = int(round(lanes))
+    width_tag = numeric(tags.get('width') or tags.get('est_width'), 0)
+    if hw == 'footway':
+        return 1, round(width_tag if 1.0 <= width_tag <= 12 else 2.5, 1)
+    if hw == 'pedestrian':
+        return 1, round(width_tag if 2.0 <= width_tag <= 60 else 6.0, 1)
+    lane_w = ROAD_LANE_W.get(hw, 3.0)
+    extra = (ROAD_EXTRA_ONEWAY if oneway else ROAD_EXTRA_TWOWAY).get(hw, 0.5)
+    width = lanes * lane_w + extra
+    # width 标签：只接受与车道数大致相符的值（OSM 里常见把整条道路红线宽标在单幅上的误标）
+    if 2.5 <= width_tag <= 60 and 0.6 * width <= width_tag <= 2.2 * width:
+        width = width_tag
+    if hw == 'service':
+        width = min(width, 6.0)
+    return lanes, round(max(2.5, min(45.0, width)), 1)
+
+
+def road_flags(tags):
+    """(桥 b, 隧道 t, 层 y)。缺 layer 时按 OSM 约定：桥默认 1、隧道默认 -1。"""
+    bridge = tags.get('bridge') not in (None, 'no', 'false', '0') or tags.get('man_made') == 'bridge'
+    tunnel_v = tags.get('tunnel')
+    # building_passage（穿楼门洞）、covered（风雨廊）是地面道路，不按隧道处理
+    tunnel = tunnel_v not in (None, 'no', 'false', '0', 'building_passage', 'covered')
+    layer_raw = tags.get('layer')
+    layer = round(numeric(layer_raw, 0)) if layer_raw not in (None, '') else (1 if bridge else (-1 if tunnel else 0))
+    if bridge and layer <= 0:
+        layer = 1
+    if tunnel and layer >= 0:
+        layer = -1
+    return int(bridge), int(tunnel), max(-5, min(5, layer))
+
+
 def road_output():
-    cats = ('motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'service',
-            'unclassified', 'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'pedestrian', 'footway')
+    cats = ROAD_CLASSES
     idx = {n: i for i, n in enumerate(cats)}
     feats, seen = [], set()
-    # 分区 Overpass 失败时，合入本项目早期窄范围研究缓存中的高速、环线和主干路。
-    road_sources = []
+    stats = defaultdict(int)
+    # Geofabrik 陕西提取是同一时间点的完整快照，优先；Overpass 分区缓存与早期窄范围研究缓存
+    # （部分是几个月前的快照，同一道路被拆分后 way id 已变）只补 Geofabrik 里没有的路段。
+    primary_src, backup_src = [], []
     for cat in ('roads_main', 'roads_core', 'roads_detail'):
-        road_sources.extend(load_cat(cat))
+        for p in sorted(glob.glob(str(SRC / 'osm' / f'{cat}__*.json'))):
+            (primary_src if p.endswith('__geofabrik.json') else backup_src).append(p)
     for pattern in ('osm_motorways.json', 'osm_ring_roads.json', 'osm_main_roads_named.json', 'osm_bridges_wei.json'):
-        road_sources.extend(load_extra(str(SRC / 'airports_research' / pattern)))
-    for el in road_sources:
-        tags = el.get('tags', {})
-        hw = tags.get('highway')
-        if hw not in idx or el.get('type') != 'way':
-            continue
-        key = (el.get('type'), el.get('id'))
-        if key in seen:
-            continue
-        seen.add(key)
-        coords = raw_coords(el.get('geometry'))
-        if len(coords) < 2:
-            continue
-        try:
-            from shapely.geometry import LineString
-            ls = LineString(as_world(coords)).simplify(1.25 if hw in cats[:6] else 0.7, preserve_topology=False)
-            p = flat(list(ls.coords))
-        except Exception:
-            p = flat(as_world(coords))
-        if len(p) < 4:
-            continue
-        lanes = max(1, min(12, round(numeric(tags.get('lanes'), {'motorway': 4, 'trunk': 3, 'primary': 3, 'secondary': 2}.get(hw, 1)))))
-        default_width = {'motorway': 30, 'trunk': 25, 'primary': 19, 'secondary': 14, 'tertiary': 10,
-                         'residential': 7, 'service': 5, 'unclassified': 7, 'motorway_link': 11,
-                         'trunk_link': 10, 'primary_link': 9, 'secondary_link': 8,
-                         'pedestrian': 5, 'footway': 2.6}.get(hw, 8)
-        width = numeric(tags.get('width'), numeric(tags.get('lanes'), 0) * 3.4 or default_width)
-        feats.append({'c': idx[hw], 'n': name_of(tags), 'w': round(max(1.5, min(50, width)), 1), 'l': lanes,
-                      'o': int(tags.get('oneway') in ('yes', '1', '-1')), 'b': int(tags.get('bridge') not in (None, 'no')),
-                      't': int(tags.get('tunnel') not in (None, 'no')), 'y': round(numeric(tags.get('layer'))), 'p': p})
+        backup_src.append(str(SRC / 'airports_research' / pattern))
+
+    def seg_keys(coords):
+        return {tuple(sorted(((round(a[0], 5), round(a[1], 5)), (round(b[0], 5), round(b[1], 5)))))
+                for a, b in zip(coords, coords[1:])}
+
+    covered = set()
+    for group, paths in (('geofabrik', primary_src), ('backup', backup_src)):
+        for path in paths:
+            for el in (read_json(Path(path), {}) or {}).get('elements', []):
+                tags = el.get('tags', {})
+                hw = ROAD_ALIAS.get(tags.get('highway'), tags.get('highway'))
+                if hw not in idx or el.get('type') != 'way':
+                    continue
+                key = (el.get('type'), el.get('id'))
+                if key in seen:
+                    continue
+                seen.add(key)
+                if tags.get('area') == 'yes':
+                    # 步行广场/人行道面（大雁塔南广场一带有 2800 多块）是面，不能沿周长画成道路带
+                    stats['skip_area'] += 1
+                    continue
+                coords = raw_coords(el.get('geometry'))
+                if len(coords) < 2:
+                    continue
+                keys = seg_keys(coords)
+                if group == 'backup' and keys and len(keys & covered) > 0.3 * len(keys):
+                    stats['skip_overlap_' + group] += 1
+                    continue
+                covered |= keys
+                if tags.get('oneway') == '-1':
+                    coords = coords[::-1]   # 统一成 o=1 时沿折线正向通行
+                try:
+                    from shapely.geometry import LineString
+                    ls = LineString(as_world(coords)).simplify(1.25 if hw in cats[:6] else 0.7, preserve_topology=False)
+                    p = flat(list(ls.coords))
+                except Exception:
+                    p = flat(as_world(coords))
+                if len(p) < 4:
+                    continue
+                lanes, width = road_lanes_width(hw, tags)
+                b, t, y = road_flags(tags)
+                oneway = int(tags.get('oneway') in ('yes', '1', '-1', 'true') or tags.get('junction') == 'roundabout'
+                             or (hw in ('motorway', 'motorway_link') and tags.get('oneway') not in ('no', '0', 'false', 'reversible')))
+                feats.append({'c': idx[hw], 'n': name_of(tags), 'w': width, 'l': lanes, 'o': oneway,
+                              'b': b, 't': t, 'y': y, 'p': p})
+                stats['from_' + group] += 1
     write_json('roads.json', {'classes': cats, 'features': feats})
+    print('[roads] 统计', dict(sorted(stats.items())))
     return len(feats)
 
 
 def rail_output():
-    feats = []
-    rail_sources = load_cat('rail')
-    rail_sources += load_extra(str(SRC / 'airports_research' / 'osm_rail.json'))
-    for el in rail_sources:
-        if el.get('type') != 'way':
-            continue
-        tags = el.get('tags', {})
-        railway = tags.get('railway')
-        if railway not in ('rail', 'subway', 'light_rail', 'tram', 'narrow_gauge', 'construction', 'monorail'):
-            continue
-        coords = raw_coords(el.get('geometry'))
-        if len(coords) < 2:
-            continue
-        feats.append({'c': {'rail': 0, 'subway': 1, 'light_rail': 2, 'tram': 2, 'narrow_gauge': 0, 'construction': 0, 'monorail': 2}[railway],
-                      'n': name_of(tags) or tags.get('ref', ''), 'w': 5.5 if railway != 'subway' else 4.2,
-                      'l': 2 if tags.get('tracks') == '2' else 1, 'o': 0, 'b': int(tags.get('bridge') not in (None, 'no')),
-                      't': int(tags.get('tunnel') not in (None, 'no')), 'y': round(numeric(tags.get('layer'))), 'p': flat(as_world(coords))})
+    """铁路/地铁/轻轨。Geofabrik 优先，早期研究缓存只补缺；在建线（railway=construction）不输出。"""
+    from shapely.geometry import LineString
+    cls = {'rail': 0, 'narrow_gauge': 0, 'subway': 1, 'light_rail': 2, 'tram': 2, 'monorail': 2}
+    feats, seen, covered = [], set(), set()
+    stats = defaultdict(int)
+    groups = (('geofabrik', load_cat('rail')), ('backup', load_extra(str(SRC / 'airports_research' / 'osm_rail.json'))))
+    for group, elements in groups:
+        for el in elements:
+            if el.get('type') != 'way':
+                continue
+            key = (el.get('type'), el.get('id'))
+            if key in seen:
+                continue
+            seen.add(key)
+            tags = el.get('tags', {})
+            railway = tags.get('railway')
+            if railway not in cls:
+                stats['skip_' + str(railway)] += 1
+                continue
+            coords = raw_coords(el.get('geometry'))
+            if len(coords) < 2:
+                continue
+            keys = {tuple(sorted(((round(a[0], 5), round(a[1], 5)), (round(b[0], 5), round(b[1], 5)))))
+                    for a, b in zip(coords, coords[1:])}
+            if group == 'backup' and len(keys & covered) > 0.3 * len(keys):
+                stats['skip_overlap_backup'] += 1
+                continue
+            covered |= keys
+            b, t, y = road_flags(tags)
+            if tags.get('location') == 'underground' and not t:
+                t, y = 1, min(y, -1)
+            tracks = int(max(1, min(8, numeric(tags.get('tracks'), 1))))
+            width = (3.8 if railway == 'subway' else 4.0) + (tracks - 1) * 4.5
+            try:
+                p = flat(list(LineString(as_world(coords)).simplify(0.8, preserve_topology=False).coords))
+            except Exception:
+                p = flat(as_world(coords))
+            if len(p) < 4:
+                continue
+            feats.append({'c': cls[railway], 'n': name_of(tags) or tags.get('ref', ''), 'w': round(width, 1),
+                          'l': tracks, 'o': 0, 'b': b, 't': t, 'y': y, 'p': p})
+            stats[f'{group}_{railway}'] += 1
     write_json('rail.json', {'classes': ['rail', 'subway', 'light_rail'], 'features': feats})
+    print('[rail] 统计', dict(sorted(stats.items())))
     return len(feats)
 
 
@@ -492,24 +603,22 @@ def split_by_grid(wpoly, cell=2400.0, min_piece=45000.0):
     return pieces
 
 
-def water_output():
-    from shapely.geometry import LineString
-    from shapely.ops import unary_union
+def water_elements():
     els = load_cat('water')
     # 河网、渭河及城区湖泊取自本项目缓存，避免主请求失败后水体缺失。
-    extras = load_extra(str(SRC / 'airports_research' / 'osm_weihe.json'))
-    extras += load_extra(str(SRC / 'dem' / 'osm' / 'water_*.json'))
-    extras += load_extra(str(SRC / 'landmarks_historic' / 'osm' / 'qujiang.json'))
-    els += extras
-    dem = DemSampler()
-    if not dem.ok:
-        print('[water] 警告：找不到 dem_main.png/meta.json，水位退回常数')
+    els += load_extra(str(SRC / 'airports_research' / 'osm_weihe.json'))
+    els += load_extra(str(SRC / 'dem' / 'osm' / 'water_*.json'))
+    els += load_extra(str(SRC / 'landmarks_historic' / 'osm' / 'qujiang.json'))
+    return els
+
+
+def water_shapes(stats=None):
+    """OSM 水面要素 → [(世界坐标 Polygon, 名称, 类别)]（已裁到 MAIN、去重），以及河流中心线 way 列表。"""
+    from shapely.ops import unary_union
+    stats = stats if stats is not None else defaultdict(int)
     main_box = main_world_box()
-    polys, lines, seen = [], [], set()
-    shapes = []   # (wpoly, name, kind)
-    line_src = []
-    stats = defaultdict(int)
-    for el in els:
+    shapes, line_src, seen = [], [], set()
+    for el in water_elements():
         tags = el.get('tags', {})
         name = name_of(tags)
         key = (el.get('type'), el.get('id'))
@@ -552,40 +661,101 @@ def water_output():
                 continue
             shapes.append((wpoly, name, kind))
 
-    # 同一水体在不同来源里以不同 id 重复（例如湖面同时被河道面覆盖）：湖/库/塘面优先，河道面让位。
+    # 同一水体在不同来源里以不同 id 重复，或塘面叠在湖面上：两层水面水位不同会互相穿插闪烁。
+    # 非河道面按面积从大到小去重（大半被已收面覆盖的丢弃，小部分重叠的扣掉）；河道面在输出时让位给湖/库/塘面。
+    kept = []
+    for wpoly, name, kind in sorted([s for s in shapes if s[2] != 'river'], key=lambda s: -s[0].area):
+        overlap = [g for g, _, _ in kept if g.intersects(wpoly)]
+        if overlap:
+            inter = unary_union(overlap)
+            ov = wpoly.intersection(inter).area
+            if ov > 0.5 * wpoly.area:
+                stats['skip_duplicate'] += 1
+                continue
+            if ov > 1.0:
+                diff = wpoly.difference(inter)
+                kept.extend((g, name, kind) for g in getattr(diff, 'geoms', [diff])
+                            if g.geom_type == 'Polygon' and g.area > 60)
+                continue
+        kept.append((wpoly, name, kind))
+    rivers = [s for s in shapes if s[2] == 'river']
+    return kept + rivers, line_src
+
+
+SANDBAR_PATH = SRC / 'vector_check' / 'sandbars.json'
+
+
+def load_sandbars():
+    """tools/water_sandbars.py 依 Esri 影像识别的河道沙洲/裸露河滩（经纬度多边形），转世界坐标并合并。"""
+    data = read_json(SANDBAR_PATH, None)
+    if not data:
+        return None
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    polys = []
+    for item in data.get('sandbars', []):
+        rings = [[geo.project(lon, lat) for lon, lat in ring] for ring in item.get('rings', [])]
+        if not rings or len(rings[0]) < 3:
+            continue
+        p = Polygon(rings[0], [r for r in rings[1:] if len(r) >= 3])
+        if not p.is_valid:
+            p = p.buffer(0)
+        if not p.is_empty:
+            polys.append(p)
+    return unary_union(polys) if polys else None
+
+
+def water_output():
+    from shapely.geometry import LineString, Point
+    from shapely.ops import substring, unary_union
+    stats = defaultdict(int)
+    dem = DemSampler()
+    if not dem.ok:
+        print('[water] 警告：找不到 dem_main.png/meta.json，水位退回常数')
+    main_box = main_world_box()
+    shapes, line_src = water_shapes(stats)
     other_union = unary_union([s for s, _, k in shapes if k != 'river']) if shapes else None
+    sandbars = load_sandbars()
+    if sandbars is None:
+        print('[water] 未找到沙洲缓存（tools/water_sandbars.py），河道面不扣沙洲')
+    polys, lines = [], []
     for wpoly, name, kind in shapes:
-        pieces = [wpoly]
-        if kind == 'river':
-            pieces = split_by_grid(wpoly)
-        for piece in pieces:
-            if kind == 'river' and other_union is not None and not other_union.is_empty:
-                try:
-                    if piece.intersects(other_union):
+        if kind == 'river' and sandbars is not None and wpoly.intersects(sandbars):
+            # 渭河、灞河等河道面在 OSM 里是两岸之间的整个河槽，中间大片沙洲/河滩按影像扣成内环（露出影像底图）。
+            before = wpoly.area
+            carved = wpoly.difference(sandbars)
+            if not carved.is_empty:
+                stats['sandbar_m2'] += round(before - carved.area)
+                wpoly = carved
+        bases = [g for g in getattr(wpoly, 'geoms', [wpoly]) if g.geom_type == 'Polygon' and g.area > 300]
+        for base in bases:
+            pieces = split_by_grid(base) if kind == 'river' else [base]
+            for piece in pieces:
+                sub = [piece]
+                if kind == 'river' and other_union is not None and piece.intersects(other_union):
+                    try:
                         diff = piece.difference(other_union)
                         sub = [g for g in getattr(diff, 'geoms', [diff]) if g.geom_type == 'Polygon' and g.area > 300]
+                    except Exception:
+                        pass
+                for g in sub:
+                    outer, holes = shape_rings(g, min_hole_area=40)
+                    if not outer:
+                        continue
+                    if dem.ok:
+                        # 河道取分位高一点：DEM 河道平整后是沿程平滑的下包络面，分段内最高处也要露出水面。
+                        h = dem.level(g, 90 if kind == 'river' else 70) + 0.3
                     else:
-                        sub = [piece]
-                except Exception:
-                    sub = [piece]
-            else:
-                sub = [piece]
-            for g in sub:
-                outer, holes = shape_rings(g, min_hole_area=40)
-                if not outer:
-                    continue
-                if dem.ok:
-                    # 河道取分位高一点：DEM 河道平整后是沿程平滑的下包络面，分段内最高处也要露出水面。
-                    h = dem.level(g, 90 if kind == 'river' else 70) + 0.3
-                else:
-                    h = 364.5 if name == '渭河' else 388.0
-                polys.append({'n': name or ('河道' if kind == 'river' else ''), 'k': kind, 'outer': outer, 'holes': holes,
-                              'h': round(h, 1), 'a': round(g.area)})
-                stats['poly_' + kind] += 1
+                        h = 364.5 if name == '渭河' else 388.0
+                    polys.append({'n': name or {'river': '河道', 'moat': '护城河'}.get(kind, ''), 'k': kind, 'outer': outer,
+                                  'holes': holes, 'h': round(h, 1), 'a': round(g.area)})
+                    stats['poly_' + kind] += 1
 
     # 河流中心线：有面状水面的河段不再画线（前端把“渭河”线强制放宽到 ≥520 m，会把整条中心线画成宽水带），
-    # 长线按 ~1.2 km 切段，方便前端按段取地形高度。
+    # 长线按 ~1.2 km 切段，每段附建议水位 h（前端目前按首点地形取高，h 供后续使用）。
     cover = unary_union([s for s, _, _ in shapes]).buffer(12) if shapes else None
+    if cover is not None and sandbars is not None:
+        cover = cover.union(sandbars.buffer(12))
     default_w = {'river': 16, 'canal': 8, 'stream': 4}
     for el in line_src:
         tags = el.get('tags', {})
@@ -614,7 +784,6 @@ def water_output():
                 continue
             if cover is not None and part.length < 1500:
                 # 河面多边形之间的短残段：多是中心线与岸线略有错位（两端都贴着水面），不再单独画成水带。
-                from shapely.geometry import Point
                 a, b = Point(part.coords[0]), Point(part.coords[-1])
                 if a.distance(cover) < 30 and b.distance(cover) < 30:
                     stats['line_skip_gap'] += 1
@@ -622,7 +791,6 @@ def water_output():
             part = part.simplify(1.5, preserve_topology=False)
             n_chunks = max(1, math.ceil(part.length / 1200.0))
             for ci in range(n_chunks):
-                from shapely.ops import substring
                 seg = substring(part, ci / n_chunks, (ci + 1) / n_chunks, normalized=True)
                 pts = list(seg.coords)
                 if len(pts) < 2:
@@ -632,7 +800,7 @@ def water_output():
                     item['h'] = round(min(dem.at(x, z) for x, z in pts[:: max(1, len(pts) // 12)] + [pts[-1]]) + 0.2, 1)
                 lines.append(item)
                 stats['line_' + ww] += 1
-    # 城墙护城河由历史城墙中心线生成外侧水道，在前端精确贴合城墙路径。
+    # 城墙护城河另由 citywall 模块按城墙中心线生成贴合水道；这里保留 OSM 护城河面（k=moat）。
     write_json('water.json', {'polys': polys, 'lines': lines})
     print('[water] 统计', dict(sorted(stats.items())))
     return len(polys), len(lines)
@@ -649,6 +817,7 @@ def landuse_output():
         'grave_yard': 'cemetery', 'greenfield': 'construction',
     }
     polys, seen = [], set()
+    stats = defaultdict(int)
     elements = load_cat('landuse')
     elements += load_extra(str(SRC / 'landmarks_historic' / 'osm' / 'qujiang.json'))
     elements += load_extra(str(SRC / 'landmarks_historic' / 'osm' / 'others.json'))
@@ -667,10 +836,10 @@ def landuse_output():
         if key in seen:
             continue
         seen.add(key)
-        for outer, holes, area in world_polygons(el, tolerance=landuse_tolerance, min_area=180):
-            cx = sum(outer[::2]) / max(1, len(outer) // 2)
-            cz = sum(outer[1::2]) / max(1, len(outer) // 2)
-            distance = math.hypot(cx, cz)
+        for wpoly in world_shapes(el, tolerance=landuse_tolerance, min_area=180):
+            area = float(wpoly.area)
+            c = wpoly.representative_point()
+            distance = math.hypot(c.x, c.y)
             if kind in ('forest', 'orchard', 'farmland', 'grass'):
                 min_feature_area = 1200 if distance < 10000 else (5000 if distance < 20000 else (18000 if distance < 35000 else 100000))
             elif kind in ('residential', 'commercial', 'industrial', 'construction'):
@@ -679,8 +848,15 @@ def landuse_output():
                 min_feature_area = 180 if distance < 25000 else 1500
             if area < min_feature_area:
                 continue
-            polys.append({'k': kind, 'n': name_of(tags), 'outer': outer, 'holes': holes})
+            outer, holes = shape_rings(wpoly, min_hole_area=60)
+            if not outer:
+                continue
+            # a：面积（m²，扣除内环），供前端按面积筛选/分级显示
+            polys.append({'k': kind, 'n': name_of(tags), 'outer': outer, 'holes': holes, 'a': round(area)})
+            stats[kind] += 1
+    polys.sort(key=lambda p: -p['a'])
     write_json('landuse.json', {'polys': polys})
+    print('[landuse] 统计', dict(sorted(stats.items())))
     return len(polys)
 
 
@@ -870,42 +1046,157 @@ def buildings_output():
     return n
 
 
+# 全国知名地标 / 交通枢纽（OSM 上不一定带 wikidata，按名称补足 i=3）
+POI_FAMOUS = re.compile(
+    r'^(西安)?(钟楼|鼓楼|大雁塔|小雁塔|大慈恩寺|荐福寺|大唐不夜城|大唐芙蓉园|曲江池遗址公园|西安城墙|永宁门|安定门|长乐门|安远门|'
+    r'陕西历史博物馆|西安碑林博物馆|碑林博物馆|大明宫国家遗址公园|大明宫|兴庆宫公园|回民街|北院门|大兴善寺|青龙寺|'
+    r'汉长安城遗址|未央宫遗址|秦始皇帝陵博物院|秦始皇兵马俑博物馆|兵马俑|华清宫|华清池|骊山|西安博物院|半坡博物馆|'
+    r'大唐西市|陕西电视塔|西安奥体中心|西安国际港务区|昆明池|斗门水库（昆明池）|汉阳陵|'
+    r'西安站|西安北站|西安东站|西安南站|阿房宫站|咸阳站|咸阳西站|西安咸阳国际机场|西安咸阳国际机场T[1-5]航站楼|'
+    r'赛格国际购物中心|西安赛格国际购物中心|大悦城|西安大悦城|曲江大悦城|SKP|西安SKP|西安万象城|万象城|'
+    r'西安交通大学|西北工业大学|西北大学|陕西师范大学|西安电子科技大学|长安大学)$')
+# 通用名只在真身附近才算地标（寺庙里也有钟楼、鼓楼）：名称 → 距钟楼原点的最大距离（米）
+POI_FAMOUS_LOCAL = {'钟楼': 700, '鼓楼': 700, '西安钟楼': 700, '西安鼓楼': 700, '永宁门': 3000, '安定门': 3000,
+                    '长乐门': 3000, '安远门': 3000, '回民街': 1500, '北院门': 1500}
+POI_TRANSIT_JUNK = {'platform', 'stop_position', 'stop_area'}
+
+
+def poi_importance(tags, name, area, dist=0.0):
+    """标注重要度 0~3：3 全国知名地标/交通枢纽/大型商场，2 区级重要，1 普通有名称的店铺与设施，0 其它。"""
+    wd = bool(tags.get('wikidata') or tags.get('wikipedia') or tags.get('name:en') and tags.get('wikimedia_commons'))
+    tourism, historic, amenity = tags.get('tourism'), tags.get('historic'), tags.get('amenity')
+    shop, leisure, railway = tags.get('shop'), tags.get('leisure'), tags.get('railway')
+    station = tags.get('station')
+    is_metro = railway in ('station', 'halt', 'stop') and (station in ('subway', 'light_rail', 'monorail')
+                                                         or tags.get('subway') == 'yes' or tags.get('light_rail') == 'yes')
+    if is_metro and not re.search(r'(西安北站|北客站|西安站|火车站)$', name):
+        return 2   # 地铁站即便叫“钟楼”“大雁塔”也不是地标本身
+    aliases = [name] + [a.strip() for k in ('alt_name', 'official_name', 'short_name') for a in (tags.get(k) or '').split(';')]
+    if any(a and POI_FAMOUS.match(a) and dist <= POI_FAMOUS_LOCAL.get(a, 1e9) for a in aliases):
+        return 3
+    if tags.get('aeroway') in ('aerodrome', 'terminal'):
+        return 3
+    if railway in ('station', 'halt') or tags.get('public_transport') == 'station' and tags.get('train') == 'yes':
+        if station in ('subway', 'light_rail', 'monorail') or tags.get('subway') == 'yes' or tags.get('light_rail') == 'yes':
+            return 2                                   # 地铁/云巴站：区级导航地标
+        if railway == 'halt':
+            return 1
+        # 国铁车站：西安站/北站/东站等大站已由名单给 3；带 wikidata 的客运站 2；其余多是三民村、青岔这类小站/货运站
+        return 2 if wd or area > 30000 else 1
+    if railway in ('subway_entrance', 'stop', 'platform', 'crossing', 'level_crossing', 'switch', 'buffer_stop'):
+        return 0
+    if shop in ('mall', 'department_store'):
+        return 3 if wd or area >= 25000 else 2
+    if tourism in ('attraction', 'museum', 'theme_park', 'zoo', 'aquarium', 'gallery'):
+        if wd:
+            return 3
+        if tourism in ('museum', 'theme_park', 'zoo', 'aquarium') or area > 20000:
+            return 2
+        return 1                                       # 无 wikidata 的小景点（牌坊、雕塑群……）
+    if historic in ('monument', 'memorial', 'city_gate', 'archaeological_site', 'castle', 'tomb', 'ruins', 'building',
+                    'heritage', 'temple', 'palace', 'citywalls', 'fort'):
+        if wd:
+            return 3
+        if historic in ('city_gate', 'palace', 'castle') or (historic in ('archaeological_site', 'tomb', 'monument')
+                                                           and (area > 20000 or re.search(r'(遗址|陵|墓|碑)', name))):
+            return 2
+        return 1
+    if amenity == 'place_of_worship':
+        return 3 if wd else (2 if re.search(r'(寺|观|庙|清真大寺|教堂)$', name) else 1)
+    if amenity == 'university':
+        return 3 if wd else 2
+    if amenity == 'bus_station':
+        return 2 if re.search(r'(客运站|汽车站|客运中心|枢纽)', name) else 1
+    if amenity in ('college', 'hospital', 'townhall', 'courthouse', 'library', 'theatre',
+                   'arts_centre', 'conference_centre', 'exhibition_centre'):
+        if amenity == 'hospital' and not re.search(r'医院', name):
+            return 1
+        return 3 if wd and amenity in ('library', 'theatre', 'arts_centre', 'exhibition_centre') else 2
+    if leisure in ('stadium',):
+        return 3 if wd else 2
+    if leisure in ('park', 'nature_reserve', 'garden') and not tags.get('building'):
+        return 3 if wd and area > 300000 else (2 if wd or area > 150000 else 1)
+    if tags.get('man_made') == 'tower' and (wd or tags.get('tower:type') in ('communication', 'observation')):
+        return 3 if wd else 2
+    if tags.get('office') == 'government' or amenity == 'townhall':
+        return 2 if re.search(r'(人民政府|管委会|管理委员会)$', name) else 1
+    if tourism == 'hotel':
+        stars = numeric(tags.get('stars'), 0)
+        return 2 if wd or stars >= 5 or area > 8000 else 1
+    if amenity in ('parking', 'parking_entrance', 'toilets', 'atm', 'charging_station', 'bicycle_parking', 'vending_machine',
+                   'post_box', 'telephone', 'bench', 'waste_basket', 'recycling', 'shelter', 'drinking_water', 'fountain',
+                   'motorcycle_parking', 'taxi', 'car_rental', 'bicycle_rental', 'loading_dock'):
+        return 0
+    if re.search(r'(\d+|[一二三四五六七八九十]+)(号楼|栋|单元|号门|出入口|入口|出口|[A-Z]口)$', name) or re.fullmatch(r'[A-Z]?\d*[A-Z]?口', name):
+        return 0
+    if shop or amenity or tourism or historic or leisure or tags.get('office') or tags.get('healthcare') or tags.get('craft') \
+            or tags.get('club') or tags.get('man_made') in ('bridge', 'tower', 'lighthouse'):
+        return 1
+    return 0
+
+
 def pois_output():
     source = load_cat('pois') + load_extra(str(SRC / 'landmarks_historic' / 'osm' / '*.json'))
     seen, out = set(), []
+    stats = defaultdict(int)
     for el in source:
         tags = el.get('tags', {})
         name = name_of(tags)
-        if not name:
-            continue
+        if not name or not re.search(r'[\u4e00-\u9fff]', name):
+            continue   # 契约：只要带中文名称的点
         key = (el.get('type'), el.get('id'))
         if key in seen:
             continue
         seen.add(key)
-        p = tag_world(el)
+        pt = tags.get('public_transport')
+        if (pt in POI_TRANSIT_JUNK or tags.get('highway') == 'bus_stop') and tags.get('railway') not in ('station', 'halt'):
+            stats['skip_bus_stop'] += 1   # 公交站台/停靠点：不是地标，旧版误归为 landmark（约 7000 条）
+            continue
+        if el.get('type') != 'node' and tags.get('railway') in ('rail', 'subway', 'light_rail', 'tram', 'construction',
+                                                                'disused', 'narrow_gauge', 'monorail', 'preserved'):
+            stats['skip_rail_line'] += 1  # 线路名（陇海铁路、地铁 2 号线……）在 rail.json 里，不是点
+            continue
+        area = 0.0
+        p = None
+        if el.get('type') in ('way', 'relation'):
+            shapes = world_shapes(el, tolerance=2.0, min_area=1)
+            if shapes:
+                area = float(sum(s.area for s in shapes))
+                q = max(shapes, key=lambda s: s.area).representative_point()
+                p = (q.x, q.y)
+        if p is None:
+            p = tag_world(el)
         if p is None:
             geom = raw_coords(el.get('geometry'))
             if not geom:
-                # 面/线名称取质心点，避免把首点误当成建筑中心。
-                poly = polygons_from_element(el)
-                if poly:
-                    from shapely.ops import transform
-                    q = transform(lambda x, y, z=None: geo.project(x, y), poly[0]).representative_point()
-                    p = (q.x, q.y)
-                else:
-                    continue
-            else:
-                from shapely.geometry import LineString
-                q = LineString(as_world(geom)).interpolate(0.5, normalized=True)
-                p = (q.x, q.y)
+                continue
+            from shapely.geometry import LineString
+            q = LineString(as_world(geom)).interpolate(0.5, normalized=True)
+            p = (q.x, q.y)
         if math.hypot(p[0], p[1]) > 38000:
             continue
         k = (tags.get('shop') and 'shop') or (tags.get('tourism') and 'hotel' if tags.get('tourism') == 'hotel' else tags.get('tourism')) or tags.get('amenity') or tags.get('historic') or tags.get('railway') or 'landmark'
-        out.append({'n': name, 'k': str(k), 'x': round(p[0], 1), 'z': round(p[1], 1)})
-        if len(out) >= 20000:
-            break
-    write_json('pois.json', {'pois': out})
-    return len(out)
+        imp = poi_importance(tags, name, area, math.hypot(p[0], p[1]))
+        if tags.get('railway') in ('station', 'halt') and not name.endswith('站') and not re.search(r'[)）]$', name):
+            name = name + '站'   # OSM 车站名不带“站”（西安北、萧家村），标注时和同名地标/村庄区分
+        out.append({'n': name, 'k': str(k), 'x': round(p[0], 1), 'z': round(p[1], 1), 'i': imp})
+    # 同名同地（车站的点+面、同一商场的多个要素）只留一个：取重要度最高的
+    out.sort(key=lambda o: -o['i'])
+    kept, by_name = [], defaultdict(list)
+    for o in out:
+        # 重要标注（整片景区/长街的多个要素）去重半径更大
+        radius = {3: 800, 2: 300}.get(o['i'], 150)
+        if any(math.hypot(q['x'] - o['x'], q['z'] - o['z']) < radius for q in by_name[o['n']]):
+            stats['skip_duplicate'] += 1
+            continue
+        by_name[o['n']].append(o)
+        kept.append(o)
+    kept = kept[:20000]
+    for o in kept:
+        stats[f'i{o["i"]}'] += 1
+    write_json('pois.json', {'pois': kept})
+    print('[pois] 统计', dict(sorted(stats.items())))
+    return len(kept)
 
 
 def airport_output():
