@@ -150,9 +150,22 @@ def draw_view(name, w, s, e, n, z, layers, out_dir, max_px=2400):
             if not in_view(f['p']):
                 continue
             pts = ring_px(f['p'])
-            width = max(1, int(round(float(f.get('w') or 8) / mpp)))
-            col = (255, 80, 80, 110) if f.get('b') else ((120, 120, 255, 110) if f.get('t') else (255, 200, 0, 90))
-            d.line(pts, fill=col, width=width)
+            col = (255, 80, 80, 90) if f.get('b') else ((120, 120, 255, 90) if f.get('t') else (255, 200, 0, 70))
+            if mpp < 2.5:
+                # 近景：按路面宽度画出两侧边线，便于和影像里的路面宽度对比
+                from shapely.geometry import LineString
+                ls = LineString([(f['p'][i], f['p'][i + 1]) for i in range(0, len(f['p']) - 1, 2)])
+                poly = ls.buffer(float(f.get('w') or 8) / 2, cap_style='flat', join_style='mitre')
+                for g in getattr(poly, 'geoms', [poly]):
+                    ext = [to_px(x, zz) for x, zz in g.exterior.coords]
+                    d.polygon(ext, fill=col, outline=(col[0], col[1], col[2], 255))
+                    for hole in g.interiors:   # 闭合环路的缓冲区是环形，内部要挖掉
+                        d.polygon([to_px(x, zz) for x, zz in hole.coords], fill=(0, 0, 0, 0),
+                                  outline=(col[0], col[1], col[2], 255))
+                d.line(pts, fill=(255, 255, 255, 160), width=1)
+            else:
+                width = max(1, int(round(float(f.get('w') or 8) / mpp)))
+                d.line(pts, fill=col, width=width)
     img = Image.alpha_composite(img.convert('RGBA'), over).convert('RGB')
     dd = ImageDraw.Draw(img)
     # 比例尺

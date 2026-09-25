@@ -39,7 +39,7 @@ SITES_WORLD = {'gaoxin_cbd': (-6050.0, 7350.0, 480)}
 
 def load_cmab_rings():
     c = np.load(os.path.join(ROOT, 'data-src', 'heights', 'cmab_xian.npz'))
-    x, z, po, ppo = c['x'], c['z'], c['part_off'], c['poly_part_off']
+    x, z, po, ppo, h = c['x'], c['z'], c['part_off'], c['poly_part_off'], c['h']   # npz 每次取键都会重新解压，先取出
     rings, hs = [], []
     for i in range(len(ppo) - 1):
         a, b = po[ppo[i]], po[ppo[i] + 1]
@@ -47,7 +47,7 @@ def load_cmab_rings():
         if b - a < 4 or np.abs(rx).max() > 2e5 or np.abs(rz).max() > 2e5:
             continue
         rings.append(np.c_[rx, rz].astype(np.float64))
-        hs.append(c['h'][i])
+        hs.append(h[i])
     return rings, np.array(hs)
 
 
