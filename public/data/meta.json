@@ -1,0 +1,239 @@
+{
+ "origin": {
+  "lat": 34.2610119,
+  "lon": 108.9423419
+ },
+ "k": 0.8264815661806715,
+ "generated": "2026-09-25T03:36:07+00:00",
+ "dem": [
+  {
+   "file": "dem_main.png",
+   "w": 2048,
+   "h": 2048,
+   "bounds": {
+    "x0": -31496.7,
+    "x1": 42106.2,
+    "z0": -51234.8,
+    "z1": 34558.0
+   },
+   "lonlat": [
+    108.6,
+    33.95,
+    109.4,
+    34.72
+   ],
+   "mpp": [
+    35.94,
+    41.89
+   ],
+   "encoding": "terrarium",
+   "min": 343.5,
+   "max": 2273.8
+  },
+  {
+   "file": "dem_outer.png",
+   "w": 1024,
+   "h": 1024,
+   "bounds": {
+    "x0": -59097.7,
+    "x1": 69707.2,
+    "z0": -71404.9,
+    "z1": 67773.0
+   },
+   "lonlat": [
+    108.3,
+    33.65,
+    109.7,
+    34.9
+   ],
+   "mpp": [
+    125.79,
+    135.92
+   ],
+   "encoding": "terrarium",
+   "min": 336.6,
+   "max": 2991.0
+  }
+ ],
+ "demInfo": {
+  "source": "fabdem",
+  "dtm": "FABDEM（已去建筑/森林）+ 平原区形态学开运算",
+  "openingWindowM": 150.0,
+  "water": "大水体（OSM 河道面/湖库面，平均宽≥50 m）已平整到水面高度；河道沿程平滑下降",
+  "weihe": [
+   345.2,
+   359.4,
+   398.4
+  ]
+ },
+ "sources": [
+  "© OpenStreetMap contributors",
+  "© OpenStreetMap contributors — https://www.openstreetmap.org/copyright",
+  "Esri World Imagery — Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  "FABDEM v1-2 (Hawker et al. 2022, University of Bristol & Fathom; CC BY-NC-SA 4.0), derived from Copernicus DEM GLO-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018",
+  "Terrain Tiles (Mapzen / AWS Open Data, Terrarium): SRTM, ETOPO1 and others"
+ ],
+ "imagery": [
+  {
+   "file": "img_outer.jpg",
+   "w": 2048,
+   "h": 2048,
+   "bounds": {
+    "x0": -60822.773,
+    "x1": 84729.65,
+    "z0": -85999.253,
+    "z1": 75725.662
+   },
+   "mpp": 71.071,
+   "mppZ": 78.967,
+   "priority": 0,
+   "zoom": 11,
+   "tiles": [
+    1640,
+    811,
+    1648,
+    820
+   ],
+   "lonlat": [
+    108.28125,
+    33.5780147,
+    109.8632813,
+    35.0299964
+   ],
+   "source": "Esri World Imagery",
+   "quality": 82
+  },
+  {
+   "file": "img_main.jpg",
+   "w": 4096,
+   "h": 4096,
+   "bounds": {
+    "x0": -32520.913,
+    "x1": 44298.421,
+    "z0": -53654.27,
+    "z1": 35294.434
+   },
+   "mpp": 18.755,
+   "mppZ": 21.716,
+   "priority": 1,
+   "zoom": 13,
+   "tiles": [
+    6567,
+    3252,
+    6585,
+    3273
+   ],
+   "lonlat": [
+    108.5888672,
+    33.9433599,
+    109.4238281,
+    34.7416125
+   ],
+   "source": "Esri World Imagery",
+   "quality": 82
+  },
+  {
+   "file": "img_core.jpg",
+   "w": 4096,
+   "h": 4096,
+   "bounds": {
+    "x0": -10283.737,
+    "x1": 10942.658,
+    "z0": -10190.699,
+    "z1": 11035.696
+   },
+   "mpp": 5.182,
+   "mppZ": 5.182,
+   "priority": 2,
+   "zoom": 15,
+   "tiles": [
+    26290,
+    13051,
+    26310,
+    13071
+   ],
+   "lonlat": [
+    108.8305664,
+    34.1618182,
+    109.0612793,
+    34.3525067
+   ],
+   "source": "Esri World Imagery",
+   "quality": 82
+  },
+  {
+   "file": "img_xiy.jpg",
+   "w": 4096,
+   "h": 3384,
+   "bounds": {
+    "x0": -22413.106043984062,
+    "x1": -10789.127791339502,
+    "z0": -24847.019164318208,
+    "z1": -15244.60234691573
+   },
+   "mpp": 2.838,
+   "priority": 3
+  },
+  {
+   "file": "img_wall.jpg",
+   "w": 2048,
+   "h": 2048,
+   "bounds": {
+    "x0": -1944.797,
+    "x1": 2351.022,
+    "z0": -2104.453,
+    "z1": 1685.975
+   },
+   "mpp": 2.098,
+   "mppZ": 1.851,
+   "priority": 3,
+   "zoom": 17,
+   "tiles": [
+    105193,
+    52236,
+    105209,
+    52250
+   ],
+   "lonlat": [
+    108.9212036,
+    34.2458652,
+    108.9678955,
+    34.2799144
+   ],
+   "source": "Esri World Imagery",
+   "quality": 82
+  },
+  {
+   "file": "img_qujiang.jpg",
+   "w": 2048,
+   "h": 2048,
+   "bounds": {
+    "x0": 582.155,
+    "x1": 4625.278,
+    "z0": 3707.536,
+    "z1": 7750.659
+   },
+   "mpp": 1.974,
+   "mppZ": 1.974,
+   "priority": 3,
+   "zoom": 17,
+   "tiles": [
+    105203,
+    52259,
+    105218,
+    52274
+   ],
+   "lonlat": [
+    108.9486694,
+    34.1913577,
+    108.9926147,
+    34.2276999
+   ],
+   "source": "Esri World Imagery",
+   "quality": 82
+  }
+ ],
+ "online": {
+  "maxZoom": 18
+ }
+}
