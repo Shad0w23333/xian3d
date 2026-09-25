@@ -1,0 +1,8 @@
+node_modules/
+dist/
+data-src/
+*.log
+.DS_Store
+shots/
+.venv-tools/
+shots/

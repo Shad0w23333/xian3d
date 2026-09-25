@@ -1,0 +1,19 @@
+{
+  "name": "xian3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "西安 3D 可交互城市模型（Three.js）",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host --port 4173"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1",
+    "playwright": "^1.63.0"
+  }
+}

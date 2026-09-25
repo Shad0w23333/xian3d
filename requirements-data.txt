@@ -1,0 +1,8 @@
+numpy>=1.26
+Pillow>=10.0
+scipy>=1.11
+requests>=2.31
+shapely>=2.0
+tifffile>=2024.2
+remotezip>=0.12
+osmium>=4.3
