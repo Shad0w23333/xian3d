@@ -6,15 +6,24 @@
 子命令：
   python tools/imagery_pack.py plan   [--plan default]                 # 估算各片区瓦片数与体积
   python tools/imagery_pack.py compare --lon 108.9423 --lat 34.2610 --z 19   # 各源同一位置对比图 → research/imagery_compare/
+  python tools/imagery_pack.py bench --source google,esri_clarity,tianditu,amap --tk XXX   # 各片区抽样打分（清晰度/积雪/缺图率）
+  python tools/imagery_pack.py all --source google,esri_clarity,tianditu --pick sharp --plan ultra  # 逐块择优 + 核心区 z20
   python tools/imagery_pack.py download --source google[,esri] [--plan default] [--workers 16]
   python tools/imagery_pack.py pack --source google[,esri] [--plan default]  # → tiles/*.xtp + index.json
   python tools/imagery_pack.py all --source google,esri                # download + pack
 
-源（--source 可逗号分隔：前者缺图时用后者补）：
-  google  Google 卫星（WGS-84，西安城区 z19~z20 清晰，推荐）
-  esri    Esri World Imagery（WGS-84，z19；部分区域年份较旧/有积雪）
-  bing    Bing 航拍（WGS-84，z19）
-  amap    高德卫星（GCJ-02，下载后逐瓦片纠偏回 WGS-84；z18 以上仅部分区域）
+源（--source 可逗号分隔：前者缺图时用后者补；加 --pick sharp 则按 8×8 瓦片块自动挑最清晰的源）：
+  google        Google 卫星（WGS-84，西安城区 z19~z20，通常最清晰）
+  esri          Esri World Imagery（WGS-84，z19；部分区域年份较旧/有积雪）
+  esri_clarity  Esri Clarity（同源未经锐化压缩的版本，常比 esri 清楚）
+  wayback       Esri Wayback 指定期（--wayback latest 或期号；可挑无雪的新一期）
+  bing          Bing 航拍（WGS-84，z19）
+  tianditu      天地图卫星（国家地理信息公共服务平台，免费，需“服务器端”Key：--tk 或环境变量 TIANDITU_TK；CGCS2000≈WGS-84，z18）
+  amap          高德卫星（GCJ-02，下载后逐瓦片纠偏回 WGS-84；z18 以上仅部分区域）
+  tencent       腾讯卫星（GCJ-02，自动纠偏）
+  jl1           吉林一号“共生地球”年度影像（0.5~0.75 m，免费注册；--jl1-mk 影像图层 mk、--jl1-tk 令牌，
+                URL 模板以其控制台为准，可用 --url 覆盖）
+  custom        任意 XYZ 模板：--url 'https://host/{z}/{x}/{y}.jpg'（占位符 {z} {x} {y} {-y}(TMS) {q}(quadkey) {s}），GCJ 源加 --gcj
 缓存：data-src/tiles_hd/<源>/<z>/<x>/<y>.jpg（纠偏前的高德原图在 data-src/tiles_hd/amap_raw/）；缺图记为 .miss。
 """
 import argparse
@@ -46,7 +55,21 @@ SOURCES = {
              'attr': 'Microsoft Bing'},
     'amap': {'url': 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', 'subs': '1234',
              'gcj': True, 'attr': '高德卫星（已纠偏）'},
+    'esri_clarity': {'url': 'https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                     'subs': None, 'gcj': False, 'attr': 'Esri World Imagery (Clarity)'},
+    'wayback': {'url': 'https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/{wb}/{z}/{y}/{x}',
+                'subs': None, 'gcj': False, 'attr': 'Esri World Imagery Wayback'},
+    'tianditu': {'url': 'https://t{s}.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default'
+                        '&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk={tk}',
+                 'subs': '01234567', 'gcj': False, 'attr': '天地图（国家地理信息公共服务平台）'},
+    'tencent': {'url': 'https://p{s}.map.gtimg.com/sateTiles/{z}/{x16}/{ty16}/{x}_{ty}.jpg', 'subs': '0123', 'gcj': True,
+                'attr': '腾讯地图卫星（已纠偏）'},
+    'jl1': {'url': 'https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk={mk}&tk={tk1}', 'subs': None, 'gcj': False,
+            'attr': '吉林一号（长光卫星 共生地球）'},
+    'custom': {'url': '', 'subs': None, 'gcj': False, 'attr': '自定义影像源'},
+    'best': {'url': '', 'subs': None, 'gcj': False, 'attr': '多源择优'},
 }
+CFG = {'tk': os.environ.get('TIANDITU_TK', ''), 'wb': '', 'mk': os.environ.get('JL1_MK', ''), 'tk1': os.environ.get('JL1_TK', '')}
 
 # 片区计划：(名称, (西, 南, 东, 北), 最小层级, 最大层级)
 PLANS = {
@@ -70,6 +93,14 @@ PLANS = {
         ('大雁塔·曲江', (108.945, 34.183, 109.002, 34.232), 18, 18),
     ],
 }
+# ultra：default 基础上，核心片区加 z20（Google 在西安城区有 z20，约 0.12 m/px；体积约再增加 2~3 GB）
+PLANS['ultra'] = PLANS['default'] + [
+    ('城墙内 z20', (108.918, 34.244, 108.968, 34.282), 20, 20),
+    ('大雁塔·不夜城 z20', (108.952, 34.195, 108.975, 34.225), 20, 20),
+    ('未央路口 z20', (108.935, 34.332, 108.955, 34.348), 20, 20),
+    ('浐灞半岛 z20', (109.004, 34.326, 109.025, 34.345), 20, 20),
+    ('曲江池·W z20', (108.975, 34.192, 108.992, 34.212), 20, 20),
+]
 # 打包分组（层级段 → 文件）
 BANDS = [(11, 15), (16, 17), (18, 18), (19, 20)]
 
@@ -171,7 +202,12 @@ def src_url(src, z, x, y):
     u = S['url']
     if S['subs']:
         u = u.replace('{s}', S['subs'][(x + y) % len(S['subs'])])
-    return u.replace('{z}', str(z)).replace('{x}', str(x)).replace('{y}', str(y)).replace('{q}', quadkey(z, x, y))
+    ty = (1 << z) - 1 - y  # TMS 行号（y 自下而上）
+    rep = {'{z}': z, '{x}': x, '{y}': y, '{-y}': ty, '{ty}': ty, '{x16}': x >> 4, '{ty16}': ty >> 4,
+           '{tk}': CFG['tk'], '{wb}': CFG['wb'], '{mk}': CFG['mk'], '{tk1}': CFG['tk1']}
+    for k, v in rep.items():
+        u = u.replace(k, str(v))
+    return u.replace('{q}', quadkey(z, x, y))
 
 
 def is_placeholder(src, data, headers):
@@ -201,6 +237,9 @@ def fetch_raw(src, z, x, y, retries=4):
                 d.mkdir(parents=True, exist_ok=True)
                 miss.touch()
                 return None
+            if r.status_code == 200 and r.content[:1] == b'<':
+                # 天地图等在 Key 无效/超限时返回 XML/HTML 错误页
+                raise RuntimeError('服务返回错误页（Key 无效或超出配额？）：' + r.content[:160].decode('utf-8', 'replace'))
             if r.status_code == 200:
                 d.mkdir(parents=True, exist_ok=True)
                 tmp = f.with_suffix('.part')
@@ -251,7 +290,13 @@ def fetch_wgs(src, z, x, y):
     return buf.getvalue()
 
 
-SOURCES['amap_raw'] = dict(SOURCES['amap'], gcj=False)
+def _raw_variants():
+    for k in list(SOURCES):
+        if SOURCES[k]['gcj'] and not k.endswith('_raw'):
+            SOURCES[k + '_raw'] = dict(SOURCES[k], gcj=False)
+
+
+_raw_variants()
 
 
 def download(sources, plan, workers):
@@ -291,6 +336,111 @@ def download(sources, plan, workers):
         print('  错误：', e)
     if fail:
         print(f'有 {fail} 张因网络错误未完成，重新运行本命令即可断点续传。')
+
+
+# ───────────────────────── 清晰度评分与择优 ─────────────────────────
+def tile_score(data):
+    """清晰度 = 灰度拉普拉斯方差（越大越清楚）；积雪/云（高亮低饱和）占比高时降分；返回 (score, 雪云比例)"""
+    import numpy as np
+    from PIL import Image
+    im = Image.open(io.BytesIO(data)).convert('RGB').resize((256, 256))
+    a = np.asarray(im, np.float32)
+    g = a.mean(axis=2)
+    lap = g[1:-1, 1:-1] * 4 - g[:-2, 1:-1] - g[2:, 1:-1] - g[1:-1, :-2] - g[1:-1, 2:]
+    sharp = float(lap.var())
+    mx, mn = a.max(axis=2), a.min(axis=2)
+    snow = float(((mx > 215) & ((mx - mn) < 28)).mean())
+    return sharp * (1 - min(0.8, snow * 1.5)), snow
+
+
+def download_pick(sources, plan, workers, block=3):
+    """按 2^block × 2^block 瓦片块择优：每块抽样 4 张给各源打分，整块用得分最高的源（避免逐瓦片拼色）。结果写入 best 源缓存。"""
+    tiles = plan_tiles(plan)
+    groups = {}
+    for t in tiles:
+        groups.setdefault((t[0], t[1] >> block, t[2] >> block), []).append(t)
+    print(f'计划 {plan}：{len(tiles)} 张瓦片，{len(groups)} 块，候选源 {sources}（逐块择优）')
+    stat = {s: 0 for s in sources}
+    done = fail = 0
+    lock = threading.Lock()
+    t0 = time.time()
+
+    def job(key):
+        ts = groups[key]
+        rnd = random.Random(hash(key))
+        sample = rnd.sample(ts, min(4, len(ts)))
+        scores = {}
+        for s_ in sources:
+            sc, n = 0.0, 0
+            for t in sample:
+                try:
+                    b = fetch_wgs(s_, *t)
+                except Exception:
+                    b = None
+                if b:
+                    sc += tile_score(b)[0]
+                    n += 1
+            if n:
+                scores[s_] = sc / len(sample) * (n / len(sample))  # 缺图按比例扣分
+        order = sorted(scores, key=lambda k: -scores[k]) + [s_ for s_ in sources if s_ not in scores]
+        nf = 0
+        for t in ts:
+            out = CACHE / 'best' / str(t[0]) / str(t[1]) / f'{t[2]}.jpg'
+            if out.exists():
+                continue
+            for s_ in order:
+                try:
+                    b = fetch_wgs(s_, *t)
+                except Exception:
+                    b = None
+                if b:
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    out.write_bytes(b)
+                    break
+            else:
+                nf += 1
+        return (order[0] if scores else None), len(ts), nf
+
+    with ThreadPoolExecutor(workers) as ex:
+        futs = [ex.submit(job, k) for k in groups]
+        for fu in as_completed(futs):
+            best, n, nf = fu.result()
+            with lock:
+                if best:
+                    stat[best] += n
+                done += n
+                fail += nf
+                if done % 1000 < n or done == len(tiles):
+                    print(f'  {done}/{len(tiles)}  未取到 {fail}  {done / max(time.time() - t0, 1e-3):.1f} 张/秒  采用：{stat}', flush=True)
+    print('各源采用瓦片数：', stat)
+    if fail:
+        print(f'有 {fail} 张未取到（缺图或网络错误），重新运行可续传。')
+
+
+def cmd_bench(sources, plan, n=10):
+    """各片区在其最高层级随机抽样，比较各源：可用率、清晰度、雪/云比例"""
+    rnd = random.Random(7)
+    print(f'{"片区":12s} {"层级":4s} ' + ' '.join(f'{s:>22s}' for s in sources))
+    for name, bbox, z0, z1 in PLANS[plan]:
+        ts = list(tiles_in(bbox, z1))
+        sample = rnd.sample(ts, min(n, len(ts)))
+        cells = []
+        for s_ in sources:
+            ok, sc, sn = 0, 0.0, 0.0
+            for (x, y) in sample:
+                try:
+                    b = fetch_wgs(s_, z1, x, y)
+                except Exception as e:
+                    b = None
+                    err = str(e)[:60]
+                if b:
+                    a, w = tile_score(b)
+                    ok += 1
+                    sc += a
+                    sn += w
+            cells.append(f'{ok}/{len(sample)} 清晰{sc / max(ok, 1):7.0f} 雪{sn / max(ok, 1):4.0%}' if ok else '   —— 无图/出错')
+        print(f'{name:12s} z{z1:<3d} ' + ' '.join(f'{c:>22s}' for c in cells), flush=True)
+    print('清晰度为灰度拉普拉斯方差（越大越清楚，同片区横向比较）；雪 = 高亮低饱和像素比例（积雪/云/过曝）。')
 
 
 # ───────────────────────── 打包 ─────────────────────────
@@ -376,29 +526,62 @@ def cmd_compare(lon, lat, z, sources):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('cmd', choices=['plan', 'compare', 'download', 'pack', 'all'])
+    ap.add_argument('cmd', choices=['plan', 'compare', 'bench', 'download', 'pack', 'all'])
     ap.add_argument('--source', default='google,esri')
     ap.add_argument('--plan', default='default', choices=list(PLANS))
+    ap.add_argument('--pick', choices=['first', 'sharp'], default='first', help='first：按顺序回退；sharp：逐块择优（输出为 best 源）')
     ap.add_argument('--workers', type=int, default=12)
     ap.add_argument('--lon', type=float, default=108.9423)
     ap.add_argument('--lat', type=float, default=34.2610)
     ap.add_argument('--z', type=int, default=19)
+    ap.add_argument('--tk', default=CFG['tk'], help='天地图 Key（服务器端），也可用环境变量 TIANDITU_TK')
+    ap.add_argument('--wayback', default='latest', help='Esri Wayback 期号或 latest')
+    ap.add_argument('--jl1-mk', default=CFG['mk'])
+    ap.add_argument('--jl1-tk', default=CFG['tk1'])
+    ap.add_argument('--url', default='', help='custom 源的 XYZ 模板（也可覆盖 jl1 模板）')
+    ap.add_argument('--gcj', action='store_true', help='custom 源为 GCJ-02 坐标')
     a = ap.parse_args()
+    CFG.update(tk=a.tk, mk=a.jl1_mk, tk1=a.jl1_tk)
+    if a.url:
+        key = 'jl1' if 'jl1' in a.source and 'custom' not in a.source else 'custom'
+        SOURCES[key].update(url=a.url, gcj=a.gcj)
+        _raw_variants()
     sources = [s.strip() for s in a.source.split(',') if s.strip()]
     for s in sources:
-        if s not in SOURCES:
-            sys.exit(f'未知源 {s}，可选：google esri bing amap')
+        if s not in SOURCES or s.endswith('_raw'):
+            sys.exit(f'未知源 {s}，可选：' + ' '.join(k for k in SOURCES if not k.endswith('_raw')))
+    if 'tianditu' in sources and not CFG['tk']:
+        sys.exit('天地图需要 Key：在 https://console.tianditu.gov.cn 免费申请“服务器端”Key，然后加 --tk 或设环境变量 TIANDITU_TK')
+    if 'jl1' in sources and not (CFG['mk'] and CFG['tk1']):
+        sys.exit('吉林一号需要在“共生地球/吉林一号网”注册后获取影像图层 mk 与令牌 tk：--jl1-mk ... --jl1-tk ...')
+    if 'custom' in sources and not SOURCES['custom']['url']:
+        sys.exit('custom 源需要 --url 模板')
+    if 'wayback' in sources:
+        CFG['wb'] = wayback_release(a.wayback)
     if a.cmd == 'plan':
         cmd_plan(a.plan)
     elif a.cmd == 'compare':
-        cmd_compare(a.lon, a.lat, a.z, sources if a.source != 'google,esri' else ['google', 'esri', 'bing', 'amap'])
+        cmd_compare(a.lon, a.lat, a.z, sources if a.source != 'google,esri' else ['google', 'esri', 'esri_clarity', 'bing', 'amap', 'tencent'])
+    elif a.cmd == 'bench':
+        cmd_bench(sources, a.plan)
     elif a.cmd == 'download':
-        download(sources, a.plan, a.workers)
+        (download_pick if a.pick == 'sharp' else download)(sources, a.plan, a.workers)
     elif a.cmd == 'pack':
-        pack(sources, a.plan)
+        pack(['best'] if a.pick == 'sharp' else sources, a.plan)
     else:
-        download(sources, a.plan, a.workers)
-        pack(sources, a.plan)
+        (download_pick if a.pick == 'sharp' else download)(sources, a.plan, a.workers)
+        pack(['best'] if a.pick == 'sharp' else sources, a.plan)
+
+
+def wayback_release(want):
+    """Esri Wayback：取最新一期（或指定期号）的 release 编号"""
+    if want != 'latest':
+        return want
+    r = session().get('https://s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json', timeout=30)
+    cfg = r.json()
+    best = max(cfg.items(), key=lambda kv: kv[1].get('itemTitle', ''))
+    print('Esri Wayback 最新一期：', best[1].get('itemTitle'), '期号', best[0])
+    return best[0]
 
 
 if __name__ == '__main__':
