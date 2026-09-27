@@ -1,7 +1,8 @@
-// 卫星影像：内置降级底图（img_*.jpg）+ 在线 Esri 瓦片流式加载（LRU 缓存、按距离优先、离线自动降级）
+// 卫星影像：内置降级底图（img_*.jpg）+ 在线瓦片流式加载（高德/Esri，高德自动做 GCJ-02 纠偏拼接；LRU 缓存、按距离优先、离线自动降级）
 import * as THREE from 'three';
 import { loadImageBitmap } from './data.js';
-import { ONLINE_IMAGERY } from './config.js';
+import { IMAGERY_PROVIDERS, DEFAULT_IMAGERY } from './config.js';
+import { wgs2gcj } from './gcj.js';
 
 const ENTRY = new WeakMap(); // texture -> cache entry
 
@@ -10,10 +11,13 @@ export class Imagery {
     this.renderer = renderer;
     this.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), quality.anisotropy || 8);
     this.mosaics = [];
+    this.provider = IMAGERY_PROVIDERS[DEFAULT_IMAGERY];
+    this.providerId = DEFAULT_IMAGERY;
+    this.raw = new Map(); // GCJ 原始瓦片缓存 key -> Promise<ImageBitmap>
     this.online = {
       enabled: true,
-      url: ONLINE_IMAGERY.url,
-      maxZoom: ONLINE_IMAGERY.maxZoom,
+      url: this.provider.url,
+      maxZoom: this.provider.maxZoom,
       status: '等待', // 等待 / 在线 / 离线
       ok: 0,
       fail: 0,
@@ -22,7 +26,7 @@ export class Imagery {
     this.failed = new Set();
     this.pending = new Map(); // key -> {z,x,y,priority}
     this.inflight = new Map();
-    this.maxInflight = 10;
+    this.maxInflight = 12;
     this.cacheLimit = 700;
     this.listeners = new Set();
     this.frame = 0;
@@ -34,9 +38,25 @@ export class Imagery {
   }
 
   setOnlineConfig(cfg) {
-    if (!cfg) return;
-    if (cfg.url) this.online.url = cfg.url;
+    // meta.json 里的 online 配置只对 Esri 源生效（旧数据）；默认用高德
+    if (!cfg || this.provider.gcj) return;
     if (cfg.maxZoom) this.online.maxZoom = cfg.maxZoom;
+  }
+
+  /** 切换在线影像源（'amap' | 'esri'），清空已加载的在线瓦片 */
+  setProvider(id) {
+    const p = IMAGERY_PROVIDERS[id];
+    if (!p || id === this.providerId) return false;
+    this.provider = p;
+    this.providerId = id;
+    this.online.url = p.url;
+    this.online.maxZoom = p.maxZoom;
+    this.pending.clear();
+    for (const [, e] of this.cache) if (e.refs === 0) { e.tex.dispose(); e.tex.image && e.tex.image.close && e.tex.image.close(); }
+    this.cache = new Map([...this.cache].filter(([, e]) => e.refs > 0)); // 仍被地形引用的旧瓦片稍后自然回收
+    this.generation = (this.generation || 0) + 1;
+    this.setOnlineEnabled(this.online.enabled);
+    return true;
   }
 
   async loadMosaics(list) {
@@ -83,7 +103,7 @@ export class Imagery {
   }
 
   key(z, x, y) {
-    return `${z}/${x}/${y}`;
+    return `${this.providerId}/${z}/${x}/${y}`;
   }
 
   /** 已加载的在线瓦片纹理（主纹理），不存在返回 null */
@@ -146,9 +166,61 @@ export class Imagery {
 
   _url(z, x, y) {
     let u = this.online.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+    const subs = this.provider.subdomains;
+    if (subs) u = u.replace('{s}', subs[(x + y) % subs.length]);
     // Esri 两个同源主机轮换，分摊连接
     if (u.includes('server.arcgisonline.com')) u = u.replace('server.arcgisonline.com', this.hosts[(x + y) & 1]);
     return u;
+  }
+
+  /** 取一张原始瓦片（带缓存），返回 ImageBitmap（未翻转） */
+  _raw(z, x, y, signal) {
+    const k = `${this.providerId}:${z}/${x}/${y}`;
+    let pr = this.raw.get(k);
+    if (pr) {
+      this.raw.delete(k);
+      this.raw.set(k, pr); // LRU 刷新
+      return pr;
+    }
+    pr = (async () => {
+      const res = await fetch(this._url(z, x, y), { mode: 'cors', signal });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      if (blob.size < 900) throw new Error('placeholder');
+      return createImageBitmap(blob, { colorSpaceConversion: 'none' });
+    })();
+    pr.catch(() => this.raw.delete(k));
+    this.raw.set(k, pr);
+    if (this.raw.size > 360) {
+      const old = this.raw.keys().next().value;
+      const op = this.raw.get(old);
+      this.raw.delete(old);
+      op.then((b) => b.close && setTimeout(() => b.close(), 2000)).catch(() => {});
+    }
+    return pr;
+  }
+
+  /** GCJ-02 源：把 WGS 瓦片 (z,x,y) 对应的区域从 2×2 张火星坐标瓦片中裁出来，返回翻转好的 ImageBitmap */
+  async _composeGcj(z, x, y, signal) {
+    const n = 2 ** z;
+    const lonW = (x / n) * 360 - 180;
+    const latN = (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
+    const lonC = ((x + 0.5) / n) * 360 - 180;
+    const latC = (Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 0.5)) / n))) * 180) / Math.PI;
+    const g = wgs2gcj(lonC, latC);
+    const lon = lonW + (g.lon - lonC), lat = latN + (g.lat - latC);
+    const tx = ((lon + 180) / 360) * n;
+    const lr = (lat * Math.PI) / 180;
+    const ty = ((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2) * n;
+    const ix = Math.floor(tx), iy = Math.floor(ty);
+    const fx = tx - ix, fy = ty - iy;
+    const need = [[0, 0], [1, 0], [0, 1], [1, 1]].filter(([dx, dy]) => (dx === 0 || fx > 1e-4) && (dy === 0 || fy > 1e-4));
+    const bmps = await Promise.all(need.map(([dx, dy]) => this._raw(z, ix + dx, iy + dy, signal)));
+    const S = 256;
+    const cv = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(S, S) : Object.assign(document.createElement('canvas'), { width: S, height: S });
+    const g2 = cv.getContext('2d');
+    need.forEach(([dx, dy], i) => g2.drawImage(bmps[i], (dx - fx) * S, (dy - fy) * S, S, S));
+    return createImageBitmap(cv, { imageOrientation: 'flipY' });
   }
 
   async _fetch(k, p) {
@@ -156,12 +228,19 @@ export class Imagery {
     this.inflight.set(k, ctrl);
     const timer = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const res = await fetch(this._url(p.z, p.x, p.y), { mode: 'cors', signal: ctrl.signal });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const blob = await res.blob();
-      // Esri 在无数据区域会返回很小的灰色占位图
-      if (blob.size < 1200) throw new Error('placeholder');
-      const bmp = await createImageBitmap(blob, { imageOrientation: 'flipY', colorSpaceConversion: 'none' });
+      const gen = this.generation || 0;
+      let bmp;
+      if (this.provider.gcj) {
+        bmp = await this._composeGcj(p.z, p.x, p.y, ctrl.signal);
+      } else {
+        const res = await fetch(this._url(p.z, p.x, p.y), { mode: 'cors', signal: ctrl.signal });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        // Esri 在无数据区域会返回很小的灰色占位图
+        if (blob.size < 1200) throw new Error('placeholder');
+        bmp = await createImageBitmap(blob, { imageOrientation: 'flipY', colorSpaceConversion: 'none' });
+      }
+      if (gen !== (this.generation || 0)) { bmp.close && bmp.close(); return; } // 期间切换了影像源
       const tex = new THREE.Texture(bmp);
       tex.flipY = false;
       tex.colorSpace = THREE.SRGBColorSpace;

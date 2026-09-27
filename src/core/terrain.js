@@ -558,7 +558,7 @@ export class Terrain {
         const tex = im.get(z, ax, ay);
         if (tex) {
           const bb = tileWorldBounds(z, ax, ay);
-          best = { tex, mpp: (bb.x1 - bb.x0) / 256, bounds: bb, key: `${z}/${ax}/${ay}` };
+          best = { tex, mpp: (bb.x1 - bb.x0) / 256, bounds: bb, key: `${im.providerId}:${z}/${ax}/${ay}` };
           break;
         }
       }

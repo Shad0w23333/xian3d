@@ -11,7 +11,7 @@ import { Labels } from './core/labels.js';
 import { Exclusions } from './core/exclusions.js';
 import { createContext } from './core/context.js';
 import { UI } from './core/ui.js';
-import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA, START_VIEW, defaultQualityLevel, ONLINE_IMAGERY } from './core/config.js';
+import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA, START_VIEW, defaultQualityLevel, IMAGERY_PROVIDERS } from './core/config.js';
 import { project, unproject } from './core/geo.js';
 import { MODULES } from './modules/index.js';
 import { installHeightFog } from './core/fog.js';
@@ -111,6 +111,11 @@ async function main() {
   const imagery = new Imagery(renderer, quality);
   imagery.setOnlineConfig(meta.online);
   if (params.get('online') === '0') imagery.setOnlineEnabled(false);
+  {
+    let pid = params.get('imagery');
+    if (!pid) try { pid = localStorage.getItem('xian3d.imagery'); } catch {}
+    if (pid && IMAGERY_PROVIDERS[pid]) imagery.setProvider(pid);
+  }
   const [,] = await Promise.all([terrain.load(meta), imagery.loadMosaics(meta.imagery)]);
 
   const data = {};
@@ -234,11 +239,15 @@ async function main() {
   // —— UI ——
   ui.build(app);
   ui.setQualityActive(qIndex);
-  ui.setAttribution([
-    '影像 ' + (meta.online?.attribution || ONLINE_IMAGERY.attribution),
-    '地图数据 © OpenStreetMap 贡献者',
-    ...(meta.sources || []).filter((s) => !/Esri|OpenStreetMap/i.test(s)),
-  ]);
+  const updateAttribution = () =>
+    ui.setAttribution([
+      imagery.provider.attribution,
+      '建筑 CMAB（Zhang et al. 2025）',
+      '地图数据 © OpenStreetMap 贡献者',
+      ...(meta.sources || []).filter((x) => !/Esri|OpenStreetMap/i.test(x)).map((x) => x.split('(')[0].split('（')[0].trim()).slice(0, 2),
+    ]);
+  updateAttribution();
+  ui.setProvider(imagery.providerId);
   const miniSrc = imagery.mosaics.find((m) => /main/.test(m.file)) || imagery.mosaics[imagery.mosaics.length - 1];
   if (miniSrc) ui.setMinimapImage(miniSrc.texture.image, miniSrc.bounds);
   if (params.get('mini') === '0') ui.toggleMinimap(false);
@@ -279,6 +288,13 @@ async function main() {
   ui.on('preset', goPreset);
   ui.on('quality', applyQuality);
   ui.on('online', (v) => { imagery.setOnlineEnabled(v); ui.toast(v ? '已开启在线高清卫星影像' : '已切换到内置影像'); });
+  ui.on('provider', (id) => {
+    if (imagery.setProvider(id)) {
+      try { localStorage.setItem('xian3d.imagery', id); } catch {}
+      updateAttribution();
+      ui.toast(`影像源：${imagery.provider.name}`);
+    }
+  });
   ui.on('traffic', (v) => setLayer('traffic', v));
   ui.on('labels', (v) => setLayer('labels', v));
   ui.on('buildings', (v) => setLayer('buildings', v));
