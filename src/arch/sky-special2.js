@@ -134,15 +134,16 @@ export function buildRainbowBridge(env, S) {
     grp.add(new THREE.Mesh(f, env.mats.white));
   }
   // 斜拉索：每片 41 根，锚点沿拱圈上段，桥面锚点分布于主跨（+u）与边跨（-u），落在桥面两侧
+  // （拱圈锚点取在与桥面锚点同侧的拱腿上：lat = cos(th)·archHalf 与 side 同号，两片索面互不交叉）
   const cab = [];
-  const n = S.cables, deckHalf = 13.2;
+  const n = S.cables, deckHalf = S.deckHalf ?? 13.2;
   for (const side of [-1, 1]) {
     for (let k = 0; k < n; k++) {
       const f = k / (n - 1);
       const main = k < Math.round(n * 0.6);
       const kk = main ? k / (Math.round(n * 0.6) - 1) : (k - Math.round(n * 0.6)) / (n - Math.round(n * 0.6) - 1);
       const s = main ? 22 + kk * (S.span - 26) : -(18 + kk * (S.back - 22));
-      const th = Math.PI / 2 + side * (0.12 + 0.55 * (main ? kk : kk * 0.8)) * 0.5;
+      const th = Math.PI / 2 - side * (0.12 + 0.55 * (main ? kk : kk * 0.8)) * 0.5;
       const A = archPt(th);
       const B = new THREE.Vector3(tx + ux * s + lx * side * deckHalf, y0 + 1.2, tz + uz * s + lz * side * deckHalf);
       const g = strut(A, B, 0.28);
@@ -158,7 +159,7 @@ export function buildRainbowBridge(env, S) {
   const edge = [];
   for (const side of [-1, 1]) {
     const pts = [];
-    for (let s = -L * S.t; s <= L * (1 - S.t); s += 8) pts.push(new THREE.Vector3(tx + ux * s + lx * side * (deckHalf + 1.2), deckY(ctx, tx + ux * s, tz + uz * s) + 1.4, tz + uz * s + lz * side * (deckHalf + 1.2)));
+    for (let s = -L * S.t; s <= L * (1 - S.t); s += 8) pts.push(new THREE.Vector3(tx + ux * s + lx * side * (deckHalf + 0.2), deckY(ctx, tx + ux * s, tz + uz * s) + 1.4, tz + uz * s + lz * side * (deckHalf + 0.2)));
     if (pts.length > 2) edge.push(withHue(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length * 2, 0.18, 5, false), 0, 3));
   }
   if (edge.length) grp.add(new THREE.Mesh(mergeAll(edge), rainbowMaterial(ctx, { day: 0x8f969c, strength: 1.6 })));
@@ -200,49 +201,137 @@ export function buildButterflyBridge(env, S) {
 }
 
 // ───────────── 后海东岸：观景步道 + 夜市摊位灯串 ─────────────
+/**
+ * 名为 name 的道路在 a→b 路段范围内（沿 a→b 投影 0..L、横向 300 m 内）的折线，按 a→b 方向排列 [[x,z],...]；
+ * 双幅路取偏 side（offset 符号）一侧的那幅。找不到返回 null。
+ */
+function roadPath(ctx, name, a, b, side) {
+  const [ax, az] = a, [bx, bz] = b;
+  const L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz, nz = ux;
+  const runs = [];
+  for (const f of ctx.data.roads?.features || []) {
+    if (f.n !== name || !f.p) continue;
+    const p = f.p;
+    let run = [];
+    for (let i = 0; i + 1 < p.length; i += 2) {
+      const s = (p[i] - ax) * ux + (p[i + 1] - az) * uz, l = (p[i] - ax) * nx + (p[i + 1] - az) * nz;
+      if (s >= 0 && s <= L && Math.abs(l) < 300) run.push([p[i], p[i + 1], s, l]);
+      else if (run.length) { runs.push(run); run = []; }
+    }
+    if (run.length) runs.push(run);
+  }
+  const cand = runs.filter((r) => r.length >= 2).map((r) => ({ r, span: Math.abs(r[r.length - 1][2] - r[0][2]), lat: r.reduce((t, q) => t + q[3], 0) / r.length }));
+  if (!cand.length) return null;
+  const maxSpan = Math.max(...cand.map((c) => c.span));
+  if (maxSpan < L * 0.5) return null;
+  const best = cand.filter((c) => c.span >= maxSpan * 0.8).sort((p, q) => side * (q.lat - p.lat))[0].r;
+  if (best[0][2] > best[best.length - 1][2]) best.reverse();
+  return best.map((q) => [q[0], q[1]]);
+}
+
+/** 折线按弧长取点：返回 {x, z, tx, tz}（单位切线） */
+function pathSampler(path) {
+  const cum = [0];
+  for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  let k = 0;
+  const at = (d) => {
+    if (d < cum[k]) k = 0;
+    while (k < path.length - 2 && cum[k + 1] < d) k++;
+    const [x0, z0] = path[k], [x1, z1] = path[k + 1];
+    const sl = cum[k + 1] - cum[k] || 1, t = Math.max(0, Math.min(1, (d - cum[k]) / sl));
+    return { x: x0 + (x1 - x0) * t, z: z0 + (z1 - z0) * t, tx: (x1 - x0) / sl, tz: (z1 - z0) / sl };
+  };
+  return { length: cum[cum.length - 1], at };
+}
+
+/** 点是否落在水面多边形内（water.json：{outer, holes}），只检查与 bbox 相交的水面 */
+function waterTester(ctx, bb) {
+  const polys = [];
+  for (const w of ctx.data.water?.polys || []) {
+    const o = w.outer;
+    if (!o || o.length < 6) continue;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < o.length; i += 2) { x0 = Math.min(x0, o[i]); x1 = Math.max(x1, o[i]); z0 = Math.min(z0, o[i + 1]); z1 = Math.max(z1, o[i + 1]); }
+    if (x1 < bb.x0 || x0 > bb.x1 || z1 < bb.z0 || z0 > bb.z1) continue;
+    polys.push({ o, holes: (w.holes || []).filter((h) => h.length >= 6), x0, x1, z0, z1 });
+  }
+  const pip = (x, z, p) => {
+    let c = false;
+    for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
+      if (p[i + 1] > z !== p[j + 1] > z && x < ((p[j] - p[i]) * (z - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) c = !c;
+    }
+    return c;
+  };
+  return (x, z) => polys.some((w) => x >= w.x0 && x <= w.x1 && z >= w.z0 && z <= w.z1 && pip(x, z, w.o) && !w.holes.some((h) => pip(x, z, h)));
+}
+
 export function buildHouhai(env, S) {
   const { ctx } = env;
-  const [ax, az] = S.a, [bx, bz] = S.b;
-  const L = Math.hypot(bx - ax, bz - az);
-  const ux = (bx - ax) / L, uz = (bz - az) / L, nx = -uz, nz = ux;
+  // 沿真实道路布置（找不到道路时退回直线 a→b）
+  const path = (S.road && roadPath(ctx, S.road, S.a, S.b, Math.sign(S.offset) || -1)) || [S.a, S.b];
+  const P = pathSampler(path);
+  const L = P.length;
+  // 局部法线 (-tz, tx)：与原 a→b 直线的 n = (-uz, ux) 同向，offset 的正负含义不变
+  const off = (d, o) => {
+    const q = P.at(d);
+    return { x: q.x - q.tz * o, z: q.z + q.tx * o, tx: q.tx, tz: q.tz };
+  };
+  let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
+  for (const [x, z] of path) { bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); bz0 = Math.min(bz0, z); bz1 = Math.max(bz1, z); }
+  const pad = Math.abs(S.offset) + 10;
+  const inWater = waterTester(ctx, { x0: bx0 - pad, x1: bx1 + pad, z0: bz0 - pad, z1: bz1 + pad });
   const grp = new THREE.Group();
   grp.name = '后海夜市';
   const stallGeo = new THREE.BoxGeometry(2.6, 2.3, 2.2).translate(0, 1.15, 0);
   const stallMat = new THREE.MeshStandardMaterial({ roughness: 0.7, emissive: 0xffd9a0, emissiveIntensity: 0 });
   ctx.night.register(stallMat, { day: 0, night: 0.5 });
-  const nS = Math.floor(L / 7);
-  const stalls = new THREE.InstancedMesh(stallGeo, stallMat, nS);
   const bulbGeo = new THREE.SphereGeometry(0.16, 6, 4);
   const bulbMat = new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xffc070, emissiveIntensity: 0 });
   ctx.night.register(bulbMat, { day: 0.05, night: 3.2 });
-  const nB = Math.floor(L / 1.6);
-  const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, nB);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
   const cols = [0xc8261c, 0xf2f2f2, 0x1e4e9a, 0xe0a21c, 0x2e8b57];
-  const rot = Math.atan2(ux, uz);
-  q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rot);
+  // 摊位（落水的跳过）
+  const sM = [], sC = [];
+  const nS = Math.floor(L / 7);
   for (let i = 0; i < nS; i++) {
-    const s = (i + 0.5) * 7, x = ax + ux * s + nx * S.offset, z = az + uz * s + nz * S.offset;
-    p.set(x, ctx.terrain.heightAt(x, z), z);
-    m.compose(p, q, sc);
-    stalls.setMatrixAt(i, m);
-    stalls.setColorAt(i, new THREE.Color(cols[i % cols.length]));
+    const o = off((i + 0.5) * 7, S.offset);
+    if (inWater(o.x, o.z)) continue;
+    q.setFromAxisAngle(Y, Math.atan2(o.tx, o.tz));
+    p.set(o.x, ctx.terrain.heightAt(o.x, o.z), o.z);
+    sM.push(m.compose(p, q, sc).clone());
+    sC.push(new THREE.Color(cols[i % cols.length]));
   }
+  // 灯串（落水的跳过）
+  const bM = [];
+  const nB = Math.floor(L / 1.6);
   for (let i = 0; i < nB; i++) {
-    const s = i * 1.6, x = ax + ux * s + nx * (S.offset + 2.8), z = az + uz * s + nz * (S.offset + 2.8);
+    const s = i * 1.6, o = off(s, S.offset + 2.8);
+    if (inWater(o.x, o.z)) continue;
     const sag = Math.sin(((s % 12) / 12) * Math.PI) * 0.6;
-    m.makeTranslation(x, ctx.terrain.heightAt(x, z) + 3.6 - sag, z);
-    bulbs.setMatrixAt(i, m);
+    bM.push(new THREE.Matrix4().makeTranslation(o.x, ctx.terrain.heightAt(o.x, o.z) + 3.6 - sag, o.z));
   }
-  stalls.instanceMatrix.needsUpdate = bulbs.instanceMatrix.needsUpdate = true;
-  stalls.computeBoundingSphere();
-  bulbs.computeBoundingSphere();
-  stalls.castShadow = true;
-  grp.add(stalls, bulbs);
+  if (sM.length) {
+    const stalls = new THREE.InstancedMesh(stallGeo, stallMat, sM.length);
+    sM.forEach((mm, i) => { stalls.setMatrixAt(i, mm); stalls.setColorAt(i, sC[i]); });
+    stalls.instanceMatrix.needsUpdate = true;
+    stalls.computeBoundingSphere();
+    stalls.castShadow = true;
+    grp.add(stalls);
+  }
+  if (bM.length) {
+    const bulbs = new THREE.InstancedMesh(bulbGeo, bulbMat, bM.length);
+    bM.forEach((mm, i) => bulbs.setMatrixAt(i, mm));
+    bulbs.instanceMatrix.needsUpdate = true;
+    bulbs.computeBoundingSphere();
+    grp.add(bulbs);
+  }
+  // 暖光点光源（LightPool 强度单位为坎德拉，与其他街灯同量级）
   for (let s = 100; s < L; s += 300) {
-    const x = ax + ux * s + nx * S.offset, z = az + uz * s + nz * S.offset;
-    ctx.lights.add({ position: new THREE.Vector3(x, ctx.terrain.heightAt(x, z) + 5, z), color: 0xffb870, intensity: 6, distance: 40, nightOnly: true });
+    const o = off(s, S.offset);
+    if (inWater(o.x, o.z)) continue;
+    ctx.lights.add({ position: new THREE.Vector3(o.x, ctx.terrain.heightAt(o.x, o.z) + 5, o.z), color: 0xffb870, intensity: 600, distance: 40, nightOnly: true });
   }
+  grp.userData.stats = { stalls: sM.length, bulbs: bM.length, pathLen: Math.round(L) };
   return grp;
 }
 

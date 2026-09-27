@@ -7,6 +7,8 @@
 //   数据：各瓦片的原始图像字节（256×256，Web Mercator / WGS-84，已完成 GCJ 纠偏）
 const HEADER = 32;
 const ENTRY = 20;
+// 覆盖表的数值键（与索引一致 x < 2^24；z ≤ 24 时结果 < 2^53，精确）
+const ckey = (z, x, y) => (z * 16777216 + x) * 16777216 + y;
 
 async function rangeFetch(url, start, end, signal) {
   const res = await fetch(url, { headers: { Range: `bytes=${start}-${end - 1}` }, signal });
@@ -24,6 +26,7 @@ class Pack {
     this.url = url;
     this.meta = meta;
     this.map = new Map(); // "z/x/y" -> [offset, length]
+    this.cover = new Map(); // ckey(z,x,y) -> 该瓦片范围内（含自身与子孙）包里最深的 zoom
   }
 
   async open() {
@@ -43,6 +46,12 @@ class Pack {
       const off = Number(d.getBigUint64(o + 8, true));
       const len = d.getUint32(o + 16, true);
       this.map.set(`${z}/${x}/${y}`, [off, len]);
+      // 向上登记到各级祖先；祖先已记录 ≥ z 时其更上层必然也 ≥ z，可提前停止
+      for (let a = z, ax = x, ay = y; a >= 0; a--, ax >>>= 1, ay >>>= 1) {
+        const k = ckey(a, ax, ay), v = this.cover.get(k);
+        if (v !== undefined && v >= z) break;
+        this.cover.set(k, z);
+      }
       if (z < minZ) minZ = z;
       if (z > maxZ) maxZ = z;
     }
@@ -83,8 +92,18 @@ export class TilePack {
     tp.packs = opened.filter(Boolean);
     if (!tp.packs.length) return null;
     tp.maxZoom = Math.max(...tp.packs.map((p) => p.maxZ));
+    // 合并各包的覆盖表（取最深）
+    tp.cover = tp.packs[0].cover;
+    for (const p of tp.packs.slice(1)) for (const [k, v] of p.cover) if (!(tp.cover.get(k) >= v)) tp.cover.set(k, v);
+    for (const p of tp.packs) p.cover = null;
     tp.count = tp.packs.reduce((s, p) => s + p.map.size, 0);
     return tp;
+  }
+
+  /** 瓦片 (z,x,y) 范围内（含自身与子孙）包里最深的 zoom；范围内没有任何包内瓦片返回 -1 */
+  coverZ(z, x, y) {
+    const v = this.cover.get(ckey(z, x, y));
+    return v === undefined ? -1 : v;
   }
 
   has(z, x, y) {

@@ -9,7 +9,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 /**
  * NaN/Inf 钳制：任何一个 NaN 像素进入泛光模糊后都会扩散成整屏黑（Metal 默认 fast-math，
- * isnan()/x!=x 可能被优化掉，所以用位运算判断指数位全 1）。HalfFloat 溢出（>65504 → Inf）同样处理。
+ * isnan()/x!=x 可能被优化掉，所以用位运算判断指数位全 1）。HalfFloat 溢出（>65504 → +Inf）是“极亮”，
+ * 饱和到上限而不是变黑；NaN 与 -Inf 置 0（符号位同样用位运算判断，不依赖浮点比较）。
  */
 const SanitizeShader = {
   name: 'SanitizeShader',
@@ -21,7 +22,8 @@ const SanitizeShader = {
     uniform sampler2D tDiffuse;
     varying vec2 vUv;
     float sane(float x) {
-      if ((floatBitsToUint(x) & 0x7f800000u) == 0x7f800000u) return 0.0;
+      uint b = floatBitsToUint(x);
+      if ((b & 0x7f800000u) == 0x7f800000u) return (b & 0x807fffffu) == 0u ? 256.0 : 0.0; // +Inf → 上限；NaN / -Inf → 0
       return clamp(x, 0.0, 256.0);
     }
     void main() {

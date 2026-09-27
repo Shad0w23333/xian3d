@@ -10,14 +10,14 @@ const F = (...a) => a.filter((i) => i >= 0); // 招牌朝向（找不到合适�
 /** 被本文件取代的旧定义（sky-data.js 的 key） */
 export const SUPERSEDED = new Set(['wygj', 'wygjS1', 'wygjS2', 'xidigang', 'darongcheng']);
 
-/** 多边形中外法线最接近 (dx,dz) 且较长的边下标（招牌朝向用；多边形会先经 G.ccw） */
-export function faceTowards(pts, dx, dz, minL = 12) {
+/** 多边形中外法线最接近 (dx,dz) 且较长的边下标（招牌朝向用；多边形会先经 G.ccw）；skip：跳过的边下标集合 */
+export function faceTowards(pts, dx, dz, minL = 12, skip = null) {
   const p = G.ccw(pts), n = p.length / 2, dl = Math.hypot(dx, dz);
   let best = -1, bs = -1e9;
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
     const ex = p[j * 2] - p[i * 2], ez = p[j * 2 + 1] - p[i * 2 + 1], L = Math.hypot(ex, ez);
-    if (L < minL) continue;
+    if (L < minL || skip?.has(i)) continue;
     const nx = ez / L, nz = -ex / L;
     const s = (nx * dx + nz * dz) / dl + L / 400;
     if (s > bs) { bs = s; best = i; }
@@ -25,8 +25,43 @@ export function faceTowards(pts, dx, dz, minL = 12) {
   return best;
 }
 
+/** 外法线与 (dx,dz) 夹角 < 45°、长度 ≥ minL 的边中，中点离 (px,pz) 最近的边下标（招牌要挂在某个入口旁时用；多边形先经 G.ccw） */
+export function faceNear(pts, dx, dz, px, pz, minL = 6) {
+  const p = G.ccw(pts), n = p.length / 2, dl = Math.hypot(dx, dz);
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const ex = p[j * 2] - p[i * 2], ez = p[j * 2 + 1] - p[i * 2 + 1], L = Math.hypot(ex, ez);
+    if (L < minL || (ez * dx - ex * dz) / (L * dl) < Math.SQRT1_2) continue;
+    const d = Math.hypot((p[i * 2] + p[j * 2]) / 2 - px, (p[i * 2 + 1] + p[j * 2 + 1]) / 2 - pz);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+
 // 未央国际：三角形塔楼（直角在地块东北，斜边朝西南内院）【推测落位，调研 §3.3】
 const WYGJ_TOWER = [-78, -8637, -22, -8633, -20, -8584];
+
+// We Young 168 退台（调研 §3.4：各层露台围着内院逐层后退，“向上张开”）：由 FP2.wygj / FP2.wygj_holes 用 shapely 离线求得
+//   ——外轮廓 buffer(-6 / -12, 斜接) 再扣掉内院 buffer(+3 / +6)，开运算去细碎片后简化（G.inset 的简单斜接遇东北角缺口会自交）。
+//   FP2 的未央国际轮廓若重新提取，需同步重算这几组坐标。
+const WY168_T2 = [-51.1, -8618.9, -50.5, -8619.5, -42.7, -8613.9, -31.9, -8624.5, -27.2, -8624.5, -24.5, -8611.2, -24.7, -8587.6, -117.4, -8587.3, -117.6, -8590.9, -118.6, -8591, -118.6, -8615.1, -120.4, -8615.1, -120.6, -8627.2, -112.2, -8635.6, -53.1, -8635.6, -53.3, -8627.2, -74.4, -8626.2, -87.1, -8618.7, -96.6, -8608.8, -81.8, -8594.4, -66, -8594.6, -46.6, -8614.2];
+const WY168_T3 = [
+  [-100.9, -8608.8, -85.1, -8593.4, -111.7, -8593.3, -111.8, -8596.5, -112.6, -8596.5, -112.6, -8621.1, -114.5, -8621.1, -114.5, -8624.7, -109.7, -8629.6, -74.5, -8629.6, -88.9, -8621.1],
+  [-31.7, -8616.3, -30.5, -8610.7, -30.7, -8593.6, -62.9, -8593.5, -47, -8609.5, -42.2, -8606],
+];
+// 庭院主入口：东北角 45° V 形缺口（调研 §3.2 (−47,−8625)(−43,−8622)(−34,−8631)；§3.5 招牌“在路口入口处”）
+const WY168_GATE = [-40, -8626];
+
+/** 同一栋楼的多块招牌依次取朝向：已被前面招牌占用的边不再选（否则两块字叠在同一面上 z-fighting） */
+function facePicker(pts) {
+  const used = new Set();
+  return (dx, dz, minL = 12) => {
+    const i = faceTowards(pts, dx, dz, minL, used);
+    if (i >= 0) used.add(i);
+    return i;
+  };
+}
 
 // 凯悦（欧亚国际三期商业 4 号楼）：“叠石流水”——4 块圆角体块逐段错位微旋转叠起，总高约 100 m【推测造型，调研 §2】
 export const HYATT = { cx: 6458, cz: -7833, blocks: [
@@ -94,21 +129,24 @@ export function towerSpecs2() {
 
 export function mallSpecs2() {
   const xdg = FP2.xidigang, drc = FP2.darongcheng, wy = FP2.wygj;
+  const fx = facePicker(xdg), fd = facePicker(drc);
   return [
     // 熙地港：塔博曼设计“全钢式”商业，B1+L1–L6（6F 影院），檐口约 34 m【推测】；东南斜切面朝路口为主入口
     { key: 'xidigang', d: 'weiyang', pts: xdg, h: 34,
       style: { tint: '#4c5c68', spd: '#c9c6bf', floorH: 5.6, colW: 3.4, spandrel: 0.42 },
-      signs: [{ text: 'CityOn熙地港', h: 6.5, faces: F(faceTowards(xdg, 1, 1, 30), faceTowards(xdg, 1, 0)) }, { text: '熙地港', h: 5, faces: F(faceTowards(xdg, 0, 1)) }],
+      signs: [{ text: 'CityOn熙地港', h: 6.5, faces: F(fx(1, 1, 30), fx(1, 0)) }, { text: '熙地港', h: 5, faces: F(fx(0, 1)) }],
       domes: [[-137, -8855, 11, 7], [-149, -8806, 11, 11], [-100, -8791, 9, 7], [-176, -8848, 8, 6], [-166, -8822, 7, 7], [-187, -8791, 8, 6], [-155, -8769, 9, 6], [-118, -8767, 8, 6]] },
     // 大融城 IMIX PARK：B1–5F，约 30 m；西北角半径约 70 m 的外凸弧面为主立面（玻璃幕墙 + 横向铝板带）
     { key: 'darongcheng', d: 'weiyang', pts: drc, h: 30,
       style: { tint: '#43586a', spd: '#d6d2c8', floorH: 5.6, colW: 2.6, spandrel: 0.36 },
-      signs: [{ text: '大融城 IMIX PARK', h: 5.5, faces: F(faceTowards(drc, -1, -0.8, 20)) }, { text: '大融城', h: 5.5, faces: F(faceTowards(drc, 0, 1), faceTowards(drc, -1, 0, 30)) }] },
-    // 未央国际 · We Young 168 退台商业庭院（4~6 层，逐层后退的白色曲面栏板）
-    { key: 'wy168a', d: 'weiyang', pts: wy, h: 9, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.5 } },
-    { key: 'wy168b', d: 'weiyang', pts: G.inset(wy, 6), h: 17, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 } },
-    { key: 'wy168c', d: 'weiyang', pts: G.inset(wy, 12), h: 24, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 },
-      signs: [{ text: 'WE YOUNG 168', h: 2.6, faces: F(faceTowards(G.inset(wy, 12), -1, -1, 6)) }] },
+      signs: [{ text: '大融城 IMIX PARK', h: 5.5, faces: F(fd(-1, -0.8, 20)) }, { text: '大融城', h: 5.5, faces: F(fd(0, 1), fd(-1, 0, 30)) }] },
+    // 未央国际 · We Young 168 退台商业庭院（4~6 层，逐层后退的白色曲面栏板）；底层带内院（屋面挖空、院内立面朝内）
+    { key: 'wy168a', d: 'weiyang', pts: wy, holes: FP2.wygj_holes, h: 9, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.5 } },
+    { key: 'wy168b', d: 'weiyang', pts: WY168_T2, h: 17, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 } },
+    { key: 'wy168c', d: 'weiyang', pts: WY168_T3[0], h: 24, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 } },
+    // 招牌挂在东北块朝西北、正对入口缺口的那面墙（约 14.7 m）；同块更长的西北向边（22.6 m）是内院墙面，不在入口处
+    { key: 'wy168d', d: 'weiyang', pts: WY168_T3[1], h: 24, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 },
+      signs: [{ text: 'WE YOUNG 168', h: 2.6, faces: F(faceNear(WY168_T3[1], -1, -1, ...WY168_GATE)) }] },
     // 锦江国际酒店（原凯宾斯基，欧亚经济论坛永久会址）：三翼曲线形 5 层，约 24 m；中部穹顶会议厅
     { key: 'jinjiang', d: 'chanba', pts: FP2.jinjiang, h: 24,
       style: { mode: 7, tint: '#34424c', spd: '#d8cfbf', floorH: 4.6, colW: 2.4, spandrel: 0.45 },
@@ -130,11 +168,15 @@ export const SPECIAL2 = {
   },
   hyatt: HYATT,
   // 灞河 2 号桥（浐灞二号桥，“彩虹桥”）：独塔双索面拱形斜塔斜拉桥，塔高 78 m，主跨 145 m，82 根索，夜间彩虹灯
-  rainbow: { a: [6942, -8307], b: [7268, -8696], t: 0.4, archH: 78, archHalf: 19, tilt: 13 * D, cables: 41, span: 145, back: 105 },
-  // 浐灞 1 号桥（“蝴蝶桥”，欧亚大道跨浐河）：80 m 主跨，两片拱肋各向外倾 20°
-  butterfly: { a: [6526, -7972], b: [6641, -8043], span: 80, rise: 17, half: 15, lean: 20 * D },
-  // “后海”东岸灞河东路：观景步道 + 后海星光汇夜市（约 1.5 km 摊位灯串）
-  houhai: { a: [7301, -8775], b: [6371, -10006], offset: -24 },
+  //   a/b 取 roads.json 两幅单向桥面（各宽 8 m、中心相距约 10 m）的中线；deckHalf：索面锚点离中线距离，
+  //   贴着渲染出的桥面外缘（中线 ±8.7~9.1 m，实桥宽 29.6 m 但路网只有两幅 8 m 车行道）
+  rainbow: { a: [6938.0, -8310.3], b: [7263.9, -8699.4], t: 0.4, archH: 78, archHalf: 19, tilt: 13 * D, cables: 41, span: 145, back: 105, deckHalf: 9.4 },
+  // 浐灞 1 号桥（“蝴蝶桥”，欧亚大道跨浐河）：80 m 主跨，两片拱肋各向外倾 20°；a/b 同样取两幅桥面中线，
+  //   拱脚/吊杆落在桥面外缘（中线 ±8.3~9.0 m）
+  butterfly: { a: [6523.7, -7975.7], b: [6638.1, -8047.7], span: 80, rise: 17, half: 9.4, lean: 20 * D },
+  // “后海”东岸灞河东路：观景步道 + 后海星光汇夜市（约 1.5 km 摊位灯串）；摊位沿真实道路（road）向河一侧偏 offset，
+  //   a→b 只限定路段范围（直线与道路中段相差近 200 m，会落进东侧锦绣湖）
+  houhai: { a: [7301, -8775], b: [6371, -10006], offset: -24, road: '灞河东路' },
 };
 
 /** SPECIAL2 占地多边形（prepare 排除区） */

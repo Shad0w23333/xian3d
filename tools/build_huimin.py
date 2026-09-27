@@ -6,7 +6,10 @@
    "maxH": 15,
    "streets": ["北院门", ...],          # 街名表
    "b": [{"p":[x,z,...], "h":高度, "fl":层数, "fr":[临街边下标...], "st":街名下标|-1, "sg":"店名"|null, "k":类型}],
-   "lanes": [{"n":街名, "p":[x,z,...], "w":宽}]}   # 挂灯笼串/人流的主街中心线
+   "lanes": [{"n":街名, "p":[x,z,...], "w":宽}],   # 挂灯笼串/人流的主街中心线
+   "keep": [[x,z,...], ...]}            # 街区内仍由通用建筑模块渲染的现有建筑（高楼 / 锚点在街区外）轮廓：
+                                        #   前端据此判断街区内 POI 归属（靠近这些楼的 POI 仍交给 signage，其余由本街区招牌负责）
+b 中除 OSM 逐户轮廓外，还补入“被让位但 OSM 没有替代轮廓”的现有建筑空地（CMAB 轮廓扣除 OSM 后的剩余部分），避免出现空地块。
 依赖：data-src/overture/building.parquet（tools/fetch_overture.py）、public/data/buildings.bin、roads.json、pois.json
 """
 import json
@@ -93,14 +96,18 @@ def main():
     polys = [p for p in (dist.geoms if dist.geom_type == 'MultiPolygon' else [dist]) if p.area > 30000]
     dist = unary_union(polys).simplify(4)
     polys = [p for p in (dist.geoms if dist.geom_type == 'MultiPolygon' else [dist])]
+    # 与写进 JSON、前端注册排除区完全一致的（0.1 m 取整）轮廓：让位判定按它做，避免边界附近前后端不一致
+    dist_rings = [np.round(np.array(p.exterior.coords)[:-1], 1) for p in polys]
+    dist_js = unary_union([Polygon(r) for r in dist_rings])
     print('街区', len(polys), '块，面积', round(dist.area / 1e4, 1), '公顷')
 
-    # —— 被替换的现有低层建筑、保留的高楼 ——
-    rep = [c for c in cm if c['h'] <= MAXH and dist.contains(shapely.Point(c['x'], c['z']))]
-    tall = [c for c in cm if c['h'] > MAXH and dist.intersects(c['g'])]
+    # —— 被替换的现有低层建筑（前端按锚点落在街区内且 h ≤ MAXH 隐藏）、仍会渲染的现有建筑（高楼 + 锚点在街区外） ——
+    rep = [c for c in cm if c['h'] <= MAXH and dist_js.contains(shapely.Point(c['x'], c['z']))]
+    rep_ids = {c['i'] for c in rep}
+    keep = [c for c in cm if c['i'] not in rep_ids and dist.intersects(c['g'])]
     trep = STRtree([c['g'] for c in rep])
-    ttall = STRtree([c['g'] for c in tall]) if tall else None
-    print('替换现有低层', len(rep), '保留高楼', len(tall))
+    tkeep = STRtree([c['g'] for c in keep]) if keep else None
+    print('替换现有低层', len(rep), '保留现有建筑', len(keep), '（其中高楼', sum(1 for c in keep if c['h'] > MAXH), '）')
 
     # —— 道路（临街面识别） ——
     R = json.load(open('public/data/roads.json'))
@@ -115,15 +122,15 @@ def main():
     streets = []
     sidx = {}
     out = []
-    for o in osm:
-        g = o['g']
+
+    def overlaps_keep(g):
+        """与仍会渲染的现有建筑（高楼 / 锚点在街区外的低层）重叠超过 30%：丢弃，避免墙体互相穿插"""
+        if tkeep is None:
+            return False
+        return any(g.intersection(keep[j]['g']).area > 0.3 * g.area for j in tkeep.query(g, predicate='intersects'))
+
+    def emit(g, name, nf_osm):
         c = g.centroid
-        if not dist.contains(c):
-            continue
-        if ttall is not None:
-            hit = ttall.query(g, predicate='intersects')
-            if any(g.intersection(tall[j]['g']).area > 0.3 * g.area for j in hit):
-                continue
         # 高度：与被替换建筑的面积加权
         hs = [(g.intersection(rep[j]['g']).area, rep[j]['h']) for j in trep.query(g, predicate='intersects')]
         a = sum(x for x, _ in hs)
@@ -139,8 +146,8 @@ def main():
         else:
             nf = 2 if rnd < 0.15 else 3 if rnd < 0.5 else 4 if rnd < 0.88 else 5
         h = max(hc, nf * 3.2 + 0.7)
-        if o['nf']:
-            h = o['nf'] * 3.3 + 0.6
+        if nf_osm:
+            h = nf_osm * 3.3 + 0.6
         h = float(min(MAXH + 2.5, max(3.4, h)))
         fl = max(1, min(5, int(round((h - 0.7) / 3.2))))
         ring = np.array(g.exterior.coords)[:-1]
@@ -186,10 +193,50 @@ def main():
             st = sidx[best_st]
         if best_st == '北院门' and fr:
             h, fl = 7.2, 2
-        kind = 'mosque' if (o['name'] and '清真' in o['name'] and '寺' in o['name']) else ('shop' if fr else 'res')
+        kind = 'mosque' if (name and '清真' in name and '寺' in name) else ('shop' if fr else 'res')
         out.append({'p': np.round(ring, 1).flatten().tolist(), 'h': round(h, 1), 'fl': fl, 'fr': fr, 'st': st,
-                    'sg': None, 'k': kind, 'nm': o['name']})
-    print('输出建筑', len(out), '临街', sum(1 for b in out if b['fr']))
+                    'sg': None, 'k': kind, 'nm': name})
+
+    ndrop = 0
+    for o in osm:
+        g = o['g']
+        if not dist.contains(g.centroid):
+            continue
+        if overlaps_keep(g):
+            ndrop += 1
+            continue
+        emit(g, o['name'], o['nf'])
+    n_osm = len(out)
+
+    # —— 补空地：被让位的现有低层建筑中，OSM 几乎没有替代轮廓（覆盖 < 20%）的，用其轮廓扣掉 OSM 后的剩余部分补建 ——
+    #   （覆盖较多的保持空缺：剩余部分多为院落/巷道，CMAB 粗块在这里本就偏大）
+    osm_g = [Polygon(np.array(b['p']).reshape(-1, 2)) for b in out]
+    tosm = STRtree(osm_g)
+    nfill, filled = 0, []
+    for c in rep:
+        g0 = c['g']
+        if g0.is_empty or g0.area < 20:
+            continue
+        near = [osm_g[j] for j in tosm.query(g0, predicate='intersects')]
+        cov = unary_union(near).intersection(g0).area if near else 0.0
+        if cov >= 0.2 * g0.area:
+            continue
+        # CMAB 轮廓之间偶有重叠：再扣掉已补的空地块
+        near_all = near + [f for f in filled if f.intersects(g0)]
+        rest0 = g0.difference(unary_union(near_all)) if near_all else g0
+        # 开运算去掉细长碎片（< 2 m 宽），再简化
+        rest = rest0.buffer(-1.0, join_style=2).buffer(1.0, join_style=2).intersection(rest0).simplify(0.3)
+        for pg in (rest.geoms if hasattr(rest, 'geoms') else [rest]):
+            if pg.geom_type != 'Polygon' or pg.is_empty or pg.area < 20 or not pg.is_valid:
+                continue
+            pg = Polygon(pg.exterior)  # 内环（极少）忽略
+            if overlaps_keep(pg):
+                continue
+            emit(pg, None, None)
+            filled.append(Polygon(np.array(out[-1]['p']).reshape(-1, 2)))
+            nfill += 1
+    print('输出建筑', len(out), '（OSM', n_osm, '，补空地', nfill, '；与保留建筑重叠而丢弃的 OSM', ndrop, '）',
+          '临街', sum(1 for b in out if b['fr']))
 
     # —— POI 店名 → 最近临街建筑 ——
     P = json.load(open('public/data/pois.json'))['pois']
@@ -236,9 +283,13 @@ def main():
             json.dump(R, fp, ensure_ascii=False, separators=(',', ':'))
     print('主街宽度修正', nfix, '段')
 
-    res = {'district': [np.round(np.array(p.exterior.coords)[:-1], 1).flatten().tolist() for p in polys],
-           'maxH': MAXH, 'streets': streets, 'b': out, 'lanes': lanes,
-           'source': 'OpenStreetMap（Overture 2026-09-23）轮廓 + CMAB 高度'}
+    keep_rings = []
+    for c in keep:
+        g = c['g'] if c['g'].geom_type == 'Polygon' else max(c['g'].geoms, key=lambda x: x.area)
+        keep_rings.append(np.round(np.array(g.exterior.coords)[:-1], 1).flatten().tolist())
+    res = {'district': [r.flatten().tolist() for r in dist_rings],
+           'maxH': MAXH, 'streets': streets, 'b': out, 'lanes': lanes, 'keep': keep_rings,
+           'source': 'OpenStreetMap（Overture 2026-09-23）轮廓 + CMAB 高度（无 OSM 替代处补 CMAB 轮廓）'}
     for b in out:
         if not b['nm']:
             b.pop('nm')

@@ -5,28 +5,49 @@ import * as G from './sky-geom.js';
 import { style as mkStyle } from './sky-facade.js';
 
 // ---------- 招牌图集：所有楼顶字/立面字合成一张贴图、一个材质、一次绘制 ----------
+// 已拷进图集并释放了像素的文字画布（textures.text 的模块级缓存会一直持有它们，同键再取到时需换键重绘）
+const RELEASED = new WeakSet();
+let freshSeq = 0;
 export class SignAtlas {
-  constructor(ctx, W = 4096, H = 2048) {
+  /**
+   * opts（均可选，默认值即 skyline 原行为）：
+   *   rowH  横排条目在图集中的像素高度（默认 150）
+   *   vW    >0 时竖排条目按宽度缩放到 vW 像素（默认 0：与横排一样按高度 rowH，竖排字会很窄）
+   *   side  材质面向（默认 DoubleSide；单面招牌可用 FrontSide，背面不再显示镜像字）
+   */
+  constructor(ctx, W = 4096, H = 2048, opts = {}) {
     this.ctx = ctx;
     this.W = W; this.H = H;
+    this.rowH = opts.rowH ?? 150;
+    this.vW = opts.vW ?? 0;
+    this.side = opts.side ?? THREE.DoubleSide;
     this.canvas = document.createElement('canvas');
     this.canvas.width = W; this.canvas.height = H;
     this.g = this.canvas.getContext('2d');
     this.x = 0; this.y = 0; this.row = 0;
     this.pos = []; this.uv = []; this.cache = new Map();
   }
-  /** 渲染文字进图集，返回 {u0,v0,u1,v1,aspect} */
+  /** 渲染文字进图集，返回 {u0,v0,u1,v1,aspect}；图集已满返回 null */
   entry(text, opts) {
     const key = text + JSON.stringify(opts);
     if (this.cache.has(key)) return this.cache.get(key);
-    const t = this.ctx.tex.text(text, { size: 110, padding: 0.12, letterSpacing: 0.06, ...opts });
+    const topts = { size: 110, padding: 0.12, letterSpacing: 0.06, ...opts };
+    let t = this.ctx.tex.text(text, topts);
+    if (RELEASED.has(t.canvas)) t = this.ctx.tex.text(text, { ...topts, _fresh: ++freshSeq }); // 未知字段只改变缓存键
     const c = t.canvas;
     let w = c.width, h = c.height;
-    const k = Math.min(1, 150 / h);
+    const k = opts?.vertical && this.vW ? Math.min(1, this.vW / w) : Math.min(1, this.rowH / h);
     w = Math.ceil(w * k); h = Math.ceil(h * k);
+    // 文字画布只用于拷进图集：用完即释放像素（缓存条目仍在，但只剩 1×1），否则每个条目都常驻一张全尺寸画布
+    const release = () => {
+      t.texture?.dispose?.();
+      c.width = c.height = 1;
+      RELEASED.add(c);
+    };
     if (this.x + w > this.W) { this.x = 0; this.y += this.row + 4; this.row = 0; }
-    if (this.y + h > this.H) { console.warn('[skyline] 招牌图集已满', text); return null; }
+    if (this.y + h > this.H) { console.warn('[skyline] 招牌图集已满', text); release(); this.cache.set(key, null); return null; }
     this.g.drawImage(c, this.x, this.y, w, h);
+    release();
     const e = { u0: this.x / this.W, u1: (this.x + w) / this.W, v0: 1 - (this.y + h) / this.H, v1: 1 - this.y / this.H, aspect: w / h };
     this.x += w + 4; this.row = Math.max(this.row, h);
     this.cache.set(key, e);
@@ -55,7 +76,7 @@ export class SignAtlas {
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     const mat = new THREE.MeshStandardMaterial({
       map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0, transparent: true, alphaTest: 0.08,
-      roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide, depthWrite: true,
+      roughness: 0.45, metalness: 0.1, side: this.side, depthWrite: true,
     });
     this.ctx.night.register(mat, { day: 0.06, night: 2.6 });
     const g = new THREE.BufferGeometry();
@@ -236,6 +257,7 @@ export function buildTower(env, spec) {
   }
   const lastInset = tiers[tiers.length - 1].inset || 0;
   // —— 塔冠 ——
+  let slopeTop = null, slopeY = null; // 斜顶无塔冠时的顶轮廓与斜面高度函数
   const crownPoly = G.inset(pts, lastInset + (spec.crown?.inset || 0));
   const cb = at(crownPoly, topF);
   if (spec.crown) {
@@ -250,6 +272,41 @@ export function buildTower(env, spec) {
     // 屋面：略低于顶檐的平/斜屋面
     const roofY = yTopFn ? (x, z) => yTopFn(x, z) - 3.5 : base + topF + crownH - 3.5;
     solid.add(G.capGeometry(G.inset(ct, 0.4), roofY), mats.dark);
+  } else if (yTopFn) {
+    // 斜顶、无塔冠（W 酒店 / 万众国际）：幕墙按原立面一直升到斜面，斜面从 H-drop+LIFT（低侧）到 H（高侧）；
+    // 顶点高度与该高度处的收分互相依赖，迭代求一个过顶轮廓的斜平面 slopeY。
+    // 斜面最低点比末层顶（topF = H-drop）高 LIFT：否则最低顶点的上下沿重合，fb.ring 用 e1×(top-bot) 求面法线会得零向量
+    // （该四边形另一三角形面积不为零，着色器 normalize 零向量 → NaN 光照）
+    const LIFT = 0.1, dropE = drop - LIFT;
+    const [sdx, sdz] = spec.slope.dir, sdl = Math.hypot(sdx, sdz);
+    const proj = (x, z) => ((x - c.x) * sdx + (z - c.z) * sdz) / sdl;
+    const n = prevPoly.length / 2;
+    const ys = new Array(n).fill(H - dropE * 0.5);
+    let top = null, p0 = 0, p1 = 1;
+    for (let it = 0; it < 8; it++) {
+      top = [];
+      for (let i = 0; i < n; i++) {
+        const s = taper !== 1 ? sAt(ys[i]) : 1;
+        top.push(c.x + (prevPoly[i * 2] - c.x) * s, c.z + (prevPoly[i * 2 + 1] - c.z) * s);
+      }
+      p0 = Infinity; p1 = -Infinity;
+      for (let i = 0; i < n; i++) { const q = proj(top[i * 2], top[i * 2 + 1]); p0 = Math.min(p0, q); p1 = Math.max(p1, q); }
+      for (let i = 0; i < n; i++) ys[i] = H - dropE * (p1 - proj(top[i * 2], top[i * 2 + 1])) / Math.max(1e-6, p1 - p0);
+    }
+    const P0 = p0, PL = Math.max(1e-6, p1 - p0);
+    slopeY = (x, z) => base + H - dropE * (P0 + PL - proj(x, z)) / PL;
+    slopeTop = top;
+    const lt = tiers[tiers.length - 1];
+    const ls = lt.style ? mkStyle({ ...spec.style, ...lt.style }) : st;
+    fb.ring(at(prevPoly, topF), top, base + topF, slopeY, ls, { vBase: base });
+    // 随坡金属檐口 + 斜玻璃屋面
+    const par = spec.roof?.parapet ?? 0.9;
+    const up = (d) => (x, z) => slopeY(x, z) + d;
+    const ti = G.inset(top, 0.35);
+    solid.add(G.wallGeometry(top, top, slopeY, up(par)), mats.parapet);
+    solid.add(G.wallGeometry(ti, ti, up(par), up(0.1)), mats.parapet);
+    solid.add(G.annulus(top, ti, up(par)), mats.parapet);
+    solid.add(G.capGeometry(ti, up(0.1)), mats.glassRoof || mats.roof);
   } else {
     // 女儿墙 + 屋面
     const par = spec.roof?.parapet ?? 1.4;
@@ -260,7 +317,7 @@ export function buildTower(env, spec) {
   }
   // —— 屋顶设备 / 停机坪 / 避雷针 ——
   const roofTop = spec.crown ? base + topF + crownH - 3.5 - (spec.slope ? drop : 0) : base + topF;
-  const rpoly = at(crownPoly, topF);
+  const rpoly = slopeTop || at(crownPoly, topF);
   const rb = G.bbox(rpoly);
   const rw = rb.x1 - rb.x0, rd = rb.z1 - rb.z0;
   if (spec.roof?.mech !== false && !spec.slope) {
@@ -306,8 +363,8 @@ export function buildTower(env, spec) {
       if (corners.length >= 4) break;
       if (corners.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) > Math.min(rw, rd) * 0.5)) corners.push(p);
     }
-    const cy = spec.crown ? (yTopFn ? null : base + topF + crownH + 0.6) : base + topF + 1.8;
-    for (const [x, z] of corners) beacons.add(x, cy ?? yTopFn(x, z) + 0.6, z, 0, H > 150 ? 5 : 3.5);
+    const cy = spec.crown ? (yTopFn ? null : base + topF + crownH + 0.6) : slopeY ? null : base + topF + 1.8;
+    for (const [x, z] of corners) beacons.add(x, cy ?? (slopeY || yTopFn)(x, z) + (slopeY ? 1.2 : 0.6), z, 0, H > 150 ? 5 : 3.5);
     if (H > 150) for (const [x, z] of corners.slice(0, 2)) beacons.add(x, base + H * 0.5, z, 1, 2.5);
   }
   // —— 楼顶字 ——
@@ -326,7 +383,24 @@ export function buildTower(env, spec) {
   return { base, top: base + H, c };
 }
 
-/** 裙房/商场：幕墙体 + 屋面 + 女儿墙 + 招牌 */
+/** 带洞多边形顶盖（outer CCW，holes 任意方向），朝上，非索引 */
+function capWithHoles(outer, holes, y) {
+  const V = (p) => { const o = []; for (let i = 0; i < p.length; i += 2) o.push(new THREE.Vector2(p[i], p[i + 1])); return o; };
+  const contour = V(outer), hv = holes.map(V);
+  const tris = THREE.ShapeUtils.triangulateShape(contour, hv);
+  const all = contour.concat(...hv), pos = [];
+  for (const t of tris) {
+    const a = all[t[0]], b = all[t[1]], c = all[t[2]];
+    const up = (b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y) > 0;
+    for (const k of up ? [t[0], t[1], t[2]] : [t[0], t[2], t[1]]) pos.push(all[k].x, y, all[k].y);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** 裙房/商场：幕墙体 + 屋面 + 女儿墙 + 招牌；p.holes（可选）：内院轮廓（院内立面 + 女儿墙，屋面挖空） */
 export function buildPodium(env, p) {
   const { ctx, fb, solid, detail, mats, signs } = env;
   const pts = G.ccw(p.pts);
@@ -337,7 +411,22 @@ export function buildPodium(env, p) {
   solid.add(G.wallGeometry(pts, pts, base + p.h, base + p.h + par), mats.parapet);
   const inn = G.inset(pts, 0.4);
   solid.add(G.wallGeometry(inn, inn, base + p.h + par, base + p.h + 0.05), mats.parapet);
-  solid.add(G.capGeometry(inn, base + p.h + 0.05), p.roofMat || mats.roof);
+  if (p.holes?.length) {
+    // 内院轮廓取顺时针：外法线 (dz,-dx) 指向院内，立面/女儿墙外侧朝院内；G.inset 对顺时针轮廓向院外（屋面一侧）偏移
+    const holeIn = [];
+    for (const h0 of p.holes) {
+      const c = G.ccw(h0), h = [];
+      for (let i = c.length - 2; i >= 0; i -= 2) h.push(c[i], c[i + 1]);
+      fb.prism(h, base - 3, base + p.h, st, { vBase: base });
+      solid.add(G.wallGeometry(h, h, base + p.h, base + p.h + par), mats.parapet);
+      const hi = G.inset(h, 0.4);
+      solid.add(G.wallGeometry(hi, hi, base + p.h + par, base + p.h + 0.05), mats.parapet);
+      holeIn.push(hi);
+    }
+    solid.add(capWithHoles(inn, holeIn, base + p.h + 0.05), p.roofMat || mats.roof);
+  } else {
+    solid.add(G.capGeometry(inn, base + p.h + 0.05), p.roofMat || mats.roof);
+  }
   for (const sg of p.signs || []) {
     const faces = Array.isArray(sg.faces) ? sg.faces : longestEdges(pts, sg.faces || 1);
     for (const i of faces) {
