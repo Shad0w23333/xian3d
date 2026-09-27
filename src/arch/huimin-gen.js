@@ -7,6 +7,7 @@
 // 资料：research/refs/huimin/notes.md（2026-09 调研：层数、街宽、色板、店名）
 import * as THREE from 'three';
 import { SignAtlas } from './sky-towers.js';
+import { inset as insetPoly } from './sky-geom.js';
 
 const BAY = 3.2; // 开间（贴图横向重复单位，米）
 const TRAD_LANES = new Set(['北院门', '西羊市', '大皮院', '化觉巷', '北广济街', '小皮院', '大学习巷']);
@@ -382,7 +383,10 @@ export function buildHuimin(ctx, data) {
     if (!acc.has(k)) acc.set(k, new Acc());
     return acc.get(k);
   };
-  const signs = new SignAtlas(ctx, 4096, 2048);
+  // 招牌图集：横排条目 96 px 高（0.72 m 的匾约 133 px/m），竖排 LED 按宽 64 px；全部单面（背面不显示镜像字）。
+  // 约 240 种文字条目，默认 150 px 的行高装不下（会丢掉后放的真实店名），所以先收集、按“真实店名 → 通用店名 → 竖招”顺序入图集
+  const signs = new SignAtlas(ctx, 4096, 2048, { rowH: 96, vW: 64, side: THREE.FrontSide });
+  const signReq = [];
   const lanternPos = [];
   const T = ctx.terrain;
   const streets = data.streets || [];
@@ -407,11 +411,12 @@ export function buildHuimin(ctx, data) {
     const r = rand(cx, cz);
     // 墙面风格：回坊主街多青砖，洒金桥/西仓等多白瓷砖与红砖
     const st = comp ? 'brick' : trad ? (r < 0.7 ? 'brick' : r < 0.85 ? 'plaster' : 'red') : r < 0.38 ? 'brick' : r < 0.58 ? 'tile' : r < 0.8 ? 'red' : 'plaster';
-    const H = b.h;
+    const o = obb(p);
+    // 寺院 / 庙宇 / 大院内建筑是单层殿堂（数据里沿用了民居的 2~5 层规则）：檐高封顶，大殿略高
+    const H = comp ? Math.min(b.h, o.a > 12 ? 8.5 : 6) : b.h;
     const fl = Math.max(1, b.fl);
     const shopH = fr.size ? 3.6 : 3.2;
     const fh = fl > 1 ? (H - shopH) / (fl - 1) : H;
-    const o = obb(p);
     const rect = o.area > 0 ? area / o.area : 0;
     // 屋顶类型
     let roof = 'flat';
@@ -436,7 +441,9 @@ export function buildHuimin(ctx, data) {
         A(mat).quad([ax, ya, az], [ax, yb, az], [bx, yb, bz], [bx, ya, bz], [nb, va], [nb, vb], [0, vb], [0, va]);
       };
       if (comp) {
-        wallQuad('temple', y0, eaveY, 0, Math.max(1, (eaveY - y0) / 4.2));
+        // 殿堂墙面：贴图竖向只铺一次（额枋在上、槛窗居中、下碱在下），开间宽随檐高放大
+        const tb = Math.max(1, Math.round(L / Math.max(3.2, (eaveY - y0) * 0.6)));
+        A('temple').quad([ax, y0, az], [ax, eaveY, az], [bx, eaveY, bz], [bx, y0, bz], [tb, 0], [tb, 1], [0, 1], [0, 0]);
         continue;
       }
       if (L < 2.2) {
@@ -467,30 +474,58 @@ export function buildHuimin(ctx, data) {
         const dx = (bx - ax) / L, dz = (bz - az) / L, nx = dz, nz = -dx;
         const mx = (ax + bx) / 2, mz = (az + bz) / 2;
         const wantSign = b.sg || (trad ? r < 0.6 : r < 0.4);
+        let signHalf = 0, signY = 0; // 招牌沿墙半宽（估计值）与中心高，灯笼避让用
         if (wantSign && L > 3 && i === longestFront(p, fr)) {
           const text = b.sg || (trad ? GENERIC_TRAD : GENERIC_MODERN)[Math.floor(rand(bi, 5) * (trad ? GENERIC_TRAD.length : GENERIC_MODERN.length))];
+          const real = !!b.sg;
           const sy = g1 + (fl > 1 ? 0.45 : -0.45);
           const opts = trad
             ? { bg: '#1c1a18', color: '#d9b25a', serif: true, border: '#8a6a2a' }
             : [{ bg: '#1e4e9a', color: '#ffffff' }, { bg: '#c8261c', color: '#ffe36b' }, { bg: '#f4f1ea', color: '#c8261c' }, { bg: '#1f7a4d', color: '#ffffff' }][Math.floor(rand(bi, 6) * 4)];
-          signs.place(text, { x: mx - nx * 0.25, y: sy, z: mz - nz * 0.25 }, nx, nz, 0.72, Math.min(L * 0.85, 7.5), opts);
+          const maxW = Math.min(L * 0.85, 7.5);
+          signReq.push({ text, real, p: { x: mx - nx * 0.25, y: sy, z: mz - nz * 0.25 }, nx, nz, h: 0.72, maxW, opts });
+          signHalf = Math.min(maxW, 0.72 * (0.75 * [...text].length + 0.13)) / 2; // 汉字约 0.75 字高/字 + 边距
+          signY = sy;
           nSigns++;
-          // LED 竖招（挑出墙面，朝街道两个方向可见）
+          // LED 竖招（挑出墙面 0.6~1.2 m，朝街道两个方向）：背靠背两块单面牌，两边看都不镜像；
+          // 平顶铺面有首层披檐：底边抬到披檐根部（g1+0.95）以上，不插进檐瓦
           if (fl >= 2 && rand(bi, 8) < (trad ? 0.35 : 0.25)) {
             const vt = text.replace(/[·\s]/g, '').slice(0, 5);
             const led = rand(bi, 9) < 0.5 ? { bg: '#b0120c', color: '#ffe36b', vertical: true } : { bg: '#0f6a3c', color: '#ffffff', vertical: true };
-            const px = ax + dx * Math.min(0.9, L * 0.2) + nx * 0.9, pz = az + dz * Math.min(0.9, L * 0.2) + nz * 0.9;
-            signs.place(vt, { x: px, y: g1 + 1.9, z: pz }, dx, dz, 0.55 * vt.length, 3.2, led);
+            const lh = 0.55 * vt.length, ly = g1 + (roof === 'flat' ? Math.max(1.9, 1.05 + lh / 2) : 1.9);
+            const cx = ax + dx * (Math.min(0.9, L * 0.2) + 0.45) + nx * 0.9, cz = az + dz * (Math.min(0.9, L * 0.2) + 0.45) + nz * 0.9;
+            // place() 会沿牌面法线再外移 0.45 m：两面各自朝 ±d，最终相距 3 cm
+            for (const sd of [1, -1]) signReq.push({ text: vt, real, p: { x: cx - sd * dx * 0.435, y: ly, z: cz - sd * dz * 0.435 }, nx: sd * dx, nz: sd * dz, h: lh, maxW: 3.2, opts: led });
           }
         }
-        // 红灯笼（回坊主街，每开间一盏，挂在檐下）
+        // 红灯笼（回坊主街，每开间一盏）：两层以上平顶铺面挂在披檐下、招牌下方（披檐在 0.85 m 处高 g1+0.525，招牌 g1+0.09…0.81，
+        // 灯笼含木托 +0.365、流苏 -0.99）；坡顶挂在檐下封口（top-0.19）以下；与招牌同高时让开招牌所在的一段
         if (trad && fl >= 1) {
           const k = Math.max(1, Math.round(L / 3.4));
+          const out = roof === 'flat' ? 0.85 : 0.6;
+          const ly = fl > 1 && roof === 'flat' ? g1 - 0.35 : top - (roof === 'flat' ? 0.55 : 0.6);
+          const avoid = signHalf > 0 && ly - 0.99 < signY + 0.36 && ly + 0.365 > signY - 0.36 ? signHalf + 0.35 : 0;
           for (let q = 0; q < k; q++) {
             const t = (q + 0.5) / k;
-            lanternPos.push(ax + (bx - ax) * t + nx * (roof === 'flat' ? 0.85 : 0.6), (fl > 1 ? g1 + 0.35 : top - 0.55), az + (bz - az) * t + nz * (roof === 'flat' ? 0.85 : 0.6));
+            if (avoid && Math.abs(t - 0.5) * L < avoid) continue;
+            lanternPos.push(ax + (bx - ax) * t + nx * out, ly, az + (bz - az) * t + nz * out);
           }
         }
+      }
+    }
+    // 女儿墙内侧面 + 压顶：外侧面是单面的，从空中看远侧女儿墙只剩背面会被剔除（看起来没有女儿墙）
+    if (roof === 'flat') {
+      const pin = insetPoly(p, 0.22);
+      const W = A('plain-' + st), yt = top + 0.7;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const ax = p[i * 2], az = p[i * 2 + 1], bx = p[j * 2], bz = p[j * 2 + 1];
+        const L = Math.hypot(bx - ax, bz - az);
+        if (L < 0.05) continue;
+        const cx = pin[i * 2], cz = pin[i * 2 + 1], ex = pin[j * 2], ez = pin[j * 2 + 1];
+        const u = Math.max(1, Math.round(L / BAY));
+        W.quad([ex, top, ez], [ex, yt, ez], [cx, yt, cz], [cx, top, cz], [0, 0], [0, 0.22], [u, 0.22], [u, 0]); // 内侧面，朝内
+        W.quad([ax, yt, az], [cx, yt, cz], [ex, yt, ez], [bx, yt, bz], [0, 0], [0, 0.07], [u, 0.07], [u, 0]); // 压顶，朝上
       }
     }
     // —— 屋顶 ——
@@ -545,6 +580,11 @@ export function buildHuimin(ctx, data) {
       R.quad(P(-a, -bb, ey), P(a, -bb, ey), P(a, bb, ey), P(-a, bb, ey), [0, 0], [1, 0], [1, 1], [0, 1]);
     }
   });
+
+  // —— 招牌入图集：真实店名优先，其次通用横匾，竖招最后且按字数从多到少（同高条目排在同一行，图集利用率高） ——
+  const rank = (q) => (q.opts.vertical ? 2 : q.real ? 0 : 1);
+  signReq.sort((a, b) => rank(a) - rank(b) || (rank(a) === 2 ? b.text.length - a.text.length || b.real - a.real : 0));
+  for (const q of signReq) signs.place(q.text, q.p, q.nx, q.nz, q.h, q.maxW, q.opts);
 
   // —— 输出 ——
   const group = new THREE.Group();

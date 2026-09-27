@@ -116,13 +116,22 @@ async function main() {
   if (pack) imagery.attachPack(pack);
   {
     let pid = params.get('imagery');
-    if (!pid) try { pid = localStorage.getItem('xian3d.imagery'); } catch {}
+    if (!pid) {
+      // 已保存的选择只在“当时已有本地包”或“现在仍没有本地包”时沿用；
+      // 旧版（无本地选项时）存的 amap/esri 不应压过新生成的本地包
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem('xian3d.imagery.v2') || 'null');
+        if (!saved) { const s = localStorage.getItem('xian3d.imagery'); if (s) saved = { id: s, hadLocal: s === 'local' }; }
+      } catch {}
+      if (saved && typeof saved.id === 'string' && (saved.hadLocal || !pack)) pid = saved.id;
+    }
     if (pid === 'local' && !pack) pid = null;
     if (!pid && pack) pid = 'local';
     if (pid && IMAGERY_PROVIDERS[pid]) imagery.setProvider(pid);
   }
-  // online=0 只关闭联网影像；本地瓦片包不受影响
-  if (params.get('online') === '0' && !imagery.provider.local) imagery.setOnlineEnabled(false);
+  // online=0 只关闭联网影像；本地瓦片包不受影响（Imagery 内区分，之后切换影像源也保持）
+  if (params.get('online') === '0') imagery.setOnlineEnabled(false);
   const [,] = await Promise.all([terrain.load(meta), imagery.loadMosaics(meta.imagery)]);
 
   const data = {};
@@ -276,6 +285,7 @@ async function main() {
     ]);
   updateAttribution();
   ui.setProvider(imagery.providerId, !!imagery.pack);
+  ui.setLayer('online', imagery.netAllowed);
   const miniSrc = imagery.mosaics.find((m) => /main/.test(m.file)) || imagery.mosaics[imagery.mosaics.length - 1];
   if (miniSrc) ui.setMinimapImage(miniSrc.texture.image, miniSrc.bounds);
   if (params.get('mini') === '0') ui.toggleMinimap(false);
@@ -315,10 +325,14 @@ async function main() {
   ui.on('speed', (s) => (sky.speed = s));
   ui.on('preset', goPreset);
   ui.on('quality', applyQuality);
-  ui.on('online', (v) => { imagery.setOnlineEnabled(v); ui.toast(v ? '已开启在线高清卫星影像' : '已切换到内置影像'); });
+  ui.on('online', (v) => {
+    imagery.setOnlineEnabled(v);
+    if (imagery.provider.local) ui.toast(v ? '已允许联网影像（当前为本地离线高清）' : '已禁止联网影像（本地离线高清照常使用）');
+    else ui.toast(v ? '已开启在线高清卫星影像' : '已切换到内置影像');
+  });
   ui.on('provider', (id) => {
     if (imagery.setProvider(id)) {
-      try { localStorage.setItem('xian3d.imagery', id); } catch {}
+      try { localStorage.setItem('xian3d.imagery.v2', JSON.stringify({ id, hadLocal: !!imagery.pack })); } catch {}
       updateAttribution();
       ui.toast(`影像源：${imagery.provider.name}`);
     }
@@ -431,7 +445,7 @@ async function main() {
       mode: controls.mode,
       locked: controls.locked,
       place: placeName(camera.position.x, camera.position.z),
-      online: imagery.online.enabled ? `${imagery.online.status} · 缓存 ${imagery.cache.size}` : '离线',
+      online: imagery.online.enabled ? `${imagery.provider.local ? '本地' : imagery.online.status} · 缓存 ${imagery.cache.size}` : '离线',
       stats: `绘制 ${info.calls} 次 · ${(info.triangles / 1e6).toFixed(2)}M 三角形 · 地形块 ${terrain.visibleCount}`,
     });
     app.fps = fps;
