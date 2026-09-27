@@ -179,8 +179,11 @@ async function main() {
     ui.setLoading(0.62 + (0.33 * i) / Math.max(1, loaded.length), `构建：${mod.name || mod.id}……`);
     await new Promise((r) => setTimeout(r, 0));
     const t0 = performance.now();
+    const nChildren = scene.children.length;
     try {
       const inst = (await mod.build(ctx)) || {};
+      // 记录归属模块（调试/诊断用）
+      for (let k = nChildren; k < scene.children.length; k++) scene.children[k].userData.module ??= mod.id;
       inst.id = mod.id;
       inst.name = mod.name;
       instances.push(inst);
@@ -192,6 +195,24 @@ async function main() {
     }
   }
   app.modules = instances;
+  // 兜底：零长度法线在 Metal 上 normalize → NaN，经泛光扩散成全屏黑。构建完成后统一修正为朝上
+  {
+    const t0 = performance.now();
+    let fixed = 0;
+    scene.traverse((o) => {
+      const N = o.geometry?.attributes?.normal;
+      if (!o.isMesh || !N || N.isInterleavedBufferAttribute || N.normalized || !(N.array instanceof Float32Array)) return;
+      if ([].concat(o.material).every((m) => m.flatShading)) return;
+      const a = N.array;
+      let n = 0;
+      for (let i = 0; i < a.length; i += 3) {
+        const x = a[i], y = a[i + 1], z = a[i + 2];
+        if (!(x * x + y * y + z * z > 1e-12)) { a[i] = 0; a[i + 1] = 1; a[i + 2] = 0; n++; }
+      }
+      if (n) { N.needsUpdate = true; fixed += n; }
+    });
+    if (fixed) console.warn(`[xian3d] 修正零长度/NaN 法线 ${fixed} 个（${(performance.now() - t0).toFixed(0)} ms）`);
+  }
 
   // —— 后期 & 控制 ——
   const post = new Post(renderer, scene, camera, quality, reversed);
@@ -352,6 +373,8 @@ async function main() {
   let speed = 0;
   app.frame = 0;
   const tick = () => {
+    // 自动截图：暂停渲染，避免软件渲染（SwiftShader）时帧循环阻塞截图
+    if (app.paused) { clock.getDelta(); requestAnimationFrame(tick); return; }
     const dt = Math.min(clock.getDelta(), 0.1);
     elapsed += dt;
     app.frame++;
