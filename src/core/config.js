@@ -1,12 +1,28 @@
 // 全局配置：画质档位、在线影像、预设视角
 import { project } from './geo.js';
 
-export const ONLINE_IMAGERY = {
-  // Esri World Imagery（支持 CORS）。meta.json 中的 online 字段会覆盖这里。
-  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  maxZoom: 18,
-  attribution: 'Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+// 在线卫星影像源。gcj=true 表示瓦片按 GCJ-02（火星坐标）绘制，加载时自动纠偏拼接。
+export const IMAGERY_PROVIDERS = {
+  amap: {
+    name: '高德卫星',
+    url: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+    subdomains: ['1', '2', '3', '4'],
+    maxZoom: 18,
+    gcj: true,
+    attribution: '影像 © 高德地图 AutoNavi',
+  },
+  esri: {
+    name: 'Esri 卫星',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    subdomains: null,
+    maxZoom: 18,
+    gcj: false,
+    attribution: '影像 Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+  },
 };
+export const DEFAULT_IMAGERY = 'amap';
+// 兼容旧代码
+export const ONLINE_IMAGERY = IMAGERY_PROVIDERS[DEFAULT_IMAGERY];
 
 // 画质档位：0 低 / 1 中 / 2 高 / 3 超高
 export const QUALITY_LEVELS = [

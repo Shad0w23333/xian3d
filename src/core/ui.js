@@ -100,6 +100,7 @@ export class UI {
       <div class="sec">
         <div class="sec-h">图层</div>
         <label><input type="checkbox" class="l-online" checked /> 在线高清卫星影像 <em class="online-status"></em></label>
+        <label>影像源 <select class="l-provider"><option value="amap">高德卫星（较新）</option><option value="esri">Esri 卫星</option></select></label>
         <label><input type="checkbox" class="l-traffic" checked /> 交通流与航班</label>
         <label><input type="checkbox" class="l-labels" checked /> 地名标注</label>
         <label><input type="checkbox" class="l-buildings" checked /> 城市建筑</label>
@@ -183,6 +184,7 @@ export class UI {
     this.panel.querySelectorAll('.preset').forEach((b) => b.addEventListener('click', () => this.emit('preset', b.dataset.key)));
     this.panel.querySelectorAll('.q').forEach((b) => b.addEventListener('click', () => this.emit('quality', parseInt(b.dataset.q))));
     $('.l-online').addEventListener('change', (e) => this.emit('online', e.target.checked));
+    $('.l-provider').addEventListener('change', (e) => this.emit('provider', e.target.value));
     $('.l-traffic').addEventListener('change', (e) => this.emit('traffic', e.target.checked));
     $('.l-labels').addEventListener('change', (e) => this.emit('labels', e.target.checked));
     $('.l-buildings').addEventListener('change', (e) => this.emit('buildings', e.target.checked));
@@ -200,6 +202,10 @@ export class UI {
   setLayer(name, v) {
     const el = this.panel.querySelector('.l-' + name);
     if (el) el.checked = v;
+  }
+  setProvider(id) {
+    const el = this.panel.querySelector('.l-provider');
+    if (el) el.value = id;
   }
   setAttribution(list) {
     this.attrib.textContent = list.join(' · ');
