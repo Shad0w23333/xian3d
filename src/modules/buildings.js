@@ -1,240 +1,799 @@
+// 通用城市建筑：由 public/data/buildings.bin（v1 / v2，见 docs/CONTRACT.md 3.4）生成全城十几万栋建筑。
+//
+// 结构（几何在 Web Worker 里生成，见 src/arch/bld-gen.js；立面全部由着色器程序化生成，见 src/arch/bld-shader.js）：
+//   · 远景 lo：8 km 大块合批，块内 1 km 小块按 Morton 序连续排列；每帧对 1 km 小块做视锥/距离剔除，
+//     把可见小块合并成 ≤ 4 段 drawRange（块级剔除 + 少量 draw call）；外墙共享角点、轮廓简化、无女儿墙。
+//   · 近景 hi：相机附近（离地 < 900 m）的 1 km 小块按需生成：外墙逐边独立 UV（开间避开转角）、女儿墙、
+//     窗洞视差凹进 + 简化室内映射；hi 接管的小块在 lo 顶点着色器里整栋塌缩（uHiRect），两者严格互补。
+//   · 屋顶构件（楼梯间/机房、水箱、空调机组、太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
+//   · 航空障碍灯：高度 ≥ 100 m 的楼顶四角红色闪光灯（Points）。
+//   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的逐窗亮灯。
+// 对外 API：nearestFacade(x, z, maxDist) → {x, z, nx, nz, height, index, …}（招牌模块用）
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, STYLE_NAMES } from '../arch/bld-gen.js';
+import { createFacadeMaterials, createDataTexture } from '../arch/bld-shader.js';
+import BldWorker from '../arch/bld-worker.js?worker&inline';
 
-const CHUNK = 5000;
-const PALETTE = [
-  [0.67, 0.62, 0.54], [0.72, 0.68, 0.59], [0.61, 0.65, 0.67], [0.53, 0.57, 0.6],
-  [0.72, 0.7, 0.64], [0.62, 0.55, 0.45], [0.55, 0.61, 0.65], [0.77, 0.74, 0.67], [0.66, 0.59, 0.48],
+const HI_AGL = 900; // 相机离地高于此值不使用近景小块
+const HI_RADIUS = [650, 900, 1200, 1500]; // 近景半径（按画质档位）
+const MAX_RUNS = 4; // 每个远景大块最多几段 drawRange
+const GAP_MERGE = 60000; // 相邻可见段之间的不可见索引数小于此值时合并（少一次 draw call）
+const NEAR_KEEP = 1300; // 相机附近的小块即使不在视锥内也绘制（保证画面外建筑的阴影）
+const FAR_D = [2500, 3200, 4000, 5500]; // 超过此距离的小块改用超远景子集（只画显眼建筑，且不投射阴影）
+const HI_CACHE = 40; // 近景小块缓存上限
+
+// —— 亮灯率曲线（北京时间小时 → 亮灯比例）：傍晚高、午夜后下降 ——
+const LIT_RES = [[0, 0.27], [1, 0.17], [2, 0.1], [4, 0.06], [5.5, 0.08], [6.5, 0.22], [7.5, 0.15], [9, 0.08], [16, 0.08], [17.5, 0.24], [19, 0.42], [20.5, 0.5], [22, 0.45], [23, 0.36], [24, 0.27]];
+const LIT_OFF = [[0, 0.12], [5, 0.08], [7, 0.2], [8.5, 0.8], [17, 0.85], [18, 0.76], [19, 0.56], [20.5, 0.4], [22, 0.26], [23, 0.17], [24, 0.12]];
+const LIT_COM = [[0, 0.34], [1, 0.2], [3, 0.1], [6, 0.12], [8, 0.5], [10, 0.9], [21.5, 0.95], [22.5, 0.7], [23.5, 0.45], [24, 0.34]];
+function curve(tab, h) {
+  h = ((h % 24) + 24) % 24;
+  for (let k = 1; k < tab.length; k++) {
+    if (h <= tab[k][0]) {
+      const [h0, v0] = tab[k - 1], [h1, v1] = tab[k];
+      return v0 + ((v1 - v0) * (h - h0)) / Math.max(1e-6, h1 - h0);
+    }
+  }
+  return tab[tab.length - 1][1];
+}
+const smooth = (a, b, x) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+// ———— Worker 调用（失败时回退主线程） ————
+class GenClient {
+  constructor() {
+    this.q = [];
+    this.w = null;
+    this.local = null;
+    this.initMsg = null;
+    try {
+      this.w = new BldWorker();
+      this.w.onmessage = (e) => {
+        const job = this.q.shift();
+        if (job) job.resolve(e.data);
+      };
+      this.w.onerror = (e) => {
+        console.warn('[buildings] Worker 出错，回退主线程生成', e && e.message);
+        this._fail();
+      };
+    } catch (e) {
+      console.warn('[buildings] 无法创建 Worker，回退主线程生成', e);
+      this.w = null;
+    }
+  }
+  _fail() {
+    if (this.w) this.w.terminate();
+    this.w = null;
+    const jobs = this.q;
+    this.q = [];
+    for (const j of jobs) this._runLocal(j);
+  }
+  _runLocal(job) {
+    setTimeout(() => {
+      if (!this.local) {
+        this.local = createGenerator();
+        if (this.initMsg && job.msg.type !== 'init') this.local.handle(this.initMsg);
+      }
+      let r;
+      try {
+        r = this.local.handle(job.msg).msg;
+      } catch (err) {
+        r = { type: 'error', message: String((err && err.stack) || err) };
+      }
+      job.resolve(r);
+    }, 0);
+  }
+  /** 不转移（transfer）主线程数据：Worker 失败时还能用同一消息在主线程重跑 */
+  call(msg) {
+    if (msg.type === 'init') this.initMsg = msg;
+    return new Promise((resolve) => {
+      const job = { msg, resolve };
+      if (this.w) {
+        this.q.push(job);
+        this.w.postMessage(msg);
+      } else this._runLocal(job);
+    });
+  }
+  dispose() {
+    if (this.w) this.w.terminate();
+    this.w = null;
+  }
+}
+
+// 兜底：地标模块已加载时，与其同名的 OSM 建筑让位（正常情况下地标模块会在 prepare 里注册排除区）
+const LANDMARK_NAMES = [
+  ['belltower', /^(西安)?(钟楼|鼓楼)$/],
+  ['pagoda', /^(大雁塔|大慈恩寺.{0,6})$/],
+  ['heritage', /^(小雁塔|荐福寺.{0,6}|西安博物院)$/],
+  ['citywall', /(城墙|箭楼|闸楼|角楼|敌楼|魁星楼|^(永宁|安定|长乐|安远|朱雀|含光|勿幕|玉祥|尚武|尚德|解放|中山|文昌|和平|建国|朝阳|小南)门(城楼)?$)/],
 ];
 
-function hash(n) {
-  let x = (n + 0x9e3779b9) | 0; x ^= x >>> 16; x = Math.imul(x, 0x21f0aaad); x ^= x >>> 15;
-  x = Math.imul(x, 0x735a2d97); x ^= x >>> 15; return (x >>> 0) / 4294967296;
-}
-
-function chunkFor(map, x, z) {
-  const cx = Math.floor(x / CHUNK), cz = Math.floor(z / CHUNK), key = `${cx}:${cz}`;
-  if (!map.has(key)) map.set(key, { key, cx: cx * CHUNK, cz: cz * CHUNK, positions: [], colors: [], indices: [], windows: [], count: 0 });
-  return map.get(key);
-}
-
-function colorFor(kind, seed, roof = false) {
-  const base = PALETTE[Math.max(0, Math.min(PALETTE.length - 1, kind))] || PALETTE[0];
-  const k = (hash(seed) - 0.5) * 0.11;
-  if (roof) return [0.31 + k, 0.32 + k, 0.33 + k];
-  return base.map((x) => Math.max(0, Math.min(1, x + k)));
-}
-
-function pushVertex(chunk, p, c) {
-  chunk.positions.push(p[0], p[1], p[2]); chunk.colors.push(c[0], c[1], c[2]);
-}
-
-function appendBuilding(chunk, points, groundY, height, kind, seed, minHeight = 0, makeRoof = true) {
-  const n = points.length / 2;
-  if (n < 3 || n > 260) return;
-  const wall = colorFor(kind, seed), roof = colorFor(kind, seed + 19, true);
-  const h0 = groundY + minHeight, h1 = h0 + height;
-  const start = chunk.positions.length / 3;
-  for (let i = 0; i < n; i++) {
-    const x = points[i * 2] - chunk.cx, z = points[i * 2 + 1] - chunk.cz;
-    pushVertex(chunk, [x, h0, z], wall);       // 外牆底环
-  }
-  for (let i = 0; i < n; i++) {
-    const x = points[i * 2] - chunk.cx, z = points[i * 2 + 1] - chunk.cz;
-    pushVertex(chunk, [x, h1, z], wall);       // 外牆顶环
-  }
-  const roofStart = chunk.positions.length / 3;
-  for (let i = 0; i < n; i++) {
-    const x = points[i * 2] - chunk.cx, z = points[i * 2 + 1] - chunk.cz;
-    pushVertex(chunk, [x, h1, z], roof);
-  }
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n, a = start + i, b = start + j, at = start + n + i, bt = start + n + j;
-    chunk.indices.push(a, b, at, b, bt, at);
-  }
-  if (makeRoof) {
-    const contour = [];
-    for (let i = 0; i < n; i++) contour.push(new THREE.Vector2(points[i * 2] - chunk.cx, points[i * 2 + 1] - chunk.cz));
-    try {
-      const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
-      for (const tri of triangles) chunk.indices.push(roofStart + tri[0], roofStart + tri[1], roofStart + tri[2]);
-    } catch {
-      for (let i = 1; i < n - 1; i++) chunk.indices.push(roofStart, roofStart + i, roofStart + i + 1);
+// ———— 主线程预处理：地面高程、底部高程、排除标记、包围盒 ————
+function preprocess(ctx, P) {
+  const N = P.count, offs = P.offs, T = ctx.terrain, ex = ctx.exclusions;
+  const ga = new Float32Array(N), base = new Float32Array(N), skip = new Uint8Array(N), bb = new Float32Array(N * 4);
+  // skyline 模块渲染的已调研高楼（h ≥ 34 m）：带 flags bit3 且与其轮廓对应的通用建筑让位
+  const sky = ctx.modules && ctx.modules.skyline
+    ? (ctx.data.skyline?.features || []).filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000)
+    : [];
+  const inPoly = (x, z, p) => {
+    let c = false;
+    for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
+      if (p[i + 1] > z !== p[j + 1] > z && x < ((p[j] - p[i]) * (z - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) c = !c;
     }
-  }
-  chunk.count++;
-}
-
-function skylineMatch(name, x, z, index) {
-  if (!name) return false;
-  const features = skylineMatch.index.get(name);
-  if (!features) return false;
-  return features.some((p) => Math.hypot(x - p[0], z - p[1]) < 35);
-}
-skylineMatch.index = new Map();
-
-function addWindows(chunk, pts, ground, height, maxCount) {
-  if (chunk.windows.length >= maxCount) return;
-  const floors = Math.max(1, Math.floor((height - 2.8) / 3.15));
-  if (floors <= 1) return;
-  const n = pts.length / 2;
-  for (let i = 0; i < n && chunk.windows.length < maxCount; i++) {
-    const ax = pts[i * 2], az = pts[i * 2 + 1], j = (i + 1) % n;
-    const bx = pts[j * 2], bz = pts[j * 2 + 1], dx = bx - ax, dz = bz - az;
-    const len = Math.hypot(dx, dz);
-    if (len < 5) continue;
-    const cols = Math.min(18, Math.floor(len / 4.6));
-    const rows = Math.min(floors, 48);
-    const yaw = Math.atan2(-dz, dx);
-    const nx = -dz / len, nz = dx / len;
-    for (let row = 0; row < rows && chunk.windows.length < maxCount; row++) {
-      const y = ground + 2.6 + row * 3.1;
-      if (y > ground + height - 1.5) break;
-      for (let col = 0; col < cols && chunk.windows.length < maxCount; col++) {
-        const t = (col + 0.5) / cols;
-        chunk.windows.push({ x: ax + dx * t + nx * 0.12, y, z: az + dz * t + nz * 0.12, yaw,
-          w: Math.min(1.45, len / cols * 0.55), h: Math.min(1.65, height / floors * 0.53) });
+    return c;
+  };
+  const names = ctx.data.buildingNames || {};
+  const lmRe = LANDMARK_NAMES.filter(([id]) => ctx.modules && ctx.modules[id]).map((x) => x[1]);
+  let nEx = 0, nSky = 0;
+  for (let i = 0; i < N; i++) {
+    const ax = P.anchorX[i], az = P.anchorZ[i];
+    const s = P.vertStart[i] * 2, e = s + P.vertCount[i] * 2;
+    let x0 = 32767, x1 = -32768, z0 = 32767, z1 = -32768;
+    for (let k = s; k < e; k += 2) {
+      const dx = offs[k], dz = offs[k + 1];
+      if (dx < x0) x0 = dx;
+      if (dx > x1) x1 = dx;
+      if (dz < z0) z0 = dz;
+      if (dz > z1) z1 = dz;
+    }
+    const X0 = ax + x0 * 0.1, X1 = ax + x1 * 0.1, Z0 = az + z0 * 0.1, Z1 = az + z1 * 0.1;
+    bb[i * 4] = X0;
+    bb[i * 4 + 1] = Z0;
+    bb[i * 4 + 2] = X1;
+    bb[i * 4 + 3] = Z1;
+    if (sky.length && P.flags[i] & 8) {
+      for (const f of sky) {
+        if (Math.abs(f.x - ax) < 150 && Math.abs(f.z - az) < 150 && (Math.hypot(f.x - ax, f.z - az) < 45 || inPoly(ax, az, f.outer))) {
+          skip[i] = 1;
+          nSky++;
+          break;
+        }
       }
     }
+    if (!skip[i] && ex && ex.test(ax, az, 'buildings')) {
+      skip[i] = 1;
+      nEx++;
+    }
+    if (!skip[i] && lmRe.length && P.flags[i] & 2) {
+      const nm = names[i];
+      if (nm && lmRe.some((re) => re.test(nm))) {
+        skip[i] = 1;
+        nEx++;
+      }
+    }
+    const h0 = T.heightAt(ax, az);
+    ga[i] = h0;
+    let b = h0;
+    if (X1 - X0 > 24 || Z1 - Z0 > 24) b = Math.min(b, T.heightAt(X0, Z0), T.heightAt(X1, Z0), T.heightAt(X0, Z1), T.heightAt(X1, Z1));
+    base[i] = b;
   }
+  return { ga, base, skip, bb, nEx, nSky };
 }
 
-function parseBinary(buffer) {
-  if (!buffer || buffer.byteLength < 16) return null;
-  const view = new DataView(buffer);
-  if (view.getUint8(0) !== 88 || view.getUint8(1) !== 66 || view.getUint8(2) !== 76 || view.getUint8(3) !== 68) return null;
-  const version = view.getUint32(4, true), count = view.getUint32(8, true), total = view.getUint32(12, true);
-  if (version !== 1 || count > 800000 || total > 6000000) return null;
-  let o = 16;
-  const anchorsX = new Float32Array(count), anchorsZ = new Float32Array(count);
-  for (let i = 0; i < count; i++, o += 4) anchorsX[i] = view.getFloat32(o, true);
-  for (let i = 0; i < count; i++, o += 4) anchorsZ[i] = view.getFloat32(o, true);
-  const starts = new Uint32Array(count), counts = new Uint16Array(count), heights = new Uint16Array(count), mins = new Uint16Array(count), kinds = new Uint8Array(count), flags = new Uint8Array(count);
-  for (let i = 0; i < count; i++, o += 4) starts[i] = view.getUint32(o, true);
-  for (let i = 0; i < count; i++, o += 2) counts[i] = view.getUint16(o, true);
-  for (let i = 0; i < count; i++, o += 2) heights[i] = view.getUint16(o, true);
-  for (let i = 0; i < count; i++, o += 2) mins[i] = view.getUint16(o, true);
-  for (let i = 0; i < count; i++, o++) kinds[i] = view.getUint8(o);
-  for (let i = 0; i < count; i++, o++) flags[i] = view.getUint8(o);
-  o = (o + 3) & ~3;
-  if (o + total * 4 > buffer.byteLength) return null;
-  const offsets = new Int16Array(total * 2);
-  for (let i = 0; i < offsets.length; i++, o += 2) offsets[i] = view.getInt16(o, true);
-  return { count, total, anchorsX, anchorsZ, starts, counts, heights, mins, kinds, flags, offsets };
+/** 临街判定用道路（主干道 + 支路 + 步行街） */
+function packRoads(roads) {
+  const feats = roads?.features || [];
+  const keep = new Set([1, 2, 3, 4, 5, 7, 12]);
+  let np = 0, nr = 0;
+  for (const f of feats) if (keep.has(f.c) && f.p && f.p.length >= 4) (np += f.p.length / 2), nr++;
+  const pts = new Float32Array(np * 2), starts = new Int32Array(nr + 1), widths = new Float32Array(nr);
+  let o = 0, r = 0;
+  for (const f of feats) {
+    if (!keep.has(f.c) || !f.p || f.p.length < 4) continue;
+    pts.set(f.p, o * 2);
+    starts[r] = o;
+    widths[r] = f.w || 8;
+    o += f.p.length / 2;
+    r++;
+  }
+  starts[nr] = o;
+  return { pts, starts, widths };
 }
 
-function buildFallback(ctx, root) {
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshStandardMaterial({ color: 0xb5b0a6, roughness: 0.74, metalness: 0.08 });
-  const count = 2100;
-  const mesh = new THREE.InstancedMesh(geometry, material, count);
-  const obj = new THREE.Object3D();
-  for (let i = 0; i < count; i++) {
-    const gx = i % 42, gz = Math.floor(i / 42);
-    const x = -9200 + gx * 440 + (hash(i + 8) - 0.5) * 170;
-    const z = -7600 + gz * 440 + (hash(i + 29) - 0.5) * 170;
-    const h = 6 + Math.pow(hash(i + 88), 2.2) * (Math.hypot(x + 6200, z - 5000) < 2200 ? 170 : 55);
-    const w = 65 + hash(i + 147) * 110, d = 60 + hash(i + 261) * 100;
-    obj.position.set(x, ctx.terrain.heightAt(x, z) + h / 2, z);
-    obj.scale.set(w, h, d); obj.rotation.y = hash(i + 412) * Math.PI; obj.updateMatrix(); mesh.setMatrixAt(i, obj.matrix);
-    const c = new THREE.Color().setHSL(0.08 + hash(i + 512) * 0.11, 0.06 + hash(i + 618) * 0.08, 0.47 + hash(i + 716) * 0.2);
-    mesh.setColorAt(i, c);
+// ———— 屋顶构件几何（单位尺寸，实例缩放；顶点色 × 实例色） ————
+function tint(g, c) {
+  const n = g.attributes.position.count;
+  const a = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) (a[i * 3] = c[0]), (a[i * 3 + 1] = c[1]), (a[i * 3 + 2] = c[2]);
+  g.setAttribute('color', new THREE.BufferAttribute(a, 3));
+  if (g.index) g = g.toNonIndexed();
+  return g;
+}
+function propGeometries() {
+  // 0 盒体：电梯机房/楼梯间/彩钢棚/通风器（底面在 y=0），顶部压顶略深
+  const box = mergeGeometries([
+    tint(new THREE.BoxGeometry(1, 0.94, 1).translate(0, 0.47, 0), [1, 1, 1]),
+    tint(new THREE.BoxGeometry(1.03, 0.06, 1.03).translate(0, 0.97, 0), [0.8, 0.8, 0.78]),
+  ]);
+  // 1 水箱：不锈钢/玻璃钢圆罐（10 边，顶盖）
+  const tank = tint(new THREE.CylinderGeometry(0.5, 0.5, 1, 10, 1, false).translate(0, 0.5, 0), [1, 1, 1]);
+  // 2 空调室外机组（多联机）：机身 + 顶部风扇格栅（深色顶板）
+  const ac = mergeGeometries([
+    tint(new THREE.BoxGeometry(1, 0.86, 1).translate(0, 0.43, 0), [1, 1, 1]),
+    tint(new THREE.BoxGeometry(0.92, 0.08, 0.86).translate(0, 0.9, 0), [0.16, 0.16, 0.17]),
+  ]);
+  // 3 太阳能热水器（朝南 +Z）：真空管集热板（深蓝黑）倾角 40° + 顶部储水罐 + 支架，实尺寸 1.8×1.4 m
+  const tilt = (40 * Math.PI) / 180;
+  const solar = mergeGeometries([
+    tint(new THREE.BoxGeometry(1.8, 0.08, 1.4).rotateX(tilt).translate(0, 0.3 + 0.7 * Math.sin(tilt), 0.2), [0.07, 0.09, 0.13]),
+    tint(new THREE.CylinderGeometry(0.2, 0.2, 1.9, 8, 1, true).rotateZ(Math.PI / 2).translate(0, 0.3 + 1.4 * Math.sin(tilt) + 0.12, 0.2 - 0.7 * Math.cos(tilt) - 0.1), [0.86, 0.86, 0.84]),
+    tint(new THREE.BoxGeometry(1.7, 1.2, 0.05).translate(0, 0.6, -0.38), [0.5, 0.5, 0.5]),
+  ]);
+  return [box, tank, ac, solar];
+}
+
+// ———— 航空障碍灯（红色中光强闪光灯，约 40 次/分） ————
+function makeObstacleLights(ctx, arr) {
+  const n = arr.length / 4;
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(n * 3), ph = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    pos[i * 3] = arr[i * 4];
+    pos[i * 3 + 1] = arr[i * 4 + 1];
+    pos[i * 3 + 2] = arr[i * 4 + 2];
+    ph[i] = arr[i * 4 + 3];
   }
-  mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  mesh.castShadow = true; mesh.receiveShadow = true; root.add(mesh);
-  return [{ visible: true, x: 0, z: 0, fallback: true }];
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
+  g.computeBoundingSphere();
+  const m = new THREE.PointsMaterial({ size: 3.5, sizeAttenuation: false, transparent: true, depthWrite: false, fog: true });
+  m.color.setRGB(5, 0.15, 0.08);
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = ctx.uniforms.uTime;
+    sh.uniforms.uNight = ctx.uniforms.uNight;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aPhase;\nuniform float uTime;\nuniform float uNight;\nvarying float vBlink;')
+      .replace(
+        'gl_PointSize = size;',
+        `float bph = fract(uTime / 1.5 + aPhase);
+        vBlink = smoothstep(0.0, 0.05, bph) * (1.0 - smoothstep(0.3, 0.42, bph)) * mix(0.04, 1.0, smoothstep(0.1, 0.6, uNight));
+        gl_PointSize = size * clamp(1.5 - length(mvPosition.xyz) / 8000.0, 0.6, 1.5);`
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vBlink;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.a *= smoothstep(0.5, 0.15, length(gl_PointCoord - 0.5)) * vBlink;');
+  };
+  m.customProgramCacheKey = () => 'xian-bld-obstacle-v1';
+  const pts = new THREE.Points(g, m);
+  pts.name = '航空障碍灯';
+  pts.renderOrder = 5;
+  return pts;
 }
 
 export default {
   id: 'buildings',
-  name: '城市建筑与玻璃幕墙',
+  name: '城市建筑',
+
   async build(ctx) {
-    const root = new THREE.Group(); root.name = '西安城市建筑'; ctx.scene.add(root);
-    const parsed = parseBinary(ctx.data.buildings);
-    if (!parsed) {
-      const chunks = buildFallback(ctx, root);
-      return {
-        setQuality(q) { this.drawDistance = q.buildingDistance || 18000; },
-        setLayer(layer, visible) { if (layer === 'buildings') root.visible = visible; },
-        update() {}, dispose() { root.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); ctx.scene.remove(root); },
+    const t0 = performance.now();
+    const root = new THREE.Group();
+    root.name = '通用城市建筑';
+    ctx.scene.add(root);
+    const P = parseBuildings(ctx.data.buildings);
+    if (!P) {
+      console.warn('[buildings] buildings.bin 缺失或格式错误');
+      const none = () => null;
+      return { update() {}, setLayer() {}, nearestFacade: none, api: { nearestFacade: none }, dispose() { ctx.scene.remove(root); } };
+    }
+    const N = P.count;
+    const pre = preprocess(ctx, P);
+    const roads = packRoads(ctx.data.roads);
+    const tPre = performance.now() - t0;
+
+    // —— Worker：解析 + 分类 + 数据纹理 + 远景几何 ——
+    const gen = new GenClient();
+    const init = await gen.call({ type: 'init', buffer: ctx.data.buildings, ga: pre.ga, base: pre.base, skip: pre.skip, roads });
+    if (!init || init.type !== 'init' || !init.ok) {
+      gen.dispose();
+      throw new Error('建筑生成失败：' + ((init && init.message) || '未知错误'));
+    }
+    const t1 = performance.now();
+    const texArr = init.tex;
+    const dataTex = createDataTexture(texArr, init.texRows);
+    const mats = createFacadeMaterials(ctx, dataTex);
+    const U = mats.uniforms;
+    U.uDrawDist.value = ctx.quality.buildingDistance || 16000;
+    let hiRadius = HI_RADIUS[ctx.quality.level ?? 2] || 1200;
+
+    // —— 远景大块 ——
+    const loGroup = new THREE.Group();
+    loGroup.name = '建筑远景';
+    root.add(loGroup);
+    const blocks = [];
+    const chunkDir = new Map();
+    for (const b of init.blocks) {
+      const ib = new THREE.InterleavedBuffer(b.vbuf, LO_STRIDE);
+      const blk = {
+        ox: b.ox, oz: b.oz,
+        pos: new THREE.InterleavedBufferAttribute(ib, 3, 0),
+        dat: new THREE.InterleavedBufferAttribute(ib, 3, 3),
+        idx: [new THREE.BufferAttribute(b.ibuf, 1), new THREE.BufferAttribute(b.fibuf, 1)],
+        chunks: [], pool: [[], []], box: new THREE.Box3(), localBox: null, localSphere: null, tris: b.ibuf.length / 3,
       };
-    }
-    const names = ctx.data.buildingNames || {};
-    const skyline = ctx.data.skyline?.features || [];
-    skylineMatch.index = new Map();
-    for (const f of skyline) {
-      if (!skylineMatch.index.has(f.n)) skylineMatch.index.set(f.n, []);
-      skylineMatch.index.get(f.n).push([f.x, f.z]);
-    }
-    const chunks = new Map();
-    let windowCount = 0, landmarkCount = 0;
-    const maxWindows = 78000;
-    for (let i = 0; i < parsed.count; i++) {
-      const count = parsed.counts[i], start = parsed.starts[i];
-      if (count < 3 || count > 240) continue;
-      const x = parsed.anchorsX[i], z = parsed.anchorsZ[i];
-      const name = names[String(i)] || '';
-      const isSkyline = (parsed.flags[i] & 8) !== 0 || skylineMatch(name, x, z, i);
-      if (isSkyline) continue; // 实测高层由 skyline 模块以完整幕墙与轮廓渲染。
-      const item = chunkFor(chunks, x, z);
-      const points = new Array(count * 2);
-      for (let j = 0; j < count; j++) {
-        points[j * 2] = x + parsed.offsets[(start + j) * 2] / 10;
-        points[j * 2 + 1] = z + parsed.offsets[(start + j) * 2 + 1] / 10;
+      for (const c of b.chunks) {
+        const box = new THREE.Box3(new THREE.Vector3(c.bounds[0], c.bounds[1], c.bounds[2]), new THREE.Vector3(c.bounds[3], c.bounds[4], c.bounds[5]));
+        const ch = { cx: c.cx, cz: c.cz, r: [c.start, c.fstart], c: [c.count, c.fcount], box, n: c.n };
+        blk.chunks.push(ch);
+        blk.box.union(box);
+        chunkDir.set(c.cx + ',' + c.cz, ch);
       }
-      const ground = ctx.terrain.heightAt(x, z), height = parsed.heights[i] / 10, minHeight = parsed.mins[i] / 10;
-      appendBuilding(item, points, ground, height, parsed.kinds[i], i, minHeight);
-      if (height >= 18 && Math.hypot(x, z) < 13500 && windowCount < maxWindows) {
-        const before = item.windows.length;
-        addWindows(item, points, ground + minHeight, height, maxWindows - windowCount);
-        windowCount += item.windows.length - before;
+      const lb = blk.box;
+      blk.localBox = new THREE.Box3(
+        new THREE.Vector3((lb.min.x - b.ox) * LO_QXZ, lb.min.y * 10, (lb.min.z - b.oz) * LO_QXZ),
+        new THREE.Vector3((lb.max.x - b.ox) * LO_QXZ, lb.max.y * 10, (lb.max.z - b.oz) * LO_QXZ)
+      );
+      blk.localSphere = blk.localBox.getBoundingSphere(new THREE.Sphere());
+      blocks.push(blk);
+    }
+    // set 0：远景全集（投射阴影）；set 1：超远景子集
+    const blockMesh = (blk, set, k) => {
+      const pool = blk.pool[set];
+      if (pool[k]) return pool[k];
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', blk.pos);
+      g.setAttribute('aData', blk.dat);
+      g.setIndex(blk.idx[set]);
+      g.boundingBox = blk.localBox;
+      g.boundingSphere = blk.localSphere;
+      const m = new THREE.Mesh(g, mats.lo);
+      m.position.set(blk.ox, 0, blk.oz);
+      m.scale.set(1 / LO_QXZ, 0.1, 1 / LO_QXZ);
+      m.matrixAutoUpdate = false;
+      m.updateMatrix();
+      m.frustumCulled = false; // 小块级剔除由 updateRuns 负责
+      m.castShadow = set === 0;
+      m.receiveShadow = true;
+      m.visible = false;
+      m.name = `建筑${set ? '超远景' : '远景'} ${blk.ox},${blk.oz} #${k}`;
+      loGroup.add(m);
+      pool[k] = m;
+      return m;
+    };
+    for (const blk of blocks) blockMesh(blk, 0, 0).visible = true; // 预热：保证 compileAsync 编译到远景材质
+    let farD = FAR_D[ctx.quality.level ?? 2] || 4000;
+
+    // —— 近景小块 ——
+    const hiGroup = new THREE.Group();
+    hiGroup.name = '建筑近景';
+    root.add(hiGroup);
+    const hiCache = new Map(); // key → {state, mesh, props, used}
+    let hiShown = new Set();
+    let hiRect = null; // [x0, z0, x1, z1]（小块坐标）
+    let inflight = 0;
+    let layerOn = true;
+    let frame = 0;
+    const makeHiMesh = (m) => {
+      const ib = new THREE.InterleavedBuffer(m.vbuf, HI_STRIDE);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.InterleavedBufferAttribute(ib, 3, 0));
+      g.setAttribute('aData', new THREE.InterleavedBufferAttribute(ib, 4, 3));
+      g.setAttribute('aMeta', new THREE.InterleavedBufferAttribute(ib, 1, 7));
+      g.setIndex(new THREE.BufferAttribute(m.ibuf, 1));
+      const b = m.bounds;
+      g.boundingBox = new THREE.Box3(
+        new THREE.Vector3((b[0] - m.ox) * 10, b[1] * 10, (b[2] - m.oz) * 10),
+        new THREE.Vector3((b[3] - m.ox) * 10, b[4] * 10, (b[5] - m.oz) * 10)
+      );
+      g.boundingSphere = g.boundingBox.getBoundingSphere(new THREE.Sphere());
+      const mesh = new THREE.Mesh(g, mats.hi);
+      mesh.position.set(m.ox, 0, m.oz);
+      mesh.scale.setScalar(0.1);
+      mesh.matrixAutoUpdate = false;
+      mesh.updateMatrix();
+      mesh.castShadow = mesh.receiveShadow = true;
+      mesh.visible = false;
+      mesh.name = '建筑近景 ' + m.key;
+      return mesh;
+    };
+    // 预热近景材质（一个退化三角形，首帧后移除）
+    const warm = makeHiMesh({ vbuf: new Uint16Array(HI_STRIDE * 3), ibuf: new Uint32Array([0, 1, 2]), bounds: [0, 0, 0, 1, 1, 1], ox: 0, oz: 0, key: 'warm' });
+    warm.visible = true;
+    warm.frustumCulled = false;
+    hiGroup.add(warm);
+
+    // —— 屋顶构件（实例化） ——
+    const propGroup = new THREE.Group();
+    propGroup.name = '屋顶构件';
+    root.add(propGroup);
+    const propGeos = propGeometries();
+    const propMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.08, envMapIntensity: 0.5 });
+    propMat.name = '屋顶构件';
+    const propMeshes = [null, null, null, null];
+    const propCap = [0, 0, 0, 0];
+    const ensureProp = (t, n) => {
+      if (propMeshes[t] && propCap[t] >= n) return propMeshes[t];
+      let cap = 256;
+      while (cap < n) cap *= 2;
+      if (propMeshes[t]) {
+        propGroup.remove(propMeshes[t]);
+        propMeshes[t].dispose();
       }
-      if (name && Math.hypot(x, z) < 24000 && landmarkCount < 360) {
-        if (height > 24 || /钟楼|鼓楼|大明宫|博物馆|机场|大厦|广场|电视塔|中心|酒店/.test(name)) {
-          ctx.labels.add(name, new THREE.Vector3(x, ground + height + 3, z), { category: 'landmark', minDist: 90, maxDist: 9500, priority: height > 80 ? 2.4 : 0.7 });
-          landmarkCount++;
+      const m = new THREE.InstancedMesh(propGeos[t], propMat, cap);
+      m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
+      m.count = 0;
+      m.frustumCulled = false;
+      m.castShadow = t <= 1; // 小构件不投射阴影（省一半三角形）
+      m.receiveShadow = true;
+      m.name = ['屋顶机房', '屋顶水箱', '屋顶空调机组', '太阳能热水器'][t];
+      propGroup.add(m);
+      propMeshes[t] = m;
+      propCap[t] = cap;
+      return m;
+    };
+    for (let t = 0; t < 4; t++) ensureProp(t, 1);
+    const _m4 = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _c = new THREE.Color();
+    const _up = new THREE.Vector3(0, 1, 0);
+    const rebuildProps = () => {
+      const cnt = [0, 0, 0, 0];
+      for (const k of hiShown) {
+        const e = hiCache.get(k);
+        if (!e || !e.props) continue;
+        const pr = e.props;
+        for (let o = 0; o < pr.length; o += 9) cnt[pr[o]]++;
+      }
+      const ms = cnt.map((n, t) => ensureProp(t, n));
+      const w = [0, 0, 0, 0];
+      for (const k of hiShown) {
+        const e = hiCache.get(k);
+        if (!e || !e.props) continue;
+        const pr = e.props;
+        for (let o = 0; o < pr.length; o += 9) {
+          const t = pr[o];
+          _p.set(pr[o + 1], pr[o + 2], pr[o + 3]);
+          _q.setFromAxisAngle(_up, pr[o + 7]);
+          _s.set(pr[o + 4], pr[o + 5], pr[o + 6]);
+          _m4.compose(_p, _q, _s);
+          ms[t].setMatrixAt(w[t], _m4);
+          _c.setHex(pr[o + 8] >>> 0);
+          ms[t].setColorAt(w[t], _c);
+          w[t]++;
         }
       }
+      for (let t = 0; t < 4; t++) {
+        ms[t].count = w[t];
+        ms[t].instanceMatrix.needsUpdate = true;
+        if (ms[t].instanceColor) ms[t].instanceColor.needsUpdate = true;
+      }
+    };
+
+    const requestHi = (key) => {
+      hiCache.set(key, { state: 'loading', used: frame });
+      inflight++;
+      gen.call({ type: 'hi', key }).then((m) => {
+        inflight--;
+        const e = hiCache.get(key);
+        if (!e) return;
+        if (!m || m.type !== 'hi' || m.empty || !m.ibuf || !m.ibuf.length) {
+          if (!m || m.type !== 'hi') {
+            console.warn('[buildings] 近景小块生成失败', key, m && m.message);
+            e.err = true;
+          }
+          e.state = 'empty';
+          return;
+        }
+        e.mesh = makeHiMesh(m);
+        e.props = m.props;
+        e.state = 'ready';
+        hiGroup.add(e.mesh);
+      });
+    };
+    const disposeHi = (key) => {
+      const e = hiCache.get(key);
+      if (e && e.mesh) {
+        hiGroup.remove(e.mesh);
+        e.mesh.geometry.dispose();
+      }
+      hiCache.delete(key);
+    };
+    const sameSet = (a, b) => {
+      if (a.size !== b.size) return false;
+      for (const k of a) if (!b.has(k)) return false;
+      return true;
+    };
+    const manageHi = () => {
+      const cam = ctx.camera.position;
+      const agl = cam.y - ctx.terrain.heightAt(cam.x, cam.z);
+      const keys = [];
+      let rect = null;
+      if (layerOn && agl < HI_AGL) {
+        const R = hiRadius;
+        rect = [Math.floor((cam.x - R) / CHUNK), Math.floor((cam.z - R) / CHUNK), Math.floor((cam.x + R) / CHUNK), Math.floor((cam.z + R) / CHUNK)];
+        for (let cz = rect[1]; cz <= rect[3]; cz++)
+          for (let cx = rect[0]; cx <= rect[2]; cx++) {
+            const k = cx + ',' + cz;
+            if (chunkDir.has(k)) keys.push(k);
+          }
+      }
+      // 请求缺失的小块（由近及远，最多 2 个并发）
+      const miss = keys.filter((k) => !hiCache.has(k));
+      if (miss.length && inflight < 2) {
+        const d = (k) => {
+          const c = chunkDir.get(k);
+          return Math.hypot((c.cx + 0.5) * CHUNK - cam.x, (c.cz + 0.5) * CHUNK - cam.z);
+        };
+        miss.sort((a, b) => d(a) - d(b));
+        for (const k of miss) {
+          if (inflight >= 2) break;
+          requestHi(k);
+        }
+      }
+      for (const k of keys) hiCache.get(k) && (hiCache.get(k).used = frame);
+      // 目标小块全部就绪才切换（避免远/近景交接时出现空洞）
+      const ready = keys.every((k) => hiCache.has(k) && hiCache.get(k).state !== 'loading');
+      // 任一小块生成失败：整片退回远景（不留空洞）
+      if (ready && keys.some((k) => hiCache.get(k).err)) {
+        keys.length = 0;
+        rect = null;
+      }
+      if (ready) {
+        const next = new Set(keys.filter((k) => hiCache.get(k).state === 'ready'));
+        const rectChanged = String(rect) !== String(hiRect);
+        if (!sameSet(next, hiShown) || rectChanged) {
+          for (const k of hiShown) if (!next.has(k) && hiCache.get(k)?.mesh) hiCache.get(k).mesh.visible = false;
+          for (const k of next) hiCache.get(k).mesh.visible = true;
+          const propsChanged = !sameSet(next, hiShown);
+          hiShown = next;
+          hiRect = keys.length ? rect : null;
+          if (hiRect) U.uHiRect.value.set(hiRect[0], hiRect[1], hiRect[2], hiRect[3]);
+          else U.uHiRect.value.set(1e6, 1e6, -1e6, -1e6);
+          if (propsChanged) rebuildProps();
+        }
+      }
+      // 淘汰远处缓存
+      if (hiCache.size > HI_CACHE) {
+        const cand = [...hiCache.entries()].filter(([k, e]) => e.state !== 'loading' && !hiShown.has(k)).sort((a, b) => a[1].used - b[1].used);
+        for (let i = 0; i < cand.length && hiCache.size > HI_CACHE; i++) disposeHi(cand[i][0]);
+      }
+    };
+
+    // —— 远景：每帧按 1 km 小块剔除（视锥 + 距离），按距离分到“远景全集 / 超远景子集”两套索引，
+    //    各自把可见小块（Morton 序）合并成 ≤ MAX_RUNS 段 drawRange ——
+    const frustum = new THREE.Frustum();
+    const pm = new THREE.Matrix4();
+    const mkRuns = () => {
+      const r = [];
+      for (let i = 0; i < 64; i++) r.push({ s: 0, e: 0, gap: 0 });
+      return { runs: r, n: 0, cur: null, gap: 0 };
+    };
+    const RS = [mkRuns(), mkRuns()];
+    const distXZ = (box, x, z) => {
+      const dx = Math.max(box.min.x - x, 0, x - box.max.x), dz = Math.max(box.min.z - z, 0, z - box.max.z);
+      return Math.hypot(dx, dz);
+    };
+    const runPush = (R, c, set) => {
+      const st = c.r[set], cnt = c.c[set];
+      if (!cnt) return;
+      if (R.cur && R.gap <= GAP_MERGE) R.cur.e = st + cnt;
+      else if (R.n < R.runs.length) {
+        R.cur = R.runs[R.n++];
+        R.cur.s = st;
+        R.cur.e = st + cnt;
+        R.cur.gap = R.gap;
+      }
+      R.gap = 0;
+    };
+    const runGap = (R, c, set) => {
+      if (R.cur) R.gap += c.c[set];
+    };
+    const runFinish = (R, blk, set) => {
+      const runs = R.runs;
+      while (R.n > MAX_RUNS) {
+        let bi = 1;
+        for (let k = 2; k < R.n; k++) if (runs[k].gap < runs[bi].gap) bi = k;
+        runs[bi - 1].e = runs[bi].e;
+        const tmp = runs[bi];
+        for (let k = bi; k < R.n - 1; k++) runs[k] = runs[k + 1];
+        runs[R.n - 1] = tmp;
+        R.n--;
+      }
+      for (let k = 0; k < R.n; k++) {
+        const m = blockMesh(blk, set, k);
+        m.geometry.drawRange.start = runs[k].s;
+        m.geometry.drawRange.count = runs[k].e - runs[k].s;
+        m.visible = true;
+      }
+      const pool = blk.pool[set];
+      for (let k = R.n; k < pool.length; k++) if (pool[k]) pool[k].visible = false;
+    };
+    const updateRuns = () => {
+      const cam = ctx.camera;
+      pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+      frustum.setFromProjectionMatrix(pm, cam.coordinateSystem, cam.reversedDepth);
+      const cx = cam.position.x, cz = cam.position.z;
+      const dd = U.uDrawDist.value;
+      const hr = hiRect;
+      for (const blk of blocks) {
+        for (const R of RS) (R.n = 0), (R.cur = null), (R.gap = 0);
+        const bd = distXZ(blk.box, cx, cz);
+        if (bd <= dd && (bd < NEAR_KEEP || frustum.intersectsBox(blk.box))) {
+          for (const c of blk.chunks) {
+            const inHi = hr && c.cx >= hr[0] && c.cx <= hr[2] && c.cz >= hr[1] && c.cz <= hr[3];
+            let vis = false;
+            const d = distXZ(c.box, cx, cz);
+            if (!inHi) vis = d <= dd && (d < NEAR_KEEP || frustum.intersectsBox(c.box));
+            if (vis && d < farD) {
+              runPush(RS[0], c, 0);
+              runGap(RS[1], c, 1);
+            } else if (vis) {
+              runGap(RS[0], c, 0);
+              runPush(RS[1], c, 1);
+            } else {
+              runGap(RS[0], c, 0);
+              runGap(RS[1], c, 1);
+            }
+          }
+        }
+        runFinish(RS[0], blk, 0);
+        runFinish(RS[1], blk, 1);
+      }
+    };
+
+    // —— 航空障碍灯 ——
+    let obstacle = null;
+    if (init.lights && init.lights.length) {
+      obstacle = makeObstacleLights(ctx, init.lights);
+      root.add(obstacle);
     }
 
-    const buildingMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.74, metalness: 0.12, side: THREE.DoubleSide });
-    const windowMat = new THREE.MeshPhysicalMaterial({ color: 0x536e80, metalness: 0.52, roughness: 0.17, clearcoat: 0.78, emissive: 0x26394a, emissiveIntensity: 0.03, side: THREE.DoubleSide });
-    ctx.night.register(windowMat, { day: 0.03, night: 1.35, curve: 1.05 });
-    const chunksList = [];
-    for (const chunk of chunks.values()) {
-      if (!chunk.count) continue;
-      const group = new THREE.Group(); group.name = `建筑区块 ${chunk.key}`;
-      group.position.set(chunk.cx, 0, chunk.cz);
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(chunk.positions, 3));
-      geom.setAttribute('color', new THREE.Float32BufferAttribute(chunk.colors, 3));
-      geom.setIndex(chunk.indices); geom.computeVertexNormals(); geom.computeBoundingSphere();
-      const mesh = new THREE.Mesh(geom, buildingMat); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = true; group.add(mesh);
-      if (chunk.windows.length) {
-        const win = new THREE.InstancedMesh(new THREE.BoxGeometry(1.35, 1.45, 0.075), windowMat, chunk.windows.length);
-        const dummy = new THREE.Object3D();
-        chunk.windows.forEach((w, j) => {
-          dummy.position.set(w.x - chunk.cx, w.y, w.z - chunk.cz); dummy.rotation.set(0, w.yaw, 0);
-          dummy.scale.set(w.w / 1.35, w.h / 1.45, 1); dummy.updateMatrix(); win.setMatrixAt(j, dummy.matrix);
-        });
-        win.instanceMatrix.needsUpdate = true; win.castShadow = false; win.receiveShadow = false; group.add(win);
+    // —— nearestFacade：外墙最近点查询（招牌模块用） ——
+    const FC = 64;
+    let fgrid = null;
+    const stamp = new Uint32Array(N);
+    let qid = 0;
+    const buildFacadeGrid = () => {
+      const g = new Map();
+      for (let i = 0; i < N; i++) {
+        if (pre.skip[i]) continue;
+        const x0 = Math.floor(pre.bb[i * 4] / FC), z0 = Math.floor(pre.bb[i * 4 + 1] / FC);
+        const x1 = Math.floor(pre.bb[i * 4 + 2] / FC), z1 = Math.floor(pre.bb[i * 4 + 3] / FC);
+        for (let cz = z0; cz <= z1; cz++)
+          for (let cx = x0; cx <= x1; cx++) {
+            const k = cx * 100003 + cz;
+            let l = g.get(k);
+            if (!l) g.set(k, (l = []));
+            l.push(i);
+          }
       }
-      root.add(group);
-      chunksList.push({ group, x: chunk.cx + CHUNK / 2, z: chunk.cz + CHUNK / 2 });
-      chunk.positions.length = chunk.colors.length = chunk.indices.length = chunk.windows.length = 0;
-    }
-    const q = ctx.quality;
-    let drawDistance = q.buildingDistance || 18000;
-    let layerVisible = true, frame = 0;
-    return {
-      setQuality(next) { drawDistance = Math.max(5000, next.buildingDistance || 18000); },
-      setLayer(layer, visible) { if (layer === 'buildings') { layerVisible = visible; root.visible = visible; } },
-      update() {
-        if (++frame % 15) return;
-        const p = ctx.camera.position;
-        for (const c of chunksList) c.group.visible = layerVisible && Math.hypot(p.x - c.x, p.z - c.z) < drawDistance + 4500;
-      },
-      dispose() { root.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); ctx.scene.remove(root); },
-      stats: { count: parsed.count, windows: windowCount, labels: landmarkCount },
+      return g;
     };
+    /**
+     * 最近的建筑外墙点。
+     * @returns {null|{x,z,nx,nz,height,index,dist,ground,bottom,top,edge,edgeLen,tx,tz,style,styleName,floorH,groundFloorH,street,name}}
+     *   x,z 外墙上的最近点；nx,nz 外法线（单位向量，指向街道一侧）；height 建筑高度（米，离地）；
+     *   ground 质心处地面海拔；top 屋顶海拔；tx,tz 沿墙切向；floorH/groundFloorH 标准层/首层层高；street 是否临街
+     */
+    const nearestFacade = (x, z, maxDist = 40) => {
+      if (!fgrid) fgrid = buildFacadeGrid();
+      if (++qid >= 0xffffffff) (qid = 1), stamp.fill(0);
+      let best = -1, bd = maxDist, bpx = 0, bpz = 0, bdx = 0, bdz = 0, bL = 0, be = 0;
+      const cx0 = Math.floor((x - maxDist) / FC), cx1 = Math.floor((x + maxDist) / FC);
+      const cz0 = Math.floor((z - maxDist) / FC), cz1 = Math.floor((z + maxDist) / FC);
+      const offs = P.offs;
+      for (let cz = cz0; cz <= cz1; cz++)
+        for (let cx = cx0; cx <= cx1; cx++) {
+          const l = fgrid.get(cx * 100003 + cz);
+          if (!l) continue;
+          for (const i of l) {
+            if (stamp[i] === qid) continue;
+            stamp[i] = qid;
+            const q = i * 4;
+            if (x < pre.bb[q] - bd || x > pre.bb[q + 2] + bd || z < pre.bb[q + 1] - bd || z > pre.bb[q + 3] + bd) continue;
+            const s = P.vertStart[i], n = P.vertCount[i], ax = P.anchorX[i], az = P.anchorZ[i];
+            for (let j = 0; j < n; j++) {
+              const k = j + 1 < n ? j + 1 : 0;
+              const x0 = ax + offs[(s + j) * 2] * 0.1, z0 = az + offs[(s + j) * 2 + 1] * 0.1;
+              const x1 = ax + offs[(s + k) * 2] * 0.1, z1 = az + offs[(s + k) * 2 + 1] * 0.1;
+              const dx = x1 - x0, dz = z1 - z0, L2 = dx * dx + dz * dz;
+              if (L2 < 1e-4) continue;
+              let t = ((x - x0) * dx + (z - z0) * dz) / L2;
+              t = t < 0 ? 0 : t > 1 ? 1 : t;
+              const px = x0 + dx * t, pz = z0 + dz * t;
+              const d = Math.hypot(x - px, z - pz);
+              if (d < bd) {
+                bd = d;
+                best = i;
+                bpx = px;
+                bpz = pz;
+                bdx = dx;
+                bdz = dz;
+                bL = Math.sqrt(L2);
+                be = j;
+              }
+            }
+          }
+        }
+      if (best < 0) return null;
+      // 外环方向（shoelace > 0 为逆时针，外法线 = (dz, -dx)）
+      const s = P.vertStart[best], n = P.vertCount[best];
+      let a = 0;
+      for (let j = 0; j < n; j++) {
+        const k = j + 1 < n ? j + 1 : 0;
+        a += offs[(s + j) * 2] * offs[(s + k) * 2 + 1] - offs[(s + k) * 2] * offs[(s + j) * 2 + 1];
+      }
+      const sg = a >= 0 ? 1 : -1;
+      const nx = (sg * bdz) / bL, nz = (-sg * bdx) / bL;
+      const t = best * 16;
+      const H = texArr[t + 1] || P.heightDm[best] * 0.1;
+      const st = Math.round(texArr[t + 3]);
+      return {
+        x: bpx, z: bpz, nx, nz,
+        height: H,
+        index: best,
+        dist: bd,
+        ground: pre.ga[best],
+        bottom: pre.base[best],
+        top: pre.ga[best] + H,
+        edge: be,
+        edgeLen: bL,
+        tx: bdx / bL, tz: bdz / bL,
+        style: st,
+        styleName: STYLE_NAMES[st] || '',
+        floorH: texArr[t + 2] || 3,
+        groundFloorH: texArr[t + 8] || 4,
+        street: ((texArr[t + 11] | 0) & 1) === 1,
+        name: (ctx.data.buildingNames && ctx.data.buildingNames[String(best)]) || '',
+      };
+    };
+
+    const stat = init.stat;
+    console.log(
+      `[buildings] v${init.version} ${N} 栋（排除 ${pre.nEx}，skyline 让位 ${pre.nSky}）；远景 ${blocks.length} 块 ${(stat.loTris / 1e6).toFixed(2)}M 三角形；` +
+        `Worker ${stat.ms} ms；主线程预处理 ${tPre.toFixed(0)} ms + 建网格 ${(performance.now() - t1).toFixed(0)} ms；风格 ` +
+        STYLE_NAMES.map((s, i) => `${s}${stat.styles[i]}`).join(' ')
+    );
+    updateRuns();
+
+    const inst = {
+      nearestFacade,
+      api: { nearestFacade },
+      stats: () => ({
+        blocks: blocks.length,
+        loVisible: blocks.reduce((s, b) => s + b.pool[0].filter((m) => m && m.visible).length, 0),
+        farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length, 0),
+        hiShown: hiShown.size,
+        hiCached: hiCache.size,
+        props: propMeshes.map((m) => m.count),
+      }),
+      update(dt, t) {
+        frame++;
+        if (frame === 3 && warm.parent) {
+          hiGroup.remove(warm);
+          warm.geometry.dispose();
+        }
+        if (!root.visible) return;
+        // 亮灯率：住宅 / 办公 / 商业 + 夜间开灯系数
+        const h = ctx.sky ? ctx.sky.hours : 12;
+        const nf = ctx.uniforms.uNight.value;
+        U.uLit.value.set(curve(LIT_RES, h), curve(LIT_OFF, h), curve(LIT_COM, h), smooth(0.06, 0.5, nf));
+        if (frame % 3 === 0 || frame < 3) manageHi();
+        updateRuns();
+      },
+      setLayer(name, on) {
+        if (name !== 'buildings') return;
+        root.visible = on;
+        layerOn = on;
+      },
+      setQuality(q) {
+        U.uDrawDist.value = q.buildingDistance || 16000;
+        hiRadius = HI_RADIUS[q.level ?? 2] || 1200;
+        farD = FAR_D[q.level ?? 2] || 4000;
+      },
+      dispose() {
+        gen.dispose();
+        for (const k of [...hiCache.keys()]) disposeHi(k);
+        for (const blk of blocks) for (const pool of blk.pool) for (const m of pool) m && m.geometry.dispose();
+        for (const m of propMeshes) m && m.dispose();
+        propGeos.forEach((g) => g.dispose());
+        dataTex.dispose();
+        mats.lo.dispose();
+        mats.hi.dispose();
+        ctx.scene.remove(root);
+      },
+    };
+    return inst;
   },
 };
