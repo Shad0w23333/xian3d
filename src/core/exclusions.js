@@ -10,7 +10,8 @@ export class Exclusions {
 
   /**
    * shape: {points:[x,z,...]} | {rect:[cx,cz,w,d,rotRad]} | {circle:[cx,cz,r]}
-   * flags: {buildings=true, trees=true, roads=false, pois=true}
+   * flags: {buildings=true, trees=true, roads=false, pois=true, maxHeight}
+   *   maxHeight（可选，米）：只让高度 ≤ maxHeight 的通用建筑让位（片区精建替换低层街区、保留其中高楼）
    */
   add(shape, flags = {}) {
     let p = shape.points;
@@ -33,12 +34,13 @@ export class Exclusions {
     return it;
   }
 
-  /** 点是否落在某类排除区内 */
-  test(x, z, kind = 'buildings') {
+  /** 点是否落在某类排除区内；h 为建筑高度（仅 buildings 用于 maxHeight 判断） */
+  test(x, z, kind = 'buildings', h = 0) {
     const list = this.grid.get(Math.floor(x / this.cell) * 100003 + Math.floor(z / this.cell));
     if (!list) return false;
     for (const it of list) {
       if (!it.flags[kind]) continue;
+      if (kind === 'buildings' && it.flags.maxHeight != null && h > it.flags.maxHeight) continue;
       const b = it.bb;
       if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
       if (pointInPoly(x, z, it.p)) return true;

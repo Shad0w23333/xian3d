@@ -13,10 +13,9 @@ fi
 PORT=4173
 URL="http://localhost:$PORT/"
 ( sleep 1.2; open "$URL" ) &
-if command -v python3 >/dev/null 2>&1; then
-  echo "服务已启动：$URL （关闭本窗口即停止）"
-  python3 -m http.server $PORT --directory "$DIR"
+# 优先用 Node 的零依赖服务器（支持 HTTP Range，离线影像包需要）；否则用 Python 版
+if command -v node >/dev/null 2>&1; then
+  node tools/serve.mjs "$DIR" $PORT
 else
-  echo "服务已启动：$URL （关闭本窗口即停止）"
-  npx --yes serve -l $PORT "$DIR"
+  python3 tools/serve.py "$DIR" $PORT
 fi
