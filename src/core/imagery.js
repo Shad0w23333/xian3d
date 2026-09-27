@@ -43,15 +43,25 @@ export class Imagery {
     if (cfg.maxZoom) this.online.maxZoom = cfg.maxZoom;
   }
 
-  /** 切换在线影像源（'amap' | 'esri'），清空已加载的在线瓦片 */
+  /** 挂接本地离线瓦片包（TilePack） */
+  attachPack(pack) {
+    this.pack = pack;
+    if (pack.attribution) IMAGERY_PROVIDERS.local.attribution = pack.attribution;
+    IMAGERY_PROVIDERS.local.maxZoom = pack.maxZoom;
+  }
+
+  /** 切换影像源（'local' | 'amap' | 'esri'），清空已加载的瓦片 */
   setProvider(id) {
     const p = IMAGERY_PROVIDERS[id];
     if (!p || id === this.providerId) return false;
+    if (p.local && !this.pack) return false;
     this.provider = p;
     this.providerId = id;
     this.online.url = p.url;
     this.online.maxZoom = p.maxZoom;
+    this.maxInflight = p.local ? 16 : 12;
     this.pending.clear();
+    this.failed.clear();
     for (const [, e] of this.cache) if (e.refs === 0) { e.tex.dispose(); e.tex.image && e.tex.image.close && e.tex.image.close(); }
     this.cache = new Map([...this.cache].filter(([, e]) => e.refs > 0)); // 仍被地形引用的旧瓦片稍后自然回收
     this.generation = (this.generation || 0) + 1;
@@ -122,6 +132,8 @@ export class Imagery {
     if (!this.online.enabled) return;
     const k = this.key(z, x, y);
     if (this.cache.has(k) || this.failed.has(k) || this.inflight.has(k)) return;
+    // 本地包：包里没有的瓦片直接记为失败（地形会退回祖先瓦片或内置底图）
+    if (this.provider.local && !this.pack.has(z, x, y)) { this.failed.add(k); return; }
     const bo = this.backoff.get(k);
     if (bo && performance.now() < bo) return;
     const p = this.pending.get(k);
@@ -230,7 +242,11 @@ export class Imagery {
     try {
       const gen = this.generation || 0;
       let bmp;
-      if (this.provider.gcj) {
+      if (this.provider.local) {
+        const blob = await this.pack.get(p.z, p.x, p.y, ctrl.signal);
+        if (!blob) throw new Error('placeholder');
+        bmp = await createImageBitmap(blob, { imageOrientation: 'flipY', colorSpaceConversion: 'none' });
+      } else if (this.provider.gcj) {
         bmp = await this._composeGcj(p.z, p.x, p.y, ctrl.signal);
       } else {
         const res = await fetch(this._url(p.z, p.x, p.y), { mode: 'cors', signal: ctrl.signal });

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { loadJSON, loadBinary, onProgress } from './core/data.js';
 import { Terrain } from './core/terrain.js';
 import { Imagery } from './core/imagery.js';
+import { TilePack } from './core/tilepack.js';
 import { SkySystem } from './core/sky.js';
 import { Controls } from './core/controls.js';
 import { Post } from './core/post.js';
@@ -110,12 +111,18 @@ async function main() {
   const terrain = new Terrain();
   const imagery = new Imagery(renderer, quality);
   imagery.setOnlineConfig(meta.online);
-  if (params.get('online') === '0') imagery.setOnlineEnabled(false);
+  // 本地离线高清影像包（public/tiles/，tools/imagery_pack.py 生成）：存在时默认使用，?pack=0 关闭
+  const pack = params.get('pack') === '0' ? null : await TilePack.load('tiles/');
+  if (pack) imagery.attachPack(pack);
   {
     let pid = params.get('imagery');
     if (!pid) try { pid = localStorage.getItem('xian3d.imagery'); } catch {}
+    if (pid === 'local' && !pack) pid = null;
+    if (!pid && pack) pid = 'local';
     if (pid && IMAGERY_PROVIDERS[pid]) imagery.setProvider(pid);
   }
+  // online=0 只关闭联网影像；本地瓦片包不受影响
+  if (params.get('online') === '0' && !imagery.provider.local) imagery.setOnlineEnabled(false);
   const [,] = await Promise.all([terrain.load(meta), imagery.loadMosaics(meta.imagery)]);
 
   const data = {};
@@ -268,7 +275,7 @@ async function main() {
       ...(meta.sources || []).filter((x) => !/Esri|OpenStreetMap/i.test(x)).map((x) => x.split('(')[0].split('（')[0].trim()).slice(0, 2),
     ]);
   updateAttribution();
-  ui.setProvider(imagery.providerId);
+  ui.setProvider(imagery.providerId, !!imagery.pack);
   const miniSrc = imagery.mosaics.find((m) => /main/.test(m.file)) || imagery.mosaics[imagery.mosaics.length - 1];
   if (miniSrc) ui.setMinimapImage(miniSrc.texture.image, miniSrc.bounds);
   if (params.get('mini') === '0') ui.toggleMinimap(false);
