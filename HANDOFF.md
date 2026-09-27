@@ -169,8 +169,12 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 **尝试后放弃**
 - 用 Overture 里的“东亚建筑数据集”（zenodo 8174931）补全 CMAB 缺失建筑：核查发现它在凯悦（2025 开业）原址只有施工工棚，比 CMAB 更旧，补全会引入过时信息，已撤销。
 
+- 用户追加要求（最清晰最新的免费影像、用高德数据替代陈旧的 OSM）：
+  - `imagery_pack.py` 新增源 `esri_clarity`、`wayback`（Esri 历史期）、`tianditu`（天地图，需服务器端 Key）、`tencent`（GCJ 纠偏）、`jl1`（吉林一号共生地球，需 mk/tk）、`custom`（任意 XYZ 模板）；`--pick sharp` 按 8×8 瓦片块抽样打分自动择优；`bench` 各片区抽样评测；`--plan ultra` 核心片区 z20；前端地形 LOD 在本地包有 z20 时可细分到 z20。
+  - `tools/amap_fetch.py`：高德 Web 服务 API（多边形 POI 搜索四叉细分、交通态势矩形道路），缓存续传、配额保护，`merge` 做 GCJ→WGS 逆变换后合并进 pois.json（类型码映射到招牌类别与重要度）与 roads.json（补缺失路段、给无名路补路名）。已用伪造数据离线测试；真实抓取需用户 Key 在本机运行（云端网络不通高德）。
+
 **遗留 / 下一步**
-1. 在本机运行 `python tools/imagery_pack.py compare ...` 选源，再 `all --source google,esri` 生成影像包；在 Mac 上复核永宁门夜景（`?online=0&view=5&time=20.8`）。
+1. 在本机运行 `python tools/imagery_pack.py bench ...` 选源，再 `all --pick sharp --plan ultra` 生成影像包；运行 `tools/amap_fetch.py poi/roads/merge` 更新 POI 与路网；在 Mac 上复核永宁门夜景（`?online=0&view=5&time=20.8`）。
 2. 待核实并补建：欧亚国际三期两栋 180 m 塔（坐标、是否竣工未知）、凯悦准确轮廓（现为按调研推测的叠石体块）、W 酒店三塔准确落位、彩虹桥主塔偏向哪一岸、西北国金中心 228 m 是否已建成。有高清影像后可逐一校准。
 3. 浐灞/港务区 2022 年后新建的大量住宅在 CMAB 中缺失或高度被截在约 86 m；需要更新的建筑数据源（或用高清影像人工补录重点片区）。
 4. 曲江道路：数据已是 2026 年最新 OSM；登高路南段（杜陵西路—航天大道 1,177 m）OSM 尚未绘出。

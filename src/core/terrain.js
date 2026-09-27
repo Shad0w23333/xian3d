@@ -330,6 +330,9 @@ export class Terrain {
     const q = this.quality.maxTileZoom;
     const onlineOn = this.imagery.online.enabled;
     if (!inMain) return 13;
+    // 本地离线高清包：比在线再细一级（包里有 z19/z20 时，“高”画质到 19、“超高”到 20）
+    const im = this.imagery;
+    if (im.provider.local && im.pack) return Math.min(im.pack.maxZoom, q + 1);
     return onlineOn ? q : Math.min(q, 16);
   }
 

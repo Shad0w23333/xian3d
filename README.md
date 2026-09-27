@@ -34,19 +34,42 @@ npm run preview
 
 ## 离线高清卫星影像（推荐）
 
-在线流式影像很费带宽。可以在本机一次性下载高清瓦片，打包成少量大文件（`tiles/*.xtp`，前端用 HTTP Range 按需读取）：
+在线流式影像很费带宽。可以在本机一次性下载高清瓦片，打包成少量大文件（`tiles/*.xtp`，前端用 HTTP Range 按需读取）。可用的免费源：
+
+| 源 | 说明 | 最高层级 | 坐标 |
+|---|---|---|---|
+| `google` | 西安城区通常最清晰 | z20（约 0.12 m/px） | WGS-84 |
+| `esri_clarity` / `esri` / `wayback` | Clarity 未经二次压缩；Wayback 可指定期（避开积雪那期） | z19 | WGS-84 |
+| `tianditu` | 天地图，国家平台，免费，需“服务器端”Key（console.tianditu.gov.cn） | z18 | CGCS2000≈WGS-84 |
+| `jl1` | 吉林一号“共生地球”年度影像（0.5~0.75 m），免费注册后取 mk/tk | 视图层 | WGS-84 |
+| `amap` / `tencent` | 高德 / 腾讯卫星，脚本逐瓦片纠偏 | z18（部分 z19+） | GCJ-02 |
+| `bing` | Bing 航拍 | z19 | WGS-84 |
 
 ```bash
-python tools/imagery_pack.py plan                                   # 估算：默认方案约 7 万张 / 1.7 GB（lite 方案约 0.6 GB）
-python tools/imagery_pack.py compare --lon 108.9423 --lat 34.2610 --z 19   # 对比 Google/Esri/Bing/高德同一位置的清晰度
-python tools/imagery_pack.py all --source google,esri               # 下载（断点续传）+ 打包；前者缺图时用后者补
+python tools/imagery_pack.py plan --plan ultra                       # 估算：default 约 7 万张 1.7 GB；ultra（核心区 z20）约 11 万张 2.7 GB
+python tools/imagery_pack.py bench --source google,esri_clarity,tianditu,amap --tk 天地图Key   # 各片区抽样比清晰度/积雪/缺图率
+python tools/imagery_pack.py compare --lon 108.9423 --lat 34.2610 --z 19                     # 同一位置多源对比图
+python tools/imagery_pack.py all --source google,esri_clarity,tianditu --pick sharp --plan ultra --tk 天地图Key
 ```
 
-- 覆盖：全域 z11–15、城区 z16–17、城墙内/曲江/小寨/高新/未央/浐灞 z18–19、奥体北站/咸阳机场 z18（片区在脚本 `PLANS` 里改）。
-- 高德（`--source amap`）是 GCJ-02 坐标，脚本会逐瓦片纠偏回 WGS-84 后再打包。
-- 打包结果在仓库根目录 `tiles/`（不进 `dist/`，已加入 `.gitignore`）。`npm run dev` / `npm run preview` / 双击启动脚本都会把它挂到 `/tiles/`，页面自动启用“本地离线高清”影像源（`?pack=0` 可关闭）。
-- 注意：Python 自带的 `http.server` 不支持 Range，请用 `node tools/serve.mjs` 或 `python3 tools/serve.py`。
+- `--pick sharp`：按 8×8 瓦片块抽样打分（清晰度 + 积雪/云惩罚），每块整体采用得分最高的源，避免逐瓦片拼色；不加则按 `--source` 顺序回退。
+- 断点续传：中断后重新运行同一命令即可；缓存在 `data-src/tiles_hd/`。
+- 打包结果在仓库根目录 `tiles/`（不进 `dist/`，已加入 `.gitignore`）。`npm run dev` / `npm run preview` / 双击启动脚本都会把它挂到 `/tiles/`，页面自动启用“本地离线高清”影像源（`?pack=0` 关闭）；包里有 z20 时“超高”画质会用到 z20。
+- Python 自带的 `http.server` 不支持 Range，请用 `node tools/serve.mjs` 或 `python3 tools/serve.py`。
 - 各图源都有使用条款，打包结果仅供个人本地使用，不要公开发布。
+
+## 高德数据（POI 与道路）
+
+OSM 在西安的 POI 只有约 9 千条且陈旧，高德同范围有十几万条。用你自己的高德“Web服务”Key（console.amap.com）在本机抓取，只调用官方 Web 服务接口：
+
+```bash
+export AMAP_KEY=你的Key
+python tools/amap_fetch.py poi   --max-requests 4000   # 多边形 POI 搜索，自动四叉细分；配额用完后次日重跑续传
+python tools/amap_fetch.py roads                      # 交通态势·矩形道路（带路名与等级），用于补缺失路段、补路名
+python tools/amap_fetch.py merge                      # GCJ-02 → WGS-84 后合并进 public/data/pois.json、roads.json（原文件备份在 data-src/）
+```
+
+高德不提供建筑轮廓和完整路网的官方数据接口；本脚本不抓取高德瓦片（违反其服务条款）。生成的数据仅供个人本地使用。
 
 ## 数据生成
 
