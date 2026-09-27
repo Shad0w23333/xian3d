@@ -1,0 +1,351 @@
+// skyline：通用摩天楼生成器（分段收分/斜顶/塔冠/裙房/屋顶设备/停机坪/避雷针/楼顶字/航空障碍灯）
+import * as THREE from 'three';
+import { Batcher } from '../core/util.js';
+import * as G from './sky-geom.js';
+import { style as mkStyle } from './sky-facade.js';
+
+// ---------- 招牌图集：所有楼顶字/立面字合成一张贴图、一个材质、一次绘制 ----------
+export class SignAtlas {
+  constructor(ctx, W = 4096, H = 2048) {
+    this.ctx = ctx;
+    this.W = W; this.H = H;
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = W; this.canvas.height = H;
+    this.g = this.canvas.getContext('2d');
+    this.x = 0; this.y = 0; this.row = 0;
+    this.pos = []; this.uv = []; this.cache = new Map();
+  }
+  /** 渲染文字进图集，返回 {u0,v0,u1,v1,aspect} */
+  entry(text, opts) {
+    const key = text + JSON.stringify(opts);
+    if (this.cache.has(key)) return this.cache.get(key);
+    const t = this.ctx.tex.text(text, { size: 110, padding: 0.12, letterSpacing: 0.06, ...opts });
+    const c = t.canvas;
+    let w = c.width, h = c.height;
+    const k = Math.min(1, 150 / h);
+    w = Math.ceil(w * k); h = Math.ceil(h * k);
+    if (this.x + w > this.W) { this.x = 0; this.y += this.row + 4; this.row = 0; }
+    if (this.y + h > this.H) { console.warn('[skyline] 招牌图集已满', text); return null; }
+    this.g.drawImage(c, this.x, this.y, w, h);
+    const e = { u0: this.x / this.W, u1: (this.x + w) / this.W, v0: 1 - (this.y + h) / this.H, v1: 1 - this.y / this.H, aspect: w / h };
+    this.x += w + 4; this.row = Math.max(this.row, h);
+    this.cache.set(key, e);
+    return e;
+  }
+  /** 在世界中放置一块文字牌：中心 p，外法线 n（水平单位向量），字高 h（米），最大宽度 maxW */
+  place(text, p, nx, nz, h, maxW, opts = {}) {
+    const e = this.entry(text, opts);
+    if (!e) return;
+    let w = h * e.aspect;
+    if (maxW && w > maxW) { h *= maxW / w; w = maxW; }
+    const rx = nz, rz = -nx; // 面向外看时的右方向
+    const x0 = p.x - rx * w / 2, z0 = p.z - rz * w / 2, x1 = p.x + rx * w / 2, z1 = p.z + rz * w / 2;
+    const y0 = p.y - h / 2, y1 = p.y + h / 2;
+    const o = 0.45;
+    const P = [[x0, y0, z0], [x1, y0, z1], [x1, y1, z1], [x0, y1, z0]].map(([x, y, z]) => [x + nx * o, y, z + nz * o]);
+    const U = [[e.u0, e.v0], [e.u1, e.v0], [e.u1, e.v1], [e.u0, e.v1]];
+    for (const k of [0, 1, 2, 0, 2, 3]) { this.pos.push(...P[k]); this.uv.push(...U[k]); }
+  }
+  build() {
+    if (!this.pos.length) return null;
+    const tex = new THREE.CanvasTexture(this.canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    const mat = new THREE.MeshStandardMaterial({
+      map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0, transparent: true, alphaTest: 0.08,
+      roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide, depthWrite: true,
+    });
+    this.ctx.night.register(mat, { day: 0.06, night: 2.6 });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, mat);
+    m.name = '楼顶字';
+    return m;
+  }
+}
+
+// ---------- 航空障碍灯 / 泛光点：一个 Points 绘制 ----------
+export class Beacons {
+  constructor(ctx) { this.ctx = ctx; this.P = []; this.A = []; }
+  /** kind: 0 红色闪光（楼顶） 1 红色常亮（中段） 2 白色闪光（电视塔桅杆顶） */
+  add(x, y, z, kind = 0, size = 5) { this.P.push(x, y, z); this.A.push(kind, Math.random(), size); }
+  build() {
+    const ctx = this.ctx;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3));
+    g.setAttribute('aInfo', new THREE.Float32BufferAttribute(this.A, 3));
+    this.uScale = { value: 500 };
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uTime: ctx.uniforms.uTime, uNight: ctx.uniforms.uNight, uScale: this.uScale },
+      vertexShader: /* glsl */ `
+        #include <common>
+        #include <logdepthbuf_pars_vertex>
+        attribute vec3 aInfo; uniform float uTime; uniform float uNight; uniform float uScale;
+        varying vec3 vCol; varying float vA;
+        void main(){
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mv;
+          float kind = aInfo.x;
+          // 中光强航空障碍灯：约 40 次/分，楼顶同步闪
+          float ph = kind < 0.5 ? fract(uTime * 0.667) : fract(uTime * 0.8 + aInfo.y * 0.1);
+          float on = kind > 0.5 && kind < 1.5 ? 1.0 : smoothstep(0.0, 0.05, ph) * (1.0 - smoothstep(0.28, 0.42, ph));
+          vCol = kind > 1.5 ? vec3(1.0, 0.95, 0.9) : vec3(1.0, 0.06, 0.03);
+          float day = 1.0 - uNight;
+          vA = on * mix(1.0, 0.35, day) * (kind > 0.5 && kind < 1.5 ? 0.7 : 1.0);
+          float sz = aInfo.z * uScale / max(1.0, -mv.z);
+          gl_PointSize = clamp(sz, 2.2, 40.0) * (0.6 + 0.4 * uNight);
+          #include <logdepthbuf_vertex>
+        }`,
+      fragmentShader: /* glsl */ `
+        #include <logdepthbuf_pars_fragment>
+        varying vec3 vCol; varying float vA;
+        void main(){
+          #include <logdepthbuf_fragment>
+          vec2 d = gl_PointCoord - 0.5; float r = length(d) * 2.0;
+          float core = 1.0 - smoothstep(0.0, 0.35, r); float halo = 1.0 - smoothstep(0.2, 1.0, r);
+          float a = (core * 1.0 + halo * 0.35) * vA;
+          if (a < 0.01) discard;
+          gl_FragColor = vec4(vCol * (core * 7.0 + halo * 1.2), a);
+        }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    const pts = new THREE.Points(g, mat);
+    pts.frustumCulled = false;
+    pts.renderOrder = 5;
+    pts.name = '航空障碍灯';
+    return pts;
+  }
+  update(renderer, camera) {
+    if (!this.uScale) return;
+    const h = renderer.domElement.height || 800;
+    this.uScale.value = (h * 0.5) * camera.projectionMatrix.elements[5];
+  }
+}
+
+// ---------- 共享实体材质 ----------
+export function solidMats(ctx) {
+  const T = ctx.tex;
+  const heli = (() => {
+    const c = T.canvas(512);
+    const g = c.getContext('2d');
+    g.fillStyle = '#2d3a33'; g.fillRect(0, 0, 512, 512);
+    g.strokeStyle = '#e8e2d0'; g.lineWidth = 18;
+    g.beginPath(); g.arc(256, 256, 200, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = '#e0b43a'; g.lineWidth = 8;
+    g.beginPath(); g.arc(256, 256, 232, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = '#eeeae0'; g.font = 'bold 250px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('H', 256, 268);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    return t;
+  })();
+  const m = {
+    roof: ctx.mats.clone('concrete', { color: 0x8d8a84, roughness: 0.9 }),
+    parapet: new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.7, roughness: 0.35 }),
+    metal: ctx.mats.get('metalGray'),
+    white: new THREE.MeshStandardMaterial({ color: 0xd9dadb, metalness: 0.35, roughness: 0.4 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x2b2f33, metalness: 0.5, roughness: 0.5 }),
+    heli: new THREE.MeshStandardMaterial({ map: heli, roughness: 0.8 }),
+    stone: ctx.mats.clone('marble', { color: 0xd8d0c0, roughness: 0.7 }),
+    granite: ctx.mats.clone('stonePaving', { color: 0xb9b4aa, roughness: 0.85 }),
+    roofTile: ctx.mats.get('roofGray'),
+    glassRoof: new THREE.MeshPhysicalMaterial({ color: 0x9fb4c2, metalness: 0.6, roughness: 0.12, envMapIntensity: 1.2 }),
+    membrane: new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, emissive: 0xffd9c4, emissiveIntensity: 0 }),
+    grass: ctx.mats.get('grass'),
+    yellow: new THREE.MeshStandardMaterial({ color: 0xd9a21b, roughness: 0.6, metalness: 0.3 }),
+    track: new THREE.MeshStandardMaterial({ color: 0x9a3a2c, roughness: 0.9 }),
+    seats: new THREE.MeshStandardMaterial({ color: 0x5b6e84, roughness: 0.8 }),
+    lampWarm: ctx.mats.get('lampWarm'),
+    ledBlue: new THREE.MeshStandardMaterial({ color: 0xaab4bf, emissive: 0x6fa8ff, emissiveIntensity: 0, roughness: 0.5 }),
+    ledRed: new THREE.MeshStandardMaterial({ color: 0x8a2a2a, emissive: 0xff3a2a, emissiveIntensity: 0, roughness: 0.5 }),
+  };
+  ctx.night.register(m.membrane, { day: 0, night: 0.9 });
+  ctx.night.register(m.ledBlue, { day: 0, night: 3.2 });
+  ctx.night.register(m.ledRed, { day: 0.05, night: 3.0 });
+  return m;
+}
+
+/** 轮廓下最低地面高度 */
+export function groundMin(ctx, pts) {
+  let m = Infinity;
+  const c = G.centroid(pts);
+  m = Math.min(m, ctx.terrain.heightAt(c.x, c.z));
+  for (let i = 0; i < pts.length; i += 2) m = Math.min(m, ctx.terrain.heightAt(pts[i], pts[i + 1]));
+  return m;
+}
+
+function longestEdges(poly, k = 2) {
+  const n = poly.length / 2, e = [];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    e.push({ i, L: Math.hypot(poly[j * 2] - poly[i * 2], poly[j * 2 + 1] - poly[i * 2 + 1]) });
+  }
+  e.sort((a, b) => b.L - a.L);
+  return e.slice(0, k).map((x) => x.i);
+}
+function edgeInfo(poly, i) {
+  const n = poly.length / 2, j = (i + 1) % n;
+  const ax = poly[i * 2], az = poly[i * 2 + 1], bx = poly[j * 2], bz = poly[j * 2 + 1];
+  const L = Math.hypot(bx - ax, bz - az) || 1;
+  return { mx: (ax + bx) / 2, mz: (az + bz) / 2, nx: (bz - az) / L, nz: -(bx - ax) / L, L };
+}
+
+/**
+ * 构建一栋塔楼。env: {ctx, fb, solid(Batcher), detail(Batcher), mats, signs, beacons}
+ * spec 见 sky-data.js
+ */
+export function buildTower(env, spec) {
+  const { ctx, fb, solid, detail, mats, signs, beacons } = env;
+  const pts = G.ccw(spec.pts);
+  const base = spec.base ?? groundMin(ctx, spec.podium ? spec.podium.pts.concat(pts) : pts);
+  const c = G.centroid(pts);
+  const H = spec.h;
+  const st = mkStyle(spec.style || {});
+  const crownH = spec.crown ? spec.crown.h : 0;
+  const drop = spec.slope ? spec.slope.drop : 0;
+  const taper = spec.taper ?? 1;
+  const sAt = (y) => 1 - (1 - taper) * Math.min(1, Math.max(0, y / H));
+  const at = (poly, y) => (taper !== 1 ? G.scaleAbout(poly, c.x, c.z, sAt(y)) : poly);
+  const topF = H - crownH - drop; // 最高楼层顶
+  // 斜顶：沿 dir 方向，最低处 H-drop、最高处 H
+  let yTopFn = null;
+  if (spec.slope) {
+    const [dx, dz] = spec.slope.dir, dl = Math.hypot(dx, dz);
+    let r = 0;
+    for (let i = 0; i < pts.length; i += 2) r = Math.max(r, Math.abs(((pts[i] - c.x) * dx + (pts[i + 1] - c.z) * dz) / dl));
+    yTopFn = (x, z) => base + H - drop * (0.5 - 0.5 * (((x - c.x) * dx + (z - c.z) * dz) / dl / r));
+  }
+  // —— 分段 ——
+  const tiers = (spec.tiers || [{ to: topF, inset: 0 }]).map((t) => ({ ...t, to: t.to <= 1.001 ? t.to * topF : t.to }));
+  let y0 = -3, prevPoly = null;
+  for (let k = 0; k < tiers.length; k++) {
+    const t = tiers[k];
+    const poly = G.inset(pts, t.inset || 0);
+    const s = t.style ? mkStyle({ ...spec.style, ...t.style }) : st;
+    const b = at(poly, Math.max(0, y0)), tp = at(poly, t.to);
+    if (prevPoly && (t.inset || 0) !== (tiers[k - 1].inset || 0)) {
+      // 退台挑檐
+      solid.add(G.annulus(at(prevPoly, y0), b, base + y0 + 0.02), mats.parapet);
+    }
+    fb.ring(b, tp, base + y0, base + t.to, s, { vBase: base });
+    prevPoly = poly;
+    y0 = t.to;
+  }
+  const lastInset = tiers[tiers.length - 1].inset || 0;
+  // —— 塔冠 ——
+  const crownPoly = G.inset(pts, lastInset + (spec.crown?.inset || 0));
+  const cb = at(crownPoly, topF);
+  if (spec.crown) {
+    const cs = mkStyle({ ...spec.style, mode: 4, floorH: crownH + drop, spandrel: 0, lit: 0, mullW: spec.crown.mullW ?? 0.14, colW: spec.crown.colW ?? st.colW * 2, spd: spec.crown.color || '#ffe2b8', tint: spec.crown.tint || spec.style?.tint });
+    const ct = at(crownPoly, topF + crownH);
+    if (spec.crown.inset) solid.add(G.annulus(at(prevPoly, topF), cb, base + topF + 0.02), mats.parapet);
+    fb.ring(cb, ct, base + topF, yTopFn || base + topF + crownH, cs, { vLocal: true });
+    // 塔冠顶檐（厚金属环）
+    const rim = G.inset(ct, -0.6);
+    solid.add(G.wallGeometry(rim, rim, yTopFn ? (x, z) => yTopFn(x, z) - 1.2 : base + topF + crownH - 1.2, yTopFn || base + topF + crownH), mats.parapet);
+    solid.add(G.annulus(rim, G.inset(ct, 1.0), yTopFn || base + topF + crownH), mats.parapet);
+    // 屋面：略低于顶檐的平/斜屋面
+    const roofY = yTopFn ? (x, z) => yTopFn(x, z) - 3.5 : base + topF + crownH - 3.5;
+    solid.add(G.capGeometry(G.inset(ct, 0.4), roofY), mats.dark);
+  } else {
+    // 女儿墙 + 屋面
+    const par = spec.roof?.parapet ?? 1.4;
+    const tp = at(prevPoly, topF);
+    solid.add(G.wallGeometry(tp, tp, base + topF, base + topF + par), mats.parapet);
+    solid.add(G.capGeometry(G.inset(tp, 0.35), base + topF + 0.1), mats.roof);
+    solid.add(G.wallGeometry(G.inset(tp, 0.35), G.inset(tp, 0.35), base + topF + par, base + topF + 0.1), mats.parapet);
+  }
+  // —— 屋顶设备 / 停机坪 / 避雷针 ——
+  const roofTop = spec.crown ? base + topF + crownH - 3.5 - (spec.slope ? drop : 0) : base + topF;
+  const rpoly = at(crownPoly, topF);
+  const rb = G.bbox(rpoly);
+  const rw = rb.x1 - rb.x0, rd = rb.z1 - rb.z0;
+  if (spec.roof?.mech !== false && !spec.slope) {
+    const mw = Math.min(rw, rd) * 0.42;
+    detail.add(G.box(c.x, roofTop + 2.6, c.z, mw, 5.2, mw * 0.8), mats.roof, null, { worldUV: 1 });
+    detail.add(G.box(c.x + mw * 0.2, roofTop + 5.8, c.z - mw * 0.1, mw * 0.4, 1.2, mw * 0.3), mats.metal);
+    for (let k = 0; k < 3; k++) detail.add(G.cyl(c.x - mw * 0.35 + k * mw * 0.3, roofTop + 5.2, c.z + mw * 0.55, 1.4, 1.4, 1.6, 10), mats.metal);
+  }
+  if (spec.roof?.helipad) {
+    const hr = Math.min(rw, rd) * 0.36;
+    const hy = roofTop + (spec.roof.helipadY ?? 6.5);
+    const disk = new THREE.CircleGeometry(hr, 40);
+    disk.rotateX(-Math.PI / 2);
+    disk.translate(c.x, hy + 0.35, c.z);
+    solid.add(disk, mats.heli);
+    solid.add(G.cyl(c.x, hy - 0.4, c.z, hr + 0.3, hr + 0.3, 0.75, 40), mats.white);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      detail.add(G.cyl(c.x + Math.cos(a) * hr * 0.7, roofTop, c.z + Math.sin(a) * hr * 0.7, 0.35, 0.35, hy - roofTop, 6), mats.metal);
+    }
+    // 停机坪边灯（绿色常亮用暖灯代替）
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      detail.add(G.box(c.x + Math.cos(a) * hr, hy + 0.5, c.z + Math.sin(a) * hr, 0.3, 0.3, 0.3), mats.lampWarm);
+    }
+  }
+  const topY = spec.slope ? base + H : roofTop + (spec.roof?.helipad ? (spec.roof.helipadY ?? 6.5) : 6);
+  if (spec.roof?.spire) {
+    const sh = spec.roof.spire;
+    const sx = spec.roof.spireAt ? spec.roof.spireAt[0] : c.x, sz = spec.roof.spireAt ? spec.roof.spireAt[1] : c.z;
+    detail.add(G.cyl(sx, topY - 2, sz, 1.1, 0.25, sh + 2, 8), mats.metal);
+    beacons.add(sx, topY + sh, sz, 0, 6);
+  }
+  // 屋顶四角障碍灯
+  if (H > 60) {
+    const corners = [];
+    const n = rpoly.length / 2;
+    const cand = [];
+    for (let i = 0; i < n; i++) cand.push([rpoly[i * 2], rpoly[i * 2 + 1]]);
+    // 取距中心最远的 4 个且彼此分散
+    cand.sort((a, b) => Math.hypot(b[0] - c.x, b[1] - c.z) - Math.hypot(a[0] - c.x, a[1] - c.z));
+    for (const p of cand) {
+      if (corners.length >= 4) break;
+      if (corners.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) > Math.min(rw, rd) * 0.5)) corners.push(p);
+    }
+    const cy = spec.crown ? (yTopFn ? null : base + topF + crownH + 0.6) : base + topF + 1.8;
+    for (const [x, z] of corners) beacons.add(x, cy ?? yTopFn(x, z) + 0.6, z, 0, H > 150 ? 5 : 3.5);
+    if (H > 150) for (const [x, z] of corners.slice(0, 2)) beacons.add(x, base + H * 0.5, z, 1, 2.5);
+  }
+  // —— 楼顶字 ——
+  for (const sg of spec.signs || []) {
+    const poly = sg.poly ? G.ccw(sg.poly) : at(sg.onCrown === false ? prevPoly : crownPoly, sg.y ?? topF + crownH * 0.5);
+    const faces = sg.faces === 'all' ? [...Array(poly.length / 2).keys()] : Array.isArray(sg.faces) ? sg.faces : longestEdges(poly, sg.faces || 2);
+    const y = base + (sg.y ?? (spec.crown ? topF + crownH * 0.5 : topF - 3));
+    for (const i of faces) {
+      const e = edgeInfo(poly, i);
+      if (e.L < 6) continue;
+      signs.place(sg.text, { x: e.mx, y, z: e.mz }, e.nx, e.nz, sg.h || 6, e.L * (sg.fill ?? 0.8), { color: sg.color || '#ffffff', weight: 800, serif: !!sg.serif, glow: sg.glow || null });
+    }
+  }
+  // —— 裙房 ——
+  if (spec.podium) buildPodium(env, { ...spec.podium, base });
+  return { base, top: base + H, c };
+}
+
+/** 裙房/商场：幕墙体 + 屋面 + 女儿墙 + 招牌 */
+export function buildPodium(env, p) {
+  const { ctx, fb, solid, detail, mats, signs } = env;
+  const pts = G.ccw(p.pts);
+  const base = p.base ?? groundMin(ctx, pts);
+  const st = mkStyle({ mode: 6, floorH: 5.5, colW: 3.0, spandrel: 0.3, mullW: 0.18, lit: 0.9, tint: '#3a4650', spd: '#b8b1a4', ...(p.style || {}) });
+  fb.prism(pts, base - 3, base + p.h, st, { vBase: base });
+  const par = 1.2;
+  solid.add(G.wallGeometry(pts, pts, base + p.h, base + p.h + par), mats.parapet);
+  const inn = G.inset(pts, 0.4);
+  solid.add(G.wallGeometry(inn, inn, base + p.h + par, base + p.h + 0.05), mats.parapet);
+  solid.add(G.capGeometry(inn, base + p.h + 0.05), p.roofMat || mats.roof);
+  for (const sg of p.signs || []) {
+    const faces = Array.isArray(sg.faces) ? sg.faces : longestEdges(pts, sg.faces || 1);
+    for (const i of faces) {
+      const e = edgeInfo(pts, i);
+      signs.place(sg.text, { x: e.mx, y: base + (sg.y ?? p.h - (sg.h || 4) * 0.7), z: e.mz }, e.nx, e.nz, sg.h || 4, e.L * 0.85, { color: sg.color || '#ffffff', weight: 800, glow: sg.glow || null, bg: sg.bg || null });
+    }
+  }
+  return base;
+}
+
+export { Batcher };

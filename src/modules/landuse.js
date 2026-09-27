@@ -1,59 +1,119 @@
+// 用地与公园：不再绘制纯色用地色块（卫星影像已有真实地面），用地数据只供植被模块决定种树位置/密度。
+// 本模块只做两件事：
+//  1. 大型公园/绿地极淡的色调增强（草地略提绿、降一点灰度），贴地网格按地形逐点贴合，只在城区近处可见；
+//  2. 少量公园地名标注（≤ 6 个）。
 import * as THREE from 'three';
-import { Batcher, toShape } from '../core/util.js';
+import { toShape, polyCentroid } from '../core/util.js';
 
-const PALETTE = {
-  park: [0x526d43, 0.93], forest: [0x304d35, 0.97], grass: [0x687b49, 0.97],
-  farmland: [0x80734a, 0.98], orchard: [0x5d7145, 0.98], residential: [0x8b8170, 0.95],
-  commercial: [0x897763, 0.94], industrial: [0x77766f, 0.97], university: [0x7c795d, 0.96],
-  cemetery: [0x586a4e, 0.98], military: [0x686e5e, 0.98], construction: [0x92805f, 0.96], square: [0xa39c8e, 0.88],
-};
-
-function polygon(points, holes) {
-  if (!points || points.length < 6) return null;
-  const s = toShape(points, holes || []);
-  const g = new THREE.ShapeGeometry(s, 1);
-  g.rotateX(-Math.PI / 2);
-  return g;
-}
+// 只标这些（大唐芙蓉园/曲江池等由曲江模块负责）
+const LABELS = ['兴庆宫公园', '革命公园', '莲湖公园', '丰庆公园', '劳动公园', '唐城墙遗址公园'];
+const TINT_KINDS = new Set(['park', 'grass']);
+const TINT_RADIUS = 11000; // 只增强城区（远处影像分辨率低，色块会显脏）
+const MIN_AREA = 6000;
 
 export default {
   id: 'landuse',
   name: '公园与用地',
   async build(ctx) {
     const root = new THREE.Group();
-    root.name = '公园绿地';
+    root.name = '公园绿地色调';
     ctx.scene.add(root);
-    const mats = {};
-    const batches = {};
-    for (const [kind, [color, roughness]] of Object.entries(PALETTE)) {
-      mats[kind] = ctx.mats.clone(kind === 'park' || kind === 'forest' || kind === 'grass' ? 'grass' : 'concrete', { color, roughness });
-      mats[kind].color.setHex(color);
-      batches[kind] = new Batcher();
-    }
-    for (const f of ctx.data.landuse?.polys || []) {
-      const kind = PALETTE[f.k] ? f.k : 'grass';
-      const g = polygon(f.outer, f.holes);
-      if (!g) continue;
-      let h = 0;
-      for (let i = 0; i < f.outer.length; i += 2) h += ctx.terrain.heightAt(f.outer[i], f.outer[i + 1]);
-      h = h / Math.max(1, f.outer.length / 2) + 0.35;
-      batches[kind].add(g, mats[kind], new THREE.Matrix4().makeTranslation(0, h, 0));
-      g.dispose();
-      if (f.n && (kind === 'park' || kind === 'university' || kind === 'square')) {
-        const n = f.outer.length / 2;
-        let x = 0, z = 0;
-        for (let i = 0; i < f.outer.length; i += 2) { x += f.outer[i]; z += f.outer[i + 1]; }
-        x /= n; z /= n;
-        if (Math.hypot(x, z) < 25000) ctx.labels.add(f.n, new THREE.Vector3(x, h + 22, z), { category: 'district', minDist: 350, maxDist: 14000, priority: 1.1 });
+    const polys = ctx.data.landuse?.polys || [];
+
+    // —— 1. 极淡的绿地色调增强（乘法混合：只改变色相/饱和度，不遮盖影像纹理） ——
+    const P = [], I = [];
+    let nv = 0;
+    const th = ctx.terrain;
+    for (const f of polys) {
+      if (!TINT_KINDS.has(f.k) || !f.outer || f.outer.length < 6) continue;
+      if ((f.a || 0) < MIN_AREA) continue;
+      const c = polyCentroid(f.outer);
+      if (Math.hypot(c.x, c.z) > TINT_RADIUS) continue;
+      let g;
+      try {
+        g = new THREE.ShapeGeometry(toShape(f.outer, f.holes || []), 1);
+      } catch (e) {
+        continue;
       }
+      // 大三角形细分，保证贴地
+      const pos = g.attributes.position;
+      const idx = g.index ? g.index.array : null;
+      const tris = [];
+      const nT = idx ? idx.length / 3 : pos.count / 3;
+      for (let t = 0; t < nT; t++) {
+        const a = idx ? idx[t * 3] : t * 3, b = idx ? idx[t * 3 + 1] : t * 3 + 1, cI = idx ? idx[t * 3 + 2] : t * 3 + 2;
+        tris.push([pos.getX(a), -pos.getY(a)], [pos.getX(b), -pos.getY(b)], [pos.getX(cI), -pos.getY(cI)]); // toShape 用 (x, -z)
+      }
+      g.dispose();
+      const emit = (a, b, c, depth) => {
+        const la = Math.hypot(a[0] - b[0], a[1] - b[1]), lb = Math.hypot(b[0] - c[0], b[1] - c[1]), lc = Math.hypot(c[0] - a[0], c[1] - a[1]);
+        const L = Math.max(la, lb, lc);
+        if (L > 60 && depth < 7) {
+          // 最长边二分
+          if (L === la) {
+            const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+            emit(a, m, c, depth + 1);
+            emit(m, b, c, depth + 1);
+          } else if (L === lb) {
+            const m = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2];
+            emit(a, b, m, depth + 1);
+            emit(a, m, c, depth + 1);
+          } else {
+            const m = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2];
+            emit(a, b, m, depth + 1);
+            emit(m, b, c, depth + 1);
+          }
+          return;
+        }
+        for (const p of [a, b, c]) {
+          P.push(p[0], th.heightAt(p[0], p[1]) + 0.25, p[1]);
+          I.push(nv++);
+        }
+      };
+      for (let k = 0; k < tris.length; k += 3) emit(tris[k], tris[k + 1], tris[k + 2], 0);
     }
-    for (const [kind, batch] of Object.entries(batches)) {
-      const group = batch.build({ name: `用地-${kind}`, castShadow: false, receiveShadow: true });
-      if (group.children.length) root.add(group);
+    if (I.length) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+      // ShapeGeometry 的环向在 x/z 平面上可能是顺/逆时针，统一双面
+      const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(0.9, 1.0, 0.86),
+        blending: THREE.MultiplyBlending,
+        premultipliedAlpha: true,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        fog: false,
+      });
+      ctx.overlay(mat, 0.0012);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.name = '公园草地色调';
+      mesh.renderOrder = -1;
+      mesh.frustumCulled = true;
+      geo.computeBoundingSphere();
+      mesh.receiveShadow = false;
+      root.add(mesh);
     }
+
+    // —— 2. 公园标注 ——
+    const done = new Set();
+    for (const f of polys) {
+      if (!f.n || done.has(f.n) || !LABELS.includes(f.n) || f.k !== 'park') continue;
+      done.add(f.n);
+      const c = polyCentroid(f.outer);
+      const x = c.x, z = c.z;
+      ctx.labels.add(f.n, new THREE.Vector3(x, th.heightAt(x, z) + 24, z), { category: 'district', minDist: 300, maxDist: 9000, priority: 1.0 });
+      if (done.size >= 6) break;
+    }
+
     return {
-      setLayer(layer, visible) { if (layer === 'landuse') root.visible = visible; },
-      dispose() { root.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); ctx.scene.remove(root); },
+      setLayer(layer, on) {
+        if (layer === 'landuse') root.visible = on;
+      },
+      dispose() {
+        root.traverse((o) => o.geometry && o.geometry.dispose());
+        ctx.scene.remove(root);
+      },
     };
   },
 };
