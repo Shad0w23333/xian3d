@@ -1,6 +1,6 @@
 # 西安 3D 城市模型 —— 交接文档
 
-> 最后更新：2026-09-27。本文件写给第一次接手的工程师 / 云端 Claude 会话。先读完本文件，再读 `docs/CONTRACT.md`（坐标与数据格式契约）、`docs/MODULE_GUIDE.md`（模块开发规范）、`docs/ARCH_KIT.md`（中式古建构件库 API）。
+> 最后更新：2026-09-27（云端会话，见第 10 节）。本文件写给第一次接手的工程师 / 云端 Claude 会话。先读完本文件，再读 `docs/CONTRACT.md`（坐标与数据格式契约）、`docs/MODULE_GUIDE.md`（模块开发规范）、`docs/ARCH_KIT.md`（中式古建构件库 API）。
 
 ## 1. 项目目标
 
@@ -31,7 +31,8 @@ npm run build:standalone # 单文件离线版 → dist-standalone/西安3D-离�
 
 ### 自动化工具
 
-- `node tools/shot.mjs --shot "online=0&view=2&time=15|shots/x.png" [--w 1280 --h 720]`：自动起 Vite + 无头 Chromium（Metal GPU）截图，打印 fps / draw calls / 三角形 / 控制台错误。**所有视觉改动都用它自测**。
+- `node tools/shot.mjs --shot "online=0&view=2&time=15|shots/x.png" [--w 1280 --h 720]`：自动起 Vite + 无头 Chromium（macOS 用 Metal GPU；Linux/云端无 GPU 时自动用 SwiftShader 软件渲染，约 2 分钟/张）截图，打印 fps / draw calls / 三角形 / 控制台错误。**所有视觉改动都用它自测**。任意视角推荐 `cam=x,离地高,z,tx,目标离地高,tz`（世界坐标）。
+- `node tools/diag_nan.mjs "online=0&view=5&time=20.8"`：遍历场景网格，列出含 NaN 坐标 / 零长度法线的几何体及其所属模块（排查夜景黑屏）。
 - `node tools/perf.mjs [--q 2] [--night]`：逐个预设视角测帧率。
 - `tools/workflows/modules_r*.js`：此前用于并行派发 15 个建模代理的工作流脚本（含每个模块的详细需求说明，可作为需求文档参考）。
 
@@ -122,9 +123,9 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 
 开发侧已知问题：
 
-1. **永宁门夜景整屏全黑**（`?online=0&view=5&time=20.8`，1280×720 稳定复现；白天正常）。多半是某模块夜间材质产生 NaN/Inf，经泛光模糊扩散成全屏黑。二分结果：跳过 water/landuse/roads/citywall/belltower/pagoda/datang 这一组后恢复正常，问题在这 7 个模块之一（单独只加载 citywall 时不复现，说明可能是组合或分辨率相关）。建议：继续二分；并在 `src/core/post.js` 的泛光前加一道 NaN 钳制（`if (any(isnan(c))) c = vec3(0)`）兜底。
+1. ~~永宁门夜景整屏全黑~~（2026-09-27 已修，待在 Mac/Metal 上复核）：`post.js` 在 RenderPass 后加了位运算 NaN/Inf 钳制（Metal fast-math 下 `isnan` 会被优化掉，所以用 `floatBitsToUint` 判断指数位）；`main.js` 构建后统一把零长度法线改为朝上（skyline 有 1692 个，Metal 上 `normalize(0)` = NaN）；古建泛光（chinese-core）、不夜城光柱、大雁塔喷泉的 normalize/pow 做了防护。云端 SwiftShader 无法复现原问题，只能确认修复后画面正常。
 2. 白天远景地平线偏白、整体略灰（大气/雾/曝光可再调，参数在 `src/core/sky.js` 与 `fog.js`）。
-3. 离线底图来自 Esri，是冬季带积雪的旧影像，地面有白色雪斑。
+3. 内置离线底图（img_*.jpg）来自 Esri，是冬季带积雪的旧影像，地面有白色雪斑。→ 用 `tools/imagery_pack.py` 生成本地高清影像包后自然解决（见 README“离线高清卫星影像”）。
 4. CMAB 对超高层仍有低估（高新 CBD ≥100 m 的楼偏少），重点高楼需要手工校正。
 5. 三角形数偏高（最高 19M），弱机需要降档；可做更激进的建筑/树木 LOD。
 6. `src/arch/traditional.js`、`shared.js` 为旧版遗留，确认无引用后可删除。
@@ -149,3 +150,28 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 - 模块自测必须用 `tools/shot.mjs` 截图并目视检查，控制台 0 报错。
 - 网络差时一律 `online=0`。
 - 回复与文档一律使用简体中文。
+
+## 10. 2026-09-27 云端会话更新（分支 `claude/data-refresh`）
+
+云端环境只能访问 npm/PyPI 和 AWS S3（Overpass、Geofabrik、各家影像瓦片都被网络策略拦截），因此：道路/建筑用 **Overture Maps**（S3 公共桶，每月发布，底层是最新 OSM）更新；影像瓦片下载脚本写好了但必须在本机运行。
+
+**已完成**
+- 夜景黑屏修复（第 7 节第 1 条）。
+- **离线高清影像包**：`tools/imagery_pack.py`（Google/Esri/Bing/高德，多源回退、断点续传、高德 GCJ 逐瓦片纠偏、`compare` 出清晰度对比图）→ 仓库根 `tiles/*.xtp`（自定义格式：头 + 排序索引 + JPEG，见 `src/core/tilepack.js` 注释）。前端 `TilePack` 用 HTTP Range 读取，存在即默认启用（`?pack=0` 关）。`vite.config.js`、`tools/serve.mjs`、`tools/serve.py`、启动脚本都支持 Range 并挂载 `/tiles/`。已用本地底图切出的测试瓦片验证整条链路（对齐误差 0）。
+- **道路**：`tools/roads_update.py` 用 Overture 2026-09 增量更新 `roads.json`（新增 384 段 129 km、删除 22 段 13 km，保留原车道/宽度；步行街与城墙内路段受保护）。原始文件备份在 `data-src/roads.before_overture.json`（未入库）。
+- **回民街·洒金桥**（新模块 `huimin`）：`tools/build_huimin.py` 用 OSM 逐户轮廓（7515 栋）替换 CMAB 粗块，层数按调研修正，临街面识别、59 个真实店名；`src/arch/huimin-gen.js` 程序化立面/硬山坡顶/寺院庑殿顶/披檐/招牌图集/红灯笼；北院门北口石牌楼；主街路宽修正。`exclusions` 新增 `maxHeight`（只让低层通用建筑让位）。
+- **地标精建**（`src/arch/sky-data2.js`、`sky-special2.js`、`sky-footprints2.js`，接入 skyline 模块，旧的熙地港/大融城/未央国际定义被取代）：
+  - 未央：熙地港（OSM 真实轮廓 195×171 m、34 m）、大融城（137×244 m、西北弧面）、未央国际（99.6 m 三角塔 + We Young 168 退台）、经开洲际、EHB 160 m、旭辉中心 A/B、智选假日、未央国际中心。
+  - 曲江：万众国际（WFive Park C 形裙房）+ W 酒店与 A/B 写字楼三座“下大上小斜顶”塔。
+  - 浐灞：艾美 147 m + 裙房、锦江国际（原凯宾斯基，三翼 + 穹顶）、欧亚国际 ICC、凯悦“叠石”塔、灞河 2 号桥（彩虹桥：倾斜椭圆拱塔 + 82 根夜间彩虹斜拉索）、浐灞 1 号桥（蝴蝶桥）、后海东岸夜市灯串。
+- 调研笔记：`research/refs/{weiyang,qujiang,chanba,huimin}/notes*.md`（含坐标、尺寸、高度、来源 URL；多为搜索摘要，标注了【推测】项）。
+
+**尝试后放弃**
+- 用 Overture 里的“东亚建筑数据集”（zenodo 8174931）补全 CMAB 缺失建筑：核查发现它在凯悦（2025 开业）原址只有施工工棚，比 CMAB 更旧，补全会引入过时信息，已撤销。
+
+**遗留 / 下一步**
+1. 在本机运行 `python tools/imagery_pack.py compare ...` 选源，再 `all --source google,esri` 生成影像包；在 Mac 上复核永宁门夜景（`?online=0&view=5&time=20.8`）。
+2. 待核实并补建：欧亚国际三期两栋 180 m 塔（坐标、是否竣工未知）、凯悦准确轮廓（现为按调研推测的叠石体块）、W 酒店三塔准确落位、彩虹桥主塔偏向哪一岸、西北国金中心 228 m 是否已建成。有高清影像后可逐一校准。
+3. 浐灞/港务区 2022 年后新建的大量住宅在 CMAB 中缺失或高度被截在约 86 m；需要更新的建筑数据源（或用高清影像人工补录重点片区）。
+4. 曲江道路：数据已是 2026 年最新 OSM；登高路南段（杜陵西路—航天大道 1,177 m）OSM 尚未绘出。
+5. 招牌字体：headless Linux 下中文字体回退可能与 macOS 不同，招牌以 macOS 实机效果为准。
