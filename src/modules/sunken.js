@@ -7,7 +7,9 @@
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 
-const FEATHER = 1.5;
+const FEATHER = 4;
+const OUT = 4;     // 压低范围超出挡墙的距离
+const DECK = 10;   // 挡墙外地面铺装环宽度（≥ OUT + FEATHER）
 const c3 = (h) => new THREE.Color(h);
 
 class Mesher {
@@ -52,7 +54,8 @@ export default {
       // 与精建模块（W 酒店/万众国际等）重合时仍然做：下沉广场本身是它们没有的部分；只避开城墙/钟楼等古建本体
       const top = ctx.terrain.rawHeightAt(s.x, s.z);
       const F = frame(s, top);
-      const hl = s.L / 2 - FEATHER, hw = s.W / 2 - FEATHER;
+      // 地形网格较粗：压低范围外扩到挡墙外 OUT 米，保证墙面前的地形完全落到坑底；墙外多压下去的一圈由 build 的地面铺装环盖住
+      const hl = s.L / 2 + OUT, hw = s.W / 2 + OUT;
       let pts;
       if (s.round) {
         pts = [];
@@ -61,7 +64,8 @@ export default {
         pts = [F(-hl, -hw, 0), F(hl, -hw, 0), F(hl, hw, 0), F(-hl, hw, 0)].flatMap((p) => [p[0], p[2]]);
       }
       ctx.terrain.addFlatten({ points: pts, height: top - s.depth, feather: FEATHER, mode: 'min' });
-      const outer = [F(-s.L / 2 - 3, -s.W / 2 - 3, 0), F(s.L / 2 + 3, -s.W / 2 - 3, 0), F(s.L / 2 + 3, s.W / 2 + 3, 0), F(-s.L / 2 - 3, s.W / 2 + 3, 0)].flatMap((p) => [p[0], p[2]]);
+      const E = DECK + 1;
+      const outer = [F(-s.L / 2 - E, -s.W / 2 - E, 0), F(s.L / 2 + E, -s.W / 2 - E, 0), F(s.L / 2 + E, s.W / 2 + E, 0), F(-s.L / 2 - E, s.W / 2 + E, 0)].flatMap((p) => [p[0], p[2]]);
       ctx.exclusions.add({ points: outer, name: 'sunken' }, { buildings: true, trees: true, pois: false });
       this.sites.push({ ...s, top });
     }
@@ -71,7 +75,7 @@ export default {
     const root = new THREE.Group();
     root.name = '下沉广场';
     ctx.scene.add(root);
-    const solid = new Mesher(), glassM = new Mesher(), lampM = new Mesher(), waterM = new Mesher();
+    const solid = new Mesher(), glassM = new Mesher(), lampM = new Mesher(), waterM = new Mesher(), railM = new Mesher();
     const pave = c3('#b9b2a6'), paveB = c3('#a39b8e'), wall = c3('#c8c0b2'), stone = c3('#d6d0c4'), frameC = c3('#3e4247');
     const rail = c3('#8a9096'), wood = c3('#8a6a4a'), green = c3('#4f7a3c'), umb = [c3('#e8e1d2'), c3('#c9442f'), c3('#2f5d8a')];
     const shopGlass = [c3('#ffd9a0'), c3('#ffe6c4'), c3('#fff0d8'), c3('#ffc98a')];
@@ -142,6 +146,33 @@ export default {
           solid.quad(a, d, c, b, c3('#2f3337'));
         }
       }
+      // 挡墙外地面铺装环（盖住外扩压低的地形）
+      {
+        const deckC = c3('#bdb5a8');
+        if (s.round) {
+          for (let i = 0; i < 48; i++) {
+            const a0 = (i / 48) * Math.PI * 2, a1 = ((i + 1) / 48) * Math.PI * 2;
+            const P = (a, k, y) => F(Math.cos(a) * (hl + k), Math.sin(a) * (hw + k), y);
+            solid.quad(P(a0, 0, 0.03), P(a1, 0, 0.03), P(a1, DECK, 0.03), P(a0, DECK, 0.03), deckC);
+            solid.quad(P(a0, DECK, 0.03), P(a1, DECK, 0.03), P(a1, DECK, -OUT - 3), P(a0, DECK, -OUT - 3), deckC);
+          }
+        } else {
+          const X = hl + DECK, Z = hw + DECK;
+          for (const [a, b, c, d] of [
+            [[-X, -Z], [X, -Z], [X, -hw], [-X, -hw]], [[-X, hw], [X, hw], [X, Z], [-X, Z]],
+            [[-X, -hw], [-hl, -hw], [-hl, hw], [-X, hw]], [[hl, -hw], [X, -hw], [X, hw], [hl, hw]],
+          ]) solid.quad(F(...a, 0.03), F(...b, 0.03), F(...c, 0.03), F(...d, 0.03), deckC);
+          // 铺装环外缘向下的裙边（外缘地形若略低，不露缝）
+          for (const [[ua, va], [ub, vb]] of [[[-X, -Z], [X, -Z]], [[X, -Z], [X, Z]], [[X, Z], [-X, Z]], [[-X, Z], [-X, -Z]]])
+            solid.quad(F(ua, va, 0.03), F(ub, vb, 0.03), F(ub, vb, -3), F(ua, va, -3), deckC);
+        }
+      }
+      // 坑底地灯（沿挡墙内侧，夜间点亮）
+      for (let k = 0; k < Math.max(4, Math.round(s.L / 8)); k++) {
+        const u = -hl + stairL + 3 + k * 8;
+        if (u > hl - 2) break;
+        for (const v of [-hw + 1.2, hw - 1.2]) lampM.box(F, u - 0.15, u + 0.15, v - 0.15, v + 0.15, -D, -D + 0.9, c3('#ffe2a8'));
+      }
       // 顶部玻璃栏杆 + 压顶
       const perim = s.round
         ? Array.from({ length: 49 }, (_, i) => { const a = (i / 48) * Math.PI * 2; return [Math.cos(a) * hl, Math.sin(a) * hw]; })
@@ -149,7 +180,7 @@ export default {
       for (let i = 0; i + 1 < perim.length; i++) {
         const [ua, va] = perim[i], [ub, vb] = perim[i + 1];
         solid.quad(F(ua, va, 0.02), F(ub, vb, 0.02), F(ub, vb, 0.25), F(ua, va, 0.25), stone);
-        glassM.quad(F(ua, va, 0.25), F(ub, vb, 0.25), F(ub, vb, 1.15), F(ua, va, 1.15), c3('#cfe3ea'));
+        railM.quad(F(ua, va, 0.25), F(ub, vb, 0.25), F(ub, vb, 1.15), F(ua, va, 1.15), c3('#cfe3ea'));
         solid.quad(F(ua, va, 1.15), F(ub, vb, 1.15), F(ub, vb, 1.22), F(ua, va, 1.22), rail);
       }
       // 坑底：水景 / 舞台 / 外摆 / 树池
@@ -196,7 +227,8 @@ export default {
     const matWater = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.05, metalness: 0.4 });
     ctx.night.register(matGlass, { day: 0.05, night: 0.9 });
     ctx.night.register(matLamp, { day: 0, night: 2.4 });
-    for (const [M, mat, name] of [[solid, matSolid, '下沉广场'], [glassM, matGlass, '商铺橱窗'], [lampM, matLamp, '串灯'], [waterM, matWater, '水景']]) {
+    const matRail = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
+    for (const [M, mat, name] of [[solid, matSolid, '下沉广场'], [glassM, matGlass, '商铺橱窗'], [lampM, matLamp, '串灯'], [waterM, matWater, '水景'], [railM, matRail, '玻璃栏杆']]) {
       const m = M.mesh(mat, name);
       if (m) root.add(m);
     }

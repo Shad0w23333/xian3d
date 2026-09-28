@@ -138,7 +138,15 @@ export default {
 
     // —— 材质 ——
     let level = Math.max(0, Math.min(3, ctx.quality.level ?? 2));
-    let [nearR, farR, farMax, hedgeR, shrubR] = LOD_BY_LEVEL[level];
+    // 树木显示距离倍率（“画质与显示”面板）：中/远景按倍率，近景（逐棵模型）限制在 0.5~1.3 倍
+    let treeDist = ctx.quality.treeDistance ?? 1;
+    const lodRadii = () => {
+      const k = Math.max(0.2, treeDist), kn = Math.min(1.3, Math.max(0.5, k));
+      const [a, b, c, d, e] = LOD_BY_LEVEL[level];
+      const fr = Math.max(a * kn + FARBAND + 20, b * k);
+      return [a * kn, fr, Math.max(fr + 300, c * k), d * kn, e * kn];
+    };
+    let [nearR, farR, farMax, hedgeR, shrubR] = lodRadii();
     const wind = { value: 1 };
     const lampK = { value: 0.85 };
     const fadeNear = new THREE.Vector4(-2, -1, nearR - BAND, nearR);
@@ -426,7 +434,7 @@ export default {
     };
 
     const setRadii = () => {
-      [nearR, farR, farMax, hedgeR, shrubR] = LOD_BY_LEVEL[level];
+      [nearR, farR, farMax, hedgeR, shrubR] = lodRadii();
       fadeNear.set(-2, -1, nearR - BAND, nearR);
       fadeShrub.set(-2, -1, shrubR - BAND, shrubR);
       fadeMid.set(nearR - BAND, nearR, farR - FARBAND, farR);
@@ -455,6 +463,7 @@ export default {
       },
       setQuality(q) {
         level = Math.max(0, Math.min(3, q.level ?? level));
+        treeDist = q.treeDistance ?? treeDist;
         setRadii();
         density = q.treeDensity ?? density;
         applyDensity();

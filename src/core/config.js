@@ -31,28 +31,47 @@ export const DEFAULT_IMAGERY = 'amap';
 // 兼容旧代码
 export const ONLINE_IMAGERY = IMAGERY_PROVIDERS[DEFAULT_IMAGERY];
 
-// 画质档位：0 低 / 1 中 / 2 高 / 3 超高
+// 画质档位：0 低 / 1 中 / 2 高 / 3 超高（作为“预设”：选择后填充“画质与显示”面板里的各细项，见 core/display.js）
+// 细项说明：
+//   shadows 阴影开关；shadowQuality 阴影质量 0~3（分辨率 + 覆盖范围，见 SHADOW_QUALITY）
+//   aa 抗锯齿 off/fxaa/smaa/msaa2/msaa4；bloom 泛光；bloomStrength 泛光强度倍率；toneMapping 色调映射；exposure 曝光倍率
+//   ibl 环境反射（天空环境贴图）；clouds 云层；fog 雾浓度倍率（0=无雾）
+//   viewDistance 视距（km，0=不限）；terrainSplit 地形细分；maxTileZoom 影像精度（瓦片级别）
+//   buildingDistance 建筑显示距离（m）；treeDistance 树木显示距离倍率；treeDensity 树木密度
+//   trafficDensity 车辆密度；peopleDensity 行人密度；pointLights 夜景点光源数；pixelRatio 像素比
 export const QUALITY_LEVELS = [
   {
-    name: '低', pixelRatio: 0.75, msaa: 0, shadows: false, shadowMapSize: 1024,
-    bloom: true, pointLights: 0, terrainSplit: 1.35, maxTileZoom: 16,
-    buildingDistance: 6000, trafficDensity: 0.35, treeDensity: 0.3, anisotropy: 2,
+    name: '低', pixelRatio: 0.75, msaa: 0, aa: 'fxaa', shadows: false, shadowQuality: 0, shadowMapSize: 1024,
+    bloom: true, bloomStrength: 1, toneMapping: 'aces', exposure: 1, ibl: true, clouds: true, fog: 1,
+    viewDistance: 35, pointLights: 0, terrainSplit: 1.35, maxTileZoom: 16,
+    buildingDistance: 6000, trafficDensity: 0.35, treeDensity: 0.3, treeDistance: 1, peopleDensity: 0.4, anisotropy: 2,
   },
   {
-    name: '中', pixelRatio: 1, msaa: 2, shadows: true, shadowMapSize: 2048,
-    bloom: true, pointLights: 4, terrainSplit: 1.7, maxTileZoom: 17,
-    buildingDistance: 10000, trafficDensity: 0.6, treeDensity: 0.6, anisotropy: 4,
+    name: '中', pixelRatio: 1, msaa: 2, aa: 'msaa2', shadows: true, shadowQuality: 1, shadowMapSize: 2048,
+    bloom: true, bloomStrength: 1, toneMapping: 'aces', exposure: 1, ibl: true, clouds: true, fog: 1,
+    viewDistance: 0, pointLights: 4, terrainSplit: 1.7, maxTileZoom: 17,
+    buildingDistance: 10000, trafficDensity: 0.6, treeDensity: 0.6, treeDistance: 1, peopleDensity: 0.7, anisotropy: 4,
   },
   {
-    name: '高', pixelRatio: 1.25, msaa: 4, shadows: true, shadowMapSize: 4096,
-    bloom: true, pointLights: 8, terrainSplit: 2.0, maxTileZoom: 18,
-    buildingDistance: 16000, trafficDensity: 1.0, treeDensity: 1.0, anisotropy: 8,
+    name: '高', pixelRatio: 1.25, msaa: 4, aa: 'msaa4', shadows: true, shadowQuality: 2, shadowMapSize: 4096,
+    bloom: true, bloomStrength: 1, toneMapping: 'aces', exposure: 1, ibl: true, clouds: true, fog: 1,
+    viewDistance: 0, pointLights: 8, terrainSplit: 2.0, maxTileZoom: 18,
+    buildingDistance: 16000, trafficDensity: 1.0, treeDensity: 1.0, treeDistance: 1, peopleDensity: 1.0, anisotropy: 8,
   },
   {
-    name: '超高', pixelRatio: 2, msaa: 4, shadows: true, shadowMapSize: 4096,
-    bloom: true, pointLights: 12, terrainSplit: 2.4, maxTileZoom: 19,
-    buildingDistance: 26000, trafficDensity: 1.4, treeDensity: 1.3, anisotropy: 16,
+    name: '超高', pixelRatio: 2, msaa: 4, aa: 'msaa4', shadows: true, shadowQuality: 3, shadowMapSize: 4096,
+    bloom: true, bloomStrength: 1, toneMapping: 'aces', exposure: 1, ibl: true, clouds: true, fog: 1,
+    viewDistance: 0, pointLights: 12, terrainSplit: 2.4, maxTileZoom: 19,
+    buildingDistance: 26000, trafficDensity: 1.4, treeDensity: 1.3, treeDistance: 1, peopleDensity: 1.3, anisotropy: 16,
   },
+];
+
+// 阴影质量档：贴图分辨率 + 覆盖范围倍率（本项目为单张跟随相机的平行光阴影，无级联；范围越大越远处有阴影、但越糊）
+export const SHADOW_QUALITY = [
+  { name: '低', mapSize: 1024, range: 0.6 },
+  { name: '中', mapSize: 2048, range: 1.0 },
+  { name: '高', mapSize: 4096, range: 1.25 },
+  { name: '超高', mapSize: 8192, range: 1.6 },
 ];
 
 export function defaultQualityLevel() {

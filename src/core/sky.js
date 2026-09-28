@@ -144,6 +144,13 @@ export class SkySystem {
     this.night = 0;
     this.sunElev = 0;
     this._tween = null;
+    // —— 画质与显示设置（core/display.js 写入）——
+    this.fogScale = 1; // 雾浓度倍率（0 = 无雾）
+    this.fogFloor = 0; // 雾浓度下限（视距受限时用来遮住远裁剪面）
+    this.exposureScale = 1; // 曝光倍率
+    this.shadowRange = 1; // 阴影覆盖范围倍率
+    this.envEnabled = true; // 环境反射（IBL）
+    this.cloudsEnabled = true;
 
     this.skyMat = makeSkyMaterial();
     const u = this.skyMat.uniforms;
@@ -200,6 +207,7 @@ export class SkySystem {
 
   setQuality(q) {
     this.sun.castShadow = !!q.shadows;
+    if (q.shadowRange != null) this.shadowRange = q.shadowRange;
     if (this.sun.shadow.mapSize.x !== q.shadowMapSize) {
       this.sun.shadow.mapSize.set(q.shadowMapSize, q.shadowMapSize);
       if (this.sun.shadow.map) {
@@ -207,6 +215,25 @@ export class SkySystem {
         this.sun.shadow.map = null;
       }
     }
+  }
+
+  /** 环境反射（IBL）开关：关闭后不再渲染 PMREM 环境贴图，并略提高半球光补偿 */
+  setEnvironment(on) {
+    on = !!on;
+    if (on === this.envEnabled) return;
+    this.envEnabled = on;
+    if (!on) {
+      this.scene.environment = null;
+      if (this.envRT) { this.envRT.dispose(); this.envRT = null; }
+    } else {
+      this._lastEnv.el = 999; // 下一帧立即重建
+      this._lastEnv.t = -10;
+    }
+  }
+
+  setClouds(on) {
+    this.cloudsEnabled = !!on;
+    this.skyMat.uniforms.cloudCoverage.value = on ? 0.2 : 0;
   }
 
   setHours(h, animate = false) {
@@ -274,7 +301,7 @@ export class SkySystem {
     }
     this.hemi.color.copy(lerpKeys(HEMI_SKY, el, this._tmpC));
     this.hemi.groundColor.set(0x5d5446).lerp(C('#141210'), this.night);
-    this.hemi.intensity = 0.22 + 0.62 * (1 - this.night);
+    this.hemi.intensity = 0.22 + 0.62 * (1 - this.night) + (this.envEnabled ? 0 : 0.3 * (1 - this.night) + 0.04);
     this.scene.environmentIntensity = 0.3 + 0.55 * (1 - this.night);
 
     // 雾（高度雾，见 core/fog.js）：颜色随太阳高度，并在朝向太阳时偏暖
@@ -288,10 +315,10 @@ export class SkySystem {
       const warm = toward * toward * smooth(25, 2, el) * (1 - this.night);
       this.scene.fog.color.lerp(this._tmpC.copy(this.sun.color).multiplyScalar(0.9), warm * 0.45);
     }
-    this.scene.fog.density = 2.4e-5 + this.night * 1.4e-5;
+    this.scene.fog.density = Math.max((2.4e-5 + this.night * 1.4e-5) * this.fogScale, this.fogFloor);
 
     // 曝光（Preetham 天空亮度高，白天需压低曝光，太阳光相应调强）
-    this.renderer.toneMappingExposure = 0.6 + this.night * 0.55;
+    this.renderer.toneMappingExposure = (0.6 + this.night * 0.55) * this.exposureScale;
 
     // 阴影相机跟随
     if (camera && this.sun.castShadow) this._updateShadow(camera, lightDir, agl);
@@ -303,7 +330,7 @@ export class SkySystem {
     // 环境贴图（节流）
     const now = performance.now() / 1000;
     const L = this._lastEnv;
-    if ((Math.abs(L.el - el) > 1.2 || Math.abs(L.night - this.night) > 0.04) && now - L.t > 0.35) {
+    if (this.envEnabled && (Math.abs(L.el - el) > 1.2 || Math.abs(L.night - this.night) > 0.04) && now - L.t > 0.35) {
       this._renderEnv();
       L.el = el;
       L.night = this.night;
@@ -313,7 +340,7 @@ export class SkySystem {
 
   _updateShadow(camera, dir, agl) {
     // 阴影范围随高度变化：地面行走 ~350 m，高空 ~3.5 km
-    const size = THREE.MathUtils.clamp(Math.max(agl, 20) * 2.2, 350, 3600);
+    const size = THREE.MathUtils.clamp(Math.max(agl, 20) * 2.2, 350, 3600) * this.shadowRange;
     this.shadowSize = size;
     const fwd = new THREE.Vector3();
     camera.getWorldDirection(fwd);
