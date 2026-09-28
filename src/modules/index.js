@@ -21,6 +21,7 @@ export const MODULES = [
   { id: 'traffic', load: () => import('./traffic.js') },
   { id: 'amapinfo', load: () => import('./amapinfo.js') },
   { id: 'metro', load: () => import('./metro.js') },
+  { id: 'pedestrians', load: () => import('./pedestrians.js') },
   // 开发用（默认不加载，?modules=archtest 时加载）
   { id: 'archtest', load: () => import('./dev/archtest.js'), dev: true },
 ];
