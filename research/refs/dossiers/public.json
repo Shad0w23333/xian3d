@@ -124,7 +124,7 @@
    "Esri World Imagery z18",
    "Overture/OSM w1266651327,w1266651617,w1266651492,w1266651258"
   ],
-  "confidence": "medium(体量/层数)/low(立面)",
+  "confidence": "low",
   "local_data": {
    "osm_id": "w1266651327",
    "osm_name": null,
@@ -133,7 +133,8 @@
    "osm_levels": null,
    "footprint_area_m2": 5877
   },
-  "notes": "“主楼”取住院二部（资料最完整）；两座塔楼对应关系由卫星阴影+“南19/北20层”推断"
+  "notes": "“主楼”取住院二部（资料最完整）；两座塔楼对应关系由卫星阴影+“南19/北20层”推断",
+  "confidence_note": "medium(体量/层数)/low(立面)"
  },
  {
   "name": "西安交通大学第一附属医院（雁塔西路院区）",
@@ -1188,9 +1189,10 @@
    "https://www.shx.chinanews.com.cn/news/2024/0924/101413.html",
    "Esri World Imagery z18"
   ],
-  "confidence": "medium(层数)/low(坐标)",
+  "confidence": "low",
   "local_data": null,
-  "notes": "高新区团结南路与西太路一带；“全球最大单体医疗建筑”为开发/施工方宣传口径"
+  "notes": "高新区团结南路与西太路一带；“全球最大单体医疗建筑”为开发/施工方宣传口径",
+  "confidence_note": "medium(层数)/low(坐标)"
  },
  {
   "name": "西安市第三医院",
@@ -1453,7 +1455,7 @@
    "Commons 20201209 The Building of Xi'an Municipal People's Government",
    "https://zh.wikipedia.org/wiki/西安市人民政府（凤城八路109号）"
   ],
-  "confidence": "medium(体量)/low(高度)",
+  "confidence": "low",
   "local_data": {
    "osm_id": "r18903162",
    "osm_name": null,
@@ -1462,7 +1464,8 @@
    "osm_levels": null,
    "footprint_area_m2": 35257
   },
-  "notes": "凤城八路109号"
+  "notes": "凤城八路109号",
+  "confidence_note": "medium(体量)/low(高度)"
  },
  {
   "name": "西安市新城区人民政府",
@@ -1878,7 +1881,7 @@
    "OSM w275396702",
    "pois.json 西安市长安区人民政府"
   ],
-  "confidence": "medium(位置)/low(体量)",
+  "confidence": "low",
   "local_data": {
    "osm_id": "w275396702",
    "osm_name": "西安市长安区人民政府",
@@ -1887,7 +1890,8 @@
    "osm_levels": null,
    "footprint_area_m2": 3762
   },
-  "notes": ""
+  "notes": "",
+  "confidence_note": "medium(位置)/low(体量)"
  },
  {
   "name": "西安市灞桥区人民政府",
@@ -2194,7 +2198,7 @@
    "https://xadfz.xa.gov.cn/xadq/rwxa/645c431cf8fd1c1a702b73ee.html",
    "OSM w263624481"
   ],
-  "confidence": "high(层数/年代)/medium(外观)",
+  "confidence": "medium",
   "local_data": {
    "osm_id": "w263624481",
    "osm_name": "钱学森图书馆",
@@ -2203,7 +2207,8 @@
    "osm_levels": null,
    "footprint_area_m2": 8013
   },
-  "notes": "轮廓 w263624481 同时包含南北两楼"
+  "notes": "轮廓 w263624481 同时包含南北两楼",
+  "confidence_note": "high(层数/年代)/medium(外观)"
  },
  {
   "name": "西北工业大学友谊校区图书馆",
