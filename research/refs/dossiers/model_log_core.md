@@ -204,11 +204,31 @@
 
 ## 截图与对照
 
-截图命令（worktree `shots/`，已 gitignore）：
+机器过载（多代理同时截图、内存耗尽导致 Chromium 崩溃），按协调要求截图排队（flock）并压到 2 张：
 ```
-node tools/shot.mjs --wait 900 --frames 20 --w 1400 --h 900 \
-  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=250,150,-330,20,20,40|shots/core_bell_ne.png" \
-  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=300,130,-330,30,40,-560|shots/core_beidajie.png" \
-  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=520,170,-230,780,30,-560|shots/core_xincheng.png" \
-  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=-40,190,880,-60,40,1230|shots/core_nanmen.png"
+flock …/scratchpad/shot.lock node tools/shot.mjs --wait 900 --frames 20 --w 1400 --h 900 \
+  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=360,190,150,0,30,-380|shots/core_zhonglou_beidajie.png" \
+  --shot "modules=roads,buildings,dossier,skyline&time=15&online=0&cam=430,200,-210,760,40,-580|shots/core_xinchengguangchang.png"
 ```
+截图（worktree `shots/`，已 gitignore）：`shots/core_zhonglou_beidajie.png`（钟楼东南上空看北大街）、`shots/core_xinchengguangchang.png`（新城广场西南上空看东北）；
+带建筑 id 标注的副本：`scratchpad/core_agent/core_*_ids.png`（`proj.py` 按相机参数投影）。其余楼（南门一带、解放路一带、西大街）用卫星叠图
+`scratchpad/core_agent/sat/ov_{center,xincheng,south,jfl,changan}.jpg`（体块轮廓 + 高度标注叠 Esri z19）核对落位。
+
+控制台：`[dossier] 档案建筑 35/35 栋；替代名称 108、key 3、轮廓 132`、`构建完成 {"count":35,"errors":[]}`；
+`[skyline] landmarks2026：塔楼 34/41，商场·场馆 148/162`（本片被替代的批量地标已跳过）；moduleErrors 为空；`npx vite build` 通过。
+（控制台里的“招牌图集已满”均为 skyline 模块自己的图集，dossier 图集扩容后未溢出。）
+
+**钟楼—北大街**（对照照片）
+- ✔ 开元商城：屋面鼓形体量与中庭锥顶位置同卫星，西北红柱廊；✔ 易俗大剧院：金色大出挑四坡屋顶 + 深红褐柱廊，与 yisu_0/1 一致；
+  ✔ 钟楼邮局：两端出挑歇山屋顶、中段栏杆平顶；✔ 交通银行：白色方塔顶部退台 + 四角尖塔；✔ 凯爱/工行：白色竖肋深蓝玻璃塔。
+- △ 该机位下报话大楼钟楼被其西南 60 m 的通用高层（f9cc1f69，76.5 m）挡住，未能在截图中对照（落位已用卫星叠图核对）。
+- △ 全局天空偏灰白、雾较重，米黄石材、深蓝玻璃都比照片浅（与示范记录的现象相同，属全局光照问题，未在单栋 spec 中硬调）。
+
+**新城广场**（对照照片）
+- ✔ 省政府：12 层长板楼 + 通长橙褐挑檐、屋顶两端两层重檐楼阁、两端 6 层翼楼、正面白色方柱门廊，与 shengzhengfu_4/5 构图一致（原模型为 14 m 通用楼块）；
+- ✔ 皇城海航：白色方窗网格板楼、屋顶四角外挑亭式平顶 + 中部平台塔尖，与 huangcheng_0 一致；
+- ✔ 陕西科技馆：白色横带长楼 + 塔楼 + 帆形白色尖顶，与 Commons 陕西科技馆2017 一致；
+- ✔ 奥罗：圆环挑台 + 高天线；△ 前景通用高层遮挡了圆弧立面与竖排绿字。
+
+**未截图、仅卫星核对**：中环广场、时代盛典、中大国际、兴正元、群光、宏府、长安国际、合生汇、金花豪生、中贸、民生、民乐园万达、悦荟、人民大厦、希尔顿、医院与政府楼等。
+其中卫星叠图发现并已修正：省政府门廊方向（轮廓南侧凸出才是门廊）、长安国际四塔高度（92.4 → 54.6 m）、金花豪生圆塔高度（70 → 75 + 5 m）、省中医医院轮廓拆分。
