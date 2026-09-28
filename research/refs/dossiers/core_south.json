@@ -2637,9 +2637,9 @@
    "西安市中心医院"
   ],
   "category": "hospital",
-  "lon": null,
-  "lat": null,
-  "coord_source": null,
+  "lon": 108.943695,
+  "lat": 34.2733956,
+  "coord_source": "OSM 医院用地 way 1246311076 中心（Nominatim“西安市中心医院”）；另一同名 way 1267655143 位于其西北约 500 m（108.93944,34.27614），照片对应哪一院区未确认",
   "overture_id": null,
   "footprint_size_m": null,
   "height_m": null,
@@ -2707,8 +2707,11 @@
   ],
   "sources": [],
   "confidence": "low",
-  "notes": "城内西五路/北大街一带（Commons 照片拍摄于2023-09-28）。本次未完成坐标与 Overture 轮廓对位（见 notes 文件），坐标暂缺。",
-  "world_xz": null
+  "notes": "城内西五路/北大街一带（Commons 照片拍摄于2023-09-28）。坐标为 OSM 医院用地中心，主楼单体 Overture 轮廓未对位。",
+  "world_xz": [
+   124.5,
+   -1378.6
+  ]
  },
  {
   "name": "西安SKP",
@@ -3665,7 +3668,7 @@
    "https://commons.wikimedia.org/wiki/Category:Shaanxi_Library"
   ],
   "confidence": "medium",
-  "notes": "长安北路18号，1996-05-01 开工、2000年底竣工、2001-09-30开放，张锦秋设计，建筑面积4.7万㎡（wiki）。与陕西省美术博物馆同在一处高台之上（西侧）。形体细节待补（Commons 照片已列出，见 photos）。",
+  "notes": "长安北路18号，1996-05-01 开工、2000年底竣工、2001-09-30开放，张锦秋设计，建筑面积4.7万㎡（wiki）。Commons 照片（陕西省图书馆_5）可见入口处巨大圆柱与弧形挑梁组成的米黄色石材门廊；整体形体未能从现有照片判读。",
   "footprint_detail": {
    "area_m2": 6320,
    "long_axis_deg_from_east_ccw": -2.6,
@@ -4223,9 +4226,9 @@
    "Shaanxi History Museum"
   ],
   "category": "culture",
-  "lon": 108.95149,
-  "lat": 34.22801,
-  "coord_source": "暂用 Overture“陕西历史博物馆-综合楼”（48692028）质心，主馆轮廓未对位",
+  "lon": 108.9503368,
+  "lat": 34.2259093,
+  "coord_source": "OSM 陕西历史博物馆园区多边形 way 1419575277 中心（Nominatim；园区 bbox 108.94896–108.95170E, 34.22452–34.22699N）；主馆单体 Overture 轮廓未对位",
   "overture_id": null,
   "footprint_size_m": null,
   "height_m": null,
@@ -4306,10 +4309,10 @@
    "https://zh.wikipedia.org/wiki/陕西历史博物馆"
   ],
   "confidence": "medium",
-  "notes": "1986年奠基、1991-06-20开放（wiki）。本次未完成 Overture 主馆轮廓对位（仅有“陕西历史博物馆-综合楼”48692028 名称轮廓），坐标待补。",
+  "notes": "1986年奠基、1991-06-20开放（wiki）。坐标为园区中心；主殿单体轮廓未对位（Overture 仅有“陕西历史博物馆-综合楼”48692028 名称轮廓，位于园区北侧外）。",
   "world_xz": [
-   841.7,
-   3673.0
+   735.6,
+   3906.8
   ]
  },
  {
