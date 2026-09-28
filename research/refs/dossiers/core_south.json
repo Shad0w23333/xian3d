@@ -3210,7 +3210,8 @@
  {
   "name": "中贸广场（南稍门）",
   "aliases": [
-   "中贸广场A座/B座",
+   "中贸城市生活广场",
+   "ZHONGMAO PLAZA",
    "南稍门中贸"
   ],
   "category": "tower",
@@ -3228,7 +3229,7 @@
   "year": 2012,
   "massing": [
    {
-    "part": "主楼",
+    "part": "主楼（板楼）",
     "shape": "rect",
     "size_m": [
      101,
@@ -3243,16 +3244,57 @@
     "top_m": null,
     "setbacks": [],
     "taper": null,
-    "notes": "Overture 轮廓 101×35 m（南北向板楼）；另有“中贸广场-4栋”f1450a77（51×33 m）。未取得可确认的实景照片"
+    "notes": "Overture 轮廓 101×35 m（南北向板楼）；另有“中贸广场-4栋”f1450a77（51×33 m）"
+   },
+   {
+    "part": "商业裙楼",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片（夜景）：深色玻璃+石材裙楼，入口为折线形钢构玻璃雨棚，檐口一道绿色轮廓灯；内部有顶棚覆盖的商业街（中贸城市生活广场）"
    }
   ],
   "crown": null,
-  "facade": null,
-  "podium": null,
-  "signage": [],
-  "night": null,
-  "photos": [],
+  "facade": {
+   "primary": "深色玻璃+石材（裙楼）",
+   "glass_color_hex": "#2a3138",
+   "frame_color_hex": "#6a6f73",
+   "wall_color_hex": "#5e6266",
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "塔楼立面未取得清晰照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "沿长安北路",
+   "facade": "深色玻璃+石材",
+   "entrance": "朝东（长安北路），折线玻璃雨棚"
+  },
+  "signage": [
+   {
+    "text": "中贸广场",
+    "color_hex": "#ffffff",
+    "position": "裙楼檐口正立面（白色发光字）",
+    "approx_height_m": null
+   }
+  ],
+  "night": "裙楼檐口绿色线形轮廓灯，内街彩色灯饰（照片）",
+  "photos": [
+   "http://news.winshang.com/member/FCK/2019/1/23/2019123173926725704x.png",
+   "http://inews.gtimg.com/newsapp_bt/0/8610578032/641"
+  ],
   "sources": [
+   "http://news.winshang.com/html/065/2779.html",
+   "http://xian.qq.com/a/20190418/002917.htm",
    "https://www.anjuke.com/xa/cm314275/",
    "https://m.city8.com/xa/shopping/80kf947c5cfob87c19_address"
   ],
@@ -4074,7 +4116,8 @@
   "name": "金莎国际购物广场（小寨）",
   "aliases": [
    "小寨金莎国际",
-   "金莎国际广场"
+   "金莎国际广场",
+   "金莎国际酒店"
   ],
   "category": "mall",
   "lon": 108.942808,
@@ -4087,21 +4130,93 @@
   ],
   "height_m": null,
   "floors": 7,
-  "height_source": "地上7层、地下3层（WebSearch 汇总百科）",
+  "height_source": "商场地上7层、地下3层（WebSearch 汇总百科）；上部两栋塔楼层数未查到",
   "year": 2013,
-  "massing": [],
-  "crown": null,
-  "facade": null,
-  "podium": null,
-  "signage": [],
-  "night": null,
-  "photos": [],
+  "massing": [
+   {
+    "part": "商场裙楼（7层）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：欧式古典米黄石材裙楼，首层拱券与壁柱，二层以上竖向壁柱+玻璃，裙楼正面“金莎国际购物广场”金色字与徽标"
+   },
+   {
+    "part": "双塔（酒店/公寓）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "效果图：裙楼上两栋高低错落的板式塔楼，顶部阶梯形收头；实景：灰绿色面砖塔楼，挂“7天优品酒店”“金莎时代酒店”等竖牌"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "阶梯形女儿墙（效果图中金色轮廓灯）"
+  },
+  "facade": {
+   "primary": "米黄石材（裙楼）+灰绿面砖（塔楼）",
+   "glass_color_hex": "#3f5a66",
+   "frame_color_hex": "#cdbb96",
+   "wall_color_hex": "#d4c39e",
+   "pattern": "古典壁柱+方窗",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 7,
+   "height_m": null,
+   "shape": "矩形",
+   "facade": "古典石材",
+   "entrance": "朝街拱形入口，首层麦当劳等"
+  },
+  "signage": [
+   {
+    "text": "金莎国际购物广场（徽标）",
+    "color_hex": "#c9a646",
+    "position": "裙楼正立面上部",
+    "approx_height_m": null
+   },
+   {
+    "text": "金莎国际酒店 Golden Sha International Hotel",
+    "color_hex": "#f2c14e",
+    "position": "裙楼转角（效果图）",
+    "approx_height_m": null
+   }
+  ],
+  "night": "效果图：塔楼转角竖向彩色灯带、顶部金色轮廓灯；实景夜景未取得",
+  "photos": [
+   "http://img.mp.itc.cn/upload/20161119/90f2bcccded746b39e8bd73b65faffcc_th.jpeg",
+   "https://ak-d.tripcdn.com/images/200k0i0000009br068024_R_600_400_R5_D.jpg",
+   "http://img.mp.itc.cn/upload/20170807/174ead16c2a74778984ad10b4498213e_th.jpg"
+  ],
   "sources": [
+   "http://www.sohu.com/a/119407834_348963",
+   "https://hotels.ctrip.com/hotels/detail/?adult=1&checkIn=2021-07-11&checkOut=2021-07-12&children=0&cityId=10&crn=1&hotelId=1403395",
+   "http://www.sohu.com/a/162912685_225061",
    "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%B0%8F%E5%AF%A8%E9%87%91%E8%8E%8E%E5%9B%BD%E9%99%85%E5%B9%BF%E5%9C%BA/7336370",
    "http://www.xbfashion.com/html/2013/market_0815/1321.html"
   ],
   "confidence": "low",
-  "notes": "总建筑面积约13万㎡、商业7万㎡；2013年开业（西部时尚网2013-08报道）。未取得可用外观照片。",
+  "notes": "总建筑面积约13万㎡、商业7万㎡；2013年开业（西部时尚网2013-08报道）。塔楼实景与效果图差异未核实。",
   "footprint_detail": {
    "area_m2": 7000,
    "long_axis_deg_from_east_ccw": 89.7,
@@ -5919,18 +6034,74 @@
   "floors": null,
   "height_source": null,
   "year": 2009,
-  "massing": [],
-  "crown": null,
-  "facade": null,
+  "massing": [
+   {
+    "part": "红色基座",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片（夜景）：红色墙面基座，入口上方金色“西安音乐厅”字，墙面挂演出海报"
+   },
+   {
+    "part": "唐风重檐屋顶殿身",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：多重檐唐风大屋顶，檐下斗拱金黄泛光、挂红灯笼；与西侧陕西大剧院形制相近"
+   }
+  ],
+  "crown": {
+   "type": "pyramid",
+   "height_m": null,
+   "description": "唐风重檐屋顶"
+  },
+  "facade": {
+   "primary": "红色墙面+仿木构",
+   "glass_color_hex": "#e8b050",
+   "frame_color_hex": "#b8862b",
+   "wall_color_hex": "#b3261e",
+   "pattern": "柱廊+斗拱",
+   "floor_height_m": null,
+   "notes": null
+  },
   "podium": null,
-  "signage": [],
-  "night": null,
-  "photos": [],
+  "signage": [
+   {
+    "text": "西安音乐厅",
+    "color_hex": "#f2c14e",
+    "position": "入口上方基座墙面",
+    "approx_height_m": null
+   }
+  ],
+  "night": "檐口斗拱金黄泛光+基座红光（照片）",
+  "photos": [
+   "https://d.youth.cn/newtech/201902/W020190221601001102769.jpg"
+  ],
   "sources": [
+   "https://d.youth.cn/newtech/201902/t20190221_11876333.htm",
    "https://zh.wikipedia.org/wiki/西安音乐厅"
   ],
-  "confidence": "low",
-  "notes": "西安交响乐团驻地，2009-09-28开幕；交响大厅1303座+室内/流行乐厅149座；声学设计马歇尔（wiki）。位于大唐不夜城贞观广场与陕西大剧院相对。本次未取得可区分的外观照片（搜索结果多为大剧院/不夜城泛景）。",
+  "confidence": "medium",
+  "notes": "西安交响乐团驻地，2009-09-28开幕；交响大厅1303座+室内/流行乐厅149座；声学设计马歇尔（wiki）。位于大唐不夜城贞观广场东侧，与西安美术馆相邻（Overture 两者轮廓尺寸相同，均 45×32 m 外包，应为对称布置的姊妹体量）。",
   "footprint_detail": {
    "area_m2": 1456,
    "long_axis_deg_from_east_ccw": 0.0,
