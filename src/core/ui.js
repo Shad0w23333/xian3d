@@ -1,6 +1,7 @@
 // 界面：加载页、信息栏、控制面板（时间/视角/画质/图层）、帮助、小地图、提示
 import { unproject } from './geo.js';
 import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA } from './config.js';
+import { BLD_CLASSES } from '../arch/bld-class.js';
 
 const h = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -104,8 +105,15 @@ export class UI {
         <label><input type="checkbox" class="l-traffic" checked /> 交通流与航班</label>
         <label><input type="checkbox" class="l-labels" checked /> 地名标注</label>
         <label><input type="checkbox" class="l-buildings" checked /> 城市建筑</label>
+        <label><input type="checkbox" class="l-districts" /> 行政区界·商圈·地铁线（高德）</label>
+        <label><input type="checkbox" class="l-metro" /> 地铁透视俯视（X）</label>
+        <button class="b-metro-under">进入地铁·地下浏览（U）</button>
+        <label><input type="checkbox" class="l-roadnames" checked /> 路名 <em>近处显示</em></label>
+        <label><input type="checkbox" class="l-estates" checked /> 小区名称 <em>近处显示</em></label>
+        <label class="l-sub"><input type="checkbox" class="l-estatelines" checked /> 小区边界线</label>
       </div>
       <button class="collapse" title="收起/展开">⟩</button>`;
+    this._buildThematic();
     root.appendChild(this.panel);
 
     // —— 底部：按键提示 ——
@@ -159,6 +167,8 @@ export class UI {
             <h3>时间与显示</h3>
             <p><kbd>N</kbd> 日/夜切换，<kbd>T</kbd> 时间流逝开关，<kbd>[</kbd> <kbd>]</kbd> 时间 ±30 分钟</p>
             <p><kbd>L</kbd> 地名标注，<kbd>M</kbd> 小地图，<kbd>P</kbd> 控制面板</p>
+            <p><kbd>X</kbd> 地铁透视俯视，<kbd>U</kbd> 进入地铁/返回地面</p>
+            <p><kbd>V</kbd> 一键俯视/回到原视角，<kbd>B</kbd> 建筑分类高亮</p>
             <p><kbd>F</kbd> 全屏，<kbd>K</kbd> 截图保存 PNG</p>
             <p><kbd>H</kbd> 或 <kbd>?</kbd> 打开/关闭本帮助</p>
             <h3>画质</h3>
@@ -188,9 +198,66 @@ export class UI {
     $('.l-traffic').addEventListener('change', (e) => this.emit('traffic', e.target.checked));
     $('.l-labels').addEventListener('change', (e) => this.emit('labels', e.target.checked));
     $('.l-buildings').addEventListener('change', (e) => this.emit('buildings', e.target.checked));
+    $('.l-districts').addEventListener('change', (e) => this.emit('districts', e.target.checked));
+    $('.l-metro').addEventListener('change', () => this.emit('metro'));
+    $('.b-metro-under').addEventListener('click', () => this.emit('metroUnder'));
     $('.collapse').addEventListener('click', () => this.togglePanel());
+    this._bindThematic();
     // 面板内交互不触发画面锁定
     for (const el of [this.panel, this.info, this.mini]) el.addEventListener('mousedown', (e) => e.stopPropagation());
+  }
+
+  // —— 专题图：建筑分类高亮 + 一键俯视（独立区块，便于合并） ——
+  _buildThematic() {
+    const sec = h('div', 'sec sec-thematic');
+    const items = BLD_CLASSES.map(
+      (c, i) => `<label class="cls-item" title="${c.name}"><input type="checkbox" data-cls="${i}" checked /><i style="background:${c.color}"></i><span>${c.name}</span><em class="cls-n" data-cls="${i}"></em></label>`
+    ).join('');
+    sec.innerHTML = `
+      <div class="sec-h">专题图 <button class="topdown" title="相机平滑转到正上方俯视，再按回到原视角（V）">⤓ 一键俯视</button></div>
+      <label><input type="checkbox" class="l-bldclass" /> 建筑分类高亮 <em>B</em></label>
+      <div class="cls-box">
+        <div class="cls-legend">${items}</div>
+        <div class="row cls-row"><button class="cls-all">全选</button><button class="cls-none">全不选</button><span class="cls-cov"></span></div>
+      </div>`;
+    const collapse = this.panel.querySelector('.collapse');
+    this.panel.insertBefore(sec, collapse);
+    this.thematic = sec;
+  }
+  _bindThematic() {
+    const sec = this.thematic;
+    if (!sec) return;
+    const $ = (s) => this.panel.querySelector(s);
+    $('.l-roadnames').addEventListener('change', (e) => this.emit('roadnames', e.target.checked));
+    $('.l-estates').addEventListener('change', (e) => this.emit('estates', e.target.checked));
+    $('.l-estatelines').addEventListener('change', (e) => this.emit('estateLines', e.target.checked));
+    $('.l-bldclass').addEventListener('change', (e) => this.emit('bldclass', e.target.checked));
+    sec.querySelector('.topdown').addEventListener('click', () => this.emit('topdown'));
+    const boxes = [...sec.querySelectorAll('.cls-item input')];
+    const emitSel = () => this.emit('bldclassSel', new Set(boxes.filter((b) => b.checked).map((b) => +b.dataset.cls)));
+    boxes.forEach((b) => b.addEventListener('change', emitSel));
+    sec.querySelector('.cls-all').addEventListener('click', () => { boxes.forEach((b) => (b.checked = true)); emitSel(); });
+    sec.querySelector('.cls-none').addEventListener('click', () => { boxes.forEach((b) => (b.checked = false)); emitSel(); });
+  }
+  /** 分类统计（数量 + 判定覆盖率）写入图例 */
+  setClassStats(st) {
+    if (!this.thematic || !st) return;
+    this.thematic.querySelectorAll('.cls-n').forEach((e) => {
+      const n = st.byClass[+e.dataset.cls] || 0;
+      e.textContent = n >= 10000 ? (n / 10000).toFixed(1) + '万' : String(n);
+    });
+    this.thematic.querySelector('.cls-cov').textContent = `已判定 ${((st.classified / st.total) * 100).toFixed(0)}%`;
+  }
+  setClassSelection(set) {
+    if (!this.thematic) return;
+    this.thematic.querySelectorAll('.cls-item input').forEach((b) => (b.checked = !set || set.has(+b.dataset.cls)));
+  }
+  setTopDown(on) {
+    const b = this.thematic && this.thematic.querySelector('.topdown');
+    if (b) {
+      b.classList.toggle('on', on);
+      b.textContent = on ? '⤒ 回到原视角' : '⤓ 一键俯视';
+    }
   }
 
   setQualityActive(i) {

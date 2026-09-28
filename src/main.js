@@ -16,6 +16,7 @@ import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA, START_VIEW, defaultQualityLevel
 import { project, unproject } from './core/geo.js';
 import { MODULES } from './modules/index.js';
 import { installHeightFog } from './core/fog.js';
+import { setupThematic } from './core/thematic.js';
 
 installHeightFog();
 
@@ -136,7 +137,7 @@ async function main() {
 
   const data = {};
   const optional = { optional: true };
-  const [roads, water, landuse, aeroway, pois, rail, buildings, bnames, landmarks, skyline] = await Promise.all([
+  const [roads, water, landuse, aeroway, pois, rail, buildings, bnames, landmarks, skyline, amapExtra] = await Promise.all([
     loadJSON('roads.json', optional),
     loadJSON('water.json', optional),
     loadJSON('landuse.json', optional),
@@ -147,8 +148,9 @@ async function main() {
     loadJSON('buildings_names.json', optional),
     loadJSON('landmarks.json', optional),
     loadJSON('skyline.json', optional),
+    loadJSON('amap_extra.json', optional),
   ]);
-  Object.assign(data, { roads, water, landuse, aeroway, pois, rail, buildings, buildingNames: bnames, landmarks, skyline });
+  Object.assign(data, { roads, water, landuse, aeroway, pois, rail, buildings, buildingNames: bnames, landmarks, skyline, amapExtra });
   offProg();
 
   // —— 系统 ——
@@ -234,6 +236,7 @@ async function main() {
   const post = new Post(renderer, scene, camera, quality, reversed);
   const controls = new Controls(camera, renderer.domElement, terrain);
   app.controls = controls;
+  ctx.controls = controls; // 地铁地下浏览等模块运行时需要接管地面高度
   app.post = post;
 
   // 起始视角
@@ -312,7 +315,7 @@ async function main() {
     ui.setQualityActive(i);
     ui.toast(`画质：${quality.name}`);
   };
-  const layers = { traffic: true, labels: true, buildings: true };
+  const layers = { traffic: true, labels: true, buildings: true, districts: false };
   const setLayer = (name, v) => {
     layers[name] = v;
     if (name === 'labels') labels.setVisible(v);
@@ -340,7 +343,81 @@ async function main() {
   ui.on('traffic', (v) => setLayer('traffic', v));
   ui.on('labels', (v) => setLayer('labels', v));
   ui.on('buildings', (v) => setLayer('buildings', v));
+  ui.on('districts', (v) => setLayer('districts', v));
+  // —— 地铁：透视俯视 / 进入地下 ——
+  const metroXray = () => {
+    const m = ctx.metro;
+    if (!m) return ui.toast('地铁数据未加载');
+    if (m.underground) m.setUnder(false);
+    m.setXray(!m.xray);
+    ui.setLayer('metro', m.xray);
+    ui.toast(m.xray ? '地铁透视：线网按官方色显示（X 返回）' : '已退出地铁透视');
+  };
+  const metroUnder = () => {
+    const m = ctx.metro;
+    if (!m) return ui.toast('地铁数据未加载');
+    m.setUnder(!m.underground);
+    ui.setLayer('metro', false);
+    ui.toast(m.underground ? `已进入地铁 ${m.station} 站（G 切换步行/飞行，U 返回地面）` : '已返回地面');
+  };
+  app.metroXray = metroXray;
+  app.metroUnder = metroUnder;
+  if (params.get('metro') === 'xray') setTimeout(metroXray, 0);
+  if (params.get('metro') === 'under') setTimeout(metroUnder, 0);
+  ui.on('metro', () => metroXray());
+  ui.on('metroUnder', () => metroUnder());
   sky.speed = 0.1666667;
+
+  // —— 专题图层：路名 / 小区 / 建筑分类高亮（见 core/thematic.js） ——
+  const thematic = setupThematic({ app, ctx, ui, root, params });
+
+  // —— 一键俯视（通用）：app.topDown(on) 平滑转到当前视点正上方俯视；app.topDown(false) 回到原视角 ——
+  //    俯视中心：视线与地面交点（1.5 km 内），否则取相机正下方；保持原航向（屏幕上方 = 原前进方向）
+  {
+    let saved = null;
+    const dir = new THREE.Vector3();
+    const flyNoArc = (p, t) => {
+      controls.flyTo(p, t, { duration: 1.6 });
+      if (controls.tween) controls.tween.arc = 0;
+    };
+    app.topDown = (on = !saved) => {
+      if (on && !saved) {
+        if (controls.mode !== 'fly') controls.setMode('fly');
+        camera.getWorldDirection(dir);
+        const cp = camera.position;
+        const agl = Math.max(1, cp.y - terrain.heightAt(cp.x, cp.z));
+        let cx = cp.x, cz = cp.z;
+        if (dir.y < -0.05) {
+          const t = agl / -dir.y;
+          if (Math.hypot(dir.x * t, dir.z * t) < 1500) (cx += dir.x * t), (cz += dir.z * t);
+        }
+        const H = THREE.MathUtils.clamp(Math.max(agl * 1.4, 700), 700, 9000);
+        const g = terrain.heightAt(cx, cz);
+        let fx = dir.x, fz = dir.z;
+        const fl = Math.hypot(fx, fz);
+        if (fl < 1e-3) (fx = 0), (fz = -1);
+        else (fx /= fl), (fz /= fl);
+        saved = { p: cp.clone(), t: cp.clone().addScaledVector(dir, 100), mode: controls.mode };
+        flyNoArc(new THREE.Vector3(cx, g + H, cz), new THREE.Vector3(cx + fx * H * 0.022, g, cz + fz * H * 0.022));
+      } else if (!on && saved) {
+        flyNoArc(saved.p, saved.t);
+        saved = null;
+      }
+      ui.setTopDown(!!saved);
+      return !!saved;
+    };
+    app.isTopDown = () => !!saved;
+    ui.on('topdown', () => app.topDown());
+    window.addEventListener('keydown', (e) => {
+      if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.code === 'KeyV') ui.toast(app.topDown() ? '俯视（再按 V 回到原视角）' : '回到原视角');
+    });
+    if (params.get('topdown') === '1') {
+      // 自动化：直接定位到俯视（不做动画）
+      app.topDown(true);
+      if (controls.tween) controls.tween.t = controls.tween.dur;
+    }
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
@@ -358,6 +435,8 @@ async function main() {
       case 'KeyG': controls.setMode(controls.mode === 'walk' ? 'fly' : 'walk'); ui.toast(controls.mode === 'walk' ? '步行模式（空格跳跃）' : '飞行模式'); break;
       case 'KeyO': controls.setMode(controls.mode === 'orbit' ? 'fly' : 'orbit'); ui.toast(controls.mode === 'orbit' ? '环绕展示模式' : '飞行模式'); break;
       case 'KeyL': setLayer('labels', !layers.labels); break;
+      case 'KeyX': metroXray(); break;
+      case 'KeyU': metroUnder(); break;
       case 'KeyM': ui.toggleMinimap(); break;
       case 'KeyP': ui.togglePanel(); break;
       case 'KeyH': case 'Slash': ui.toggleHelp(); break;
@@ -426,6 +505,7 @@ async function main() {
     renderer.info.reset();
     post.render(dt);
     labels.update(camera, window.innerWidth, window.innerHeight);
+    thematic.update(camera, window.innerWidth, window.innerHeight);
 
     speed = speed * 0.9 + (camera.position.distanceTo(prevPos) / Math.max(dt, 1e-3)) * 0.1;
     prevPos.copy(camera.position);

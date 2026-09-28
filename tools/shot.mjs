@@ -7,6 +7,7 @@
 //   modules=a,b（只加载指定模块，none=都不加载）、skip=a,b、view=预设键(1..0 或 !1..!5)、time=小时、q=画质0..3、
 //   ll=lon,lat,离地高,目标lon,目标lat,目标离地高、cam=x,离地高,z,tx,目标离地高,tz、orbit=1
 //   labels=1 显示地名标注（默认截图不显示）
+//   --dom：连同 DOM 叠加层（地名/路名/小区标注、面板）一起截图（默认只读 WebGL 画布）
 //   输出：PNG + 控制台打印 JSON（fps、drawcalls、三角形、控制台错误、模块错误）
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
@@ -16,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
-const opt = { shots: [], w: 1600, h: 900, wait: 45, frames: 90, headed: false };
+const opt = { shots: [], w: 1600, h: 900, wait: 45, frames: 90, headed: false, dom: false };
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === '--shot') opt.shots.push(args[++i]);
@@ -25,6 +26,7 @@ for (let i = 0; i < args.length; i++) {
   else if (a === '--wait') opt.wait = +args[++i];
   else if (a === '--frames') opt.frames = +args[++i];
   else if (a === '--headed') opt.headed = true;
+  else if (a === '--dom') opt.dom = true;
 }
 if (!opt.shots.length) {
   console.error('需要至少一个 --shot "query|out.png"');
@@ -107,7 +109,7 @@ try {
         await new Promise((r) => setTimeout(r, 200));
         return window.xian.renderer.domElement.toDataURL('image/png');
       });
-      if (url && url.startsWith('data:image/png')) {
+      if (url && url.startsWith('data:image/png') && !opt.dom) {
         fs.writeFileSync(path.resolve(root, out), Buffer.from(url.split(',')[1], 'base64'));
         saved = true;
       }

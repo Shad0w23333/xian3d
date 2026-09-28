@@ -1,4 +1,4 @@
-// 西安明城墙（整体重写）：13.74 km 城墙本体 + 91 马面 + 18 城门 + 4 角楼 + 护城河驳岸 + 夜景。
+// 西安明城墙（整体重写）：13.74 km 城墙本体 + 91 马面 + 18 城门（含全部券洞） + 3 方角台角楼 + 西南圆形角台 + 护城河驳岸 + 夜景。
 //
 // 调研要点（写入常量）：
 //  · 墙高 12 m，顶宽 12~14 m，底宽 15~18 m（中线→外皮 8.1 m 取自 OSM 实测，外侧收分 1.5 m）。
@@ -7,8 +7,13 @@
 //  · 四门三重：闸楼（月城）→ 箭楼（瓮城外墙）→ 正楼。正楼面阔七间、重檐歇山三滴水、高约 36 m（含城台）；
 //    箭楼面阔十一间、长 52.6 m、宽 13 m、距地 31~33 m、单檐歇山，正面四层箭窗每层 12 孔、两侧每层 3 孔；
 //    永宁门箭楼下不开门洞（入城经瓮城），城台门洞宽高约 6 m。匾额：永寧門 / 安遠門 / 長樂門 / 安定門。
-//  · 西南角为圆弧形城角（唐皇城旧制，中线在角部切去约 28 m），圆形角台；其余三角方形角台。
-//  · 现代城门按券洞数（和平门 4、建国门/尚勤门 3 等，参考西安本地宝/澎湃城门介绍）。
+//  · 城角：东南、东北、西北为直角城角 + 方形角台（角台上现有小角亭）；西南角城墙本身仍为直角，
+//    角台为圆形（沿用唐皇城西南角圆台旧制）：卫星图实测台顶直径约 20 m、台心位于两外墙面外约 4 m，
+//    台体高出墙顶约 1.9 m，台顶无楼，仅铺地与垛口（Esri z19 影像核对，2026-09）。
+//  · 券洞（道路穿墙处都有）：四门（永宁/安远/长乐/安定）瓮城两侧各新辟 3 孔（永宁门 1956 年东西各 3 孔、
+//    长乐门南北两侧共 6 孔）；近现代城门按资料与道路（roads.json 穿墙位置/宽度）对齐布置，见 GATE_HOLES。
+//    券洞与墙身同一套截面（收分、土衬石、海墁）一体生成，真实贯通：拱顶/侧墙/券脸，道路从洞中穿过。
+//  · 魁星楼：文昌门券洞西侧约 27 m 的城墙顶（影像核对）。
 import * as THREE from 'three';
 import { ArchBuilder, buildArch, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, cityPlatform } from '../arch/chinese.js';
 import { MeshBuf, wallMaterial, merlonGeometry, merlonLedGeometry, lampPostGeometry, outlineLines } from '../arch/citywall-kit.js';
@@ -24,48 +29,49 @@ const PO = { t: 0.62, h: 1.25 }; // 外侧垛墙下段（垛口底以下）
 const PIN = { t: 0.5, h: 1.0 }; // 内侧女墙
 const MER = { w: 1.8, h: 0.72, gap: 0.5 };
 const MSTEP = MER.w + MER.gap;
-const SW_R = 30; // 西南圆角半径
+// 西南圆形角台：台心在两外墙顶皮外约 4 m（沿两外法线，距中线 off），台顶半径 rT、底半径 rB，高出墙顶 up
+const SW_TOWER = { off: OT + 4, rT: 10, rB: 11.2, up: 1.9 };
 
 // 四大城门：W=瓮城外皮半宽，P=外凸（数据 other_protrusions），月城仅永宁门
 const MAIN = {
   yongning: { plaque: '永寧門', W: 58, P: 130, arrowTunnel: 0, yue: true, label: '永宁门' },
-  anyuan: { plaque: '安遠門', W: 56, P: 81, arrowTunnel: 1, label: '安远门' },
+  anyuan: { plaque: '安遠門', W: 44, P: 81, arrowTunnel: 1, label: '安远门' },
   changle: { plaque: '長樂門', W: 45, P: 80, arrowTunnel: 1, label: '长乐门' },
   anding: { plaque: '安定門', W: 52, P: 77, arrowTunnel: 1, label: '安定门' },
 };
-// 现代城门：[券洞数, 券洞宽]
-const MODERN = {
-  shangwu: [3, 6], shangde: [3, 7.5], jiefang: [3, 8], shangjian: [3, 7], shangqin: [3, 7], chaoyang: [3, 7.5],
-  zhongshan: [2, 6.5], jianguo: [3, 7.5], heping: [4, 7.5], wenchang: [2, 7], zhuque: [3, 7.5], wumu: [1, 7],
-  hanguang: [3, 7], yuxiang: [2, 8],
+/**
+ * 券洞表（"侧门小洞洞"）：gateId → 若干组连续券洞，每组 = [[中心, 宽, {crown 拱顶高, spring 起拱高}?], ...]
+ * 中心为相对城门中线投影点的沿墙里程（m，里程沿中心线顺时针：北墙西→东、东墙北→南、南墙东→西、西墙南→北）。
+ * 数量依据：永宁门东西各 3 孔（1956）；长乐门南北两侧共 6 孔；安远/安定门同制；玉祥门 5 孔（中孔约 20 m 机动车、
+ * 两侧 4 孔各约 8 m、高约 8 m，1996 重建）；解放门 3 个拱桥式大跨门洞（中 84 m、两侧各 58 m，2004）；
+ * 尚德/尚俭/尚勤门 3 孔；中山门 2 孔（东征门/凯旋门，分列城台南北两侧）；勿幕门单孔；和平门 4 孔（1953）；
+ * 朱雀门、文昌门 4 孔；朝阳门 4 孔（两条 3 车道单向道路 + 两侧人行）；含光门：中段为唐含光门遗址博物馆，
+ * 交通走东西两侧券洞。位置/宽度与 public/data/roads.json 的道路穿墙点逐一对齐（车行孔宽 ≥ 路宽）。
+ */
+const GATE_HOLES = {
+  yongning: [[[-72, 11.5], [-61.5, 4.5], [-82.5, 4.5]], [[73, 11.5], [62.5, 4.5], [83.5, 4.5]]],
+  anyuan: [[[-76, 9.5], [-65.5, 5], [-86.5, 5]], [[58, 9.5], [48.5, 4.5], [67.5, 5]]],
+  changle: [[[-80, 9], [-69.5, 5], [-90.5, 5]], [[66, 12.5], [53.5, 5], [78.5, 5]]],
+  anding: [[[-74, 11.5], [-63.5, 4.5], [-84.5, 4.5]], [[73, 11.5], [62.5, 4.5], [83.5, 4.5]]],
+  shangwu: [[[-5, 7.6], [5, 7.6], [-13.7, 5], [13.7, 5]]],
+  shangde: [[[-3, 9], [-13, 5], [7, 5]]],
+  jiefang: [[[-2, 84, { crown: 8.8, spring: 1.0 }], [-76, 58, { crown: 8.0, spring: 1.0 }], [72, 58, { crown: 8.0, spring: 1.0 }]]],
+  shangjian: [[[-1, 8.5], [-11.25, 5], [9.25, 5]]],
+  shangqin: [[[-3, 7], [-12.5, 5], [6.5, 5]]],
+  chaoyang: [[[-11, 11.5], [3, 11.5], [-21.5, 4.5], [13.5, 4.5]]],
+  zhongshan: [[[-30, 8.5]], [[24, 8.5]]],
+  jianguo: [[[2, 8.5], [-8.5, 5], [12.5, 5]]],
+  heping: [[[-15, 5], [-6, 8], [7, 14], [18.5, 5]]],
+  wenchang: [[[-9, 7.6], [1, 7.6], [-17.3, 4.5], [9.3, 4.5]]],
+  zhuque: [[[-6, 8.5], [6, 8.5], [-16.5, 5], [16.5, 5]]],
+  wumu: [[[2, 7.5]]],
+  hanguang: [[[-54, 9], [-64, 7]], [[61, 9], [71.5, 6.5]]],
+  yuxiang: [[[-0.6, 22, { crown: 8.6, spring: 3.2 }], [-17.6, 8], [-27.6, 8], [16.4, 8], [26.4, 8]]],
 };
+const HOLE_END = 3; // 券洞组两端到墙体切口的余量（m）
 const MAIN_PLAT = { w: 56, d: 30, zc: -3 }; // 正楼城台
 
 // ───────────── 中心线几何 ─────────────
-function filletRing() {
-  const P = CENTERLINE.map((p) => p.slice());
-  const k = P.findIndex((p) => p[0] === CORNERS.SW[0] && p[1] === CORNERS.SW[1]);
-  const V = P[k], A = P[k - 1], B = P[k + 1];
-  const da = norm([A[0] - V[0], A[1] - V[1]]), db = norm([B[0] - V[0], B[1] - V[1]]);
-  const half = Math.acos(Math.max(-1, Math.min(1, da[0] * db[0] + da[1] * db[1]))) / 2;
-  const tl = SW_R / Math.tan(half);
-  const T1 = [V[0] + da[0] * tl, V[1] + da[1] * tl], T2 = [V[0] + db[0] * tl, V[1] + db[1] * tl];
-  const bis = norm([da[0] + db[0], da[1] + db[1]]);
-  const cd = SW_R / Math.sin(half);
-  const C = [V[0] + bis[0] * cd, V[1] + bis[1] * cd];
-  const a1 = Math.atan2(T1[1] - C[1], T1[0] - C[0]);
-  let a2 = Math.atan2(T2[1] - C[1], T2[0] - C[0]);
-  let d = a2 - a1;
-  while (d > Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  const arc = [];
-  for (let i = 0; i <= 10; i++) {
-    const a = a1 + (d * i) / 10;
-    arc.push([C[0] + Math.cos(a) * SW_R, C[1] + Math.sin(a) * SW_R]);
-  }
-  P.splice(k, 1, ...arc);
-  return { P, swCenter: C, swMid: arc[5], swOut: [-bis[0], -bis[1]] };
-}
 function norm(v) {
   const l = Math.hypot(v[0], v[1]) || 1;
   return [v[0] / l, v[1] / l];
@@ -132,6 +138,28 @@ class Ring {
   }
 }
 
+/**
+ * 构建城墙中心线环：券洞组范围内的中心线折点（OSM 中心线在城门附近的 3 m 小错台/微折）拉直，
+ * 保证带洞墙段是一段直墙，与两端墙身截面、墙顶垛墙严丝合缝。四角折点保留。
+ */
+function wallRing(gates) {
+  const r0 = new Ring(CENTERLINE.map((p) => p.slice()));
+  const keep = new Set(Object.values(CORNERS).map((c) => c.join(',')));
+  const drop = new Set();
+  for (const g of gates) {
+    const groups = GATE_HOLES[g.id];
+    if (!groups) continue;
+    const s = r0.project(g.world?.x ?? g.x, g.world?.z ?? g.z).s;
+    for (const grp of groups) {
+      const a0 = Math.min(...grp.map(([c, w]) => c - w / 2)) - HOLE_END, a1 = Math.max(...grp.map(([c, w]) => c + w / 2)) + HOLE_END;
+      r0.segs.forEach((sg, i) => {
+        if (sg.s0 > s + a0 - 0.5 && sg.s0 < s + a1 + 0.5 && !keep.has(sg.a.join(','))) drop.add(i);
+      });
+    }
+  }
+  return new Ring(r0.P.filter((_, i) => !drop.has(i)));
+}
+
 function inCuts(s, cuts, L) {
   for (const [a, b] of cuts) if ((s >= a && s <= b) || (s + L >= a && s + L <= b) || (s - L >= a && s - L <= b)) return true;
   return false;
@@ -181,14 +209,22 @@ function emitBody(bufs, st, sec, capStart = true, capEnd = true) {
  * 垛墙/女墙：pts [{x,z,y,nx,nz,sc,s}]（中心线上的点，n 为外法线、sc 斜接系数，y 为墙顶）。
  * merl：若给出数组，按 MSTEP 放垛（perSeg：逐段独立排布，用于转角多的环）。
  */
-function emitParapet(buf, pts, t, h, merl = null, perSeg = false, floodK = 0.45) {
+function emitParapet(buf, pts, t, h, merl = null, perSeg = false, floodK = 0.45, smooth = false) {
   if (pts.length < 2) return;
   for (let k = 0; k < pts.length - 1; k++) {
     const a = pts[k], b = pts[k + 1];
     const E = [a.nx + b.nx, 0, a.nz + b.nz];
     const hs0 = [H, floodK], hs1 = [H + h, floodK * 0.85];
-    buf.quad(P3(a, t / 2, a.y), P3(b, t / 2, b.y), P3(b, t / 2, b.y + h), P3(a, t / 2, a.y + h), [[a.s, H], [b.s, H], [b.s, H + h], [a.s, H + h]], [hs0, hs0, hs1, hs1], E);
-    buf.quad(P3(a, -t / 2, a.y), P3(b, -t / 2, b.y), P3(b, -t / 2, b.y + h), P3(a, -t / 2, a.y + h), [[a.s, H], [b.s, H], [b.s, H + h], [a.s, H + h]], [[H, 0.2], [H, 0.2], [H + h, 0.2], [H + h, 0.2]], [-E[0], 0, -E[2]]);
+    const uvs = [[a.s, H], [b.s, H], [b.s, H + h], [a.s, H + h]], hsI = [[H, 0.2], [H, 0.2], [H + h, 0.2], [H + h, 0.2]];
+    if (smooth) {
+      // 圆弧垛墙：逐顶点径向法线，消除折面感
+      const na = [a.nx, 0, a.nz], nb = [b.nx, 0, b.nz], ma = [-a.nx, 0, -a.nz], mb = [-b.nx, 0, -b.nz];
+      buf.quadN(P3(a, t / 2, a.y), P3(b, t / 2, b.y), P3(b, t / 2, b.y + h), P3(a, t / 2, a.y + h), uvs, [hs0, hs0, hs1, hs1], [na, nb, nb, na]);
+      buf.quadN(P3(a, -t / 2, a.y), P3(b, -t / 2, b.y), P3(b, -t / 2, b.y + h), P3(a, -t / 2, a.y + h), uvs, hsI, [ma, mb, mb, ma]);
+    } else {
+      buf.quad(P3(a, t / 2, a.y), P3(b, t / 2, b.y), P3(b, t / 2, b.y + h), P3(a, t / 2, a.y + h), uvs, [hs0, hs0, hs1, hs1], E);
+      buf.quad(P3(a, -t / 2, a.y), P3(b, -t / 2, b.y), P3(b, -t / 2, b.y + h), P3(a, -t / 2, a.y + h), uvs, hsI, [-E[0], 0, -E[2]]);
+    }
     buf.quad(P3(a, t / 2, a.y + h), P3(b, t / 2, b.y + h), P3(b, -t / 2, b.y + h), P3(a, -t / 2, a.y + h), [[a.s, 0], [b.s, 0], [b.s, t], [a.s, t]], [H + h, 0.15], [0, 1, 0]);
   }
   const cap = (p, q, sg) => {
@@ -282,6 +318,215 @@ function emitBlock(bufs, toW, a0, a1, o0, o1, b, lo, h, bat, sides = [1, 1, 1, 1
   if (topPave) pave.quad(W(A0, O1, b + h), W(A1, O1, b + h), W(A1, O0, b + h), W(A0, O0, b + h), [[A0, O1], [A1, O1], [A1, O0], [A0, O0]], [h, 0], [0, 1, 0]);
 }
 
+// ───────────── 券洞（贯通城墙的拱形门洞） ─────────────
+// 墙身截面（与 emitBody 一致）：外皮 y≤0.9 为土衬石（OB+0.12），其上砖面自 O_PL 收分到 OT；内皮 y≤0.6 为条石，其上 I_PL→IT。
+const O_PL = OB - ((OB - OT) * 0.9) / H, I_PL = IB + ((IT - IB) * 0.6) / H;
+const oOutB = (y) => O_PL + ((OT - O_PL) * (y - 0.9)) / (H - 0.9); // 外砖面
+const oInB = (y) => I_PL + ((IT - I_PL) * (y - 0.6)) / (H - 0.6); // 内砖面
+
+/**
+ * 券洞拱线：宽 w、拱顶高 crown、起拱高 spring。半圆能放下就用半圆（起拱 = crown − w/2），
+ * 否则用弓形拱（大跨，如解放门/玉祥门中孔）。返回 {spring, pts:[[a,y,na,ny]]}（na,ny 为指向拱心的单位法线）。
+ */
+function archProfile(cx, w, crown, spring) {
+  const r = w / 2;
+  const pts = [];
+  let ys, R, yc, th;
+  if (crown - r >= spring - 1e-6) {
+    ys = crown - r;
+    R = r;
+    yc = ys;
+    th = Math.PI / 2;
+  } else {
+    const f = crown - spring;
+    R = (r * r + f * f) / (2 * f);
+    yc = crown - R;
+    th = Math.asin(Math.min(1, r / R));
+    ys = spring;
+  }
+  const n = Math.max(20, Math.min(96, Math.ceil((2 * th * R) / 0.45)));
+  for (let i = 0; i <= n; i++) {
+    const a = Math.PI / 2 + th - (2 * th * i) / n;
+    const ca = Math.cos(a), sa = Math.sin(a);
+    const x = i === 0 ? cx - r : i === n ? cx + r : cx + ca * R;
+    const y = i === 0 || i === n ? ys : yc + sa * R;
+    pts.push([x, y, -ca, -sa]);
+  }
+  return { spring: ys, pts, R };
+}
+
+/** 券洞默认尺寸：拱顶高随宽度增长，封顶 9.2 m（上方留出匾额与海墁） */
+function holeDims(w, o = {}) {
+  const crown = o.crown ?? Math.min(9.2, 3.6 + 0.7 * w);
+  const spring = o.spring ?? Math.max(1.2, crown - w / 2);
+  return { crown, spring };
+}
+
+/**
+ * 一段带券洞的墙身（替换 [stA.s, stB.s] 间的普通墙身，两端与墙身截面严丝合缝）：
+ * 内外立面（开洞多边形三角化）、土衬石与石沿、洞内两侧墙（三段对应土衬/条石/砖面）与拱顶（逐顶点法线）、
+ * 券脸（凸出 7 cm 的砖券）、顶面海墁。垛墙/女墙沿用整圈墙顶的连续扫掠，不在此处生成。
+ * holes：[{c, w, crown, spring}]（c 相对 stA 的沿墙距离）。lo：相对墙基的地下埋深（负值）。
+ */
+function emitHoleWall(bufs, stA, stB, holes, lo) {
+  const { brick, pave, stone } = bufs;
+  const Lb = stB.s - stA.s;
+  const W = (a, o, y) => {
+    const t = a / Lb;
+    const A = P3(stA, o, 0), B = P3(stB, o, 0);
+    return [A[0] + (B[0] - A[0]) * t, stA.b + (stB.b - stA.b) * t + y, A[2] + (B[2] - A[2]) * t];
+  };
+  const tl = Math.hypot(stB.x - stA.x, stB.z - stA.z) || 1;
+  const T = [(stB.x - stA.x) / tl, 0, (stB.z - stA.z) / tl];
+  const Nn = norm([stA.nx + stB.nx, stA.nz + stB.nz]);
+  const EO = [Nn[0], 0.12, Nn[1]], EI = [-Nn[0], 0.12, -Nn[1]], UP = [0, 1, 0];
+  const u = (a) => stA.s + a;
+  const hs = holes.map((h) => ({ ...h, ...archProfile(h.c, h.w, h.crown, h.spring) })).sort((p, q) => p.c - q.c);
+
+  // —— 内外立面：底边绕过各券洞的多边形 ——
+  const facade = (y0, oF, E, fl) => {
+    const cont = [[0, y0]];
+    for (const h of hs) {
+      cont.push([h.c - h.w / 2, y0]);
+      for (const p of h.pts) cont.push([p[0], p[1]]);
+      cont.push([h.c + h.w / 2, y0]);
+    }
+    cont.push([Lb, y0], [Lb, H], [0, H]);
+    const tris = THREE.ShapeUtils.triangulateShape(cont.map(([a, y]) => new THREE.Vector2(a, y)), []);
+    for (const [i, j, k] of tris) {
+      const P = [cont[i], cont[j], cont[k]];
+      brick.tri(...P.map(([a, y]) => W(a, oF(y), y)), P.map(([a, y]) => [u(a), y]), P.map(([, y]) => [y, fl(y)]), E);
+    }
+  };
+  facade(0.9, oOutB, EO, (y) => 1 - (0.5 * (y - 0.9)) / (H - 0.9));
+  facade(0.6, oInB, EI, (y) => 0.55 - (0.25 * (y - 0.6)) / (H - 0.6));
+
+  // —— 土衬石（逐墩） ——
+  const oS = OB + 0.12, iS = IB - 0.1;
+  const edges = [0];
+  for (const h of hs) edges.push(h.c - h.w / 2, h.c + h.w / 2);
+  edges.push(Lb);
+  for (let i = 0; i < edges.length; i += 2) {
+    const p0 = edges[i], p1 = edges[i + 1];
+    if (p1 - p0 < 1e-3) continue;
+    stone.quad(W(p0, oS, lo), W(p1, oS, lo), W(p1, oS, 0.9), W(p0, oS, 0.9), [[u(p0), lo], [u(p1), lo], [u(p1), 0.9], [u(p0), 0.9]], [[0, 0.8], [0, 0.8], [0.9, 0.8], [0.9, 0.8]], EO);
+    stone.quad(W(p0, oS, 0.9), W(p1, oS, 0.9), W(p1, O_PL, 0.9), W(p0, O_PL, 0.9), [[u(p0), 0], [u(p1), 0], [u(p1), 0.3], [u(p0), 0.3]], [0.9, 0.5], UP);
+    stone.quad(W(p0, iS, lo), W(p1, iS, lo), W(p1, iS, 0.6), W(p0, iS, 0.6), [[u(p0), lo], [u(p1), lo], [u(p1), 0.6], [u(p0), 0.6]], [[0, 0.5], [0, 0.5], [0.6, 0.5], [0.6, 0.5]], EI);
+    stone.quad(W(p0, I_PL, 0.6), W(p1, I_PL, 0.6), W(p1, iS, 0.6), W(p0, iS, 0.6), [[u(p0), 0], [u(p1), 0], [u(p1), 0.3], [u(p0), 0.3]], [0.6, 0.3], UP);
+  }
+
+  // —— 洞内：两侧墙 + 拱顶 + 券脸 ——
+  const FL = 0.32; // 洞内夜间泛光系数（暖光透出洞口）
+  for (const h of hs) {
+    for (const [a, sg] of [[h.c - h.w / 2, 1], [h.c + h.w / 2, -1]]) {
+      const E = [T[0] * sg, 0, T[2] * sg];
+      const band = (y0, y1, i0, i1, o0, o1, buf) =>
+        buf.quad(W(a, i0, y0), W(a, o0, y0), W(a, o1, y1), W(a, i1, y1), [[i0, y0], [o0, y0], [o1, y1], [i1, y1]], [[y0, FL], [y0, FL], [y1, FL], [y1, FL]], E);
+      band(lo, 0.6, iS, iS, oS, oS, stone);
+      band(0.6, 0.9, I_PL, oInB(0.9), oS, oS, stone);
+      band(0.9, h.spring, oInB(0.9), oInB(h.spring), O_PL, oOutB(h.spring), brick);
+    }
+    let acc = 0;
+    for (let i = 0; i < h.pts.length - 1; i++) {
+      const p = h.pts[i], q = h.pts[i + 1];
+      const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      const np = [T[0] * p[2], p[3], T[2] * p[2]], nq = [T[0] * q[2], q[3], T[2] * q[2]];
+      brick.quadN(W(p[0], oInB(p[1]), p[1]), W(q[0], oInB(q[1]), q[1]), W(q[0], oOutB(q[1]), q[1]), W(p[0], oOutB(p[1]), p[1]),
+        [[acc, oInB(p[1])], [acc + d, oInB(q[1])], [acc + d, oOutB(q[1])], [acc, oOutB(p[1])]], [[p[1], FL], [q[1], FL], [q[1], FL], [p[1], FL]], [np, nq, nq, np]);
+      acc += d;
+    }
+    // 券脸：拱外沿一圈凸出 7 cm 的砖券（内外两面）
+    const k = Math.max(0.4, Math.min(1.2, h.w * 0.05)), dz = 0.07;
+    h.k = k;
+    const P = h.pts.map((p) => [p[0], p[1], p[0] - p[2] * k, p[1] - p[3] * k, p[2], p[3]]);
+    for (const [oF, sgn, E] of [[oOutB, 1, EO], [oInB, -1, EI]]) {
+      const f = (a, y, raise) => W(a, oF(y) + sgn * raise, y);
+      for (let i = 0; i < P.length - 1; i++) {
+        const [a0, y0, b0, z0, na, ny] = P[i], [a1, y1, b1, z1] = P[i + 1];
+        brick.quad(f(a0, y0, dz), f(a1, y1, dz), f(b1, z1, dz), f(b0, z0, dz), [[u(a0), y0], [u(a1), y1], [u(b1), z1], [u(b0), z0]], [[y0, 0.9], [y1, 0.9], [z1, 0.9], [z0, 0.9]], E);
+        const nOut = [-T[0] * na, -ny, -T[2] * na];
+        brick.quad(f(b0, z0, 0), f(b1, z1, 0), f(b1, z1, dz), f(b0, z0, dz), [[u(b0), 0], [u(b1), 0], [u(b1), dz], [u(b0), dz]], [z0, 0.9], nOut);
+        brick.quad(f(a0, y0, 0), f(a1, y1, 0), f(a1, y1, dz), f(a0, y0, dz), [[u(a0), 0], [u(a1), 0], [u(a1), dz], [u(a0), dz]], [y0, 0.6], [-nOut[0], -nOut[1], -nOut[2]]);
+      }
+      for (const j of [0, P.length - 1]) {
+        const [a0, y0, b0, z0] = P[j];
+        brick.quad(f(a0, y0, 0), f(b0, z0, 0), f(b0, z0, dz), f(a0, y0, dz), [[0, 0], [k, 0], [k, dz], [0, dz]], [y0, 0.8], [0, -1, 0]);
+      }
+    }
+  }
+  // —— 顶面海墁 ——
+  pave.quad(W(0, OT, H), W(Lb, OT, H), W(Lb, IT, H), W(0, IT, H), [[u(0), OT], [u(Lb), OT], [u(Lb), IT], [u(0), IT]], [H, 0], UP);
+  return { W, hs, T, Nn };
+}
+
+/**
+ * 西南圆形角台：圆台（底半径 rB→顶半径 rT，收分，逐顶点法线 128 分段）、土衬石圈、台顶海墁（同心两圈），
+ * 圆弧垛墙（逐顶点法线、垛按弧长均布），朝城内一侧开口 + 7 级砖踏步下到墙顶马道。
+ * C：台心；by：墙基高程；lo：相对墙基的埋深；inward：台心→城角内侧的单位向量。
+ */
+function emitRoundBastion(bufs, merl, outlineRuns, C, by, lo, inward) {
+  const { brick, pave, stone } = bufs;
+  const { rT, rB, up } = SW_TOWER;
+  const top = H + up;
+  const N = 128;
+  const rAt = (y) => rB + ((rT - rB) * (y - 0.9)) / (top - 0.9);
+  const slope = (rB - rT) / (top - 0.9); // 收分使外法线略上仰
+  const pt = (c, s, r, y) => [C[0] + c * r, by + y, C[1] + s * r];
+  const r1 = rT * 0.45;
+  for (let i = 0; i < N; i++) {
+    const A = (i / N) * Math.PI * 2, B = ((i + 1) / N) * Math.PI * 2;
+    const ca = Math.cos(A), sa = Math.sin(A), cb = Math.cos(B), sb = Math.sin(B);
+    const uA = A * rB, uB = B * rB;
+    const na = [ca, slope, sa], nb = [cb, slope, sb];
+    brick.quadN(pt(ca, sa, rAt(0.9), 0.9), pt(cb, sb, rAt(0.9), 0.9), pt(cb, sb, rT, top), pt(ca, sa, rT, top),
+      [[uA, 0.9], [uB, 0.9], [uB, top], [uA, top]], [[0.9, 1], [0.9, 1], [top, 0.5], [top, 0.5]], [na, nb, nb, na]);
+    const rs = rB + 0.12;
+    stone.quadN(pt(ca, sa, rs, lo), pt(cb, sb, rs, lo), pt(cb, sb, rs, 0.9), pt(ca, sa, rs, 0.9),
+      [[uA, lo], [uB, lo], [uB, 0.9], [uA, 0.9]], [[0, 0.8], [0, 0.8], [0.9, 0.8], [0.9, 0.8]], [[ca, 0, sa], [cb, 0, sb], [cb, 0, sb], [ca, 0, sa]]);
+    stone.quad(pt(ca, sa, rs, 0.9), pt(cb, sb, rs, 0.9), pt(cb, sb, rAt(0.9), 0.9), pt(ca, sa, rAt(0.9), 0.9),
+      [[uA, 0], [uB, 0], [uB, 0.3], [uA, 0.3]], [0.9, 0.5], [0, 1, 0]);
+    // 台顶：外环 + 内扇，避免细长三角
+    pave.quad(pt(ca, sa, rT, top), pt(cb, sb, rT, top), pt(cb, sb, r1, top), pt(ca, sa, r1, top),
+      [[C[0] + ca * rT, C[1] + sa * rT], [C[0] + cb * rT, C[1] + sb * rT], [C[0] + cb * r1, C[1] + sb * r1], [C[0] + ca * r1, C[1] + sa * r1]], [top, 0], [0, 1, 0]);
+    pave.tri(pt(0, 0, 0, top), pt(cb, sb, r1, top), pt(ca, sa, r1, top), [[C[0], C[1]], [C[0] + cb * r1, C[1] + sb * r1], [C[0] + ca * r1, C[1] + sa * r1]], [top, 0], [0, 1, 0]);
+  }
+  // 垛墙：整圈，仅在朝城内的踏步口断开
+  const hw = 1.6;
+  const a0 = Math.atan2(inward[1], inward[0]);
+  const half = Math.asin((hw + 0.3) / rT);
+  const Rp = rT - PO.t / 2;
+  const M = 120, span = 2 * Math.PI - 2 * half;
+  const pts = [];
+  for (let i = 0; i <= M; i++) {
+    const A = a0 + half + (span * i) / M;
+    const nx = Math.cos(A), nz = Math.sin(A);
+    pts.push({ x: C[0] + nx * Rp, z: C[1] + nz * Rp, y: by + top, nx, nz, sc: 1, s: (i * span * Rp) / M });
+  }
+  emitParapet(brick, pts, PO.t, PO.h, merl, false, 0.45, true);
+  outlineRuns.push(pts.map((p) => [p.x + p.nx * (PO.t / 2 + 0.05), p.y + PO.h + MER.h * 0.5, p.z + p.nz * (PO.t / 2 + 0.05)]));
+  // 踏步：自台顶沿 inward 方向下到墙顶（7 级，每级高 up/7、深 0.34 m，宽 3.2 m）
+  const d = inward, pn = [-d[1], d[0]];
+  const nStep = 7, hr = up / nStep, run = 0.34;
+  const S = (r, p, y) => [C[0] + d[0] * r + pn[0] * p, by + y, C[1] + d[1] * r + pn[1] * p];
+  const rTop = rT - 0.3; // 最上一级伸入圆台内，接缝藏于台身
+  const prof = [[rTop, H + (nStep - 1) * hr]];
+  for (let i = nStep - 1; i >= 1; i--) {
+    const r0 = i === nStep - 1 ? rTop : rT + (nStep - 1 - i) * run, r2 = rT + (nStep - i) * run;
+    const y = H + i * hr;
+    brick.quad(S(r0, -hw, y), S(r2, -hw, y), S(r2, hw, y), S(r0, hw, y), [[r0, -hw], [r2, -hw], [r2, hw], [r0, hw]], [y, 0.4], [0, 1, 0]);
+    brick.quad(S(r2, -hw, y), S(r2, -hw, y - hr), S(r2, hw, y - hr), S(r2, hw, y), [[-hw, y], [-hw, y - hr], [hw, y - hr], [hw, y]], [y, 0.5], [d[0], 0, d[1]]);
+    prof.push([r2, y], [r2, y - hr]);
+  }
+  prof.push([rTop, H]);
+  const tri2 = THREE.ShapeUtils.triangulateShape(prof.map(([r, y]) => new THREE.Vector2(r, y)), []);
+  for (const sg of [-1, 1]) {
+    for (const [i, j, k] of tri2) {
+      const P = [prof[i], prof[j], prof[k]];
+      brick.tri(...P.map(([r, y]) => S(r, sg * hw, y)), P.map(([r, y]) => [r, y]), [H, 0.4], [pn[0] * sg, 0, pn[1] * sg]);
+    }
+  }
+}
+
 // ───────────── 模块 ─────────────
 function gateFrame(ring, g) {
   const pr = ring.project(g.world?.x ?? g.x, g.world?.z ?? g.z);
@@ -295,8 +540,7 @@ export default {
   name: '西安明城墙与十八城门',
 
   prepare(ctx) {
-    const { P } = filletRing();
-    const ring = new Ring(P);
+    const ring = wallRing(ctx.data?.landmarks?.gates || []);
     // 城墙带状排除区（中线 −16 ~ +26 m，含马面），逐段矩形
     for (const sg of ring.segs) {
       const e = 4;
@@ -324,8 +568,7 @@ export default {
     const lm = ctx.data?.landmarks || {};
     const gates = lm.gates || [];
     const mamianData = lm.mamian || [];
-    const { P, swMid, swOut } = filletRing();
-    const ring = new Ring(P);
+    const ring = wallRing(gates);
     const L = ring.L;
     const root = new THREE.Group();
     root.name = '西安城墙';
@@ -352,7 +595,7 @@ export default {
     // —— 城门 / 角 / 马面：确定切口 ——
     const bodyCuts = [], outCuts = [], inCuts_ = [], forced = [];
     const addCut = (arr, a, b) => { arr.push([a, b]); forced.push(a, b); };
-    const mainGates = [], modernGates = [];
+    const mainGates = [], modernGates = [], holeGroups = [];
     for (const g of gates) {
       const f = gateFrame(ring, g);
       f.by = baseAt(f.s);
@@ -367,13 +610,14 @@ export default {
         const wc = sp.W - 7; // 瓮城侧墙中线
         addCut(outCuts, f.s - wc - 7.5, f.s - wc + 7.5);
         addCut(outCuts, f.s + wc - 7.5, f.s + wc + 7.5);
-      } else {
-        const [n, tw] = MODERN[g.id] || [2, 7];
-        f.n = n;
-        f.tw = tw;
-        f.w = n * tw + (n + 1) * 4.5;
-        modernGates.push(f);
-        addCut(bodyCuts, f.s - f.w / 2 + 0.5, f.s + f.w / 2 - 0.5);
+      } else modernGates.push(f);
+      // 券洞组：墙身在组范围内切开，由 emitHoleWall 以同一截面补上带洞墙段
+      for (const grp of GATE_HOLES[g.id] || []) {
+        const hl = grp.map(([c, w, o]) => ({ c, w, ...holeDims(w, o) }));
+        const a0 = Math.min(...hl.map((h) => h.c - h.w / 2)) - HOLE_END, a1 = Math.max(...hl.map((h) => h.c + h.w / 2)) + HOLE_END;
+        const sA = f.s + a0, sB = f.s + a1;
+        addCut(bodyCuts, sA, sB);
+        holeGroups.push({ f, sA: ring.wrap(sA), sB: ring.wrap(sB), holes: hl.map((h) => ({ ...h, c: h.c - a0 })), minC: Math.min(...hl.map((h) => Math.abs(h.c))) });
       }
     }
     // 方形角台
@@ -386,10 +630,18 @@ export default {
       corners.push({ key, x: c[0], z: c[1], s: n2.s0, u: [n1.nx, n1.nz], v: [n2.nx, n2.nz], by: baseAt(n2.s0) });
       addCut(outCuts, n2.s0 - 10, n2.s0 + 10);
     }
-    // 西南圆角台
-    const swPr = ring.project(swMid[0], swMid[1]);
-    const sw = { key: 'SW', x: swMid[0] + swOut[0] * 3, z: swMid[1] + swOut[1] * 3, s: swPr.s, by: baseAt(swPr.s), out: swOut };
-    addCut(outCuts, sw.s - 17, sw.s + 17);
+    // 西南圆形角台：城墙仍为直角，圆台心在两外墙顶皮外约 4 m（两外法线方向），台顶无楼
+    const sw = (() => {
+      const c = CORNERS.SW;
+      const i = ring.segs.findIndex((sg) => Math.abs(sg.a[0] - c[0]) < 0.01 && Math.abs(sg.a[1] - c[1]) < 0.01);
+      const n2 = ring.segs[i], n1 = ring.segs[(i - 1 + ring.segs.length) % ring.segs.length];
+      const C = [c[0] + (n1.nx + n2.nx) * SW_TOWER.off, c[1] + (n1.nz + n2.nz) * SW_TOWER.off];
+      const inward = norm([c[0] - C[0], c[1] - C[1]]);
+      const rH = SW_TOWER.rB + ((SW_TOWER.rT - SW_TOWER.rB) * (H - 0.9)) / (H + SW_TOWER.up - 0.9);
+      // 外侧垛墙在城角处断开；两侧垛墙沿各自直线延伸到圆台台身内 0.3 m（见 swExtend），接缝藏入台身
+      addCut(outCuts, n2.s0 - 0.03, n2.s0 + 0.03);
+      return { key: 'SW', x: C[0], z: C[1], C, inward, s: n2.s0, by: baseAt(n2.s0), rH };
+    })();
     // 马面
     const mamian = [];
     for (const m of mamianData) {
@@ -397,7 +649,7 @@ export default {
       const pr = ring.project(x, z);
       if (bodyCuts.some(([a, b]) => pr.s > a - 12 && pr.s < b + 12)) continue;
       if (mainGates.some((g) => Math.abs(pr.s - g.s) < g.spec.W + 12)) continue;
-      if (corners.some((c) => Math.abs(ring.wrap(pr.s - c.s + L / 2) - L / 2) < 30) || Math.abs(pr.s - sw.s) < 40) continue;
+      if (corners.some((c) => Math.abs(ring.wrap(pr.s - c.s + L / 2) - L / 2) < 30) || Math.abs(ring.wrap(pr.s - sw.s + L / 2) - L / 2) < 40) continue;
       const f = ring.frame(pr.s);
       const w = Math.max(14, Math.min(26, m.width_along_wall_m || 20)), proj = Math.max(8, Math.min(15, m.projection_beyond_face_m || 11));
       mamian.push({ s: pr.s, f, w, proj, by: baseAt(pr.s) });
@@ -460,8 +712,22 @@ export default {
     for (const r of runs(bodyCuts)) emitBody(bufs, r, WSEC);
     const shiftPts = (r, oc) => r.map((p) => ({ x: p.x + p.nx * oc * p.sc, z: p.z + p.nz * oc * p.sc, y: p.b + H, nx: p.nx, nz: p.nz, sc: p.sc, s: p.s }));
     const outlineRuns = [];
+    // 西南城角两侧垛墙：端点顺直线方向延伸至圆台台身（半径 rH − 0.3）
+    const swExtend = (pts) => {
+      for (const [iE, iP] of [[0, 1], [pts.length - 1, pts.length - 2]]) {
+        const p = pts[iE], q = pts[iP];
+        if (Math.abs(ring.wrap(p.s - sw.s + L / 2) - L / 2) > 0.2) continue;
+        const d = norm([p.x - q.x, p.z - q.z]);
+        const R = sw.rH - 0.3, fx = p.x - sw.C[0], fz = p.z - sw.C[1];
+        const bq = fx * d[0] + fz * d[1], cq = fx * fx + fz * fz - R * R, disc = bq * bq - cq;
+        if (disc < 0) continue;
+        const t = -bq - Math.sqrt(disc); // 首次进入圆的距离
+        if (t > 0 && t < 12) pts[iE] = { ...p, x: p.x + d[0] * t, z: p.z + d[1] * t, sc: 1 };
+      }
+      return pts;
+    };
     for (const r of runs(outCuts)) {
-      const pts = shiftPts(r, OT - PO.t / 2);
+      const pts = swExtend(shiftPts(r, OT - PO.t / 2));
       emitParapet(bufs.brick, pts, PO.t, PO.h, merl);
       outlineRuns.push(pts.map((p) => [p.x + p.nx * (PO.t / 2 + 0.05) * p.sc, p.y + PO.h + MER.h * 0.5, p.z + p.nz * (PO.t / 2 + 0.05) * p.sc]));
     }
@@ -513,30 +779,27 @@ export default {
     }
     // —— 西南圆形角台 ——
     {
-      const R0 = 19, R1 = 17.5, seg = 40, lo = Math.min(hAt(sw.x + sw.out[0] * 16, sw.z + sw.out[1] * 16), sw.by) - 1.5;
-      const yT = sw.by + H;
-      const a0 = Math.atan2(-sw.out[1], -sw.out[0]);
-      for (let i = 0; i < seg; i++) {
-        const A = a0 + (i / seg) * Math.PI * 2, B = a0 + ((i + 1) / seg) * Math.PI * 2;
-        const pa = [Math.cos(A), Math.sin(A)], pb = [Math.cos(B), Math.sin(B)];
-        const E = [pa[0] + pb[0], 0.1, pa[1] + pb[1]];
-        const uA = (i / seg) * 2 * Math.PI * R0, uB = ((i + 1) / seg) * 2 * Math.PI * R0;
-        bufs.brick.quad([sw.x + pa[0] * R0, lo, sw.z + pa[1] * R0], [sw.x + pb[0] * R0, lo, sw.z + pb[1] * R0], [sw.x + pb[0] * R1, yT, sw.z + pb[1] * R1], [sw.x + pa[0] * R1, yT, sw.z + pa[1] * R1],
-          [[uA, lo - sw.by], [uB, lo - sw.by], [uB, H], [uA, H]], [[0, 1], [0, 1], [H, 0.5], [H, 0.5]], E);
-        bufs.pave.tri([sw.x, yT, sw.z], [sw.x + pb[0] * R1, yT, sw.z + pb[1] * R1], [sw.x + pa[0] * R1, yT, sw.z + pa[1] * R1], [[sw.x, sw.z], [sw.x + pb[0] * R1, sw.z + pb[1] * R1], [sw.x + pa[0] * R1, sw.z + pa[1] * R1]], [H, 0], [0, 1, 0]);
+      const lo = Math.min(0, ...[0, 1, 2, 3, 4, 5].map((k) => hAt(sw.C[0] + Math.cos(k) * 11, sw.C[1] + Math.sin(k) * 11) - sw.by)) - 1.5;
+      emitRoundBastion(bufs, merl, outlineRuns, sw.C, sw.by, lo, sw.inward);
+    }
+
+    // —— 券洞墙段 ——
+    const stAt = (s) => {
+      let best = null;
+      for (const p of ST) if (!best || Math.abs(p.s - s) < Math.abs(best.s - s)) best = p;
+      return best;
+    };
+    for (const g of holeGroups) {
+      const stA = stAt(g.sA), stB = stAt(g.sB);
+      if (ring.segAt(g.sA + 0.1) !== ring.segAt(g.sB - 0.1)) console.warn('[citywall] 券洞组跨中心线折点：', g.f.g.id);
+      let lo = 0;
+      for (let k = 0; k <= 8; k++) {
+        const fr = ring.frame(g.sA + ((g.sB - g.sA) * k) / 8);
+        const bb = stA.b + ((stB.b - stA.b) * k) / 8;
+        for (const o of [OB, 0, IB]) lo = Math.min(lo, hAt(fr.x + fr.nx * o, fr.z + fr.nz * o) - bb);
       }
-      const arc = [];
-      const Rp = R1 - PO.t / 2;
-      for (let i = 0; i <= 64; i++) {
-        const A = a0 + (i / 64) * Math.PI * 2;
-        const x = sw.x + Math.cos(A) * Rp, z = sw.z + Math.sin(A) * Rp;
-        if (ring.project(x, z).off > OT - PO.t) arc.push([x, z]);
-      }
-      if (arc.length > 2) {
-        const pts = polyFrames(arc, [sw.x, sw.z], yT);
-        emitParapet(bufs.brick, pts, PO.t, PO.h, merl, true);
-        outlineRuns.push(pts.map((p) => [p.x + p.nx * (PO.t / 2 + 0.05) * p.sc, p.y + PO.h + MER.h * 0.5, p.z + p.nz * (PO.t / 2 + 0.05) * p.sc]));
-      }
+      g.geo = emitHoleWall(bufs, stA, stB, g.holes, lo - 1.2);
+      g.holeCount = g.holes.length;
     }
 
     // —— 瓮城 / 月城（与墙体同一套扫掠与材质） ——
@@ -789,7 +1052,6 @@ export default {
       complexes.push({ key: 'corner' + c.key, x: cx, z: cz, y: c.by, theta: Math.atan2(c.u[0], c.u[1]), fn: cornerTower, r: 40 });
       void d;
     }
-    complexes.push({ key: 'cornerSW', x: sw.x, z: sw.z, y: sw.by, theta: Math.atan2(sw.out[0], sw.out[1]), fn: cornerTower, r: 40 });
 
     // 近景 LOD：初始只建 detail 0；相机靠近时按需补建 detail 1（< 1300 m）与 detail 2（< 520 m），每帧至多一个
     const nearLODs = [];
@@ -831,20 +1093,37 @@ export default {
     mark('远景');
     // —— 现代城门、敌楼、魁星楼（合批，detail 1） ——
     const mb = new ArchBuilder(ctx, { detail: 1, name: 'citywall-misc' });
-    const d0 = 2 * OB + 0.6;
-    for (const g of modernGates) {
-      mb.push(g.x, g.by, g.z, g.theta);
-      mb.push(0, 0, 0, 0);
-      // 城台（不带城楼）
-      const cp = { w: g.w, d: d0, h: H, tunnels: g.n, tw: g.tw, th: Math.min(8, g.tw * 1.05), crenel: false, batter: 0.3, color: 0x938f86 };
-      // 直接用构件库城台（chinese-wall.cityPlatform 经 gateTower 暴露的参数）
-      cityPlatformLite(mb, cp);
-      mb.plaque(g.g.name, 0, 9.9, d0 / 2 - 0.2, 5.6, 1.55, { bg: '#5d5850', color: '#f2e6c4', border: '#a09682' });
-      mb.push(0, 0, 0, Math.PI);
-      mb.plaque(g.g.name, 0, 9.9, d0 / 2 - 0.2, 5.6, 1.55, { bg: '#5d5850', color: '#f2e6c4', border: '#a09682' });
-      mb.pop();
-      mb.pop();
-      mb.pop();
+    // 近现代城门匾额：挂在离城门中线最近的券洞上方，内外各一，贴合收分墙面（倾角一致，不穿插）
+    const plaqueStyle = { bg: '#5d5850', color: '#f2e6c4', border: '#a09682' };
+    const plaqueMtx = new THREE.Matrix4(), vX = new THREE.Vector3(), vY = new THREE.Vector3(), vZ = new THREE.Vector3();
+    for (const f of modernGates) {
+      let best = null;
+      for (const g of holeGroups) if (g.f === f && g.geo && (!best || g.minC < best.minC)) best = g;
+      if (!best) continue;
+      const { W, hs, T, Nn } = best.geo;
+      // 城门中线落在本组内则匾居中（如朱雀门两车行孔之间），否则挂在最近券洞正上方
+      const aC = f.s - best.sA;
+      let hb = hs[0];
+      for (const h of hs) if (Math.abs(h.c - aC) < Math.abs(hb.c - aC)) hb = h;
+      const Lg = best.sB - best.sA;
+      const aP = aC > 4 && aC < Lg - 4 ? aC : hb.c;
+      const pw = Math.min(5.6, hb.w * 0.75 + 1.2);
+      let yTop = 0;
+      for (const h of hs) if (Math.abs(h.c - aP) < h.w / 2 + h.k + pw / 2) yTop = Math.max(yTop, h.crown + h.k);
+      const yP = Math.min(10.75, Math.max(yTop + 0.8, 8.5));
+      const k = (OT - O_PL) / (H - 0.9); // 外墙面 do/dy（收分，负值）
+      for (const side of [1, -1]) {
+        const o = side > 0 ? oOutB(yP) + 0.04 : oInB(yP) - 0.04;
+        const p = W(aP, o, yP);
+        vZ.set(Nn[0] * side, -k, Nn[1] * side).normalize();
+        vY.set(Nn[0] * side * k, 1, Nn[1] * side * k).normalize();
+        vX.crossVectors(vY, vZ).normalize();
+        plaqueMtx.makeBasis(vX, vY, vZ).setPosition(p[0], p[1], p[2]);
+        mb.push(plaqueMtx.clone());
+        mb.plaque(f.g.name, 0, 0, 0, pw, 1.3, plaqueStyle);
+        mb.pop();
+      }
+      void T;
     }
     // 敌楼：四大城门两侧最近的马面（现状复建位置取近似）
     const dilou = new Set();
@@ -866,12 +1145,12 @@ export default {
       eaveLights(mb, t, { color: 0xffc56a, width: 0.07 });
       mb.pop();
     }
-    // 魁星楼（文昌门东侧城墙上）
+    // 魁星楼（文昌门券洞西侧约 27 m 的城墙顶，偏内侧；Esri z19 影像核对）
     const wen = modernGates.find((g) => g.g.id === 'wenchang');
     if (wen) {
-      const s = wen.s - 42;
+      const s = wen.s + 27;
       const f = ring.frame(s);
-      mb.push(f.x, baseAt(s) + H, f.z, Math.atan2(f.nx, f.nz));
+      mb.push(f.x - f.nx * 1.5, baseAt(s) + H, f.z - f.nz * 1.5, Math.atan2(f.nx, f.nz));
       const t = pavilion(mb, { sides: 4, size: 6.4, eaves: 2, colH: 3.8, roofColor: 'darkgray', roof: 'xieshan', platformH: 0.5 });
       eaveLights(mb, t, { color: 0xffc56a, width: 0.07 });
       mb.pop();
@@ -948,8 +1227,3 @@ export default {
     };
   },
 };
-
-// 现代城门城台：复用构件库城台（券洞 + 收分 + 土衬石 + 顶面海墁），不做垛口（墙顶垛墙连续跨过）
-function cityPlatformLite(b, o) {
-  cityPlatform(b, { ...o, inner: [] });
-}

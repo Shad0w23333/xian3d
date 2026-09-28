@@ -8,13 +8,40 @@ import * as G from '../arch/sky-geom.js';
 import { createFacadeMaterial } from '../arch/sky-facade.js';
 import { SignAtlas, Beacons, solidMats, buildTower, buildPodium, groundMin } from '../arch/sky-towers.js';
 import * as SP from '../arch/sky-special.js';
+import { loadJSON } from '../core/data.js';
 import { DISTRICTS, towerSpecs as towerSpecs1, mallSpecs as mallSpecs1, SPECIAL } from '../arch/sky-data.js';
 import { SUPERSEDED, towerSpecs2, mallSpecs2, SPECIAL2, special2Footprints } from '../arch/sky-data2.js';
 import * as SP2 from '../arch/sky-special2.js';
 
 // 2026-09 地标更新（sky-data2.js）取代失真的旧定义（熙地港、大融城、未央国际）
-const towerSpecs = () => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2());
-const mallSpecs = () => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2());
+// landmarks2026：全城地标批量精建（tools/build_landmarks2026.py 由联网调研清单生成）；prepare 时加载并去掉已精建/已被其他模块占用的
+let LM = null;
+const towerSpecs = () => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2(), LM?.towers || []);
+const mallSpecs = () => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2(), LM?.malls || []);
+
+/** 批量地标过滤：与手工精建（sky-data / sky-data2 / 特殊地标）同名或质心落在其轮廓内、或落在其他模块排除区内的跳过；
+ *  商场综合体里推算落位的塔楼（onPodium），若轮廓内已有 OSM 实测高层（skyline.json）也跳过，以实测为准 */
+function filterLandmarks(ctx, raw) {
+  const { curated } = allFootprints(ctx); // 此时 LM 为空：curated.polys 只有手工精建与特殊地标（不含通用高层）
+  const hit = (s) => {
+    const c = G.centroid(G.ccw(s.pts));
+    return curated.names.has(s.name) || curated.polys.some((p) => G.pointIn(c.x, c.z, p)) || ctx.exclusions.test(c.x, c.z, 'buildings', 1e4);
+  };
+  const malls = (raw.malls || []).filter((m) => m.pts?.length >= 6 && !hit(m));
+  const mallKeys = new Set(malls.map((m) => m.key));
+  const osm = (ctx.data.skyline?.features || []).filter((f) => f.h >= 34);
+  const towers = (raw.towers || []).filter((t) => {
+    if (!(t.pts?.length >= 6) || hit(t)) return false;
+    if (!t.onPodium) return true;
+    if (!mallKeys.has(t.onPodium)) return false;
+    const m = malls.find((q) => q.key === t.onPodium), mp = G.ccw(m.pts);
+    return !osm.some((f) => G.pointIn(f.x, f.z, mp));
+  });
+  for (const s of malls) { s.lm = true; if (!s.d) { const c = G.centroid(G.ccw(s.pts)); s.d = districtOf(c.x, c.z); } }
+  for (const s of towers) s.lm = true;
+  console.warn(`[skyline] landmarks2026：塔楼 ${towers.length}/${(raw.towers || []).length}，商场·场馆 ${malls.length}/${(raw.malls || []).length}`);
+  return { towers, malls, labels: raw.labels || [] };
+}
 
 /** 有贴图的材质自动套“米制”UV（贴图自带 UV 的除外） */
 class SBatcher extends Batcher {
@@ -68,7 +95,9 @@ function allFootprints(ctx) {
   const polys = [];
   const towers = towerSpecs();
   for (const t of towers) { polys.push(G.ccw(t.pts)); if (t.podium) polys.push(G.ccw(t.podium.pts)); }
-  for (const m of mallSpecs()) polys.push(G.ccw(m.pts));
+  // 批量地标的商场/场馆轮廓（常是整个综合体地块）不参与“通用高层去重”：地块内的 OSM 实测塔楼照常生成
+  const soft = [];
+  for (const m of mallSpecs()) { polys.push(G.ccw(m.pts)); if (m.lm) soft.push(polys[polys.length - 1]); }
   const S = SPECIAL;
   polys.push(G.ccw(S.tv.basePts), G.circle(S.tv.cx, S.tv.cz, 24, 16));
   polys.push(G.rect(S.changan.cx, S.changan.cz, 60, 60, S.changan.rot));
@@ -81,7 +110,7 @@ function allFootprints(ctx) {
   for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
   for (const p of S.gov) polys.push(G.ccw(p));
   polys.push(...special2Footprints());
-  const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.slice() };
+  const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.filter((p) => !soft.includes(p)) };
   for (const f of genericFeatures(ctx, curated)) polys.push(G.ccw(f.outer));
   return { polys, curated };
 }
@@ -89,7 +118,9 @@ function allFootprints(ctx) {
 export default {
   id: 'skyline',
   name: '现代地标与摩天楼',
-  prepare(ctx) {
+  async prepare(ctx) {
+    const raw = await loadJSON('landmarks2026.json', { optional: true });
+    LM = raw ? filterLandmarks(ctx, raw) : null;
     const { polys } = allFootprints(ctx);
     for (const p of polys) ctx.exclusions.add({ points: G.inset(p, -2.5), name: 'skyline' }, { buildings: true, trees: true });
     // 大型场馆/站房下压平地形
@@ -220,6 +251,18 @@ export default {
     for (const d of DISTRICTS) if (d.label) {
       const [x, z, h] = d.label;
       ctx.labels.add(d.name, new THREE.Vector3(x, ctx.terrain.heightAt(x, z) + h, z), { category: d.id === 'north' ? 'station' : 'district', priority: 2, minDist: 300, maxDist: 16000 });
+    }
+    // 批量地标：塔楼（≥ 80 m 或有楼顶字）、商场、场馆，以及仅标注的公园/校园
+    for (const s of LM?.towers || []) if (!s.onPodium && (s.h >= 80 || s.signs)) {
+      const c = G.centroid(G.ccw(s.pts));
+      ctx.labels.add(s.name, new THREE.Vector3(c.x, ctx.terrain.heightAt(c.x, c.z) + s.h + 6, c.z), { category: 'landmark', priority: 1 + Math.min(1.5, s.h / 200), minDist: 120, maxDist: 6000 + s.h * 40 });
+    }
+    for (const m of LM?.malls || []) {
+      const c = G.centroid(G.ccw(m.pts));
+      ctx.labels.add(m.name, new THREE.Vector3(c.x, ctx.terrain.heightAt(c.x, c.z) + m.h + 8, c.z), { category: 'landmark', priority: m.cat ? 1.4 : 1.2, minDist: 100, maxDist: 7000 });
+    }
+    for (const l of LM?.labels || []) {
+      ctx.labels.add(l.n, new THREE.Vector3(l.x, ctx.terrain.heightAt(l.x, l.z) + 30, l.z), { category: 'district', priority: l.cat === 'park' ? 1.3 : 1.1, minDist: 250, maxDist: 9000 });
     }
     const tv = SPECIAL.tv, ca = SPECIAL.changan, ao = SPECIAL.aoti.stadium;
     ctx.labels.add('陕西广播电视塔', new THREE.Vector3(tv.cx, ctx.terrain.heightAt(tv.cx, tv.cz) + 252, tv.cz), { category: 'landmark', priority: 2.5, minDist: 150 });

@@ -157,7 +157,7 @@ class Signage {
     this.acceptFill = (c, b) => fillCls.has(c) && !b;
     this.groundOK = (b) => this.P.minDm[b] === 0;
     this.mainCls = new Set([cls.trunk, cls.primary, cls.secondary]);
-    this.buildSubway(ctx.data.rail);
+    this.buildSubway(ctx.data.rail, ctx.data.amapExtra?.metro);
     this.bucketPOIs((ctx.data.pois && ctx.data.pois.pois) || []);
     this.bucketBus(ctx.data.roads);
     this.bucketNamed(ctx.data.buildingNames || {});
@@ -248,8 +248,13 @@ class Signage {
       this.chunkAt(x, z).named.push(b);
     }
   }
-  buildSubway(rail) {
+  buildSubway(rail, amapMetro) {
     const segs = [];
+    // 高德地铁线网（全线、含 OSM 缺的新线）优先；OSM 线段照常加入，重合处取最近距离不受影响
+    for (const L of amapMetro || []) {
+      const p = L.p;
+      if (L.num) for (let i = 2; i < p.length; i += 2) segs.push(p[i - 2], p[i - 1], p[i], p[i + 1], L.num);
+    }
     const feats = (rail && rail.features) || [];
     const ci = (rail && rail.classes ? rail.classes : []).indexOf('subway');
     for (const f of feats) {

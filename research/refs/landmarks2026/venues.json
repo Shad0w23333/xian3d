@@ -1,0 +1,2358 @@
+[
+ {
+  "name": "西安站（火车站综合体：南站房+高架候车室+北站房）",
+  "category": "station",
+  "lon": 108.958184,
+  "lat": 34.279927,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   558,
+   204
+  ],
+  "height_m": 24,
+  "floors": 2,
+  "year": 2021,
+  "status": "operating（1934 建站；2021-12-31 改扩建全面竣工）",
+  "form": "南北双站房+跨线高架候车室，北站房正对大明宫丹凤门",
+  "facade": "北站房唐风柱廊+灰色石材，高架候车室玻璃幕墙",
+  "roof": "重檐庑殿灰瓦（北站房），南站房仿唐坡屋顶",
+  "colors": "深灰瓦、浅灰石材、深灰钢柱、暖白灯",
+  "sign_text": "西安站",
+  "night": "檐口轮廓灯+暖白泛光",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://m.gmw.cn/2021-12/31/content_1302745061.htm",
+   "https://news.hsw.cn/system/2021/0530/1329533.shtml"
+  ],
+  "notes": "src/modules/heritage.js 已建北站房/南站房/高架候车室。"
+ },
+ {
+  "name": "西安站北站房（北广场）",
+  "category": "station",
+  "lon": 108.958039,
+  "lat": 34.281114,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   221,
+   61
+  ],
+  "height_m": 24,
+  "floors": 2,
+  "year": 2021,
+  "status": "operating（2021-05-31 投用）",
+  "form": "唐风重檐庑殿大殿式站房，与丹凤门同轴",
+  "facade": "唐风柱廊、斗拱，大面玻璃",
+  "roof": "重檐庑殿",
+  "colors": "深灰瓦、灰白石、深灰钢柱",
+  "sign_text": "西安站",
+  "night": "屋脊/檐口勾边灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://news.hsw.cn/system/2021/0530/1329533.shtml"
+  ],
+  "notes": "建筑面积 4.86 万㎡，地上 2 层地下 3 层。heritage.js 已建（world≈(1450,-2232)，146×59 m）。"
+ },
+ {
+  "name": "西安北站",
+  "category": "station",
+  "lon": 108.933927,
+  "lat": 34.377738,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   551,
+   456
+  ],
+  "height_m": null,
+  "floors": 2,
+  "year": 2011,
+  "status": "operating",
+  "form": "巨型矩形站房，唐风大屋檐+列柱",
+  "facade": "玻璃幕墙+灰色金属立柱",
+  "roof": "多段平缓大挑檐屋面",
+  "colors": "灰白、银灰",
+  "sign_text": "西安北站",
+  "night": "屋檐线性灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "skyline SPECIAL.north 已建（192×533 m 主站房）。"
+ },
+ {
+  "name": "西安东站",
+  "category": "station",
+  "lon": 109.058863,
+  "lat": 34.21551,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   390,
+   372
+  ],
+  "height_m": null,
+  "floors": 3,
+  "year": 2026,
+  "status": "operating（2026-06 建成，2026-06-30 随西十高铁开通；西延高铁 2026-05 接入）",
+  "form": "“秦山渭水、丝路长安”：高低起伏的菱形屋面群+“W”丝路飘带立面",
+  "facade": "曲线飘带玻璃幕墙+木构意向金属格栅",
+  "roof": "菱形起伏折板金属屋面（屋盖约 400×293 m）",
+  "colors": "银灰金属屋面、暖木色吊顶、浅灰石材",
+  "sign_text": "西安东站",
+  "night": "飘带轮廓灯+屋面菱形勾边（待影像核对）",
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://finance.sina.com.cn/wm/2026-06-15/doc-inicnisx5070942.shtml",
+   "https://www.sxdaily.com.cn/2026-06/16/content_20040426.html",
+   "https://m.jiemian.com/article/14593150.html",
+   "https://www.zgjtb.com/2026-06/30/content_525881.html",
+   "https://www.sxdaily.com.cn/2026-05/03/content_20018316.html"
+  ],
+  "notes": "车站总建筑 39.4 万㎡，站房 10 万㎡；13 台 27 线。OSM 轮廓 390×372 m 与报道屋盖 400×293 m 大致相符。"
+ },
+ {
+  "name": "西安西站（原阿房宫站）",
+  "category": "station",
+  "lon": 108.751602,
+  "lat": 34.271253,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": 1,
+  "year": 2017,
+  "status": "operating（2017-12 随西成客专启用，2023-02-28 更名）",
+  "form": "中小型线侧站房",
+  "facade": "石材+玻璃",
+  "roof": "平屋面/坡檐（待影像核对）",
+  "colors": "浅灰",
+  "sign_text": "西安西站",
+  "night": "一般",
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "https://m.gmw.cn/baijia/2023-02/28/1303297767.html",
+   "https://zh.wikipedia.org/wiki/%E8%A5%BF%E5%AE%89%E8%A5%BF%E7%AB%99"
+  ],
+  "notes": "站房仅 5896.5 ㎡，列为“四主一辅”之辅站；OSM 无轮廓。"
+ },
+ {
+  "name": "新西安南站（规划站址）",
+  "category": "station",
+  "lon": 108.811277,
+  "lat": 34.12277,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "planned（高新 CID 兴隆片区，规划 13 台 26 线/站房约 15 万㎡；2024 起原站址用地转作农业示范区，方案待定）",
+  "form": "未定",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安南站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "https://news.qq.com/rain/a/20240801A09BIE00"
+  ],
+  "notes": "pois.json 中“西安南站”及 A1/A2/D 地铁口处于该规划区；原“西安南站”(引镇) 已于 2023 更名引镇站。不建议建模。"
+ },
+ {
+  "name": "西安咸阳国际机场 T5 航站楼",
+  "category": "airport",
+  "lon": 108.77721,
+  "lat": 34.453711,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   1105,
+   1057
+  ],
+  "height_m": 30,
+  "floors": 4,
+  "year": 2025,
+  "status": "operating（2025-02-20 投运）",
+  "form": "主楼+六指廊，九宫格布局；取意含元殿的三层重檐屋面",
+  "facade": "大面玻璃幕墙+灰色金属竖梃，陆侧红色“西安”书法大字",
+  "roof": "三层叠落重檐大屋盖（灰色金属）",
+  "colors": "银灰屋面、浅灰幕墙、红色书法字",
+  "sign_text": "西安咸阳国际机场 T5",
+  "night": "幕墙内透+檐口线灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/aeroway.json",
+   "https://www.chinanews.com.cn/cj/2025/02-20/10371713.shtml",
+   "https://news.qq.com/rain/a/20250219A078MT00"
+  ],
+  "notes": "注意：任务说明称“T5 未建”，但 src/modules/airports.js 已有 HALLS[T5]（540×235 m 主楼屋盖）+ aeroway 指廊挤出。建议核对后仅补细节（重檐、红字、GTC）。建筑面积 70.55 万㎡。"
+ },
+ {
+  "name": "西安咸阳国际机场 T5 综合交通中心（GTC）",
+  "category": "airport",
+  "lon": 108.780798,
+  "lat": 34.456175,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   317,
+   97
+  ],
+  "height_m": 22,
+  "floors": null,
+  "year": 2025,
+  "status": "operating",
+  "form": "陆侧交通中心+停车楼，衔接地铁/城际",
+  "facade": "玻璃+金属格栅",
+  "roof": "平屋面",
+  "colors": "灰白",
+  "sign_text": "T5 综合交通中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/aeroway.json",
+   "https://www.chinanews.com.cn/cj/2025/02-20/10371713.shtml"
+  ],
+  "notes": "airports.js TERM_H 以通用挤出处理。"
+ },
+ {
+  "name": "西安咸阳国际机场 T3 航站楼",
+  "category": "airport",
+  "lon": 108.756593,
+  "lat": 34.436686,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   958,
+   667
+  ],
+  "height_m": 24,
+  "floors": 3,
+  "year": 2012,
+  "status": "operating",
+  "form": "主楼+指廊，白色拱形肋屋面",
+  "facade": "玻璃幕墙",
+  "roof": "白色拱肋大跨屋面",
+  "colors": "白、浅灰",
+  "sign_text": "西安咸阳国际机场 T3",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/aeroway.json"
+  ],
+  "notes": "airports.js HALLS[T3] 已建（OSM 多边形含指廊，外包 958×667）。"
+ },
+ {
+  "name": "西安咸阳国际机场 T2 航站楼",
+  "category": "airport",
+  "lon": 108.756033,
+  "lat": 34.441983,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   581,
+   117
+  ],
+  "height_m": 20,
+  "floors": 2,
+  "year": 2003,
+  "status": "operating",
+  "form": "长条形航站楼",
+  "facade": "玻璃+金属",
+  "roof": "平缓弧形屋面",
+  "colors": "灰白",
+  "sign_text": "T2",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/aeroway.json"
+  ],
+  "notes": "通用挤出（TERM_H）。"
+ },
+ {
+  "name": "西安咸阳国际机场 T1 航站楼",
+  "category": "airport",
+  "lon": 108.759228,
+  "lat": 34.444539,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   253,
+   62
+  ],
+  "height_m": 14,
+  "floors": 2,
+  "year": 1991,
+  "status": "停用（2025 年资料显示 T1 已不运营国内航班，待核）",
+  "form": "早期矩形航站楼",
+  "facade": "玻璃+混凝土",
+  "roof": "平屋面",
+  "colors": "灰白",
+  "sign_text": "T1",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/aeroway.json"
+  ],
+  "notes": "通用挤出（TERM_H）。"
+ },
+ {
+  "name": "钟楼饭店城市航站楼（机场巴士乘车点）",
+  "category": "station",
+  "lon": 108.941452,
+  "lat": 34.260239,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   161,
+   44
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "酒店裙楼内值机/乘车点",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "机场巴士",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://xa.bendibao.com/traffic/2023119/120484.shtm"
+  ],
+  "notes": "西安无独立城市航站楼建筑；另有西安宾馆、环贸中心城市候机楼、西北民航大厦（2026-01 由西稍门迁入）。仅作为标注点。"
+ },
+ {
+  "name": "西北民航大厦（西稍门机场巴士站）",
+  "category": "station",
+  "lon": 108.9135,
+  "lat": 34.26,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating（2026-01-04 起机场巴士西稍门站迁此）",
+  "form": "办公楼",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "机场巴士",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "https://xa.bendibao.com/traffic/2023119/120484.shtm"
+  ],
+  "notes": "劳动南路 296 号，坐标按西稍门估计，需核对。"
+ },
+ {
+  "name": "西安城北客运站",
+  "category": "station",
+  "lon": 108.936743,
+  "lat": 34.312334,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   138,
+   66
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "长途客运站房+停车场",
+  "facade": "—",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "城北客运站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "OSM 无名轮廓，距 POI 67 m。"
+ },
+ {
+  "name": "西安城南客运站",
+  "category": "station",
+  "lon": 108.933207,
+  "lat": 34.18699,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   141,
+   39
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "条形站房",
+  "facade": "—",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "城南客运站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安市汽车站（火车站西广场）",
+  "category": "station",
+  "lon": 108.957041,
+  "lat": 34.276922,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   119,
+   33
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "条形站房",
+  "facade": "—",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "西安汽车站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": "紧邻西安站南广场。"
+ },
+ {
+  "name": "三府湾客运站",
+  "category": "station",
+  "lon": 108.971287,
+  "lat": 34.279457,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   121,
+   48
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "条形站房",
+  "facade": "—",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "三府湾客运站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "城西客运站",
+  "category": "station",
+  "lon": 108.869296,
+  "lat": 34.275309,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "城西客运站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/place.parquet (GCJ→WGS)"
+  ],
+  "notes": "place.parquet 纠偏后与 POI 差约 420 m，取 POI。"
+ },
+ {
+  "name": "纺织城综合交通枢纽（城东客运站）",
+  "category": "station",
+  "lon": 109.064844,
+  "lat": 34.281637,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "地铁 1/9 号线换乘+长途客运枢纽",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "城东客运站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/place.parquet (GCJ→WGS)"
+  ],
+  "notes": "place.parquet 纠偏点 109.060816,34.286042 相差约 600 m，待核。"
+ },
+ {
+  "name": "西安国际港站",
+  "category": "station",
+  "lon": 109.060382,
+  "lat": 34.412871,
+  "coord_source": "poi",
+  "footprint_size_m": [
+   274,
+   40
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "条形站房",
+  "facade": "—",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "西安国际港站",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": "附近 OSM 条形建筑 274×40 m（未命名）。"
+ },
+ {
+  "name": "西安奥体中心体育场（“石榴花”）",
+  "category": "stadium",
+  "lon": 109.018009,
+  "lat": 34.37803,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   325,
+   310
+  ],
+  "height_m": 58.3,
+  "floors": 5,
+  "year": 2020,
+  "status": "operating",
+  "form": "石榴花瓣形体育场，28 瓣 7 种花瓣造型，屋面高差 10 m",
+  "facade": "白色花瓣状 PTFE/金属幕墙",
+  "roof": "环形罩棚",
+  "colors": "白、石榴红点缀灯光",
+  "sign_text": "西安奥体中心",
+  "night": "花瓣 RGB 媒体立面",
+  "capacity": 60000,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://tyj.shaanxi.gov.cn/ywzx/tyss/202003/t20200313_3203530.html"
+  ],
+  "notes": "skyline SP.buildAoti 已建。"
+ },
+ {
+  "name": "西安奥体中心体育馆",
+  "category": "arena",
+  "lon": 109.02212,
+  "lat": 34.375847,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   184,
+   183
+  ],
+  "height_m": 41.6,
+  "floors": 5,
+  "year": 2020,
+  "status": "operating",
+  "form": "圆形场馆（直径 226 m）",
+  "facade": "白色幕墙",
+  "roof": "穹形屋面",
+  "colors": "白",
+  "sign_text": "西安奥体中心体育馆",
+  "night": "轮廓灯",
+  "capacity": 18000,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://tyj.shaanxi.gov.cn/ywzx/tyss/202003/t20200313_3203530.html"
+  ],
+  "notes": "OSM 主体 184×183（未命名）；pois 中“体育馆”点误落在体育场。"
+ },
+ {
+  "name": "西安奥体中心游泳跳水馆",
+  "category": "arena",
+  "lon": 109.023452,
+  "lat": 34.379044,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   179,
+   128
+  ],
+  "height_m": 30.15,
+  "floors": 4,
+  "year": 2020,
+  "status": "operating",
+  "form": "椭圆/矩形场馆 170×122 m",
+  "facade": "白色幕墙",
+  "roof": "弧形屋面",
+  "colors": "白",
+  "sign_text": "游泳跳水馆",
+  "night": "轮廓灯",
+  "capacity": 4000,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://tyj.shaanxi.gov.cn/ywzx/tyss/202003/t20200313_3203530.html"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安国际足球中心",
+  "category": "stadium",
+  "lon": 108.769727,
+  "lat": 34.283205,
+  "coord_source": "poi",
+  "footprint_size_m": [
+   300,
+   255
+  ],
+  "height_m": 63.9,
+  "floors": null,
+  "year": 2025,
+  "status": "operating（2025-09 首秀；陕西联合 2026 主场）",
+  "form": "扎哈事务所设计：“下方上圆”马鞍形，方正外轮廓+流畅拱形，北侧最大 36 m 悬挑，外围幕墙大面积外倾",
+  "facade": "玻璃幕墙+金属格栅+陶土板",
+  "roof": "马鞍形罩棚",
+  "colors": "银灰、暖陶土色",
+  "sign_text": "西安国际足球中心",
+  "night": "外立面模拟天空与云彩的动态灯光",
+  "capacity": 60325,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "https://zh.wikipedia.org/wiki/%E8%A5%BF%E5%AE%89%E5%9B%BD%E9%99%85%E8%B6%B3%E7%90%83%E4%B8%AD%E5%BF%83",
+   "http://www.archina.com/index.php?g=works&m=index&a=show&id=159456",
+   "https://m.sohu.com/a/875553074_121123888/"
+  ],
+  "notes": "OSM 无轮廓（西咸沣东区域覆盖差）；尺寸取报道 299.6×254.5 m，建议影像核对朝向。"
+ },
+ {
+  "name": "陕西省体育场（“圣朱雀”）",
+  "category": "stadium",
+  "lon": 108.937478,
+  "lat": 34.234067,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   292,
+   204
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1956,
+  "status": "operating（2019-2020 改造迎十四运）",
+  "form": "椭圆碗形看台+东西罩棚",
+  "facade": "改造后浅色外立面板",
+  "roof": "东西两侧弧形罩棚",
+  "colors": "白、灰、座椅彩色",
+  "sign_text": "陕西省体育场",
+  "night": "罩棚泛光",
+  "capacity": 43000,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://tyj.shaanxi.gov.cn/ywzx/tyss/202006/t20200611_3203673.html"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "陕西奥体中心体育馆（陕西省体育馆·唐延路）",
+  "category": "arena",
+  "lon": 108.883012,
+  "lat": 34.20487,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   253,
+   129
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2021,
+  "status": "operating",
+  "form": "比赛馆+训练馆，飘逸银色屋面+曲线平台+双层柱廊",
+  "facade": "黄色砂岩立面+型钢+玻璃幕墙",
+  "roof": "银色金属曲面屋顶",
+  "colors": "砂黄、银灰",
+  "sign_text": "陕西奥体中心体育馆",
+  "night": "一般",
+  "capacity": 7048,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://www.sxjzy.org/h-nd-29961.html"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安城市运动公园体育馆（西安市体育馆）",
+  "category": "arena",
+  "lon": 108.939951,
+  "lat": 34.34765,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   106,
+   106
+  ],
+  "height_m": 34,
+  "floors": null,
+  "year": 1999,
+  "status": "operating（2020 改造）",
+  "form": "按法国波城体育馆图纸建造的方形场馆",
+  "facade": "混凝土+玻璃",
+  "roof": "方形大跨屋面（待影像核对）",
+  "colors": "灰白",
+  "sign_text": "西安城市运动公园体育馆",
+  "night": "一般",
+  "capacity": 7597,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%9F%8E%E5%B8%82%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD%E4%BD%93%E8%82%B2%E9%A6%86/64077672"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安城市运动公园",
+  "category": "park",
+  "lon": 108.93851,
+  "lat": 34.345632,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   738,
+   680
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1999,
+  "status": "operating",
+  "form": "城市公园，含体育馆、运动场",
+  "facade": "—",
+  "roof": "—",
+  "colors": "绿地",
+  "sign_text": "西安城市运动公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E5%9F%8E%E5%B8%82%E8%BF%90%E5%8A%A8%E5%85%AC%E5%9B%AD%E4%BD%93%E8%82%B2%E9%A6%86/64077672"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "曲江竞技中心（电竞中心）",
+  "category": "arena",
+  "lon": 108.989982,
+  "lat": 34.180064,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   188,
+   133
+  ],
+  "height_m": null,
+  "floors": 5,
+  "year": 2022,
+  "status": "operating",
+  "form": "圆弧“芙蓉花”造型，主副两馆，全装配式",
+  "facade": "白色曲面幕墙",
+  "roof": "圆弧屋面",
+  "colors": "白",
+  "sign_text": "曲江竞技中心",
+  "night": "媒体立面",
+  "capacity": 10415,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://www.cnr.cn/sxpd/c/xty/20230106/t20230106_526116237.shtml"
+  ],
+  "notes": "“曲江体育中心”未找到对应场馆，推测指此。"
+ },
+ {
+  "name": "西安市人民体育场",
+  "category": "stadium",
+  "lon": 108.954305,
+  "lat": 34.269205,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   211,
+   157
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1953,
+  "status": "operating",
+  "form": "传统椭圆田径场+看台",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安市人民体育场",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://en.wikipedia.org/wiki/Xi%27an_City_People%27s_Stadium"
+  ],
+  "notes": "OSM 无名轮廓与 POI 重合；座位数待查。"
+ },
+ {
+  "name": "西安体育学院（含光校区）",
+  "category": "campus",
+  "lon": 108.930356,
+  "lat": 34.239039,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   610,
+   440
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1954,
+  "status": "operating",
+  "form": "校园；田径场+训练馆",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安体育学院",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "https://zh.wikipedia.org/zh-cn/%E8%A5%BF%E5%AE%89%E4%BD%93%E8%82%B2%E5%AD%A6%E9%99%A2"
+  ],
+  "notes": "校园范围多边形；主要馆舍为 OSM 无名建筑（最大 157×57 m @108.9308,34.2398）。“雁塔体育场”未查到对应场馆，未收录。"
+ },
+ {
+  "name": "陕西大剧院",
+  "category": "theater",
+  "lon": 108.958663,
+  "lat": 34.211399,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   63,
+   41
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2017,
+  "status": "operating",
+  "form": "唐风重檐庑殿大殿+高台+前庭双阙",
+  "facade": "唐风柱廊",
+  "roof": "重檐庑殿",
+  "colors": "深灰瓦、赭红柱",
+  "sign_text": "陕西大剧院",
+  "night": "檐口轮廓灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "datang.js 贞观广场已建。"
+ },
+ {
+  "name": "西安音乐厅",
+  "category": "theater",
+  "lon": 108.960074,
+  "lat": 34.2114,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   45,
+   32
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2009,
+  "status": "operating",
+  "form": "唐风重檐歇山",
+  "facade": "唐风柱廊",
+  "roof": "重檐歇山",
+  "colors": "深灰瓦",
+  "sign_text": "西安音乐厅",
+  "night": "檐口轮廓灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "datang.js 已建。"
+ },
+ {
+  "name": "西安美术馆（曲江）",
+  "category": "museum",
+  "lon": 108.958725,
+  "lat": 34.212691,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   45,
+   32
+  ],
+  "height_m": null,
+  "floors": 2,
+  "year": 2009,
+  "status": "operating",
+  "form": "唐风二层楼阁",
+  "facade": "唐风柱廊",
+  "roof": "歇山",
+  "colors": "深灰瓦",
+  "sign_text": "西安美术馆",
+  "night": "檐口灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "datang.js 已建。"
+ },
+ {
+  "name": "西安大剧院（高新·未来之瞳）",
+  "category": "theater",
+  "lon": 108.8227,
+  "lat": 34.1391,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": 2025,
+  "status": "operating（音乐厅 2025-01 启用，全面运营 2025）",
+  "form": "王澍设计，“城山相映、山水相映”：八道起伏山体形态，被戏称“鳄鱼喝水”",
+  "facade": "青绿琉璃砖+石材混砌",
+  "roof": "起伏山形坡屋面",
+  "colors": "唐代青绿山水+唐三彩色调（青绿、赭黄）",
+  "sign_text": "西安大剧院",
+  "night": "一般",
+  "capacity": 5000,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "http://m.cnwest.com/sxxw/a/2024/12/27/22926065.html",
+   "https://sxgz.shaanxi.gov.cn/sy/gqzc/qydt/202501/t20250103_3279176.html",
+   "https://news.qq.com/rain/a/20250107A0C78600"
+  ],
+  "notes": "未来之瞳·瞳系列总建筑 19.4 万㎡（地上 6.2 万）；与西安创新馆、未来之瞳科学公园（108.824519,34.138709）连成一体。OSM 无轮廓。"
+ },
+ {
+  "name": "易俗大剧院",
+  "category": "theater",
+  "lon": 108.944801,
+  "lat": 34.26298,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   68,
+   52
+  ],
+  "height_m": null,
+  "floors": 3,
+  "year": 1992,
+  "status": "operating（2021-05-15 改造后开业）",
+  "form": "三层剧院，东西 87 m×南北 59 m",
+  "facade": "石材+玻璃",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "易俗大剧院",
+  "night": "一般",
+  "capacity": 1200,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://baike.baidu.com/item/%E6%98%93%E4%BF%97%E5%A4%A7%E5%89%A7%E9%99%A2/17391123"
+  ],
+  "notes": "北侧西一路易俗社剧场（108.944271,34.263037）为老易俗社。"
+ },
+ {
+  "name": "陕西广电大剧院",
+  "category": "theater",
+  "lon": 108.940994,
+  "lat": 34.212633,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   110,
+   85
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "剧场",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "陕西广电大剧院",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "位于陕西省广播电视中心院内（长安南路）。"
+ },
+ {
+  "name": "长安乐·一带一路文化艺术中心",
+  "category": "theater",
+  "lon": 109.012539,
+  "lat": 34.373028,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   329,
+   178
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2023,
+  "status": "operating（2023-10-15）",
+  "form": "以半坡陶“埙”为原型的五座体量（宫商角徵羽）：歌剧院/音乐厅/多功能厅/影院/传媒中心",
+  "facade": "曲面陶土色板+玻璃",
+  "roof": "埙形曲面壳体",
+  "colors": "陶土暖色、米白",
+  "sign_text": "长安乐",
+  "night": "壳体泛光",
+  "capacity": 4120,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E9%95%BF%E5%AE%89%E4%B9%90/63873069",
+   "https://www.shx.chinanews.com.cn/news/2023/1016/94669.html"
+  ],
+  "notes": "座位：歌剧院 2049+音乐厅 1560+多功能厅 511；总建筑 14.4 万㎡。"
+ },
+ {
+  "name": "长安云（西安科技馆·西安城市规划馆）",
+  "category": "museum",
+  "lon": 109.012613,
+  "lat": 34.384439,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   405,
+   103
+  ],
+  "height_m": null,
+  "floors": 5,
+  "year": 2025,
+  "status": "operating（2025-01 试运营）",
+  "form": "南北两馆+空中连桥，如漂浮在灞河岸的“星云”",
+  "facade": "白色曲面幕墙/穿孔板（待影像核对）",
+  "roof": "连续曲面屋顶",
+  "colors": "白、银灰",
+  "sign_text": "长安云",
+  "night": "轮廓光",
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://news.qq.com/rain/a/20250102A09PE900",
+   "https://m.21jingji.com/article/20241231/herald/64cfd3b5f0c11c338d0ef781de8ed359.html"
+  ],
+  "notes": "总建筑 16.12 万㎡；中庭 28 m 莫比乌斯环装置“永无止境”。"
+ },
+ {
+  "name": "西安科技馆 / 陕西（西安）科技馆新馆（长安云南馆）",
+  "category": "museum",
+  "lon": 109.01269,
+  "lat": 34.3833,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": 5,
+  "year": 2025,
+  "status": "operating（2025-01）",
+  "form": "长安云南馆",
+  "facade": "同长安云",
+  "roof": "同长安云",
+  "colors": "白",
+  "sign_text": "西安科技馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "https://news.qq.com/rain/a/20250102A09PE900",
+   "https://m.21jingji.com/article/20241231/herald/64cfd3b5f0c11c338d0ef781de8ed359.html"
+  ],
+  "notes": "地下 1 层地上 4 层，约 5.4–5.9 万㎡。即“陕西科技馆新馆”。"
+ },
+ {
+  "name": "西安城市规划馆（长安云北馆）",
+  "category": "museum",
+  "lon": 109.0126,
+  "lat": 34.3856,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": 7,
+  "year": 2025,
+  "status": "operating（2025-01）",
+  "form": "长安云北馆 1 层（部分）及 5–7 层",
+  "facade": "同长安云",
+  "roof": "同长安云",
+  "colors": "白",
+  "sign_text": "西安城市规划馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20250102A09PE900",
+   "https://m.21jingji.com/article/20241231/herald/64cfd3b5f0c11c338d0ef781de8ed359.html"
+  ],
+  "notes": "坐标按长安云 OSM 轮廓北段估计。"
+ },
+ {
+  "name": "长安书院（西安图书馆长安书院馆区）",
+  "category": "library",
+  "lon": 109.001853,
+  "lat": 34.37905,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   333,
+   219
+  ],
+  "height_m": null,
+  "floors": 7,
+  "year": 2025,
+  "status": "operating（2025-01）",
+  "form": "赵元超设计：“反宇向阳”翘曲屋面，如翻开的书，南北约 300 m×东西约 180 m",
+  "facade": "浅色石材+木纹格栅+大面玻璃（大实大虚）",
+  "roof": "连续翘曲大屋面",
+  "colors": "米白石材、木色、灰色金属屋面",
+  "sign_text": "长安书院",
+  "night": "格栅内透",
+  "capacity": 3000,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://news.qq.com/rain/a/20241016A062YD00",
+   "https://www.shx.chinanews.com.cn/news/2025/0110/103313.html",
+   "https://news.qq.com/rain/a/20240323A00LEQ00"
+  ],
+  "notes": "总建筑 15.7 万㎡；图书馆+美术馆+文化艺术中心。"
+ },
+ {
+  "name": "西安图书馆（凤城二路老馆）",
+  "category": "library",
+  "lon": 108.937644,
+  "lat": 34.324601,
+  "coord_source": "overture_gcj_corrected",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安图书馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/place.parquet (GCJ→WGS)"
+  ],
+  "notes": "附近 OSM 无名建筑 136×39 m（108.938485,34.326009）可能为馆舍，待核。"
+ },
+ {
+  "name": "陕西省图书馆（长安北路主馆）",
+  "category": "library",
+  "lon": 108.94086,
+  "lat": 34.233144,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   130,
+   80
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2001,
+  "status": "operating",
+  "form": "张锦秋“新唐风”：高台之上的书库塔楼+阅览楼，“文化航母”",
+  "facade": "浅灰石材+玻璃",
+  "roof": "平屋面+唐风檐口",
+  "colors": "灰白",
+  "sign_text": "陕西省图书馆",
+  "night": "一般",
+  "capacity": 1657,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://zh.wikipedia.org/zh-hans/%E9%99%95%E8%A5%BF%E7%9C%81%E5%9B%BE%E4%B9%A6%E9%A6%86"
+  ],
+  "notes": "建筑面积 4.7 万㎡；与陕西省美术博物馆同在小寨长安北路。"
+ },
+ {
+  "name": "陕西省图书馆高新馆",
+  "category": "library",
+  "lon": 108.829437,
+  "lat": 34.21463,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   237,
+   108
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2022,
+  "status": "operating",
+  "form": "大体量方正文化建筑",
+  "facade": "石材+玻璃",
+  "roof": "平屋面",
+  "colors": "浅色",
+  "sign_text": "陕西省图书馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://k.sina.cn/article_3108168015_b942e14f019015ulw.html"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "陕西省美术博物馆",
+  "category": "museum",
+  "lon": 108.93967,
+  "lat": 34.232707,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   61,
+   57
+  ],
+  "height_m": null,
+  "floors": 5,
+  "year": 2000,
+  "status": "operating",
+  "form": "张锦秋设计，方形体量+圆形透明拱顶",
+  "facade": "浅灰石材",
+  "roof": "圆形玻璃穹顶",
+  "colors": "灰白",
+  "sign_text": "陕西省美术博物馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%9C%81%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86/4028192"
+  ],
+  "notes": "即任务中的“陕西省美术馆”。"
+ },
+ {
+  "name": "陕西科学技术馆（新城广场老馆）",
+  "category": "museum",
+  "lon": 108.951593,
+  "lat": 34.265465,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   55,
+   25
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating（新馆已在长安云开放，老馆状态待核）",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "陕西科技馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%A7%91%E5%AD%A6%E6%8A%80%E6%9C%AF%E9%A6%86/6840397"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安丝路国际会议中心",
+  "category": "expo",
+  "lon": 109.038197,
+  "lat": 34.335429,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   239,
+   210
+  ],
+  "height_m": 51.05,
+  "floors": 3,
+  "year": 2020,
+  "status": "operating（2020-05）",
+  "form": "约 200 m 见方，“天圆地方长安月”：取钟楼意象的双“月牙”大屋檐，180 根悬挂钢柱",
+  "facade": "玻璃幕墙+细钢柱列",
+  "roof": "超大方形挑檐屋面",
+  "colors": "白、银灰",
+  "sign_text": "西安丝路国际会议中心",
+  "night": "屋檐下泛光+柱列灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "http://www.tjad.cn/project/686",
+   "http://www.sasac.gov.cn/n2588025/n2641616/c14530534/content.html"
+  ],
+  "notes": "skyline SPECIAL.conf[0] 已建。OSM 名为“西安国际会展中心-会议楼”。代码 SPECIAL.conf[1]（109.0309,34.3395，OSM 无名 246×212）为第二个方形屋檐，身份待核。"
+ },
+ {
+  "name": "西安丝路国际展览中心（西安国际会展中心展厅）",
+  "category": "expo",
+  "lon": 109.036908,
+  "lat": 34.340327,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   942,
+   361
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2020,
+  "status": "operating",
+  "form": "鱼骨式展厅群",
+  "facade": "金属板+玻璃",
+  "roof": "连续波形屋面",
+  "colors": "银灰",
+  "sign_text": "西安国际会展中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/landuse.json",
+   "http://www.sasac.gov.cn/n2588025/n2641616/c14530534/content.html"
+  ],
+  "notes": "skyline SPECIAL.expo 已建。"
+ },
+ {
+  "name": "西安国际会议中心（世博园西北角）",
+  "category": "expo",
+  "lon": 109.054085,
+  "lat": 34.328162,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   153,
+   152
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2019,
+  "status": "operating",
+  "form": "方形会议建筑（待影像核对）",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安国际会议中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "http://www.tjad.cn/project/805",
+   "https://sx.sina.cn/news/xian/2019-11-09/detail-iicezzrr8262304.d.html"
+  ],
+  "notes": "网络资料常与丝路国际会议中心混称；OSM 名称与位置可信，外形需影像确认。"
+ },
+ {
+  "name": "曲江国际会议中心",
+  "category": "expo",
+  "lon": 108.950471,
+  "lat": 34.195312,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   187,
+   88
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "会议/演出/宴会综合体（与电视塔隔长安南路相望）",
+  "facade": "石材+玻璃",
+  "roof": "平屋面",
+  "colors": "浅色",
+  "sign_text": "曲江国际会议中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E6%9B%B2%E6%B1%9F%E5%9B%BD%E9%99%85%E4%BC%9A%E5%B1%95%E4%B8%AD%E5%BF%83/1301157"
+  ],
+  "notes": "建筑面积 7.68 万㎡。原曲江国际会展中心展馆已拆除（见 sky-data.js 注释）。"
+ },
+ {
+  "name": "西安高新国际会议中心",
+  "category": "expo",
+  "lon": 108.829591,
+  "lat": 34.217198,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   121,
+   114
+  ],
+  "height_m": 23.79,
+  "floors": null,
+  "year": 2019,
+  "status": "operating",
+  "form": "方正体量覆盖南北向上升的悬挑大屋面，出檐深远",
+  "facade": "石材+玻璃",
+  "roof": "单坡上升悬挑屋面",
+  "colors": "浅灰",
+  "sign_text": "西安高新国际会议中心",
+  "night": null,
+  "capacity": 3600,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://www.sxjzy.org/h-nd-20609.html"
+  ],
+  "notes": "长 114.8×宽 92.3 m；主会厅 3600 人。南邻陕西省图书馆高新馆。"
+ },
+ {
+  "name": "西安绿地笔克国际会展中心",
+  "category": "expo",
+  "lon": 108.881897,
+  "lat": 34.193856,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   324,
+   93
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "长条展厅",
+  "facade": "金属板",
+  "roof": "平缓屋面",
+  "colors": "银灰",
+  "sign_text": "绿地笔克国际会展中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安临空会展中心",
+  "category": "expo",
+  "lon": 108.790843,
+  "lat": 34.434046,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   308,
+   229
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "展厅",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安临空会展中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/aeroway.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "陕西省广播电视中心编播大楼（陕西广电大厦）",
+  "category": "other",
+  "lon": 108.9415,
+  "lat": 34.214,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 106,
+  "floors": null,
+  "year": 2009,
+  "status": "operating",
+  "form": "高层编播塔楼",
+  "facade": "玻璃幕墙",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "陕西广播电视台",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "https://baike.baidu.com/item/%E9%99%95%E8%A5%BF%E7%9C%81%E5%B9%BF%E6%92%AD%E7%94%B5%E8%A7%86%E4%B8%AD%E5%BF%83/65649927"
+  ],
+  "notes": "长安南路 336 号广电大院内；OSM/skyline 中未找到该塔楼，坐标按广电大剧院北侧估计。"
+ },
+ {
+  "name": "西安广电中心（曲江）",
+  "category": "other",
+  "lon": 108.972459,
+  "lat": 34.207647,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   122,
+   107
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安广电中心",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": "西安市广播电视局所在，勿与陕西省广电中心混淆。"
+ },
+ {
+  "name": "西安交通大学钱学森图书馆",
+  "category": "campus",
+  "lon": 108.978969,
+  "lat": 34.248701,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   143,
+   124
+  ],
+  "height_m": null,
+  "floors": 4,
+  "year": 1961,
+  "status": "operating（北楼 1961，南楼 1991）",
+  "form": "后现代“书山形”+北楼“山”字形四层",
+  "facade": "红褐/灰砖+石材（待影像核对）",
+  "roof": "平屋面",
+  "colors": "—",
+  "sign_text": "钱学森图书馆（江泽民题）",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://zh.wikipedia.org/zh-hans/%E9%92%B1%E5%AD%A6%E6%A3%AE%E5%9B%BE%E4%B9%A6%E9%A6%86_(%E8%A5%BF%E5%AE%89%E4%BA%A4%E9%80%9A%E5%A4%A7%E5%AD%A6)"
+  ],
+  "notes": "西安市优秀近现代建筑保护名录。"
+ },
+ {
+  "name": "西安交通大学兴庆校区中心楼（中心一/二/三楼）",
+  "category": "campus",
+  "lon": 108.979001,
+  "lat": 34.251477,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   128,
+   57
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1950,
+  "status": "operating",
+  "form": "1950 年代西迁时期对称式教学主楼群（待核）",
+  "facade": "砖墙",
+  "roof": "坡屋顶（待核）",
+  "colors": "—",
+  "sign_text": "西安交通大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": "中心二楼 108.980071,34.251506；中心三楼 108.977902,34.25149。"
+ },
+ {
+  "name": "西北工业大学长安校区图书馆（水上图书馆）",
+  "category": "campus",
+  "lon": 108.7598,
+  "lat": 34.03,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 49.5,
+  "floors": 9,
+  "year": 2013,
+  "status": "operating",
+  "form": "取意“航”字的高扬风帆式体量，架于启真湖/启翔湖之上",
+  "facade": "玻璃幕墙+白色构架",
+  "roof": "斜向上扬屋面",
+  "colors": "白、蓝玻璃",
+  "sign_text": "西北工业大学图书馆",
+  "night": "水面倒影+内透",
+  "capacity": 4000,
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/jingdian/xigongdachanganxiaoqutushuguan/",
+   "http://www.tjad.cn/project/102"
+  ],
+  "notes": "OSM 无轮廓；按校区多边形中心估计，需影像定位。建筑面积 5.36 万㎡。"
+ },
+ {
+  "name": "西北工业大学友谊校区老图书馆",
+  "category": "campus",
+  "lon": 108.909953,
+  "lat": 34.244557,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   88,
+   51
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西北工业大学图书馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安电子科技大学南校区图书馆",
+  "category": "campus",
+  "lon": 108.828031,
+  "lat": 34.12632,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安电子科技大学图书馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E7%94%B5%E5%AD%90%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%A6%E5%9B%BE%E4%B9%A6%E9%A6%86/9640823"
+  ],
+  "notes": "OSM 无轮廓。"
+ },
+ {
+  "name": "西安电子科技大学北校区（主楼·大礼堂）",
+  "category": "campus",
+  "lon": 108.912015,
+  "lat": 34.232025,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   81,
+   45
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安电子科技大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": "大礼堂坐标；主楼 IV 区 108.913982,34.235052。"
+ },
+ {
+  "name": "西北大学博物馆（太白校区）",
+  "category": "campus",
+  "lon": 108.921214,
+  "lat": 34.251838,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   93,
+   50
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西北大学博物馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西北大学长安校区",
+  "category": "campus",
+  "lon": 108.869894,
+  "lat": 34.146642,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   1003,
+   761
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "校园",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西北大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json"
+  ],
+  "notes": "取 OSM 校区多边形质心（非单体建筑）。"
+ },
+ {
+  "name": "陕西师范大学雁塔校区图书馆",
+  "category": "campus",
+  "lon": 108.945565,
+  "lat": 34.204757,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   114,
+   27
+  ],
+  "height_m": null,
+  "floors": 3,
+  "year": 1956,
+  "status": "operating（市级文保）",
+  "form": "中西合璧主楼+两侧三层附楼",
+  "facade": "灰砖墙+爬山虎，红木窗",
+  "roof": "斜顶排瓦+琉璃屋脊",
+  "colors": "灰砖、红木、绿植",
+  "sign_text": "陕西师范大学图书馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://zsb.snnu.edu.cn/info/1216/2496.htm"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "陕西师范大学长安校区",
+  "category": "campus",
+  "lon": 108.886631,
+  "lat": 34.155279,
+  "coord_source": "poi",
+  "footprint_size_m": [
+   1260,
+   997
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "校园；致知楼 108.885736,34.154696（122×118 m）等",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "陕西师范大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/landuse.json"
+  ],
+  "notes": "标志楼待核。"
+ },
+ {
+  "name": "长安大学渭水校区逸夫图书馆",
+  "category": "campus",
+  "lon": 108.899517,
+  "lat": 34.372652,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   105,
+   60
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "长安大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安建筑科技大学雁塔校区图书馆",
+  "category": "campus",
+  "lon": 108.961749,
+  "lat": 34.238245,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   78,
+   68
+  ],
+  "height_m": null,
+  "floors": 5,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安建筑科技大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安外国语大学长安校区图书馆",
+  "category": "campus",
+  "lon": 108.872552,
+  "lat": 34.138721,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "—",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安外国语大学",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "兴庆宫公园",
+  "category": "park",
+  "lon": 108.979187,
+  "lat": 34.255695,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   768,
+   688
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1958,
+  "status": "operating",
+  "form": "唐兴庆宫遗址公园，湖+沉香亭+花萼相辉楼",
+  "facade": "—",
+  "roof": "唐风亭阁",
+  "colors": "—",
+  "sign_text": "兴庆宫公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "heritage.js 已建沉香亭与湖心楼阁（部分）。"
+ },
+ {
+  "name": "革命公园",
+  "category": "park",
+  "lon": 108.953709,
+  "lat": 34.273065,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   370,
+   312
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1927,
+  "status": "operating",
+  "form": "纪念公园",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "革命公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "仅通用绿地/植被。"
+ },
+ {
+  "name": "莲湖公园",
+  "category": "park",
+  "lon": 108.935586,
+  "lat": 34.270619,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "湖面公园",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "莲湖公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json"
+  ],
+  "notes": "仅通用绿地/植被。"
+ },
+ {
+  "name": "环城公园（城墙-护城河环带）",
+  "category": "park",
+  "lon": 108.946,
+  "lat": 34.261,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   4250,
+   2650
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 1983,
+  "status": "operating",
+  "form": "环绕明城墙的带状公园+护城河",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "环城公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "环带取城墙外包中心；OSM 分段多边形。城墙本体已建。"
+ },
+ {
+  "name": "汉城湖公园",
+  "category": "park",
+  "lon": 108.904026,
+  "lat": 34.306293,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   6585,
+   2424
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2011,
+  "status": "operating",
+  "form": "汉长安城东侧带状湖（原团结水库），湖面 850 亩",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "汉城湖",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E5%A4%A7%E9%A3%8E%E9%98%81/4468043"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "汉城湖大风阁",
+  "category": "other",
+  "lon": 108.914297,
+  "lat": 34.300482,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   45,
+   44
+  ],
+  "height_m": 63.3,
+  "floors": null,
+  "year": 2011,
+  "status": "operating",
+  "form": "仿汉高台楼阁",
+  "facade": "汉风木构+高台",
+  "roof": "汉式重檐庑殿（待核）",
+  "colors": "深灰瓦、赭红",
+  "sign_text": "大风阁",
+  "night": "轮廓灯",
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://baike.baidu.com/item/%E5%A4%A7%E9%A3%8E%E9%98%81/4468043"
+  ],
+  "notes": "汉城湖标志建筑。"
+ },
+ {
+  "name": "大明宫国家遗址公园",
+  "category": "park",
+  "lon": 108.9589,
+  "lat": 34.29413,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   2579,
+   1424
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2010,
+  "status": "operating",
+  "form": "遗址公园，丹凤门遗址博物馆+含元殿台基",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "大明宫",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/landuse.json"
+  ],
+  "notes": "heritage.js 已建丹凤门、含元/宣政/紫宸殿遗址与宫墙。"
+ },
+ {
+  "name": "曲江池遗址公园",
+  "category": "park",
+  "lon": 108.97943,
+  "lat": 34.20186,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   1284,
+   625
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2008,
+  "status": "operating",
+  "form": "湖面+唐风亭阁",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "曲江池",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "qujiang.js/water.js 已建湖面与景观（部分）。"
+ },
+ {
+  "name": "浐灞国家湿地公园",
+  "category": "park",
+  "lon": 109.000415,
+  "lat": 34.421341,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   2469,
+   1531
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2013,
+  "status": "operating",
+  "form": "灞河入渭口湿地；起源门、科普馆、观鸟塔、湿地水街",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安浐灞国家湿地公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "http://www.rmhb.com.cn/yxsj/sy/202009/t20200927_800222109.html"
+  ],
+  "notes": "规划 8715 亩，中心区 4700 亩。"
+ },
+ {
+  "name": "昆明池·七夕公园",
+  "category": "park",
+  "lon": 108.773399,
+  "lat": 34.204377,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   3902,
+   2807
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2016,
+  "status": "operating",
+  "form": "汉昆明池复建水面+牛郎织女主题",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "昆明池",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "water.js 仅水面；斗门水库（昆明池）整体 construction 多边形 108.784125,34.186991。"
+ },
+ {
+  "name": "西安世博园（广运潭）",
+  "category": "park",
+  "lon": 109.056836,
+  "lat": 34.323972,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   2549,
+   1626
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2011,
+  "status": "operating",
+  "form": "2011 世园会会址，长安塔+创意馆+自然馆+广运门",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "西安世博园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/landuse.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%B8%96%E5%8D%9A%E5%9B%AD/8990529"
+  ],
+  "notes": "长安塔已建（skyline）。"
+ },
+ {
+  "name": "长安塔",
+  "category": "other",
+  "lon": 109.055014,
+  "lat": 34.323356,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   53,
+   43
+  ],
+  "height_m": 99,
+  "floors": 13,
+  "year": 2011,
+  "status": "operating",
+  "form": "张锦秋设计，方形唐风多层楼阁式塔（7 明层 6 暗层）",
+  "facade": "玻璃+钢构",
+  "roof": "多重唐式挑檐+攒尖",
+  "colors": "银灰、浅色玻璃",
+  "sign_text": "长安塔",
+  "night": "层檐轮廓灯",
+  "capacity": null,
+  "already_modeled": true,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "local:public/data/pois.json",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%B8%96%E5%8D%9A%E5%9B%AD/8990529"
+  ],
+  "notes": "sky-special.js buildChanganTower 已建。"
+ },
+ {
+  "name": "世博园创意馆",
+  "category": "museum",
+  "lon": 109.057376,
+  "lat": 34.325693,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   101,
+   79
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2011,
+  "status": "operating",
+  "form": "Plasma Studio 设计，折面扭转体",
+  "facade": "玻璃+金属折板",
+  "roof": "折板屋面",
+  "colors": "银灰",
+  "sign_text": "创意馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%B8%96%E5%8D%9A%E5%9B%AD/8990529"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "世博园自然馆",
+  "category": "museum",
+  "lon": 109.057212,
+  "lat": 34.322359,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   132,
+   78
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2011,
+  "status": "operating",
+  "form": "植物温室，折面玻璃体",
+  "facade": "玻璃",
+  "roof": "折面玻璃",
+  "colors": "透明",
+  "sign_text": "自然馆",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet (OSM)",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%B8%96%E5%8D%9A%E5%9B%AD/8990529"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "广运潭公园",
+  "category": "park",
+  "lon": 109.006187,
+  "lat": 34.356459,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   1708,
+   284
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": null,
+  "status": "operating",
+  "form": "灞河带状公园",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "广运潭",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": ""
+ },
+ {
+  "name": "西安奥体中央公园",
+  "category": "park",
+  "lon": 109.040402,
+  "lat": 34.375408,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   2500,
+   290
+  ],
+  "height_m": null,
+  "floors": null,
+  "year": 2021,
+  "status": "operating",
+  "form": "带状中央公园（3 段多边形）",
+  "facade": "—",
+  "roof": "—",
+  "colors": "—",
+  "sign_text": "奥体中央公园",
+  "night": null,
+  "capacity": null,
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/landuse.json",
+   "local:public/data/pois.json"
+  ],
+  "notes": "长度按三段合计估计。"
+ }
+]

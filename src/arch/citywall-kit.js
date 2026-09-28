@@ -291,7 +291,35 @@ export class MeshBuf {
     else this.i.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   tri(a, b, c, uvs, hs, E) {
-    this.quad(a, b, c, c, [uvs[0], uvs[1], uvs[2], uvs[2]], hs, E);
+    // hs 可为单个 [h,flood] 或 3 个逐顶点值（补齐为 4 个交给 quad）
+    const hh = hs && Array.isArray(hs[0]) ? [hs[0], hs[1], hs[2], hs[2]] : hs;
+    this.quad(a, b, c, c, [uvs[0], uvs[1], uvs[2], uvs[2]], hh, E);
+  }
+  /**
+   * 逐顶点法线四边形（圆弧面/券洞拱顶的平滑着色）：N 为 4 个单位法线（期望朝向）。
+   * 绕序按几何法线与平均期望法线一致自动确定；退化（面积≈0）时跳过。
+   */
+  quadN(a, b, c, d, uvs, hs, N) {
+    const ux = c[0] - a[0], uy = c[1] - a[1], uz = c[2] - a[2];
+    const vx = d[0] - b[0], vy = d[1] - b[1], vz = d[2] - b[2];
+    const gx = uy * vz - uz * vy, gy = uz * vx - ux * vz, gz = ux * vy - uy * vx;
+    if (Math.hypot(gx, gy, gz) < 1e-9) return;
+    const mx = N[0][0] + N[1][0] + N[2][0] + N[3][0], my = N[0][1] + N[1][1] + N[2][1] + N[3][1], mz = N[0][2] + N[1][2] + N[2][2] + N[3][2];
+    const flip = gx * mx + gy * my + gz * mz < 0;
+    const base = this.c;
+    const V = [a, b, c, d];
+    const single = hs && !Array.isArray(hs[0]);
+    for (let k = 0; k < 4; k++) {
+      this.p.push(V[k][0], V[k][1], V[k][2]);
+      const n = N[k], l = Math.hypot(n[0], n[1], n[2]) || 1;
+      this.n.push(n[0] / l, n[1] / l, n[2] / l);
+      this.uv.push(uvs[k][0], uvs[k][1]);
+      const hh = !hs ? [0, 0] : single ? hs : hs[k];
+      this.h.push(hh[0], hh[1]);
+    }
+    this.c += 4;
+    if (flip) this.i.push(base, base + 2, base + 1, base, base + 3, base + 2);
+    else this.i.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   geometry() {
     const g = new THREE.BufferGeometry();

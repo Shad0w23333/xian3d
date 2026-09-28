@@ -23,6 +23,8 @@ export class Controls {
     this.tween = null;
     this.orbit = { target: new THREE.Vector3(), radius: 300, angle: 0, height: 120, speed: 0.08 };
     this.eye = 1.7;
+    // 地下浏览（地铁模块设置）：groundFn(x, z, y) → 脚下地面高度（车站/隧道/通道），null 表示不在地下空间内（保持当前高度）
+    this.groundFn = null;
     this.onModeChange = null;
     this.onPresetArrive = null;
     this.lookSensitivity = 0.0022;
@@ -240,7 +242,8 @@ export class Controls {
       cam.position.addScaledVector(this.velocity, dt);
       this.vy -= 9.8 * dt;
       cam.position.y += this.vy * dt;
-      const g = this.terrain.heightAt(cam.position.x, cam.position.z) + this.eye;
+      const g = this._groundAt(cam.position.x, cam.position.z, cam.position.y) + this.eye;
+      if (this.groundFn) this._lastUnder = g - this.eye;
       this._onGround = cam.position.y <= g + 0.01;
       if (cam.position.y < g) {
         cam.position.y = g;
@@ -252,7 +255,7 @@ export class Controls {
     // 飞行：速度随离地高度自适应
     const boost = k.has('ShiftLeft') || k.has('ShiftRight') ? 5 : 1;
     const slow = k.has('AltLeft') || k.has('AltRight') ? 0.2 : 1;
-    const base = THREE.MathUtils.clamp(Math.max(agl, 2) * 0.9, 6, 3000);
+    const base = this.groundFn ? 8 : THREE.MathUtils.clamp(Math.max(agl, 2) * 0.9, 6, 3000);
     const sp = base * this.speedFactor * boost * slow;
     // 飞行时 W/S 沿视线方向（含俯仰），更直观
     const look = new THREE.Vector3(-Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), -Math.cos(this.yaw) * Math.cos(this.pitch));
@@ -274,8 +277,23 @@ export class Controls {
     this._clampAboveGround(1.6);
   }
 
+  _groundAt(x, z, y) {
+    if (!this.groundFn) return this.terrain.heightAt(x, z);
+    const g = this.groundFn(x, z, y);
+    return g ?? (this._lastUnder ?? y - this.eye);
+  }
+
   _clampAboveGround(min) {
     const cam = this.camera;
+    if (this.groundFn) {
+      // 地下：只在车站/隧道/通道内防止穿地板；空间外自由飞行
+      const g = this.groundFn(cam.position.x, cam.position.z, cam.position.y);
+      if (g != null) {
+        this._lastUnder = g;
+        if (cam.position.y < g + min) cam.position.y = g + min;
+      }
+      return;
+    }
     const g = this.terrain.heightAt(cam.position.x, cam.position.z);
     if (cam.position.y < g + min) cam.position.y = g + min;
   }
