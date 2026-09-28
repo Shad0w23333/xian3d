@@ -136,14 +136,16 @@ export function towerSpecs() {
     pyramid: { h: 16, spire: 24 },
   });
   // ———————— 未央路：荣民金融中心（270 m） ————————
+  // 落位：OSM w1370944673（Overture 2026-09，height=270，56×57 m 切角方形）质心 (94.7,−4703.7)；
+  //   原推测位置 (140,−4862) 在其以北约 165 m（tools/check_coords.py 审计，research/refs/landmarks2026/towers_notes.md §2）
   L.push({
     key: 'rongmin', name: '荣民金融中心',
-    pts: G.rect(140, -4862, 48, 48, 0, { chamfer: 3 }), h: 270,
+    pts: G.rect(95, -4704, 54, 54, 0, { chamfer: 3 }), h: 270,
     tiers: [{ to: 0.92, inset: 0 }, { to: 1, inset: 1 }],
     crown: { h: 12, color: '#e6f0ff', colW: 3 },
     roof: { helipad: true, helipadY: 2 },
     style: { tint: '#8599a7', spd: '#a4afb7', floorH: 4.4, colW: 1.5, spandrel: 0.26, band: 13, lit: 0.3, mode: 2, seed: 16 },
-    podium: { pts: G.rect(140, -4852, 112, 92, 0), h: 20, signs: [{ text: '荣民金融中心', h: 3.4, faces: 1 }] },
+    podium: { pts: G.rect(95, -4706, 96, 72, 0), h: 20, signs: [{ text: '荣民金融中心', h: 3.4, faces: 1 }] },
   });
   // ———————— 未央路：西安环球贸易中心（凤城五路东南角）2 号楼 149.75 m 已建成；1 号楼 299.75 m 在建 ————————
   L.push({
@@ -166,6 +168,10 @@ export function towerSpecs() {
   return L;
 }
 
+const DMGWD = [2310.3, -6115.9, 2310.3, -6151.6, 2307.9, -6151.6, 2310.0, -6319.0, 2310.2, -6319.8, 2329.0, -6319.8, 2329.2, -6364.8,
+  2339.2, -6364.8, 2339.2, -6365.6, 2434.8, -6364.6, 2440.3, -6359.0, 2440.3, -6222.9, 2441.9, -6222.9, 2442.1, -6219.9, 2442.3, -6196.3,
+  2440.5, -6196.3, 2440.1, -6081.8, 2432.0, -6073.5, 2338.6, -6071.8, 2322.8, -6115.7];
+
 /** 商场/裙房类（只有裙房） */
 export function mallSpecs() {
   return [
@@ -174,7 +180,9 @@ export function mallSpecs() {
     { key: 'xidigang', d: 'weiyang', pts: FP.xidigang, h: 26, signs: [{ text: 'CITYON熙地港', h: 5.5, faces: 2 }],
       domes: [[-137, -8855, 11, 7], [-149, -8806, 11, 11], [-100, -8791, 9, 7], [-176, -8848, 8, 6], [-166, -8822, 7, 7], [-187, -8791, 8, 6], [-155, -8769, 9, 6], [-118, -8767, 8, 6], [-87, -8773, 6, 5]] },
     { key: 'darongcheng', d: 'weiyang', pts: FP.darongcheng, h: 26, signs: [{ text: '大融城', h: 6, faces: 2 }] },
-    { key: 'dmgwd', d: 'weiyang', pts: FP.dmgwd, h: 26, signs: [{ text: '万达广场', h: 6.5, faces: 2, color: '#f1c24c' }] },
+    // 大明宫万达广场：换用 OSM w1409622148（Overture 2026-09，294×134 m 整体轮廓，质心 (2377,−6219)）；
+    //   旧 FP.dmgwd 只有北半部（7105 m²，质心偏北 88 m，交并比 0.19）
+    { key: 'dmgwd', d: 'weiyang', pts: DMGWD, h: 26, signs: [{ text: '万达广场', h: 6.5, faces: 2, color: '#f1c24c' }] },
     { key: 'saige', d: 'south', pts: FP.saige, h: 56, led: true, signs: [{ text: '赛格国际购物中心', h: 5.5, faces: 1 }], style: { tint: '#34414b', spd: '#cfc9bd', floorH: 5.6 } },
     { key: 'mixc', d: 'south', pts: FP.mixc, h: 24, signs: [{ text: '万象城', h: 6, faces: 2 }] },
     { key: 'kaiyuan', d: 'center', pts: FP.kaiyuan, h: 36, signs: [{ text: '开元商城', h: 5, faces: 2, color: '#e33a2c' }], style: { tint: '#3a4650', spd: '#d8d0c0' } },

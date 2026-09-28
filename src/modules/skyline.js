@@ -61,14 +61,18 @@ const districtOf = (x, z) => {
 };
 
 // —— skyline.json 中其余实测高层（OSM height/levels）：通用塔楼 ——
-const HFIX = { 西安公路研究院: 60 };
+// 数据本身已由 tools/check_heights.py --fix 修正（SKY_FIX：公路研究院 103 层/330 m 错标降为通用建筑、IFC 330→350、
+// 迈科/延长石油整片综合体轮廓取裙房高）；HFIX 只作运行时兜底（旧数据文件仍能得到正确结果），按名称覆盖高度，0 = 不是高层
+const HFIX = { 西安公路研究院: 0, 'IFC国瑞·西安金融中心': 350 };
 function genericFeatures(ctx, curated) {
-  const feats = (ctx.data.skyline?.features || []).filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000);
+  const feats = (ctx.data.skyline?.features || [])
+    .map((f) => (f.n in HFIX && f.hsrc !== 'fix' ? { ...f, h: HFIX[f.n] } : f))
+    .filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000);
   const out = [];
   for (const f of feats) {
     if (curated.names.has(f.n)) continue;
     if (curated.polys.some((p) => G.pointIn(f.x, f.z, p))) continue;
-    out.push({ ...f, h: HFIX[f.n] ?? f.h });
+    out.push(f);
   }
   return out;
 }
