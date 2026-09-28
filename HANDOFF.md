@@ -179,3 +179,19 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 3. 浐灞/港务区 2022 年后新建的大量住宅在 CMAB 中缺失或高度被截在约 86 m；需要更新的建筑数据源（或用高清影像人工补录重点片区）。
 4. 曲江道路：数据已是 2026 年最新 OSM；登高路南段（杜陵西路—航天大道 1,177 m）OSM 尚未绘出。
 5. 招牌字体：headless Linux 下中文字体回退可能与 macOS 不同，招牌以 macOS 实机效果为准。
+
+## 11. 2026-09-28 云端会话更新（分支 `claude/landmarks-all`，PR #2）
+
+用户需求（原话摘要）：西安所有地标精细化（联网搜名称）、全部商场商圈、更深度高德数据；学校/公共建筑/历史遗迹/景点；城墙券洞与圆角台；
+光影与详细画质开关、可视度、车辆/人物开关；路名、小区、建筑分类高亮俯视；全西安地铁地下网络（官方色、可进入、一键俯视透视）；全西安下沉广场；所有高校。
+
+- **联网调研清单** `research/refs/landmarks2026/`：towers 75、malls 90、heritage 80、venues 85、metro 14 线/263 站、sunken 27、universities 109 校区（各有 *_notes.md）。
+  注意：`data-src/overture/place.parquet` 坐标混杂——多数与 OSM 重合（WGS-84），少数品牌店来源为 GCJ-02，不要整体纠偏。
+- **地标批量精建**：`tools/build_landmarks2026.py` → `public/data/landmarks2026.json`（塔楼/商场/场馆/高校标志楼→skyline；古建院落→`heritage26` 模块；下沉广场→`sunken` 模块；公园/校园→标注）。
+  轮廓优先 OSM/Overture 同名，其次含点/就近，最后按调研尺寸合成矩形；已精建（already_modeled、手工轮廓内、其他模块排除区内）自动跳过。
+- **地铁地下网络**：`tools/build_metro.py` → `public/data/metro.json`；`src/modules/metro.js`：隧道（官方线路色腰线）、站台层/站厅层/屏蔽门/站名牌、出入口通道、运行列车；
+  X 透视俯视（压暗城市 + 发光线网 + 车站点 + 站名），U 进入最近车站地下步行（controls.groundFn 接管地面），再按返回地面。
+- **高德深度接入**：`tools/amap_fetch.py metro|district|place|all` + merge → `public/data/amap_extra.json`；`amapinfo` 模块（行政区界、街道、商圈、高德地铁线，面板开关）。需要用户自己的 Web 服务 Key，云端网络访问不了高德。
+- **城墙**：18 座门 65 孔券洞真实贯通墙体（`GATE_HOLES`）；西南圆形角台重做（资料与影像均为西南角圆、其余方角）；魁星楼移到文昌门西侧。
+- **专题**：路名（近处沿路显示）、小区名与边界、建筑 12 类分类高亮（B）、一键俯视（V）；`src/core/{roadnames,estates,thematic}.js`、`src/arch/bld-class.js`。
+- 待核：约 30 个地标坐标为 estimated；下沉广场深度/尺寸多为估计；国瑞 IFC 实高 350 m（sky-data 为 330）。
