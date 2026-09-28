@@ -75,7 +75,8 @@ const xijing = {
 
 // ───── 西安交通大学第一附属医院（雁塔西路院区） ─────
 // 门急诊大楼 3622261a（OSM 名称，地上 5 层，丁香园/健康界）：回字形 + 4 个内天井。
-// 高层住院楼 2c60ad1f（127×32 m 东西向长板）：南侧航拍照片 jd1_3（门急诊楼在前，住院楼在后，屋顶红色“交大一附院”立字）。
+// 高层住院楼 2c60ad1f（127×32 m 东西向长板）：2007-08-18 投用，楼高 20 层、8.3 万㎡（zh.wikipedia 经 WebSearch 摘要；8.3 万㎡ / 20 层 ≈ 4150 ㎡，
+// 与轮廓 4060 ㎡ 吻合）；南侧航拍照片 jd1_3（门急诊楼在前，住院楼在后，屋顶红色“交大一附院”立字）。
 // 住院楼立面：两端白色面砖方窗，中段深灰窗间墙 + 挑板（竖向分格），中轴一道玻璃竖带。
 // 外科大楼（13 层，2023 投用）：档案推断的 99a9a52a 是若干旧平房拼成的细长多臂轮廓，影像均早于竣工，底座无法确认 → 不建。
 const jd1 = {
@@ -89,12 +90,12 @@ const jd1 = {
       roofMat: { color: '#c4c2bc', roughness: 0.9 },
     },
     {
-      name: 'ward', fp: '2c60ad1f-aa27-4a6a-b019-145989062537', base: 0, top: 84,
+      name: 'ward', fp: '2c60ad1f-aa27-4a6a-b019-145989062537', base: 0, top: 78,
       style: { pattern: 'verticalFins', tint: '#55636e', spd: '#e4e4e0', floorH: 3.8, colW: 1.6, spandrel: 0.32, mullW: 0.5, lit: 0.6 },
     },
   ],
   signs: [
-    { text: '交大一附院', part: 'ward', face: 'S', y: 87.5, h: 5.5, color: '#d7261e' }, // 屋顶立字（航拍照片 jd1_3）
+    { text: '交大一附院', part: 'ward', face: 'S', y: 81.5, h: 5.5, color: '#d7261e' }, // 屋顶立字（航拍照片 jd1_3）
     { text: '门诊部', part: 'opd', face: 'S', y: 25.8, h: 3.0, color: '#d7261e' }, // 门急诊楼屋顶红字（同一照片）
   ],
   supersede: { names: ['西安交通大学第一附属医院（雁塔西路院区）', '交大一附院'] },
@@ -102,11 +103,12 @@ const jd1 = {
     category: 'hospital',
     dossier: 'public.json#西安交通大学第一附属医院（雁塔西路院区）（与 core_south.json 重复，按分工在此建）',
     sources: ['https://y.dxy.cn/hospital/52/915875.html（门急诊楼地上5层）', 'https://www.cn-healthcare.com/articlewm/20231027/wap-content-1615965.html（外科大楼13层）',
+      'https://zh.wikipedia.org/zh-hans/西安交通大学医学院第一附属医院（新住院大楼 2007 投用，20 层，8.3 万㎡）',
       'OSM r19307911 / w1411003683', 'Google / Esri 卫星 z19'],
     photos: ['scratchpad/pub_agent/imgs/jd1_3.jpg（南侧航拍）', 'scratchpad/pub_agent/crop_jd1.jpg（住院楼数层）', 'jd1_0.jpg（外科大楼）'],
     confidence: 'medium',
-    notes: '门急诊楼 5 层 × 4.8 m = 24 m（资料层数）。住院楼层数无资料：按照片数层——门急诊楼屋面以上露出约 20 层、被遮挡约 2 层 → 约 22 层 × 3.8 m ≈ 84 m'
-      + '（core_south 档案粗计约 20 层）。外科大楼无可信底座轮廓，未建（由通用建筑表达）。',
+    notes: '门急诊楼 5 层 × 4.8 m = 24 m（资料层数）。住院楼 20 层（资料）× 3.9 m = 78 m（照片门急诊楼屋面以上露出约 20 行窗，含设备层，基本相符）。'
+      + '外科大楼无可信底座轮廓，未建（由通用建筑表达）。',
   },
 };
 
