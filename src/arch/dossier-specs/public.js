@@ -328,8 +328,8 @@ const shengzf = {
     {
       name: 'slab', base: 0, top: 42, roof: { mech: false },
       pts: [646.5, -664.9, 571.5, -667.1, 571.7, -686.7, 587.2, -686.5, 587.2, -683.7, 621.2, -683.2, 621.3, -686.5, 652.8, -686.1, 653.0, -696.3, 670.7, -696.0, 670.5, -685.7, 702.7, -685.2, 702.6, -682.0, 736.5, -681.5, 736.6, -684.5, 752.1, -684.3, 751.8, -664.4, 676.1, -665.4],
-      style: { pattern: 'stoneWindows', spd: '#d8c3a0', tint: '#3a434a', floorH: 3.5, colW: 2.2, spandrel: 0.5, mullW: 1.0, lit: 0.5 },
-      crown: [{ type: 'hip', size: [181.5, 20.5], at: [661.8, -675.5], rot: -0.76, top: [180, 19], h: 1.2, eave: 1.6, mat: TILE_ORANGE, eaveMat: '#8a4a26' }],
+      style: { pattern: 'stoneWindows', spd: '#c4a272', tint: '#3a434a', floorH: 3.5, colW: 2.2, spandrel: 0.5, mullW: 1.0, lit: 0.5 }, // 档案 #d8c3a0，截图偏白 → 压深
+      crown: [{ type: 'hip', size: [181.5, 20.5], at: [661.8, -675.5], rot: -0.76, top: [180, 19], h: 1.2, eave: 1.6, mat: TILE_ORANGE, topMat: 'roof', eaveMat: '#8a4a26' }],
     },
     {
       name: 'portico', kind: 'podium', base: 0, top: 9.5, // 中央柱廊门廊（2 层高）

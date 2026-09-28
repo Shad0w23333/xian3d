@@ -178,7 +178,7 @@ night: {
 | `pyramid` | `h`、`inset`、`spire`、`mat` | 玻璃棱锥 + 可选塔尖 |
 | `arch` | `h`（矢高）；`size:[长,跨]`+`at`/`offset`+`rot`，或默认取体块外接矩形（`along:'short'` 换向） | 筒拱：采光中庭、拱形屋面 |
 | `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring` | 穹顶 |
-| `hip` | `h`（矢高，默认 0.3×宽）、`eave`（挑檐，默认 1.5）、`ridge`（正脊占长度比例，默认四坡等坡；取大近似歇山，1 = 双坡）、`top:[长,宽]`（平顶四坡 / 盝顶 / 行政楼“大挑檐帽”，给了就不做正脊）、`size:[长,宽]`+`at`/`offset`+`rot`（默认取体块外接矩形，`along:'short'` 换向）、`mat`（默认 `roofTile` 深灰瓦）、`eaveMat`、`eaveH`、`ridgeH` | 坡屋顶：公建仿古大屋顶、屋顶亭阁（两个 `hip` 叠放 = 重檐）、礼堂双坡 |
+| `hip` | `h`（矢高，默认 0.3×宽）、`eave`（挑檐，默认 1.5）、`ridge`（正脊占长度比例，默认四坡等坡；取大近似歇山，1 = 双坡）、`top:[长,宽]`（平顶四坡 / 盝顶 / 行政楼“大挑檐帽”，给了就不做正脊；`topMat` 单给平顶材质，如“平屋面 + 一圈琉璃挑檐”）、`size:[长,宽]`+`at`/`offset`+`rot`（默认取体块外接矩形，`along:'short'` 换向）、`mat`（默认 `roofTile` 深灰瓦）、`eaveMat`、`eaveH`、`ridgeH` | 坡屋顶：公建仿古大屋顶、屋顶亭阁（两个 `hip` 叠放 = 重檐）、礼堂双坡 |
 | `sphere` | `r`、`cy`（球心离地，默认 `r` 即球底落地）、`at`/`offset`、`mat`、`ribs`（经线杆数，`false` 不建）、`ribMat`、`ribW` | 整球：球幕影院、网壳球体 |
 
 叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet / hip` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
