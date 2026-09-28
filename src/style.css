@@ -110,6 +110,38 @@ input[type=checkbox] { accent-color: var(--gold); }
 .label-district .label-text { font-size: 15px; background: rgba(90,20,15,.55); border-color: rgba(255,120,90,.5); }
 .label-airport .label-text { background: rgba(10,40,70,.6); border-color: rgba(120,190,255,.5); }
 .label-street .label-text { font-size: 11px; font-weight: 500; background: rgba(0,0,0,.45); border-color: rgba(255,255,255,.2); }
+.label-admin .label-text { font-size: 17px; letter-spacing: 3px; background: rgba(60,40,10,.5); border-color: rgba(255,204,102,.6); }
+.label-town .label-text { font-size: 11px; font-weight: 500; background: rgba(40,30,10,.45); border-color: rgba(255,204,102,.3); }
+.label-biz .label-text { font-size: 12px; background: rgba(8,40,60,.55); border-color: rgba(79,195,247,.55); }
+.label-metro .label-text { font-size: 11px; background: rgba(10,30,70,.6); border-color: rgba(120,170,255,.5); }
+
+/* —— 路名（沿路方向旋转的文字，深色描边保证白天/夜间都可读） —— */
+.rnames { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.rname { position: absolute; left: 0; top: 0; white-space: nowrap; will-change: transform, opacity; font-weight: 600; letter-spacing: 2px;
+  color: #f4f1ea; font-size: 12px; line-height: 1; transform-origin: 0 0;
+  text-shadow: 0 0 2px #0b0906, 0 0 3px #0b0906, 1px 1px 2px rgba(0,0,0,.9), -1px -1px 2px rgba(0,0,0,.9); }
+.rname-t0 { font-size: 15px; color: #ffe39a; letter-spacing: 3px; }
+.rname-t1 { font-size: 14px; color: #fff3d6; }
+.rname-t2 { font-size: 13px; }
+
+/* —— 小区名称 —— */
+.labels-estate { z-index: 4; }
+.label-estate .label-text { font-size: 12px; font-weight: 500; color: #ffe8b0; background: rgba(40,28,6,.55); border-color: rgba(255,201,74,.55); border-radius: 4px; padding: 1px 6px; }
+.label-estate .label-text::before { content: '⌂ '; color: #ffc94a; }
+.label-estate .label-dot { height: 10px; background: linear-gradient(rgba(255,201,74,.9), rgba(255,201,74,0)); }
+
+/* —— 专题图：建筑分类高亮图例 —— */
+label.l-sub { padding-left: 20px; color: var(--ink-dim); }
+.sec-thematic .topdown { margin-left: auto; font-size: 11px; padding: 3px 8px; font-weight: 400; letter-spacing: 0; }
+.cls-box { margin-top: 4px; }
+.cls-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.cls-item { margin: 2px 0; font-size: 11px; gap: 4px; min-width: 0; }
+.cls-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cls-item i { width: 10px; height: 10px; border-radius: 2px; flex: none; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+.cls-item em { font-size: 10px; }
+.cls-row { margin-top: 6px; align-items: center; }
+.cls-row button { font-size: 11px; padding: 2px 8px; }
+.cls-cov { color: var(--ink-dim); font-size: 11px; margin-left: auto; }
 
 @media (max-width: 900px) {
   .info { min-width: 0; font-size: 11px; }

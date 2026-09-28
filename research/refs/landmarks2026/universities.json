@@ -1,0 +1,3979 @@
+{
+ "asof": "2026-09-28",
+ "count": 109,
+ "institutions": 70,
+ "notes": "坐标=OSM 校园 landuse 多边形质心（WGS84；x/z 为世界坐标）。overture_place 为 Overture place 同名点（WGS84，未纠偏）及其与质心距离，仅供参考。named_buildings_in_campus 为 Overture/OSM 建筑中落在校园多边形内且名称含图书馆/主楼/校门等关键词者。军队院校以 military=true 标注，非\"普通高校\"。",
+ "items": [
+  {
+   "name": "西安交通大学",
+   "campus": "兴庆校区",
+   "level": "本科(985/211)",
+   "lon": 108.978966,
+   "lat": 34.247703,
+   "x": 3369.5,
+   "z": 1481.4,
+   "coord_source": "osm_landuse_polygon_centroid(西安交通大学兴庆校区)",
+   "campus_bbox_m": [
+    770,
+    1050
+   ],
+   "overture_place": {
+    "name": "西安交通大学 Xi'an Jiaotong University",
+    "lon": 108.978983,
+    "lat": 34.247495,
+    "dist_m": 23
+   },
+   "landmark_buildings": [
+    {
+     "name": "钱学森图书馆",
+     "desc": "北楼1961年、南楼1991年建成，1995年命名，江泽民题馆名；北馆门前青年学子雕塑"
+    },
+    {
+     "name": "腾飞塔",
+     "desc": "90周年校庆纪念（1986），中央塔体约15m，浅色石材，顶部不锈钢抽象飞鸟（翼展约4.2m），北侧2.8m青铜女神像，环以直径32m圆形水池"
+    },
+    {
+     "name": "教学主楼群（中心楼/主楼A–G座）",
+     "desc": "校区中轴南北向板式教学楼群，与图书馆、腾飞塔构成中轴",
+     "confidence": "medium"
+    },
+    {
+     "name": "北门（咸宁西路正门）/ 樱花道",
+     "desc": "正门朝咸宁西路；门内梧桐/樱花大道直通中轴",
+     "confidence": "medium"
+    },
+    {
+     "name": "交大西迁博物馆",
+     "desc": "西迁历史展馆"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西迁博物馆",
+     "lon": 108.979779,
+     "lat": 34.243755,
+     "bbox_m": [
+      20,
+      61
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "3e7da202-e322-4b41-9ca0-95f692f2bd00"
+    },
+    {
+     "name": "国防教育中心",
+     "lon": 108.976158,
+     "lat": 34.245758,
+     "bbox_m": [
+      18,
+      14
+     ],
+     "height": null,
+     "floors": null,
+     "id": "94ec2b39-8e02-471d-b98f-23e0067264ff"
+    },
+    {
+     "name": "主楼E座",
+     "lon": 108.978957,
+     "lat": 34.246182,
+     "bbox_m": [
+      40,
+      38
+     ],
+     "height": null,
+     "floors": null,
+     "id": "9db78d67-64b7-463b-98ef-cf373e90ce3c"
+    },
+    {
+     "name": "饮食中心面屋",
+     "lon": 108.977321,
+     "lat": 34.2465,
+     "bbox_m": [
+      10,
+      23
+     ],
+     "height": null,
+     "floors": null,
+     "id": "5ae9a58f-c8fd-4916-b414-86745baeb551"
+    },
+    {
+     "name": "主楼B座",
+     "lon": 108.978553,
+     "lat": 34.24663,
+     "bbox_m": [
+      36,
+      49
+     ],
+     "height": null,
+     "floors": null,
+     "id": "808288f0-6804-4848-bf9e-a568e4d94985"
+    },
+    {
+     "name": "主楼A座",
+     "lon": 108.979357,
+     "lat": 34.246625,
+     "bbox_m": [
+      35,
+      49
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d26120ca-aa68-4745-a43d-443a80646d7d"
+    },
+    {
+     "name": "主楼D座",
+     "lon": 108.979369,
+     "lat": 34.245725,
+     "bbox_m": [
+      39,
+      56
+     ],
+     "height": null,
+     "floors": null,
+     "id": "05572c84-6cb2-4d56-8dd2-22a754d89ffa"
+    },
+    {
+     "name": "主楼C座",
+     "lon": 108.978578,
+     "lat": 34.245745,
+     "bbox_m": [
+      38,
+      56
+     ],
+     "height": null,
+     "floors": null,
+     "id": "e53ad41a-8a61-4e34-b775-cd8bb066000e"
+    },
+    {
+     "name": "思源活动中心",
+     "lon": 108.978979,
+     "lat": 34.244291,
+     "bbox_m": [
+      77,
+      77
+     ],
+     "height": null,
+     "floors": null,
+     "id": "76a21d74-7c3b-4d1b-82f2-0e447f50141e"
+    },
+    {
+     "name": "电力中心 校卫队",
+     "lon": 108.981363,
+     "lat": 34.249056,
+     "bbox_m": [
+      33,
+      29
+     ],
+     "height": null,
+     "floors": null,
+     "id": "26dc607a-6a22-4ceb-a5bc-4798f8d493a2"
+    },
+    {
+     "name": "信息与网络中心",
+     "lon": 108.979965,
+     "lat": 34.24864,
+     "bbox_m": [
+      36,
+      45
+     ],
+     "height": null,
+     "floors": null,
+     "id": "2549a6d9-01f2-4c0f-bfa9-049b6c2a5bdc"
+    },
+    {
+     "name": "钱学森图书馆",
+     "lon": 108.978969,
+     "lat": 34.248701,
+     "bbox_m": [
+      124,
+      145
+     ],
+     "height": null,
+     "floors": null,
+     "id": "cafc0ed6-69a8-4c86-8017-450068602b61"
+    }
+   ],
+   "sources": [
+    "https://www.xjtu.edu.cn/info/1112/5654.htm",
+    "https://baike.baidu.com/item/腾飞塔/65535785",
+    "http://jdxqmuseum.xjtu.edu.cn/info/1046/1378.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安交通大学",
+   "campus": "雁塔校区（医学部）",
+   "level": "本科(985/211)",
+   "lon": 108.937848,
+   "lat": 34.217909,
+   "x": -413.5,
+   "z": 4796.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安交通大学雁塔校区)",
+   "campus_bbox_m": [
+    586,
+    380
+   ],
+   "overture_place": {
+    "name": "Xi'an Jiaotong University Yanta Campus 西安交通大学雁塔校园",
+    "lon": 108.937882,
+    "lat": 34.219191,
+    "dist_m": 143
+   },
+   "landmark_buildings": [
+    {
+     "name": "雁塔校区图书馆（医学分馆）",
+     "desc": "原西安医科大学图书馆"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "经济金融学院主楼",
+     "lon": 108.939712,
+     "lat": 34.218658,
+     "bbox_m": [
+      101,
+      59
+     ],
+     "height": null,
+     "floors": null,
+     "id": "ca6c1e0d-b739-42cf-b386-8498cdb1dab7"
+    },
+    {
+     "name": "药学院教学楼",
+     "lon": 108.937627,
+     "lat": 34.217216,
+     "bbox_m": [
+      86,
+      43
+     ],
+     "height": null,
+     "floors": null,
+     "id": "e198c486-6699-450c-a357-11602c2742cc"
+    },
+    {
+     "name": "综合楼",
+     "lon": 108.937696,
+     "lat": 34.21904,
+     "bbox_m": [
+      85,
+      15
+     ],
+     "height": null,
+     "floors": null,
+     "id": "00e8c445-1b69-4324-aee0-d55b2f3ef35b"
+    },
+    {
+     "name": "基础医学实验教学中心",
+     "lon": 108.935043,
+     "lat": 34.217358,
+     "bbox_m": [
+      54,
+      28
+     ],
+     "height": null,
+     "floors": null,
+     "id": "c940c4ae-4265-48eb-bb79-3d4ff8876b86"
+    },
+    {
+     "name": "第一附属医院外科学基本技能训练中心",
+     "lon": 108.935513,
+     "lat": 34.216905,
+     "bbox_m": [
+      34,
+      10
+     ],
+     "height": null,
+     "floors": null,
+     "id": "a7e86016-e1cc-4456-8702-0cf351e2662c"
+    }
+   ],
+   "sources": [
+    "https://www.xjtu.edu.cn/info/1112/5654.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安交通大学",
+   "campus": "曲江校区",
+   "level": "本科(985/211)",
+   "lon": 108.99607,
+   "lat": 34.225412,
+   "x": 4943.1,
+   "z": 3962.1,
+   "coord_source": "osm_landuse_polygon_centroid(西安交通大学曲江校区)",
+   "campus_bbox_m": [
+    443,
+    640
+   ],
+   "overture_place": {
+    "name": "Xi'an Jiaotong University Qujiang Campus 西安交通大学曲江校区",
+    "lon": 108.995032,
+    "lat": 34.226361,
+    "dist_m": 142
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安交通大学",
+   "campus": "中国西部科技创新港（创新港校区）",
+   "level": "本科(985/211)",
+   "lon": 108.652471,
+   "lat": 34.25724,
+   "x": -26669.2,
+   "z": 419.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安交通大学(创新港校区))",
+   "campus_bbox_m": [
+    1135,
+    1294
+   ],
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "创新港图书资料中心",
+     "desc": "2019年开放"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://www.xjtu.edu.cn/info/1112/5654.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北工业大学",
+   "campus": "友谊校区",
+   "level": "本科(985/211)",
+   "lon": 108.910717,
+   "lat": 34.246257,
+   "x": -2909.6,
+   "z": 1642.3,
+   "coord_source": "osm_landuse_polygon_centroid(西北工业大学友谊校区)",
+   "campus_bbox_m": [
+    908,
+    744
+   ],
+   "overture_place": {
+    "name": "西北工业大学 Northwestern Polytechnical University",
+    "lon": 108.913659,
+    "lat": 34.24474,
+    "dist_m": 319
+   },
+   "landmark_buildings": [
+    {
+     "name": "正门（友谊西路）",
+     "desc": "友谊西路北侧校门，校训\"公诚勇毅\"",
+     "confidence": "medium"
+    },
+    {
+     "name": "图书馆西馆/东馆",
+     "desc": "西馆1958年、东馆1993年（10600㎡）东西毗邻"
+    },
+    {
+     "name": "航空楼",
+     "desc": "友谊校区标志性教学楼"
+    },
+    {
+     "name": "喷泉雕塑、校歌墙、西北工业大学旧址",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西北工业大学创新科技大楼",
+     "lon": 108.906365,
+     "lat": 34.245709,
+     "bbox_m": [
+      14,
+      44
+     ],
+     "height": null,
+     "floors": null,
+     "id": "8d219945-3ec6-46ee-bfc4-17f135febf60"
+    },
+    {
+     "name": "材料科技大楼B段",
+     "lon": 108.906746,
+     "lat": 34.245412,
+     "bbox_m": [
+      30,
+      123
+     ],
+     "height": null,
+     "floors": null,
+     "id": "da888d2d-76d2-4dc9-ac85-dfed5726dff1"
+    },
+    {
+     "name": "机电实验教学中心",
+     "lon": 108.909735,
+     "lat": 34.245782,
+     "bbox_m": [
+      14,
+      25
+     ],
+     "height": null,
+     "floors": null,
+     "id": "4b59dd73-9761-406d-9455-f5ca4bcfeba1"
+    },
+    {
+     "name": "材料科技大楼A段",
+     "lon": 108.907473,
+     "lat": 34.245819,
+     "bbox_m": [
+      93,
+      50
+     ],
+     "height": null,
+     "floors": null,
+     "id": "00f87146-5d55-4d5f-adc0-810db1fe0492"
+    },
+    {
+     "name": "综合服务大楼",
+     "lon": 108.911489,
+     "lat": 34.247283,
+     "bbox_m": [
+      5,
+      14
+     ],
+     "height": null,
+     "floors": 6,
+     "id": "59478ddf-59ef-4fdd-9fec-f9aa2bf1c047"
+    },
+    {
+     "name": "教工活动中心",
+     "lon": 108.911,
+     "lat": 34.247939,
+     "bbox_m": [
+      32,
+      57
+     ],
+     "height": null,
+     "floors": null,
+     "id": "73f50205-d7db-41ac-ac38-9d9da27eb7e6"
+    },
+    {
+     "name": "教学楼",
+     "lon": 108.914554,
+     "lat": 34.243829,
+     "bbox_m": [
+      144,
+      23
+     ],
+     "height": null,
+     "floors": null,
+     "id": "ec7efba2-650d-492f-9a7a-8d2990c06e44"
+    },
+    {
+     "name": "西北工业大学 图书馆",
+     "lon": 108.910986,
+     "lat": 34.24456,
+     "bbox_m": [
+      35,
+      40
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f3470557-2afc-456c-8fc8-0e3bc00d0d54"
+    },
+    {
+     "name": "西北工业大学老图书馆",
+     "lon": 108.909953,
+     "lat": 34.244557,
+     "bbox_m": [
+      51,
+      89
+     ],
+     "height": null,
+     "floors": null,
+     "id": "fe63bac5-723f-4abb-9789-da6433ed7242"
+    }
+   ],
+   "sources": [
+    "https://baike.baidu.com/item/西北工业大学图书馆/9640875",
+    "https://www.meet99.com/jingdian-xibeigongyedaxue-30455.html",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北工业大学",
+   "campus": "长安校区",
+   "level": "本科(985/211)",
+   "lon": 108.759533,
+   "lat": 34.030498,
+   "x": -16819.0,
+   "z": 25625.7,
+   "coord_source": "osm_landuse_polygon_centroid(西北工业大学(长安校区))",
+   "campus_bbox_m": [
+    1000,
+    2095
+   ],
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "图书馆",
+     "desc": "2013年开馆，3.2万㎡，同济院设计"
+    },
+    {
+     "name": "启真楼（校史馆）",
+     "desc": ""
+    },
+    {
+     "name": "启真湖",
+     "desc": "校区中心湖"
+    },
+    {
+     "name": "星天阁",
+     "desc": ""
+    },
+    {
+     "name": "翱翔体育馆",
+     "desc": ""
+    },
+    {
+     "name": "东风广场、何尊广场、梧桐大道",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://news.nwpu.edu.cn/info/1002/53742.htm",
+    "http://www.tjad.cn/project/102",
+    "https://www.meet99.com/jingdian-xibeigongyedaxue-30472.html",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北工业大学",
+   "campus": "沣西校区（建设中）",
+   "level": "本科(985/211)",
+   "lon": 108.710977,
+   "lat": 34.274929,
+   "x": -21286.4,
+   "z": -1549.4,
+   "coord_source": "osm_landuse_polygon_centroid(西北工业大学沣西校区(建设中))",
+   "campus_bbox_m": [
+    855,
+    1052
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "status": "OSM 标注建设中"
+  },
+  {
+   "name": "西安电子科技大学",
+   "campus": "北校区（太白南路）",
+   "level": "本科(211)",
+   "lon": 108.913137,
+   "lat": 34.233854,
+   "x": -2687.0,
+   "z": 3022.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安电子科技大学（北校区）)",
+   "campus_bbox_m": [
+    793,
+    812
+   ],
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "主楼",
+     "desc": "北校区标志，雄宏沉稳，高大主楼两侧设配楼"
+    },
+    {
+     "name": "逸夫图书馆",
+     "desc": "2001年启用；主楼A楼11层、南裙楼B楼4层、西裙楼C楼3层"
+    },
+    {
+     "name": "科技楼、东大楼、西大楼",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安电子科技大学(北校区)-西大楼",
+     "lon": 108.912084,
+     "lat": 34.236597,
+     "bbox_m": [
+      131,
+      126
+     ],
+     "height": null,
+     "floors": null,
+     "id": "003043ad-17fd-493a-bb6a-48ad08a16e0c"
+    },
+    {
+     "name": "计算机中心",
+     "lon": 108.913307,
+     "lat": 34.235233,
+     "bbox_m": [
+      48,
+      36
+     ],
+     "height": null,
+     "floors": null,
+     "id": "dcc4aaab-af0b-4a74-8674-50595ad092af"
+    },
+    {
+     "name": "红楼/行政楼",
+     "lon": 108.916329,
+     "lat": 34.234346,
+     "bbox_m": [
+      90,
+      71
+     ],
+     "height": null,
+     "floors": null,
+     "id": "756fe238-ca75-44e0-bd5d-45c78cb6ae8a"
+    },
+    {
+     "name": "西安电子科技大学北校区-主楼IV区",
+     "lon": 108.913982,
+     "lat": 34.235052,
+     "bbox_m": [
+      50,
+      60
+     ],
+     "height": null,
+     "floors": null,
+     "id": "a78a9f2a-f961-457d-aad5-147f3b34989f"
+    },
+    {
+     "name": "西安电子科技大学-大礼堂",
+     "lon": 108.912015,
+     "lat": 34.232025,
+     "bbox_m": [
+      71,
+      84
+     ],
+     "height": null,
+     "floors": null,
+     "id": "821a501f-5058-49e2-9229-1994e84a7316"
+    },
+    {
+     "name": "西安电子科技大学-逸夫图书馆",
+     "lon": 108.911929,
+     "lat": 34.233173,
+     "bbox_m": [
+      53,
+      75
+     ],
+     "height": null,
+     "floors": null,
+     "id": "cb8ca3f3-9c22-4a27-86d9-09ec7c2d272c"
+    },
+    {
+     "name": "西安电子科技大学-体育馆",
+     "lon": 108.911315,
+     "lat": 34.233921,
+     "bbox_m": [
+      60,
+      57
+     ],
+     "height": null,
+     "floors": null,
+     "id": "42bfaf1b-b8d4-452c-845f-896222e33876"
+    }
+   ],
+   "sources": [
+    "https://www.thepaper.cn/newsDetail_forward_28472652",
+    "https://www.xidian.edu.cn/xxgk/xydy.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安电子科技大学",
+   "campus": "南校区（长安）",
+   "level": "本科(211)",
+   "lon": 108.828745,
+   "lat": 34.124799,
+   "x": -10451.3,
+   "z": 15150.9,
+   "coord_source": "osm_poi(西安电子科技大学南校区)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "图书馆",
+     "desc": "校区核心，地上4层地下1层，约4万㎡，以廊道联系各楼群"
+    },
+    {
+     "name": "观光塔",
+     "desc": "礼仪广场中央的塔"
+    },
+    {
+     "name": "校史馆、网安大楼、体育馆、行政楼、综合楼、新远楼",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://www.thepaper.cn/newsDetail_forward_28472652",
+    "https://baike.baidu.com/item/西安电子科技大学长安校区",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西师范大学",
+   "campus": "雁塔校区",
+   "level": "本科(211)",
+   "lon": 108.947949,
+   "lat": 34.206409,
+   "x": 515.9,
+   "z": 6076.3,
+   "coord_source": "osm_landuse_polygon_centroid(陕西师范大学雁塔校区)",
+   "campus_bbox_m": [
+    874,
+    802
+   ],
+   "overture_place": {
+    "name": "陕西师范大学 Shaanxi Normal University",
+    "lon": 108.943999,
+    "lat": 34.203774,
+    "dist_m": 467
+   },
+   "landmark_buildings": [
+    {
+     "name": "雁塔校区图书馆",
+     "desc": "中西合璧，传为梁思成设计，匾额集鲁迅字；2016年列为西安市文物保护单位"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "体育馆",
+     "lon": 108.948662,
+     "lat": 34.204306,
+     "bbox_m": [
+      63,
+      47
+     ],
+     "height": null,
+     "floors": null,
+     "id": "3df9709a-bff9-4951-9eae-07549e7b0cf0"
+    },
+    {
+     "name": "太阳雨洗浴中心",
+     "lon": 108.949163,
+     "lat": 34.203823,
+     "bbox_m": [
+      43,
+      43
+     ],
+     "height": null,
+     "floors": null,
+     "id": "4b880ec4-1999-4f7b-9ab3-a9af449d3914"
+    },
+    {
+     "name": "图书馆",
+     "lon": 108.945565,
+     "lat": 34.204757,
+     "bbox_m": [
+      28,
+      115
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d908ba9a-ebf0-421a-ba4d-85f7174a11bb"
+    },
+    {
+     "name": "电力中心",
+     "lon": 108.943958,
+     "lat": 34.206378,
+     "bbox_m": [
+      58,
+      49
+     ],
+     "height": null,
+     "floors": null,
+     "id": "99017145-f0b2-4991-bbb0-0a6ff55652f4"
+    },
+    {
+     "name": "老年活动中心",
+     "lon": 108.951354,
+     "lat": 34.207811,
+     "bbox_m": [
+      68,
+      41
+     ],
+     "height": null,
+     "floors": null,
+     "id": "419d70e4-09c5-4db6-bbb8-1e641295e8fe"
+    },
+    {
+     "name": "学术活动中心",
+     "lon": 108.950526,
+     "lat": 34.207966,
+     "bbox_m": [
+      48,
+      37
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d07e7b70-1d79-4f42-b305-98ede0d55a9a"
+    },
+    {
+     "name": "干训中心",
+     "lon": 108.951339,
+     "lat": 34.206577,
+     "bbox_m": [
+      59,
+      19
+     ],
+     "height": null,
+     "floors": null,
+     "id": "66d7b3d7-7e76-40b2-b48d-bedd4937323d"
+    }
+   ],
+   "sources": [
+    "https://zsb.snnu.edu.cn/info/1216/2496.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西师范大学",
+   "campus": "长安校区",
+   "level": "本科(211)",
+   "lon": 108.886501,
+   "lat": 34.155249,
+   "x": -5137.6,
+   "z": 11766.1,
+   "coord_source": "osm_landuse_polygon_centroid(陕西师范大学（长安校区）)",
+   "campus_bbox_m": [
+    1259,
+    999
+   ],
+   "overture_place": {
+    "name": "陕西师范大学长安校区",
+    "lon": 108.884004,
+    "lat": 34.150436,
+    "dist_m": 582
+   },
+   "landmark_buildings": [
+    {
+     "name": "长安校区图书馆",
+     "desc": "校区标志，内设妇女文化博物馆"
+    },
+    {
+     "name": "文渊楼、校务楼、六艺楼",
+     "desc": ""
+    },
+    {
+     "name": "终南音乐厅",
+     "desc": ""
+    },
+    {
+     "name": "上林体育馆",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "学术活动中心",
+     "lon": 108.880922,
+     "lat": 34.158688,
+     "bbox_m": [
+      123,
+      115
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f9a1f633-d95c-4240-8832-9700fe7847ed"
+    },
+    {
+     "name": "教育博物馆",
+     "lon": 108.886931,
+     "lat": 34.158208,
+     "bbox_m": [
+      176,
+      80
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "7cf0f9c9-d728-41db-a51e-4946422046b6"
+    },
+    {
+     "name": "新勇学生活动中心",
+     "lon": 108.888937,
+     "lat": 34.152945,
+     "bbox_m": [
+      126,
+      72
+     ],
+     "height": null,
+     "floors": 3,
+     "id": "416a3ab2-91f5-4dd2-bf24-a8eab3cd3650"
+    }
+   ],
+   "sources": [
+    "https://www.snnu.edu.cn/xxgk/xyfj/zaxq/1.htm",
+    "https://zsb.snnu.edu.cn/info/1216/2496.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "长安大学",
+   "campus": "校本部北院（南二环中段）",
+   "level": "本科(211)",
+   "lon": 108.95288,
+   "lat": 34.234251,
+   "x": 969.5,
+   "z": 2978.5,
+   "coord_source": "osm_poi(长安大学校本部北院)",
+   "campus_bbox_m": null,
+   "overture_place": {
+    "name": "长安大学校本部北院教学区",
+    "lon": 108.951335,
+    "lat": 34.23231,
+    "dist_m": 259
+   },
+   "landmark_buildings": [
+    {
+     "name": "北院图书馆",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "长安大学北院图书馆",
+     "lon": 108.950529,
+     "lat": 34.232964,
+     "bbox_m": [
+      58,
+      58
+     ],
+     "height": null,
+     "floors": null,
+     "id": "907eb561-1d1b-4578-8158-d0a5c06b22b6"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "长安大学",
+   "campus": "校本部南院",
+   "level": "本科(211)",
+   "lon": 108.947233,
+   "lat": 34.230014,
+   "x": 450.0,
+   "z": 3450.0,
+   "coord_source": "estimated:overture_building_cluster(长安大学本部南院*)",
+   "campus_bbox_m": null,
+   "overture_place": {
+    "name": "长安大学校本部北院教学区",
+    "lon": 108.951335,
+    "lat": 34.23231,
+    "dist_m": 456
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "长安大学北院图书馆",
+     "lon": 108.950529,
+     "lat": 34.232964,
+     "bbox_m": [
+      58,
+      58
+     ],
+     "height": null,
+     "floors": null,
+     "id": "907eb561-1d1b-4578-8158-d0a5c06b22b6"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "coord_estimated": true
+  },
+  {
+   "name": "长安大学",
+   "campus": "雁塔校区",
+   "level": "本科(211)",
+   "lon": 108.955912,
+   "lat": 34.22705,
+   "x": 1248.5,
+   "z": 3779.9,
+   "coord_source": "osm_landuse_polygon_centroid(长安大学雁塔校区)",
+   "campus_bbox_m": [
+    649,
+    204
+   ],
+   "overture_place": {
+    "name": "长安大学雁塔校区",
+    "lon": 108.957586,
+    "lat": 34.227749,
+    "dist_m": 172
+   },
+   "landmark_buildings": [
+    {
+     "name": "雁塔图书馆",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "长安大学雁塔图书馆",
+     "lon": 108.955972,
+     "lat": 34.22698,
+     "bbox_m": [
+      35,
+      46
+     ],
+     "height": null,
+     "floors": null,
+     "id": "c0489f33-6899-4ad4-a7a9-bab66a2ff133"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "长安大学",
+   "campus": "小寨校区",
+   "level": "本科(211)",
+   "lon": 108.944724,
+   "lat": 34.225868,
+   "x": 219.1,
+   "z": 3911.4,
+   "coord_source": "osm_landuse_polygon_centroid(长安大学小寨校区)",
+   "campus_bbox_m": [
+    343,
+    245
+   ],
+   "overture_place": {
+    "name": "长安大学校本部北院教学区",
+    "lon": 108.951335,
+    "lat": 34.23231,
+    "dist_m": 940
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "第五教学楼",
+     "lon": 108.944899,
+     "lat": 34.226578,
+     "bbox_m": [
+      61,
+      19
+     ],
+     "height": null,
+     "floors": null,
+     "id": "36885af2-e5c6-43f2-996e-ffe77193f677"
+    },
+    {
+     "name": "科技活动训练拓展中心",
+     "lon": 108.944827,
+     "lat": 34.226318,
+     "bbox_m": [
+      17,
+      17
+     ],
+     "height": null,
+     "floors": null,
+     "id": "9a9eab7a-50d4-49cd-9fba-784ceb6bee06"
+    },
+    {
+     "name": "大学生科技活动中心",
+     "lon": 108.943662,
+     "lat": 34.225835,
+     "bbox_m": [
+      73,
+      20
+     ],
+     "height": null,
+     "floors": null,
+     "id": "b6d7be35-f8c3-4870-ba59-ed9ce6008aa5"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "长安大学",
+   "campus": "渭水校区",
+   "level": "本科(211)",
+   "lon": 108.8971,
+   "lat": 34.371688,
+   "x": -4162.5,
+   "z": -12328.5,
+   "coord_source": "osm_landuse_polygon_centroid(长安大学渭水校区)",
+   "campus_bbox_m": [
+    2282,
+    1392
+   ],
+   "overture_place": {
+    "name": "长安大学渭水校区",
+    "lon": 108.900046,
+    "lat": 34.37176,
+    "dist_m": 271
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "弘毅园桥结实验中心",
+     "lon": 108.887618,
+     "lat": 34.367283,
+     "bbox_m": [
+      108,
+      110
+     ],
+     "height": null,
+     "floors": null,
+     "id": "957967c5-e794-42fb-8a90-794cb38ef250"
+    },
+    {
+     "name": "乾健体育馆",
+     "lon": 108.889441,
+     "lat": 34.367321,
+     "bbox_m": [
+      85,
+      95
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f5c37a33-b4cd-4f29-9b6b-298cbc7295ba"
+    },
+    {
+     "name": "弘毅园岩隧实验中心",
+     "lon": 108.888493,
+     "lat": 34.367451,
+     "bbox_m": [
+      73,
+      82
+     ],
+     "height": null,
+     "floors": null,
+     "id": "9619ed26-c18a-43de-8fd3-50d80b97f966"
+    },
+    {
+     "name": "明远教学楼C栋",
+     "lon": 108.898724,
+     "lat": 34.369596,
+     "bbox_m": [
+      150,
+      88
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d0fead3c-98a9-47ba-a55d-53fe3761faeb"
+    },
+    {
+     "name": "鸿远教学楼一区",
+     "lon": 108.895171,
+     "lat": 34.369364,
+     "bbox_m": [
+      91,
+      73
+     ],
+     "height": null,
+     "floors": null,
+     "id": "a27bdab1-6647-48ea-9c48-8ef22e29bf65"
+    },
+    {
+     "name": "鸿远教学楼二区",
+     "lon": 108.895438,
+     "lat": 34.368708,
+     "bbox_m": [
+      75,
+      68
+     ],
+     "height": null,
+     "floors": null,
+     "id": "1fcc7a71-9ed9-4c50-a557-19a2cdcf4fd2"
+    },
+    {
+     "name": "弘毅园道路实验中心",
+     "lon": 108.887797,
+     "lat": 34.368239,
+     "bbox_m": [
+      140,
+      120
+     ],
+     "height": null,
+     "floors": null,
+     "id": "22379c5e-3855-4660-a603-b5534380481b"
+    },
+    {
+     "name": "西区后勤管理中心",
+     "lon": 108.891607,
+     "lat": 34.371176,
+     "bbox_m": [
+      35,
+      27
+     ],
+     "height": null,
+     "floors": null,
+     "id": "7b3cb3c5-8121-4e11-9a79-780679d496de"
+    },
+    {
+     "name": "明远教学楼B栋",
+     "lon": 108.898028,
+     "lat": 34.37006,
+     "bbox_m": [
+      108,
+      70
+     ],
+     "height": null,
+     "floors": null,
+     "id": "3f57b312-b80d-4865-8b32-515dad973e91"
+    },
+    {
+     "name": "明远教学楼D栋",
+     "lon": 108.899647,
+     "lat": 34.370747,
+     "bbox_m": [
+      74,
+      100
+     ],
+     "height": null,
+     "floors": null,
+     "id": "420cd846-2988-4e2a-a383-6d557a0b1a5a"
+    },
+    {
+     "name": "明远教学楼E栋",
+     "lon": 108.899891,
+     "lat": 34.369984,
+     "bbox_m": [
+      53,
+      53
+     ],
+     "height": null,
+     "floors": null,
+     "id": "9904b72c-e5da-475c-a8ac-9185a2866c02"
+    },
+    {
+     "name": "北辰楼会议中心",
+     "lon": 108.901827,
+     "lat": 34.370105,
+     "bbox_m": [
+      49,
+      38
+     ],
+     "height": null,
+     "floors": null,
+     "id": "ae0868e8-bfca-4a57-b587-13a797865ed9"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北大学",
+   "campus": "太白校区",
+   "level": "本科(211)",
+   "lon": 108.922828,
+   "lat": 34.250091,
+   "x": -1795.3,
+   "z": 1215.6,
+   "coord_source": "osm_landuse_polygon_centroid(西北大学太白校区)",
+   "campus_bbox_m": [
+    782,
+    518
+   ],
+   "overture_place": {
+    "name": "西北大学留学生宿舍",
+    "lon": 108.921019,
+    "lat": 34.247776,
+    "dist_m": 307
+   },
+   "landmark_buildings": [
+    {
+     "name": "国立西北大学校门（牌楼门，2022年复建）",
+     "desc": "120周年校庆复建的牌楼式校门，并复建国立西北联大照壁"
+    },
+    {
+     "name": "大礼堂",
+     "desc": "1936年落成，张学良倡建，西式砖构礼堂"
+    },
+    {
+     "name": "图书馆（太白馆）",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西北大学博物馆",
+     "lon": 108.921214,
+     "lat": 34.251838,
+     "bbox_m": [
+      93,
+      52
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f5862b1f-da17-4fa6-8411-faead0662404"
+    }
+   ],
+   "sources": [
+    "https://zh.wikipedia.org/wiki/西北大学礼堂",
+    "https://baike.baidu.com/item/西北大学太白校区/17192486",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北大学",
+   "campus": "长安校区",
+   "level": "本科(211)",
+   "lon": 108.869894,
+   "lat": 34.146642,
+   "x": -6665.4,
+   "z": 12722.9,
+   "coord_source": "osm_landuse_polygon_centroid(西北大学长安校区)",
+   "campus_bbox_m": [
+    1001,
+    764
+   ],
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "长安校区图书馆",
+     "desc": "2011年开馆，3.75万㎡"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://www.phb123.com/bk/jianzhu/ppht2496.html",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北大学",
+   "campus": "桃园校区",
+   "level": "本科(211)",
+   "lon": 108.888743,
+   "lat": 34.241137,
+   "x": -4931.3,
+   "z": 2212.1,
+   "coord_source": "osm_landuse_polygon_centroid(西北大学（桃园校区）)",
+   "campus_bbox_m": [
+    476,
+    184
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西北大学桃园校区-附中教学楼",
+     "lon": 108.887956,
+     "lat": 34.240515,
+     "bbox_m": [
+      63,
+      23
+     ],
+     "height": null,
+     "floors": null,
+     "id": "0a45bc08-cb1c-49fb-aff8-4c9bf70668ad"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安理工大学",
+   "campus": "金花校区",
+   "level": "本科",
+   "lon": 108.9883,
+   "lat": 34.255247,
+   "x": 4228.3,
+   "z": 641.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安理工大学金花校区)",
+   "campus_bbox_m": [
+    574,
+    551
+   ],
+   "overture_place": {
+    "name": "西安理工大学",
+    "lon": 108.988325,
+    "lat": 34.255353,
+    "dist_m": 12
+   },
+   "landmark_buildings": [
+    {
+     "name": "老校门",
+     "desc": "欧式风格，罗马柱耸立，两侧浮雕"
+    },
+    {
+     "name": "新校门",
+     "desc": "造型由字母L（理）、G（工）演化"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://view.inews.qq.com/a/20201126A0C6IW00",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安理工大学",
+   "campus": "曲江校区",
+   "level": "本科",
+   "lon": 108.991184,
+   "lat": 34.22263,
+   "x": 4493.7,
+   "z": 4271.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安理工大学曲江校区东区)",
+   "campus_bbox_m": [
+    689,
+    440
+   ],
+   "overture_place": {
+    "name": "Xi'an University of Technology（西安理工大学）",
+    "lon": 108.989229,
+    "lat": 34.223797,
+    "dist_m": 222
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "note": "含东区/西区两块"
+  },
+  {
+   "name": "西安建筑科技大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.962333,
+   "lat": 34.238618,
+   "x": 1839.3,
+   "z": 2492.6,
+   "coord_source": "osm_landuse_polygon_centroid(西安建筑科技大学雁塔校区)",
+   "campus_bbox_m": [
+    692,
+    845
+   ],
+   "overture_place": {
+    "name": "西安建筑科技大学建筑设计研究院",
+    "lon": 108.9617,
+    "lat": 34.2402,
+    "dist_m": 185
+   },
+   "landmark_buildings": [
+    {
+     "name": "东楼",
+     "desc": "建筑学院所在老楼"
+    },
+    {
+     "name": "校史馆",
+     "desc": ""
+    }
+   ],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "行政楼",
+     "lon": 108.963239,
+     "lat": 34.235587,
+     "bbox_m": [
+      72,
+      22
+     ],
+     "height": null,
+     "floors": 6,
+     "id": "2f0edfe9-3b8b-4f35-8aef-d74a2b3f07a6"
+    },
+    {
+     "name": "土木工程大楼",
+     "lon": 108.960106,
+     "lat": 34.240762,
+     "bbox_m": [
+      37,
+      49
+     ],
+     "height": null,
+     "floors": null,
+     "id": "548c51e0-244d-4d8c-8927-680fba3f1821"
+    },
+    {
+     "name": "工科大楼",
+     "lon": 108.96551,
+     "lat": 34.239225,
+     "bbox_m": [
+      34,
+      36
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f98f8cdd-41c1-46e2-b2c3-6ebf3db5db38"
+    },
+    {
+     "name": "西安建筑科技大学校史馆",
+     "lon": 108.963886,
+     "lat": 34.239249,
+     "bbox_m": [
+      36,
+      39
+     ],
+     "height": null,
+     "floors": null,
+     "id": "79c6e3e9-83a7-47a6-a0f0-bfd2de36eed4"
+    },
+    {
+     "name": "能源中心",
+     "lon": 108.963708,
+     "lat": 34.239646,
+     "bbox_m": [
+      37,
+      18
+     ],
+     "height": null,
+     "floors": 2,
+     "id": "2f18b3d3-bb61-4c63-9616-ae7effca6dd0"
+    },
+    {
+     "name": "体育馆",
+     "lon": 108.961478,
+     "lat": 34.240461,
+     "bbox_m": [
+      89,
+      70
+     ],
+     "height": 8.0,
+     "floors": 1,
+     "id": "a130265b-9f84-4431-b463-6f184fd79edd"
+    },
+    {
+     "name": "西大门",
+     "lon": 108.959413,
+     "lat": 34.239377,
+     "bbox_m": [
+      8,
+      53
+     ],
+     "height": null,
+     "floors": 2,
+     "id": "19e1fb54-d073-453e-9ec9-14a56311d233"
+    },
+    {
+     "name": "图书馆",
+     "lon": 108.961749,
+     "lat": 34.238245,
+     "bbox_m": [
+      68,
+      79
+     ],
+     "height": null,
+     "floors": 5,
+     "id": "ba729f70-c1e8-4b4c-b968-28f3a7e12c34"
+    },
+    {
+     "name": "大楼",
+     "lon": 108.960664,
+     "lat": 34.238417,
+     "bbox_m": [
+      99,
+      29
+     ],
+     "height": null,
+     "floors": 10,
+     "id": "675acac2-7996-4b9d-8e52-eec4d1f7f8c5"
+    },
+    {
+     "name": "环境工程大楼",
+     "lon": 108.960026,
+     "lat": 34.238888,
+     "bbox_m": [
+      53,
+      33
+     ],
+     "height": null,
+     "floors": null,
+     "id": "3fd35466-6b87-4ba5-9656-a37f7671371a"
+    },
+    {
+     "name": "建筑学院主楼",
+     "lon": 108.963224,
+     "lat": 34.237837,
+     "bbox_m": [
+      38,
+      22
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "a94473d9-836b-49cd-9be9-62905790269d"
+    }
+   ],
+   "sources": [
+    "https://dag.xauat.edu.cn/info/1065/1148.htm",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安建筑科技大学",
+   "campus": "草堂校区",
+   "level": "本科",
+   "lon": 108.749058,
+   "lat": 34.018024,
+   "x": -17782.8,
+   "z": 27010.4,
+   "coord_source": "osm_landuse_polygon_centroid(西安建筑科技大学草堂校区)",
+   "campus_bbox_m": [
+    1533,
+    1765
+   ],
+   "overture_place": null,
+   "landmark_buildings": [
+    {
+     "name": "草堂校区图书馆",
+     "desc": "汉风仿古，天圆地方理念，41035㎡，地上5层，人字拱、斗拱元素，2023年竣工"
+    }
+   ],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "https://lib.xauat.edu.cn/info/1056/1102.htm",
+    "http://ydyl.china.com.cn/2023-07/13/content_92164391.shtml",
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安石油大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.922973,
+   "lat": 34.215077,
+   "x": -1782.0,
+   "z": 5112.1,
+   "coord_source": "osm_landuse_polygon_centroid(西安石油大学（雁塔校区）)",
+   "campus_bbox_m": [
+    719,
+    310
+   ],
+   "overture_place": {
+    "name": "西安石油大学",
+    "lon": 108.925788,
+    "lat": 34.201897,
+    "dist_m": 1489
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安石油大学-体育馆",
+     "lon": 108.921089,
+     "lat": 34.214302,
+     "bbox_m": [
+      64,
+      67
+     ],
+     "height": null,
+     "floors": null,
+     "id": "cbdb9b91-a8c2-42a3-8f07-19396affc3b9"
+    },
+    {
+     "name": "西安石油大学-第一教学楼",
+     "lon": 108.92401,
+     "lat": 34.214346,
+     "bbox_m": [
+      120,
+      71
+     ],
+     "height": null,
+     "floors": null,
+     "id": "fdb0e395-b369-4bb2-ba13-6c7fff482d1a"
+    },
+    {
+     "name": "西安石油大学-第二教学楼",
+     "lon": 108.924178,
+     "lat": 34.21602,
+     "bbox_m": [
+      99,
+      43
+     ],
+     "height": null,
+     "floors": null,
+     "id": "afa23ff5-62e3-4180-8a13-72f0f747361b"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安石油大学",
+   "campus": "鄠邑校区",
+   "level": "本科",
+   "lon": 108.648797,
+   "lat": 34.104218,
+   "x": -27007.1,
+   "z": 17438.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安石油大学鄠邑校区)",
+   "campus_bbox_m": [
+    1190,
+    1054
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安科技大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.957048,
+   "lat": 34.233805,
+   "x": 1353.0,
+   "z": 3028.2,
+   "coord_source": "osm_landuse_polygon_centroid(西安科技大学北校区)",
+   "campus_bbox_m": [
+    350,
+    456
+   ],
+   "overture_place": {
+    "name": "西安科技大学",
+    "lon": 108.962016,
+    "lat": 34.234479,
+    "dist_m": 463
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "测析中心",
+     "lon": 108.954891,
+     "lat": 34.232402,
+     "bbox_m": [
+      7,
+      41
+     ],
+     "height": null,
+     "floors": null,
+     "id": "59d3d3f2-5048-4a69-b914-712d29713e62"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "note": "OSM 名为\"北校区\"，即雁塔中路本部一带"
+  },
+  {
+   "name": "西安科技大学",
+   "campus": "临潼（骊山）校区",
+   "level": "本科",
+   "lon": 109.188078,
+   "lat": 34.366775,
+   "x": 22608.6,
+   "z": -11780.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安科技大学临潼校区)",
+   "campus_bbox_m": [
+    683,
+    1203
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安工业大学",
+   "campus": "未央校区",
+   "level": "本科",
+   "lon": 108.98125,
+   "lat": 34.380991,
+   "x": 3579.7,
+   "z": -13365.6,
+   "coord_source": "osm_landuse_polygon_centroid(西安工业大学)",
+   "campus_bbox_m": [
+    762,
+    1188
+   ],
+   "overture_place": {
+    "name": "西安工业大学教a楼",
+    "lon": 108.988249,
+    "lat": 34.378149,
+    "dist_m": 718
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安工大体育馆",
+     "lon": 108.982721,
+     "lat": 34.384581,
+     "bbox_m": [
+      63,
+      147
+     ],
+     "height": null,
+     "floors": null,
+     "id": "050cd203-b29f-4362-a197-f0989ea58b4f"
+    },
+    {
+     "name": "新室内体育馆",
+     "lon": 108.984653,
+     "lat": 34.383391,
+     "bbox_m": [
+      76,
+      93
+     ],
+     "height": null,
+     "floors": null,
+     "id": "02ea5e37-0355-4fd1-b27b-2f2595eef59c"
+    },
+    {
+     "name": "工业中心",
+     "lon": 108.983073,
+     "lat": 34.381918,
+     "bbox_m": [
+      36,
+      62
+     ],
+     "height": null,
+     "floors": 1,
+     "id": "99a38fe1-75db-4da3-bcce-fb9aa2532b87"
+    },
+    {
+     "name": "西安工大图书馆",
+     "lon": 108.982642,
+     "lat": 34.380705,
+     "bbox_m": [
+      117,
+      131
+     ],
+     "height": null,
+     "floors": null,
+     "id": "0f2d1dbe-188f-4805-9ede-78c914063254"
+    },
+    {
+     "name": "老行政楼",
+     "lon": 108.98463,
+     "lat": 34.380202,
+     "bbox_m": [
+      18,
+      57
+     ],
+     "height": null,
+     "floors": null,
+     "id": "39daec1c-776a-4e1d-a81f-d07759d258b6"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安工业大学",
+   "campus": "金花校区",
+   "level": "本科",
+   "lon": 108.994324,
+   "lat": 34.266817,
+   "x": 4782.5,
+   "z": -646.3,
+   "coord_source": "osm_landuse_polygon_centroid(西安工业大学金花校区)",
+   "campus_bbox_m": [
+    619,
+    265
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安邮电大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.945373,
+   "lat": 34.215512,
+   "x": 278.9,
+   "z": 5063.6,
+   "coord_source": "osm_landuse_polygon_centroid(西安邮电大学（雁塔校区）)",
+   "campus_bbox_m": [
+    216,
+    384
+   ],
+   "overture_place": {
+    "name": "西安邮电大学",
+    "lon": 108.948417,
+    "lat": 34.212039,
+    "dist_m": 477
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安邮电大学",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.897942,
+   "lat": 34.155287,
+   "x": -4084.9,
+   "z": 11761.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安邮电大学长安校区)",
+   "campus_bbox_m": [
+    908,
+    914
+   ],
+   "overture_place": {
+    "name": "西安邮电大学一号实验楼",
+    "lon": 108.897942,
+    "lat": 34.155287,
+    "dist_m": 0
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西科技大学",
+   "campus": "西安（未央）校区",
+   "level": "本科",
+   "lon": 108.971992,
+   "lat": 34.380954,
+   "x": 2727.9,
+   "z": -13361.4,
+   "coord_source": "osm_landuse_polygon_centroid(陕西科技大学西安校区)",
+   "campus_bbox_m": [
+    908,
+    1211
+   ],
+   "overture_place": {
+    "name": "陕西科技大学未央校区教学区",
+    "lon": 108.97106,
+    "lat": 34.382119,
+    "dist_m": 156
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西科技大学",
+   "campus": "太华路校区",
+   "level": "本科",
+   "lon": 108.967893,
+   "lat": 34.296738,
+   "x": 2350.8,
+   "z": -3977.8,
+   "coord_source": "osm_landuse_polygon_centroid(陕西科技大学（太华路校区）)",
+   "campus_bbox_m": [
+    168,
+    267
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安外国语大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.94546,
+   "lat": 34.208662,
+   "x": 286.9,
+   "z": 5825.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安外国语大学（雁塔校区）)",
+   "campus_bbox_m": [
+    473,
+    421
+   ],
+   "overture_place": {
+    "name": "西安外国语大学",
+    "lon": 108.94546,
+    "lat": 34.208662,
+    "dist_m": 0
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "大礼堂",
+     "lon": 108.946036,
+     "lat": 34.208985,
+     "bbox_m": [
+      46,
+      26
+     ],
+     "height": null,
+     "floors": null,
+     "id": "df55ec9f-fa65-420a-a3a1-29dfc2aaee2a"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安外国语大学",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.871377,
+   "lat": 34.137268,
+   "x": -6529.0,
+   "z": 13765.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安外国语大学长安校区)",
+   "campus_bbox_m": [
+    961,
+    1353
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北政法大学",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.938824,
+   "lat": 34.209072,
+   "x": -323.7,
+   "z": 5780.1,
+   "coord_source": "osm_landuse_polygon_centroid(西北政法大学雁塔校区)",
+   "campus_bbox_m": [
+    556,
+    413
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西北政法大学",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.910901,
+   "lat": 34.155521,
+   "x": -2892.7,
+   "z": 11735.8,
+   "coord_source": "osm_landuse_polygon_centroid(西北政法大学长安校区)",
+   "campus_bbox_m": [
+    1143,
+    703
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安工程大学",
+   "campus": "金花校区",
+   "level": "本科",
+   "lon": 108.995118,
+   "lat": 34.259155,
+   "x": 4855.6,
+   "z": 206.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安工程大学金花校区)",
+   "campus_bbox_m": [
+    524,
+    368
+   ],
+   "overture_place": {
+    "name": "西安工程大学",
+    "lon": 108.997086,
+    "lat": 34.257556,
+    "dist_m": 254
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安工程大学",
+   "campus": "临潼校区",
+   "level": "本科",
+   "lon": 109.181254,
+   "lat": 34.366211,
+   "x": 21980.8,
+   "z": -11718.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安工程大学临潼校区)",
+   "campus_bbox_m": [
+    662,
+    1115
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安美术学院",
+   "campus": "雁塔（含光路）校区",
+   "level": "本科",
+   "lon": 108.924012,
+   "lat": 34.219842,
+   "x": -1686.4,
+   "z": 4581.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安美术学院)",
+   "campus_bbox_m": [
+    494,
+    444
+   ],
+   "overture_place": {
+    "name": "西安美术学院 Xi'an Academy of Fine Arts",
+    "lon": 108.926858,
+    "lat": 34.219316,
+    "dist_m": 268
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安美术学院-综合楼",
+     "lon": 108.926608,
+     "lat": 34.219004,
+     "bbox_m": [
+      49,
+      76
+     ],
+     "height": null,
+     "floors": null,
+     "id": "c056d2ce-de25-43ae-9330-e237f852485f"
+    },
+    {
+     "name": "专业课教室教学楼",
+     "lon": 108.923093,
+     "lat": 34.22133,
+     "bbox_m": [
+      44,
+      87
+     ],
+     "height": 30.0,
+     "floors": 6,
+     "id": "f0c1e36e-c578-4510-9515-45aaafa4954f"
+    },
+    {
+     "name": "大学生活动中心",
+     "lon": 108.924906,
+     "lat": 34.220336,
+     "bbox_m": [
+      39,
+      35
+     ],
+     "height": 20.0,
+     "floors": 4,
+     "id": "8d866d43-151c-4547-90cc-8ac5c3d15219"
+    },
+    {
+     "name": "西安美术学院-图书馆",
+     "lon": 108.925977,
+     "lat": 34.219496,
+     "bbox_m": [
+      52,
+      45
+     ],
+     "height": null,
+     "floors": null,
+     "id": "f9be9c00-7c39-4de5-94b0-37cbcb15efa1"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安美术学院",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.902928,
+   "lat": 34.120632,
+   "x": -3626.2,
+   "z": 15614.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安美术学院（长安校区）)",
+   "campus_bbox_m": [
+    420,
+    480
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安财经大学",
+   "campus": "雁塔（翠华路）校区",
+   "level": "本科",
+   "lon": 108.955036,
+   "lat": 34.222818,
+   "x": 1167.9,
+   "z": 4250.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安财经大学(雁塔校区))",
+   "campus_bbox_m": [
+    169,
+    311
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安财经大学",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.929392,
+   "lat": 34.116853,
+   "x": -1191.5,
+   "z": 16034.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安财经大学长安校区)",
+   "campus_bbox_m": [
+    888,
+    1161
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安体育学院",
+   "campus": "含光校区",
+   "level": "本科",
+   "lon": 108.930356,
+   "lat": 34.239039,
+   "x": -1102.7,
+   "z": 2445.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安体育学院)",
+   "campus_bbox_m": [
+    610,
+    441
+   ],
+   "overture_place": {
+    "name": "西安体育学院",
+    "lon": 108.930701,
+    "lat": 34.240949,
+    "dist_m": 215
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安体育学院",
+   "campus": "鄠邑校区",
+   "level": "本科",
+   "lon": 108.632916,
+   "lat": 34.094812,
+   "x": -28468.3,
+   "z": 18483.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安体育学院（鄠邑校区）)",
+   "campus_bbox_m": [
+    962,
+    858
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安音乐学院",
+   "campus": "长安中路校区",
+   "level": "本科",
+   "lon": 108.937627,
+   "lat": 34.230557,
+   "x": -433.8,
+   "z": 3389.6,
+   "coord_source": "osm_landuse_polygon_centroid(西安音乐学院)",
+   "campus_bbox_m": [
+    396,
+    208
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安音乐学院-五号教学楼",
+     "lon": 108.938138,
+     "lat": 34.230983,
+     "bbox_m": [
+      62,
+      22
+     ],
+     "height": null,
+     "floors": null,
+     "id": "c7f02434-9f19-4b24-924a-1c59fa27400c"
+    },
+    {
+     "name": "西安音乐学院 1号教学楼",
+     "lon": 108.93703,
+     "lat": 34.230824,
+     "bbox_m": [
+      68,
+      40
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "d5ebf08d-2ced-411d-9fd6-7787027c8c52"
+    },
+    {
+     "name": "西安音乐学院 7号教学楼",
+     "lon": 108.935914,
+     "lat": 34.230626,
+     "bbox_m": [
+      49,
+      18
+     ],
+     "height": null,
+     "floors": null,
+     "id": "611f86f4-6355-4773-9fba-226ed37b0b7e"
+    },
+    {
+     "name": "西安音乐学院图书馆",
+     "lon": 108.93588,
+     "lat": 34.230249,
+     "bbox_m": [
+      43,
+      10
+     ],
+     "height": null,
+     "floors": null,
+     "id": "be4ef605-2e0c-40e6-90ad-d71d71717d0f"
+    },
+    {
+     "name": "西安音乐学院 学术厅",
+     "lon": 108.938586,
+     "lat": 34.230472,
+     "bbox_m": [
+      45,
+      25
+     ],
+     "height": null,
+     "floors": null,
+     "id": "9d4897e0-1060-4d2b-ba9c-68a4195c833e"
+    },
+    {
+     "name": "西安音乐学院-四号教学楼",
+     "lon": 108.93687,
+     "lat": 34.2295,
+     "bbox_m": [
+      89,
+      45
+     ],
+     "height": null,
+     "floors": null,
+     "id": "2d3de177-e77d-4b37-9ec9-5a8aee759127"
+    },
+    {
+     "name": "西安音乐学院 2号教学楼",
+     "lon": 108.937013,
+     "lat": 34.230077,
+     "bbox_m": [
+      69,
+      40
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "f1232fb2-eb95-4d51-899d-b8b4ef2d202b"
+    },
+    {
+     "name": "西安音乐学院 3号教学楼",
+     "lon": 108.936988,
+     "lat": 34.229751,
+     "bbox_m": [
+      51,
+      35
+     ],
+     "height": null,
+     "floors": 4,
+     "id": "2f5a8254-8d11-431b-b716-6c18ca33b64b"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安医学院",
+   "campus": "未央校区",
+   "level": "本科",
+   "lon": 108.989243,
+   "lat": 34.385818,
+   "x": 4315.0,
+   "z": -13903.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安医学院未央校区)",
+   "campus_bbox_m": [
+    699,
+    772
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安医学院",
+   "campus": "高新（含光）校区",
+   "level": "本科",
+   "lon": 108.905403,
+   "lat": 34.239273,
+   "x": -3398.5,
+   "z": 2419.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安医学院(高新校区))",
+   "campus_bbox_m": [
+    200,
+    234
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西京学院",
+   "campus": "长安校区",
+   "level": "本科(民办)",
+   "lon": 108.924859,
+   "lat": 34.134552,
+   "x": -1608.4,
+   "z": 14066.9,
+   "coord_source": "osm_landuse_polygon_centroid(西京学院)",
+   "campus_bbox_m": [
+    897,
+    1453
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安文理学院",
+   "campus": "高新校区",
+   "level": "本科",
+   "lon": 108.901435,
+   "lat": 34.217331,
+   "x": -3763.6,
+   "z": 4861.3,
+   "coord_source": "osm_landuse_polygon_centroid(西安文理学院（高新校区）)",
+   "campus_bbox_m": [
+    798,
+    856
+   ],
+   "overture_place": {
+    "name": "西安文理学院",
+    "lon": 108.903419,
+    "lat": 34.220069,
+    "dist_m": 355
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安文理学院-多媒体教学楼",
+     "lon": 108.90087,
+     "lat": 34.214218,
+     "bbox_m": [
+      87,
+      55
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d33c73c4-5ff7-49dd-8be3-26d44126fbf1"
+    },
+    {
+     "name": "西安文理学院-体育馆",
+     "lon": 108.902695,
+     "lat": 34.217005,
+     "bbox_m": [
+      75,
+      68
+     ],
+     "height": null,
+     "floors": null,
+     "id": "3691a6f5-435c-4e41-8be0-310d93aec50c"
+    },
+    {
+     "name": "西安文理学院-图书馆",
+     "lon": 108.899677,
+     "lat": 34.217012,
+     "bbox_m": [
+      84,
+      42
+     ],
+     "height": null,
+     "floors": null,
+     "id": "88b971c6-5b3b-4404-a9d3-e1f932dd5edb"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安文理学院",
+   "campus": "太白校区",
+   "level": "本科",
+   "lon": 108.908467,
+   "lat": 34.222577,
+   "x": -3116.6,
+   "z": 4277.6,
+   "coord_source": "osm_landuse_polygon_centroid(西安文理学院（太白校区）)",
+   "campus_bbox_m": [
+    263,
+    238
+   ],
+   "overture_place": {
+    "name": "西安文理学院",
+    "lon": 108.903419,
+    "lat": 34.220069,
+    "dist_m": 542
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安航空学院",
+   "campus": "沣惠校区",
+   "level": "本科",
+   "lon": 108.887841,
+   "lat": 34.264354,
+   "x": -5014.3,
+   "z": -372.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安航空学院(沣惠校区))",
+   "campus_bbox_m": [
+    412,
+    296
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西学前师范学院",
+   "campus": "雁塔校区",
+   "level": "本科",
+   "lon": 108.947602,
+   "lat": 34.228257,
+   "x": 484.0,
+   "z": 3645.6,
+   "coord_source": "osm_landuse_polygon_centroid(陕西学前师范学院(雁塔校区))",
+   "campus_bbox_m": [
+    251,
+    210
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "陕西学前师范学院雁塔校区-1号楼",
+     "lon": 108.948516,
+     "lat": 34.227243,
+     "bbox_m": [
+      70,
+      21
+     ],
+     "height": null,
+     "floors": null,
+     "id": "0bc8c548-a281-4f4b-84a2-d0ebffcee95b"
+    },
+    {
+     "name": "陕西学前师范学院雁塔校区-5号楼",
+     "lon": 108.948651,
+     "lat": 34.228395,
+     "bbox_m": [
+      44,
+      13
+     ],
+     "height": null,
+     "floors": null,
+     "id": "76dbbdac-3afd-4cb2-98d6-992654e78ecb"
+    },
+    {
+     "name": "陕西学前师范学院雁塔校区-6号楼",
+     "lon": 108.948659,
+     "lat": 34.228644,
+     "bbox_m": [
+      44,
+      13
+     ],
+     "height": null,
+     "floors": null,
+     "id": "8231cb24-8989-4b1b-8f8a-c8fb4f290757"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西学前师范学院",
+   "campus": "长安校区",
+   "level": "本科",
+   "lon": 108.929687,
+   "lat": 34.130713,
+   "x": -1164.3,
+   "z": 14493.5,
+   "coord_source": "osm_landuse_polygon_centroid(陕西学前师范学院长安校区)",
+   "campus_bbox_m": [
+    748,
+    639
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安培华学院",
+   "campus": "长安校区",
+   "level": "本科(民办)",
+   "lon": 108.930151,
+   "lat": 34.124726,
+   "x": -1121.6,
+   "z": 15159.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安培华学院（长安校区）)",
+   "campus_bbox_m": [
+    780,
+    628
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安培华学院",
+   "campus": "高新校区",
+   "level": "本科(民办)",
+   "lon": 108.905209,
+   "lat": 34.227427,
+   "x": -3416.3,
+   "z": 3737.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安培华学院(高新校区))",
+   "campus_bbox_m": [
+    523,
+    275
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安翻译学院",
+   "campus": "太乙宫校区",
+   "level": "本科(民办)",
+   "lon": 109.004188,
+   "lat": 34.02629,
+   "x": 5690.0,
+   "z": 26092.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安翻译学院)",
+   "campus_bbox_m": [
+    632,
+    726
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安欧亚学院",
+   "campus": "雁塔校区",
+   "level": "本科(民办)",
+   "lon": 108.91816,
+   "lat": 34.178773,
+   "x": -2224.8,
+   "z": 9150.3,
+   "coord_source": "osm_landuse_polygon_centroid(西安欧亚学院)",
+   "campus_bbox_m": [
+    972,
+    754
+   ],
+   "overture_place": {
+    "name": "西安欧亚学院",
+    "lon": 108.918285,
+    "lat": 34.179003,
+    "dist_m": 28
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安外事学院",
+   "campus": "南校区",
+   "level": "本科(民办)",
+   "lon": 108.862669,
+   "lat": 34.231145,
+   "x": -7330.2,
+   "z": 3324.2,
+   "coord_source": "osm_landuse_polygon_centroid(西安外事学院(南校区))",
+   "campus_bbox_m": [
+    945,
+    848
+   ],
+   "overture_place": {
+    "name": "西安外事学院",
+    "lon": 108.865248,
+    "lat": 34.232927,
+    "dist_m": 309
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安外事学院南区体育馆",
+     "lon": 108.860292,
+     "lat": 34.231005,
+     "bbox_m": [
+      140,
+      125
+     ],
+     "height": null,
+     "floors": null,
+     "id": "10289eb8-f080-4231-bc12-4fa1bfcef214"
+    },
+    {
+     "name": "西安外事学院东区-学术苑",
+     "lon": 108.865817,
+     "lat": 34.233935,
+     "bbox_m": [
+      44,
+      96
+     ],
+     "height": null,
+     "floors": null,
+     "id": "64fea3d9-b366-4c2e-8b79-aa62515f29c4"
+    },
+    {
+     "name": "西安外事学院东区-6号教学楼",
+     "lon": 108.864827,
+     "lat": 34.229743,
+     "bbox_m": [
+      124,
+      53
+     ],
+     "height": null,
+     "floors": null,
+     "id": "6fb85a74-a44f-47ca-b094-1df12bb39abe"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安外事学院",
+   "campus": "北校区",
+   "level": "本科(民办)",
+   "lon": 108.85419,
+   "lat": 34.24123,
+   "x": -8110.3,
+   "z": 2201.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安外事学院（北校区）)",
+   "campus_bbox_m": [
+    612,
+    444
+   ],
+   "overture_place": {
+    "name": "西安外事学院",
+    "lon": 108.865248,
+    "lat": 34.232927,
+    "dist_m": 1374
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "西安外事学院北教学区-图书馆",
+     "lon": 108.856996,
+     "lat": 34.240124,
+     "bbox_m": [
+      71,
+      33
+     ],
+     "height": null,
+     "floors": null,
+     "id": "e99112b9-f253-47c0-aae9-f0d5de3bb032"
+    },
+    {
+     "name": "西安外事学院北教学区-学生活动中心",
+     "lon": 108.85678,
+     "lat": 34.241629,
+     "bbox_m": [
+      23,
+      55
+     ],
+     "height": null,
+     "floors": null,
+     "id": "fd84fcdc-cc07-4a27-a87c-dd903ddf9fa3"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安思源学院",
+   "campus": "白鹿原校区",
+   "level": "本科(民办)",
+   "lon": 109.074379,
+   "lat": 34.235986,
+   "x": 12147.9,
+   "z": 2785.4,
+   "coord_source": "osm_landuse_polygon_centroid(西安思源学院)",
+   "campus_bbox_m": [
+    899,
+    1278
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安交通工程学院",
+   "campus": "鄠邑校区",
+   "level": "本科(民办)",
+   "lon": 108.588311,
+   "lat": 34.115876,
+   "x": -32572.1,
+   "z": 16142.5,
+   "coord_source": "osm_nominatim",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安明德理工学院",
+   "campus": "长安校区",
+   "level": "本科(民办)",
+   "lon": 108.781122,
+   "lat": 34.046987,
+   "x": -14832.8,
+   "z": 23795.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安明德理工学院)",
+   "campus_bbox_m": [
+    714,
+    1055
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安工商学院",
+   "campus": "主校区",
+   "level": "本科(民办)",
+   "lon": 109.103488,
+   "lat": 34.532132,
+   "x": 14826.0,
+   "z": -30229.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安工商学院)",
+   "campus_bbox_m": [
+    658,
+    814
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安汽车职业大学",
+   "campus": "灞桥校区",
+   "level": "本科(职业，民办)",
+   "lon": 109.099308,
+   "lat": 34.21413,
+   "x": 14441.4,
+   "z": 5217.4,
+   "coord_source": "osm_landuse_polygon_centroid(西安汽车职业大学)",
+   "campus_bbox_m": [
+    608,
+    620
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安汽车职业大学",
+   "campus": "临潼校区",
+   "level": "本科(职业，民办)",
+   "lon": 109.175418,
+   "lat": 34.443304,
+   "x": 21443.9,
+   "z": -20314.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安汽车职业大学（临潼校区）)",
+   "campus_bbox_m": [
+    989,
+    1024
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西警察学院",
+   "campus": "主校区",
+   "level": "本科",
+   "lon": 109.002032,
+   "lat": 34.408247,
+   "x": 5491.7,
+   "z": -16404.5,
+   "coord_source": "osm_landuse_polygon_centroid(陕西警官职业学院)",
+   "campus_bbox_m": [
+    344,
+    537
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "note": "原陕西警官职业学院，OSM 仍用旧名"
+  },
+  {
+   "name": "西安戏剧学院",
+   "campus": "主校区",
+   "level": "本科",
+   "lon": 108.900249,
+   "lat": 34.411091,
+   "x": -3872.7,
+   "z": -16721.7,
+   "coord_source": "osm_landuse_polygon_centroid(西安戏剧学院)",
+   "campus_bbox_m": [
+    550,
+    429
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西中医药大学",
+   "campus": "西咸校区",
+   "level": "本科",
+   "lon": 108.737145,
+   "lat": 34.317019,
+   "x": -18878.8,
+   "z": -6236.8,
+   "coord_source": "osm_landuse_polygon_centroid(陕西中医药大学)",
+   "campus_bbox_m": [
+    620,
+    697
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳/西咸新区"
+  },
+  {
+   "name": "西藏民族大学",
+   "campus": "渭城校区",
+   "level": "本科",
+   "lon": 108.728223,
+   "lat": 34.351196,
+   "x": -19699.7,
+   "z": -10044.6,
+   "coord_source": "osm_landuse_polygon_centroid(西藏民族大学渭城校区)",
+   "campus_bbox_m": [
+    805,
+    835
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳"
+  },
+  {
+   "name": "西藏民族大学",
+   "campus": "秦汉校区",
+   "level": "本科",
+   "lon": 108.739758,
+   "lat": 34.373906,
+   "x": -18638.4,
+   "z": -12575.8,
+   "coord_source": "osm_landuse_polygon_centroid(西藏民族大学秦汉校区)",
+   "campus_bbox_m": [
+    789,
+    413
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "西咸新区"
+  },
+  {
+   "name": "咸阳师范学院",
+   "campus": "主校区",
+   "level": "本科",
+   "lon": 108.723534,
+   "lat": 34.36286,
+   "x": -20131.1,
+   "z": -11344.6,
+   "coord_source": "osm_landuse_polygon_centroid(咸阳师范学院)",
+   "campus_bbox_m": [
+    987,
+    644
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳"
+  },
+  {
+   "name": "陕西国际商贸学院",
+   "campus": "主校区",
+   "level": "本科(民办)",
+   "lon": 108.71443,
+   "lat": 34.299502,
+   "x": -20968.7,
+   "z": -4285.7,
+   "coord_source": "osm_landuse_polygon_centroid(陕西国际商贸学院)",
+   "campus_bbox_m": [
+    747,
+    746
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "西咸新区"
+  },
+  {
+   "name": "陕西服装工程学院",
+   "campus": "主校区",
+   "level": "本科(民办)",
+   "lon": 108.713339,
+   "lat": 34.304535,
+   "x": -21069.1,
+   "z": -4846.3,
+   "coord_source": "osm_landuse_polygon_centroid(陕西服装工程学院)",
+   "campus_bbox_m": [
+    775,
+    550
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "西咸新区"
+  },
+  {
+   "name": "西北大学现代学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 108.789695,
+   "lat": 34.050475,
+   "x": -14044.0,
+   "z": 23407.6,
+   "coord_source": "osm_landuse_polygon_centroid(西北大学现代学院)",
+   "campus_bbox_m": [
+    793,
+    634
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安交通大学城市学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 108.85491,
+   "lat": 34.372223,
+   "x": -8044.0,
+   "z": -12388.2,
+   "coord_source": "osm_landuse_polygon_centroid(西安交通大学城市学院)",
+   "campus_bbox_m": [
+    500,
+    935
+   ],
+   "overture_place": {
+    "name": "西安交通大学城市学院",
+    "lon": 108.85486,
+    "lat": 34.36994,
+    "dist_m": 255
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西科技大学镐京学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 108.720013,
+   "lat": 34.304781,
+   "x": -20455.1,
+   "z": -4873.6,
+   "coord_source": "osm_landuse_polygon_centroid(陕西科技大学镐京学院)",
+   "campus_bbox_m": [
+    505,
+    671
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "西咸新区"
+  },
+  {
+   "name": "延安大学西安创新学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 108.93234,
+   "lat": 34.153296,
+   "x": -920.2,
+   "z": 11983.2,
+   "coord_source": "osm_landuse_polygon_centroid(延安大学西安创新学院)",
+   "campus_bbox_m": [
+    384,
+    654
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安财经大学行知学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 109.091688,
+   "lat": 34.229929,
+   "x": 13740.3,
+   "z": 3459.5,
+   "coord_source": "osm_landuse_polygon_centroid(西安财经大学行知学院)",
+   "campus_bbox_m": [
+    769,
+    944
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [
+    {
+     "name": "教学楼",
+     "lon": 109.090078,
+     "lat": 34.229776,
+     "bbox_m": [
+      101,
+      82
+     ],
+     "height": null,
+     "floors": null,
+     "id": "8d6f12d5-b6bc-4f42-9961-0a2806abfdd6"
+    },
+    {
+     "name": "教学楼",
+     "lon": 109.091075,
+     "lat": 34.229376,
+     "bbox_m": [
+      47,
+      127
+     ],
+     "height": null,
+     "floors": null,
+     "id": "d3356d89-4e85-48ec-8292-493a922c257e"
+    }
+   ],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安高新科技学院",
+   "campus": "长安校区",
+   "level": "本科(民办，原西安理工大学高科学院)",
+   "lon": 108.893834,
+   "lat": 34.087788,
+   "x": -4462.9,
+   "z": 19263.4,
+   "coord_source": "osm_landuse_polygon_centroid(西安高新科技学院（长安校区）)",
+   "campus_bbox_m": [
+    423,
+    949
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安科技大学高新学院",
+   "campus": "主校区",
+   "level": "本科(独立学院)",
+   "lon": 108.877706,
+   "lat": 34.103946,
+   "x": -5946.7,
+   "z": 17468.2,
+   "coord_source": "osm_landuse_polygon_centroid(西安科技大学高新学院)",
+   "campus_bbox_m": [
+    594,
+    444
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安电子科技职业学院",
+   "campus": "长安校区",
+   "level": "专科/职业本科(民办)",
+   "lon": 108.938002,
+   "lat": 34.117374,
+   "x": -399.3,
+   "z": 15976.1,
+   "coord_source": "osm_landuse_polygon_centroid(西安电子科技职业学院)",
+   "campus_bbox_m": [
+    463,
+    875
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安电力高等专科学校",
+   "campus": "主校区",
+   "level": "专科",
+   "lon": 108.980933,
+   "lat": 34.269464,
+   "x": 3550.5,
+   "z": -940.9,
+   "coord_source": "osm_poi(西安电力高等专科学校)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西国防工业职业技术学院",
+   "campus": "鄠邑校区",
+   "level": "专科",
+   "lon": 108.616258,
+   "lat": 34.09559,
+   "x": -30000.9,
+   "z": 18396.6,
+   "coord_source": "osm_landuse_polygon_centroid(陕西国防工业职业技术学院)",
+   "campus_bbox_m": [
+    784,
+    602
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西国防工业职业技术学院",
+   "campus": "南校区",
+   "level": "专科",
+   "lon": 108.619184,
+   "lat": 34.063064,
+   "x": -29731.7,
+   "z": 22009.6,
+   "coord_source": "osm_landuse_polygon_centroid(陕西国防工业职业技术学院南校区)",
+   "campus_bbox_m": [
+    623,
+    406
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西交通职业技术学院",
+   "campus": "经开（凤城）校区",
+   "level": "专科",
+   "lon": 108.935121,
+   "lat": 34.326172,
+   "x": -664.4,
+   "z": -7256.4,
+   "coord_source": "osm_landuse_polygon_centroid(陕西交通职业技术学院)",
+   "campus_bbox_m": [
+    393,
+    377
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西交通职业技术学院",
+   "campus": "通远校区",
+   "level": "专科",
+   "lon": 109.046345,
+   "lat": 34.54423,
+   "x": 9568.7,
+   "z": -31581.0,
+   "coord_source": "osm_landuse_polygon_centroid(陕西交通职业技术学院（通远校区）)",
+   "campus_bbox_m": [
+    1018,
+    733
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西职业技术学院",
+   "campus": "主校区",
+   "level": "专科",
+   "lon": 109.092753,
+   "lat": 34.215774,
+   "x": 13838.4,
+   "z": 5034.6,
+   "coord_source": "osm_landuse_polygon_centroid(陕西职业技术学院)",
+   "campus_bbox_m": [
+    671,
+    600
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安职业技术学院",
+   "campus": "主校区",
+   "level": "专科",
+   "lon": 108.834914,
+   "lat": 34.228689,
+   "x": -9883.7,
+   "z": 3597.5,
+   "coord_source": "osm_landuse_polygon_centroid(西安职业技术学院)",
+   "campus_bbox_m": [
+    425,
+    435
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安铁路职业技术学院",
+   "campus": "高陵（新）校区",
+   "level": "专科",
+   "lon": 109.062674,
+   "lat": 34.387704,
+   "x": 11071.0,
+   "z": -14113.9,
+   "coord_source": "osm_landuse_polygon_centroid(西安铁路职业技术学院)",
+   "campus_bbox_m": [
+    477,
+    626
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安铁路职业技术学院",
+   "campus": "自强校区",
+   "level": "专科",
+   "lon": 108.935559,
+   "lat": 34.283107,
+   "x": -624.0,
+   "z": -2460.0,
+   "coord_source": "osm_landuse_polygon_centroid(西安铁路职业技术学院(自强校区))",
+   "campus_bbox_m": [
+    233,
+    281
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安铁路职业技术学院",
+   "campus": "龙首校区",
+   "level": "专科",
+   "lon": 108.949709,
+   "lat": 34.292885,
+   "x": 677.8,
+   "z": -3548.8,
+   "coord_source": "osm_landuse_polygon_centroid(西安铁路职业技术学院(龙首校区))",
+   "campus_bbox_m": [
+    182,
+    118
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西青年职业学院",
+   "campus": "长安校区",
+   "level": "专科",
+   "lon": 108.942382,
+   "lat": 34.116174,
+   "x": 3.6,
+   "z": 16109.4,
+   "coord_source": "osm_landuse_polygon_centroid(陕西青年职业学院长安校区)",
+   "campus_bbox_m": [
+    408,
+    625
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西工商职业学院",
+   "campus": "主校区",
+   "level": "专科",
+   "lon": 108.867974,
+   "lat": 34.165108,
+   "x": -6842.2,
+   "z": 10669.9,
+   "coord_source": "osm_landuse_polygon_centroid(陕西工商职业学院)",
+   "campus_bbox_m": [
+    421,
+    546
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安海棠职业学院",
+   "campus": "主校区",
+   "level": "专科(民办)",
+   "lon": 109.077128,
+   "lat": 34.231335,
+   "x": 12400.8,
+   "z": 3303.1,
+   "coord_source": "osm_landuse_polygon_centroid(西安海棠职业学院)",
+   "campus_bbox_m": [
+    641,
+    578
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安医学高等专科学校",
+   "campus": "鄠邑校区",
+   "level": "专科(民办)",
+   "lon": 108.727075,
+   "lat": 34.114141,
+   "x": -19805.3,
+   "z": 16335.4,
+   "coord_source": "osm_poi(西安医学高等专科学校)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "西安高科职业技术学院",
+   "campus": "蓝田校区",
+   "level": "专科(民办)",
+   "lon": 109.3685,
+   "lat": 34.120711,
+   "x": 39208.0,
+   "z": 15605.3,
+   "coord_source": "osm_landuse_polygon_centroid(西安高科职业技术学院)",
+   "campus_bbox_m": [
+    704,
+    668
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西工业职业技术大学",
+   "campus": "咸阳主校区",
+   "level": "本科(职业)",
+   "lon": 108.710469,
+   "lat": 34.349642,
+   "x": -21333.1,
+   "z": -9871.5,
+   "coord_source": "osm_landuse_polygon_centroid(陕西工业职业技术大学)",
+   "campus_bbox_m": [
+    619,
+    675
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳"
+  },
+  {
+   "name": "陕西工业职业技术大学",
+   "campus": "新校区",
+   "level": "本科(职业)",
+   "lon": 108.621012,
+   "lat": 34.410369,
+   "x": -29563.5,
+   "z": -16641.1,
+   "coord_source": "osm_landuse_polygon_centroid(陕西工业职业技术学院（新校区）)",
+   "campus_bbox_m": [
+    516,
+    516
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳"
+  },
+  {
+   "name": "陕西能源职业技术学院",
+   "campus": "医学校区（临潼）",
+   "level": "专科",
+   "lon": 109.138103,
+   "lat": 34.327156,
+   "x": 18010.7,
+   "z": -7366.0,
+   "coord_source": "osm_landuse_polygon_centroid(陕西能源职业技术学院（医学校区）)",
+   "campus_bbox_m": [
+    478,
+    295
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "陕西邮电职业技术学院",
+   "campus": "西安校区",
+   "level": "专科",
+   "lon": 108.986943,
+   "lat": 34.400826,
+   "x": 4103.5,
+   "z": -15577.1,
+   "coord_source": "osm_landuse_polygon_centroid(陕西邮电职业技术学院西安校区)",
+   "campus_bbox_m": [
+    139,
+    286
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ]
+  },
+  {
+   "name": "咸阳职业技术学院",
+   "campus": "主校区",
+   "level": "专科",
+   "lon": 108.73213,
+   "lat": 34.298825,
+   "x": -19340.2,
+   "z": -4210.3,
+   "coord_source": "osm_landuse_polygon_centroid(咸阳职业技术学院)",
+   "campus_bbox_m": [
+    810,
+    1063
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "city": "咸阳"
+  },
+  {
+   "name": "空军工程大学",
+   "campus": "灞桥（主）校区",
+   "level": "军队院校",
+   "lon": 109.134919,
+   "lat": 34.233726,
+   "x": 17717.7,
+   "z": 3037.0,
+   "coord_source": "osm_landuse_polygon_centroid(空军工程大学)",
+   "campus_bbox_m": [
+    1354,
+    1382
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  },
+  {
+   "name": "空军工程大学",
+   "campus": "长乐东路校区",
+   "level": "军队院校",
+   "lon": 109.02973,
+   "lat": 34.279517,
+   "x": 8040.0,
+   "z": -2060.2,
+   "coord_source": "osm_poi(空军工程大学)",
+   "campus_bbox_m": null,
+   "overture_place": {
+    "name": "空军工程大学",
+    "lon": 109.030486,
+    "lat": 34.274466,
+    "dist_m": 567
+   },
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true,
+   "note": "poi 两处取西侧(8040,-2060)"
+  },
+  {
+   "name": "空军军医大学（第四军医大学）",
+   "campus": "长乐西路校区",
+   "level": "军队院校",
+   "lon": 108.976017,
+   "lat": 34.275163,
+   "x": 3098.2,
+   "z": -1575.4,
+   "coord_source": "osm_poi(空军军医大学)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  },
+  {
+   "name": "火箭军工程大学",
+   "campus": "洪庆校区",
+   "level": "军队院校",
+   "lon": 109.124352,
+   "lat": 34.312032,
+   "x": 16745.6,
+   "z": -5681.2,
+   "coord_source": "osm_poi(中国人民解放军火箭军工程大学)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  },
+  {
+   "name": "武警工程大学",
+   "campus": "三桥校区",
+   "level": "军队院校",
+   "lon": 108.825115,
+   "lat": 34.282048,
+   "x": -10785.3,
+   "z": -2342.0,
+   "coord_source": "osm_poi(武警工程大学)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  },
+  {
+   "name": "国防大学政治学院西安校区",
+   "campus": "主校区",
+   "level": "军队院校",
+   "lon": 108.932686,
+   "lat": 34.235239,
+   "x": -888.4,
+   "z": 2868.6,
+   "coord_source": "osm_poi(中国人民解放军国防大学政治学院西安校区)",
+   "campus_bbox_m": null,
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  },
+  {
+   "name": "陆军边海防学院",
+   "campus": "长安校区",
+   "level": "军队院校",
+   "lon": 108.930597,
+   "lat": 34.043493,
+   "x": -1080.6,
+   "z": 24182.9,
+   "coord_source": "osm_landuse_polygon_centroid(边防学院)",
+   "campus_bbox_m": [
+    989,
+    612
+   ],
+   "overture_place": null,
+   "landmark_buildings": [],
+   "named_buildings_in_campus(overture)": [],
+   "sources": [
+    "local:public/data/landuse.json",
+    "https://zh.wikipedia.org/wiki/陕西省高等学校列表"
+   ],
+   "military": true
+  }
+ ]
+}

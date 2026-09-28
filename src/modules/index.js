@@ -10,13 +10,17 @@ export const MODULES = [
   { id: 'datang', load: () => import('./datang.js') },
   { id: 'qujiang', load: () => import('./qujiang.js') },
   { id: 'heritage', load: () => import('./heritage.js') },
+  { id: 'heritage26', load: () => import('./heritage26.js') },
   { id: 'skyline', load: () => import('./skyline.js') },
   { id: 'huimin', load: () => import('./huimin.js') },
+  { id: 'sunken', load: () => import('./sunken.js') },
   { id: 'airports', load: () => import('./airports.js') },
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
+  { id: 'amapinfo', load: () => import('./amapinfo.js') },
+  { id: 'metro', load: () => import('./metro.js') },
   // 开发用（默认不加载，?modules=archtest 时加载）
   { id: 'archtest', load: () => import('./dev/archtest.js'), dev: true },
 ];

@@ -11,6 +11,10 @@ OSM 在西安的 POI 只有约 9 千条且陈旧；高德同范围有十几万�
   python tools/amap_fetch.py poi   [--bbox 108.84,34.17,109.08,34.40] [--max-requests 4000]   # 多边形 POI 搜索（可多次运行续传）
   python tools/amap_fetch.py roads [--bbox ...]                                             # 交通态势·矩形区域道路（带路名/等级）
   python tools/amap_fetch.py status                                                        # 已缓存请求数、POI 数、已完成网格数
+  python tools/amap_fetch.py metro                                                         # 地铁全部线路折线 + 车站（公交路线查询）
+  python tools/amap_fetch.py district                                                      # 西安各区县边界 + 街道/镇名
+  python tools/amap_fetch.py place                                                         # 按 research/refs/landmarks2026 清单逐个定位地标
+  python tools/amap_fetch.py all                                                           # 以上全部 + poi + roads（一次跑完，配额内续传）
   python tools/amap_fetch.py merge                                                         # 合并进 public/data/pois.json、roads.json
 缓存：data-src/amap/（每个请求一个 JSON，断点续传；原始数据文件会备份为 *.before_amap.json）
 续传：meta.json 只记录“整格抓完且无失败请求”的初始网格；merge 只在这些网格里用高德 POI 替换 OSM POI
@@ -1016,9 +1020,234 @@ def merge_roads():
           f'平交路口 {crossed} 处（向 {len(touched)} 条已有道路插入节点），斜穿处不断开 {gaps} 处，为原无名路段补路名 {named} 段')
 
 
+# ───────────────────────── 深度接入：地铁 / 行政区划 / 商圈 / 地标定位 ─────────────────────────
+METRO_LINES = [f'{n}号线' for n in range(1, 21)] + ['机场线', '西户线']
+CITY = '029'   # 西安 citycode
+
+
+def _parse_polyline(s):
+    """高德 polyline 'lon,lat;lon,lat;…'（GCJ）→ [(wgs_lon, wgs_lat)]"""
+    out = []
+    for pt in (s or '').split(';'):
+        if ',' in pt:
+            lon, lat = map(float, pt.split(','))
+            out.append(gcj2wgs(lon, lat))
+    return out
+
+
+def cmd_metro(cli):
+    """公交路线关键字查询（v3/bus/linename，extensions=all）逐条查西安地铁 1~20 号线：线路折线 + 全部车站。
+    只保留 type 含“地铁/轻轨”、名称含查询线号的结果；每条线取两个方向里站点最多的一条。"""
+    out = {}
+    for ln in METRO_LINES:
+        kw = ln if ln.endswith('西户线') else f'西安地铁{ln}'
+        try:
+            j = cli.get('/v3/bus/linename', {'keywords': kw, 'city': CITY, 'extensions': 'all', 'offset': 10, 'page': 1})
+        except AmapCellError as ex:
+            print(f'  ！{kw} 查询失败：{ex}')
+            continue
+        best = None
+        for b in j.get('buslines') or []:
+            if not re.search('地铁|轻轨|城际|市域', str(b.get('type', ''))) or not re.search(rf'(?<!\d){re.escape(ln)}', str(b.get('name', ''))):
+                continue
+            if best is None or len(b.get('busstops') or []) > len(best.get('busstops') or []):
+                best = b
+        if not best:
+            print(f'  {kw}：无结果（未开通或名称不同）')
+            continue
+        out[ln] = {
+            'name': re.sub(r'\(.*?\)|（.*?）', '', best['name']).strip(),
+            'full': best['name'], 'id': best.get('id'), 'type': best.get('type'),
+            'start': best.get('start_stop'), 'end': best.get('end_stop'),
+            'length_km': float(best.get('distance') or 0),
+            'polyline': best.get('polyline'),
+            'stops': [{'name': s['name'], 'location': s['location'], 'seq': int(s.get('sequence') or 0)}
+                      for s in best.get('busstops') or []],
+        }
+        print(f'  {out[ln]["name"]}：{len(out[ln]["stops"])} 站，{out[ln]["length_km"]:.1f} km')
+    f = CACHE / 'metro.json'
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(out, ensure_ascii=False), 'utf-8')
+    print(f'已保存 {len(out)} 条地铁线路 → {f}')
+
+
+def cmd_district(cli):
+    """行政区划查询（v3/config/district）：西安市下辖区县边界（extensions=all 带 polyline）+ 街道/镇名与中心点"""
+    top = cli.get('/v3/config/district', {'keywords': '西安市', 'subdistrict': 2, 'extensions': 'base'})
+    city = next((d for d in top.get('districts') or [] if d.get('adcode') == '610100'), None)
+    if not city:
+        raise SystemExit('未找到西安市（adcode 610100）')
+    out = []
+    for d in city.get('districts') or []:
+        try:
+            j = cli.get('/v3/config/district', {'keywords': d['adcode'], 'subdistrict': 0, 'extensions': 'all', 'filter': d['adcode']})
+        except AmapCellError as ex:
+            print(f'  ！{d["name"]} 边界查询失败：{ex}')
+            continue
+        dd = (j.get('districts') or [{}])[0]
+        out.append({'name': d['name'], 'adcode': d['adcode'], 'center': d.get('center'), 'polyline': dd.get('polyline', ''),
+                    'streets': [{'name': s['name'], 'center': s.get('center'), 'level': s.get('level')}
+                                for s in d.get('districts') or []]})
+        print(f'  {d["name"]}：{len(out[-1]["streets"])} 个街道/镇，边界 {len(dd.get("polyline", "")) // 22} 点')
+    f = CACHE / 'district.json'
+    f.write_text(json.dumps(out, ensure_ascii=False), 'utf-8')
+    print(f'已保存 {len(out)} 个区县 → {f}')
+
+
+def place_names():
+    """地标调研清单 research/refs/landmarks2026/*.json 里的全部名称（含别名）"""
+    names = []
+    for fp in sorted((ROOT / 'research' / 'refs' / 'landmarks2026').glob('*.json')):
+        try:
+            arr = json.loads(fp.read_text('utf-8'))
+        except Exception:
+            continue
+        for it in arr if isinstance(arr, list) else arr.get('items', []):
+            for n in [it.get('name')] + list(it.get('aliases') or []):
+                if n and n not in names:
+                    names.append(n)
+    return names
+
+
+def cmd_place(cli, names):
+    """关键字搜索（v5/place/text，限西安）逐个定位地标：取第一条结果的坐标、类别、所在区、商圈与父 POI"""
+    f = CACHE / 'places.json'
+    old = json.loads(f.read_text('utf-8')) if f.exists() else {}
+    for i, n in enumerate(names):
+        if n in old:
+            continue
+        try:
+            j = cli.get('/v5/place/text', {'keywords': n, 'region': '610100', 'city_limit': 'true', 'page_size': 5,
+                                           'show_fields': 'business,navi'})
+        except AmapCellError as ex:
+            print(f'  ！{n}：{ex}')
+            continue
+        ps = j.get('pois') or []
+        key = strip_paren(n)
+        p = next((q for q in ps if strip_paren(q.get('name', '')) == key), None) or (ps[0] if ps else None)
+        old[n] = None if not p else {
+            'name': p.get('name'), 'id': p.get('id'), 'location': p.get('location'), 'type': p.get('type'),
+            'typecode': p.get('typecode'), 'adname': p.get('adname'), 'address': p.get('address'),
+            'business_area': (p.get('business') or {}).get('business_area'), 'parent': p.get('parent'),
+            'exact': strip_paren(p.get('name', '')) == key,
+        }
+        if (i + 1) % 20 == 0:
+            f.write_text(json.dumps(old, ensure_ascii=False), 'utf-8')
+            print(f'  {i + 1}/{len(names)}', flush=True)
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(old, ensure_ascii=False), 'utf-8')
+    hit = sum(1 for v in old.values() if v)
+    print(f'已定位 {hit}/{len(old)} 个地标 → {f}')
+
+
+def _xz(loc):
+    lon, lat = map(float, loc.split(','))
+    x, z = project(*gcj2wgs(lon, lat))
+    return round(x, 1), round(z, 1)
+
+
+def business_areas():
+    """高德 POI（v5 show_fields=business）的 business_area 字段 → 商圈：成员 POI 位置的中位数为中心，
+    外接圆半径取 80% 分位距离；成员少于 8 个的忽略（多为误标）"""
+    f = CACHE / 'pois.json'
+    if not f.exists():
+        return []
+    groups = defaultdict(list)
+    for p in json.loads(f.read_text('utf-8')).values():
+        ba = ((p.get('business') or {}).get('business_area') or '').strip()
+        if ba and p.get('location'):
+            groups[ba].append(_xz(p['location']))
+    out = []
+    for name, pts in groups.items():
+        if len(pts) < 8:
+            continue
+        xs = sorted(x for x, _ in pts)
+        zs = sorted(z for _, z in pts)
+        cx, cz = xs[len(xs) // 2], zs[len(zs) // 2]
+        ds = sorted(math.hypot(x - cx, z - cz) for x, z in pts)
+        out.append({'n': name, 'x': cx, 'z': cz, 'r': round(min(2500, max(150, ds[int(len(ds) * 0.8)])), 0), 'c': len(pts)})
+    out.sort(key=lambda b: -b['c'])
+    return out
+
+
+def merge_extra():
+    """地铁 / 区划 / 商圈 / 地标定位 → public/data/amap_extra.json（世界坐标）；
+    OSM 缺失的地铁线（按线号）以地下段（y=-1）追加进 rail.json，供站名/线路标识使用"""
+    ex = {'source': '高德开放平台 Web 服务 API（GCJ-02 已逆变换为 WGS-84）'}
+    mf = CACHE / 'metro.json'
+    if mf.exists():
+        lines = []
+        for ln, L in json.loads(mf.read_text('utf-8')).items():
+            m = re.match(r'(\d+)号线', ln)
+            pts = [project(lon, lat) for lon, lat in _parse_polyline(L['polyline'])]
+            lines.append({'n': L['name'], 'num': int(m.group(1)) if m else 0,
+                          'p': [round(v, 1) for xy in pts for v in xy],
+                          's': [{'n': re.sub(r'(地铁站|站)$', '', s['name']), 'x': _xz(s['location'])[0], 'z': _xz(s['location'])[1]}
+                                for s in sorted(L['stops'], key=lambda s: s['seq'])]})
+        ex['metro'] = lines
+        rsrc = DATA / 'rail.json'
+        rbak = ROOT / 'data-src' / 'rail.before_amap.json'
+        if rsrc.exists():
+            merge_base(rsrc, rbak, 'rail')
+            R = json.loads(rbak.read_text('utf-8'))
+            sub = R['classes'].index('subway')
+            have = set()
+            for ft in R['features']:
+                m = re.search(r'地铁(\d+)号线', ft.get('n') or '')
+                if ft['c'] == sub and m:
+                    have.add(int(m.group(1)))
+            add = [L for L in lines if L['num'] and L['num'] not in have and len(L['p']) >= 4]
+            for L in add:
+                R['features'].append({'c': sub, 'n': f'西安地铁{L["num"]}号线', 'w': 3.0, 'l': 1, 'o': 0, 'b': 0, 't': 0,
+                                      'y': -1, 'p': L['p'], 'src': 'amap'})
+            with open(rsrc, 'w', encoding='utf-8') as fp:
+                json.dump(R, fp, ensure_ascii=False, separators=(',', ':'))
+            merge_done('rail', rsrc)
+            print(f'rail.json：补 OSM 缺失的地铁线 {len(add)} 条（{", ".join(L["n"] for L in add) or "无"}）')
+        print(f'地铁：{len(lines)} 条线，{sum(len(L["s"]) for L in lines)} 站次')
+    df = CACHE / 'district.json'
+    if df.exists():
+        ds = []
+        for d in json.loads(df.read_text('utf-8')):
+            rings = []
+            for ring in (d.get('polyline') or '').split('|'):
+                pts = [project(lon, lat) for lon, lat in _parse_polyline(ring)]
+                # 抽稀：相邻点 < 25 m 的去掉（原始边界点极密）
+                keep = []
+                for x, z in pts:
+                    if not keep or math.hypot(x - keep[-1][0], z - keep[-1][1]) > 25:
+                        keep.append((x, z))
+                if len(keep) >= 3:
+                    rings.append([round(v, 1) for xy in keep for v in xy])
+            c = _xz(d['center']) if d.get('center') else None
+            ds.append({'n': d['name'], 'code': d['adcode'], 'c': c, 'rings': rings,
+                       'st': [{'n': s['name'], 'c': _xz(s['center'])} for s in d.get('streets') or [] if s.get('center')]})
+        ex['districts'] = ds
+        print(f'行政区：{len(ds)} 个区县，{sum(len(d["st"]) for d in ds)} 个街道/镇')
+    ba = business_areas()
+    if ba:
+        ex['business'] = ba
+        print(f'商圈：{len(ba)} 个（按 POI 的 business_area 聚合）')
+    pf = CACHE / 'places.json'
+    if pf.exists():
+        pl = {}
+        for n, p in json.loads(pf.read_text('utf-8')).items():
+            if p and p.get('location'):
+                x, z = _xz(p['location'])
+                pl[n] = {'x': x, 'z': z, 'a': p.get('adname'), 'b': p.get('business_area'), 't': p.get('typecode'), 'e': p.get('exact')}
+        ex['places'] = pl
+        print(f'地标定位：{len(pl)} 个')
+    if len(ex) > 1:
+        with open(DATA / 'amap_extra.json', 'w', encoding='utf-8') as fp:
+            json.dump(ex, fp, ensure_ascii=False, separators=(',', ':'))
+        print(f'已写出 {DATA / "amap_extra.json"}')
+    else:
+        print('没有地铁/区划/商圈/地标缓存，跳过 amap_extra.json（先运行 metro / district / poi / place）')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('cmd', choices=['poi', 'roads', 'status', 'merge'])
+    ap.add_argument('cmd', choices=['poi', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
     ap.add_argument('--key', default=os.environ.get('AMAP_KEY', ''))
     ap.add_argument('--bbox', default=','.join(map(str, DEFAULT_BBOX)), help='WGS-84 西,南,东,北')
     ap.add_argument('--cell', type=float, default=0.01, help='POI 初始网格（度）')
@@ -1038,13 +1267,20 @@ def main():
     if a.cmd == 'merge':
         merge_pois(a.core_cap)
         merge_roads()
+        merge_extra()
         return
     if not a.key:
         sys.exit('需要高德 Web 服务 Key：--key 或环境变量 AMAP_KEY（控制台 https://console.amap.com/dev/key/app ，服务平台选“Web服务”）')
     cli = Client(a.key, a.qps, a.max_requests)
-    if a.cmd == 'poi':
+    if a.cmd in ('metro', 'all'):
+        cmd_metro(cli)
+    if a.cmd in ('district', 'all'):
+        cmd_district(cli)
+    if a.cmd in ('place', 'all'):
+        cmd_place(cli, place_names())
+    if a.cmd in ('poi', 'all'):
         cmd_poi(cli, bbox, a.cell)
-    else:
+    if a.cmd in ('roads', 'all'):
         cmd_roads(cli, bbox)
 
 
