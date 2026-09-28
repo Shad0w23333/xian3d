@@ -351,7 +351,7 @@ export default {
     xray.visible = false;
     ctx.scene.add(xray);
     const dim = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      transparent: true, depthTest: false, depthWrite: false,
+      transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
       vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: 'void main(){ gl_FragColor = vec4(0.01, 0.02, 0.05, 0.62); }',
     }));
@@ -360,7 +360,7 @@ export default {
     xray.add(dim);
     const uW = { value: 20 };
     const ribbonMat = new THREE.ShaderMaterial({
-      transparent: true, depthTest: false, depthWrite: false, vertexColors: true,
+      transparent: true, depthTest: false, depthWrite: false, vertexColors: true, side: THREE.DoubleSide,
       uniforms: { uW },
       vertexShader: `attribute vec3 aSide; attribute float aDash; varying vec3 vC; varying float vD;
         void main(){ vC = color; vD = aDash; vec3 p = position + aSide * uW; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`.replace('attribute vec3 aSide;', 'uniform float uW; attribute vec3 aSide;'),
