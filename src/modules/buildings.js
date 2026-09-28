@@ -112,6 +112,26 @@ const LANDMARK_NAMES = [
   ['citywall', /(城墙|箭楼|闸楼|角楼|敌楼|魁星楼|^(永宁|安定|长乐|安远|朱雀|含光|勿幕|玉祥|尚武|尚德|解放|中山|文昌|和平|建国|朝阳|小南)门(城楼)?$)/],
 ];
 
+const EX_FRAC = 0.3; // 轮廓落入排除区的比例 ≥ 此值则让位
+const EX_AREA = 100; // 或落入比例 ≥ 10% 且估算落入面积 ≥ 此值（m²）：大楼的一角插进精建楼/古建院落
+/** 轮廓内 6×6 网格取样，落入排除区（buildings）的比例 */
+function exFrac(ex, offs, s, e, ax, az, X0, X1, Z0, Z1, h) {
+  let n = 0, hit = 0;
+  for (let gx = 0; gx < 6; gx++)
+    for (let gz = 0; gz < 6; gz++) {
+      const x = X0 + ((gx + 0.5) / 6) * (X1 - X0), z = Z0 + ((gz + 0.5) / 6) * (Z1 - Z0);
+      let c = false;
+      for (let k = s, j = e - 2; k < e; j = k, k += 2) {
+        const xi = ax + offs[k] * 0.1, zi = az + offs[k + 1] * 0.1, xj = ax + offs[j] * 0.1, zj = az + offs[j + 1] * 0.1;
+        if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+      }
+      if (!c) continue;
+      n++;
+      if (ex.test(x, z, 'buildings', h)) hit++;
+    }
+  return n ? hit / n : 0;
+}
+
 // ———— 主线程预处理：地面高程、底部高程、排除标记、包围盒 ————
 function preprocess(ctx, P) {
   const N = P.count, offs = P.offs, T = ctx.terrain, ex = ctx.exclusions;
@@ -159,6 +179,23 @@ function preprocess(ctx, P) {
       skip[i] = 1;
       nEx++;
     }
+    // 锚点（质心）在排除区外、但轮廓有相当一部分伸进排除区（精建地标/片区的边缘）：只测锚点会漏掉，
+    // 结果通用楼一半插在精建楼里。先测顶点，有顶点落入再用轮廓内网格取样估算落入比例，≥ EX_FRAC 让位
+    if (!skip[i] && ex && ex.items.length) {
+      const hm = P.heightDm[i] * 0.1;
+      let any = false;
+      for (let k = s; k < e && !any; k += 2) any = ex.test(ax + offs[k] * 0.1, az + offs[k + 1] * 0.1, 'buildings', hm);
+      if (any) {
+        const f = exFrac(ex, offs, s, e, ax, az, X0, X1, Z0, Z1, hm);
+        let A = 0;
+        for (let k = s, j = e - 2; k < e; j = k, k += 2) A += offs[j] * offs[k + 1] - offs[k] * offs[j + 1];
+        A = Math.abs(A) * 0.005; // 分米² → m²（×0.01 / 2）
+        if (f >= EX_FRAC || (f >= 0.1 && f * A >= EX_AREA)) {
+          skip[i] = 1;
+          nEx++;
+        }
+      }
+    }
     if (!skip[i] && lmRe.length && P.flags[i] & 2) {
       const nm = names[i];
       if (nm && lmRe.some((re) => re.test(nm))) {
@@ -168,9 +205,21 @@ function preprocess(ctx, P) {
     }
     const h0 = T.heightAt(ax, az);
     ga[i] = h0;
-    let b = h0;
-    if (X1 - X0 > 24 || Z1 - Z0 > 24) b = Math.min(b, T.heightAt(X0, Z0), T.heightAt(X1, Z0), T.heightAt(X0, Z1), T.heightAt(X1, Z1));
+    // 底高 = 轮廓各顶点（长边再加中点）地面最低处：原先小楼只取质心、大楼取包围盒四角，
+    // 坡地上小楼一侧悬空、L 形大楼取到轮廓外的低点而整体埋深
+    let b = h0, top = h0;
+    for (let k = s; k < e; k += 2) {
+      const vx = ax + offs[k] * 0.1, vz = az + offs[k + 1] * 0.1;
+      const hv = T.heightAt(vx, vz);
+      b = Math.min(b, hv);
+      top = Math.max(top, hv);
+      const k2 = k + 2 < e ? k + 2 : s, wx = ax + offs[k2] * 0.1, wz = az + offs[k2 + 1] * 0.1;
+      if (Math.abs(wx - vx) + Math.abs(wz - vz) > 24) b = Math.min(b, T.heightAt((vx + wx) * 0.5, (vz + wz) * 0.5));
+    }
     base[i] = b;
+    // 陡坡/崖边：楼顶（锚点地面 + 楼高）低于轮廓上坡侧地面时整栋被埋进山体；把顶面参考抬到上坡地面以上 3 m
+    const H = Math.max(3, P.heightDm[i] * 0.1);
+    if (P.minHeightDm[i] === 0 && top > h0 + H - 3) ga[i] = top - H + 3;
   }
   return { ga, base, skip, bb, nEx, nSky };
 }
@@ -282,6 +331,8 @@ export default {
     }
     const N = P.count;
     const pre = preprocess(ctx, P);
+    // 最终让位结果（含按轮廓比例的判定）挂到排除区对象上，招牌模块据此判断楼是否存在，与渲染保持一致
+    if (ctx.exclusions) ctx.exclusions.buildingSkip = pre.skip;
     const roads = packRoads(ctx.data.roads);
     const tPre = performance.now() - t0;
 
@@ -782,6 +833,8 @@ export default {
       classOf: (i) => ensureClasses().cls[i],
       nearestFacade,
       api: { nearestFacade },
+      // 诊断用（tools/check_overlap.mjs）：最终是否渲染（0=渲染）、底部高程、锚点地面高程
+      diag: { skip: pre.skip, base: pre.base, ga: pre.ga },
       stats: () => ({
         blocks: blocks.length,
         loVisible: blocks.reduce((s, b) => s + b.pool[0].filter((m) => m && m.visible).length, 0),
