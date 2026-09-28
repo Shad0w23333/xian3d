@@ -93,6 +93,20 @@ POINT_FIX = [
     dict(n='陕铁大厦', ll=(108.968439, 34.157468), r=25, h=99.8, why='99.8 m/23F（招商稿）；东长安街×神舟四路西北角候选轮廓'),
 ]
 
+# 公共建筑（research/refs/dossiers/public.json 有层数的）：只抬高轮廓内最高的 N 栋（主楼），不降低、不动裙房
+# ovt：Overture id 前缀；top：从高到低依次赋给轮廓内最高的几栋（层数 × 层高，层高写在 why 中）
+PUBLIC_FLOORS = [
+    dict(n='西京医院（空军军医大学第一附属医院）', ovt=['25b169f2'], top=[80.0, 76.0],
+         why='北楼 20 层、南楼 19 层、裙楼 5 层（中联西北院通稿），医院按 4.0 m/层；CMAB 仅 12.6–19.9 m'),
+    dict(n='交大一附院（雁塔西路）外科大楼', ovt=['3622261a'], top=[52.0], why='外科大楼 13 层（健康界 2023-10-27），4.0 m/层'),
+    dict(n='西安市第三医院 住院楼', ovt=['37c17aee'], top=[52.0], why='西院住院楼 13 层（north.json 转引卫健委摘要），4.0 m/层'),
+    dict(n='西安交大钱学森图书馆 南楼', ovt=['cafc0ed6'], top=[46.2], why='南楼 II 段地上 11 层（交大官网/地方志办），4.2 m/层'),
+    dict(n='长安大学渭水校区逸夫图书馆', ovt=['42e588d3'], top=[52.0], why='主体地上 13 层（长安大学官网），4.0 m/层'),
+    dict(n='陕西省图书馆（长安北路主馆）', ovt=['928a0ecd'], top=[42.0], why='主楼地上 10 层（zh.wikipedia），4.2 m/层；CMAB 16 m'),
+]
+RES_FLOOR_H = 3.0      # 住宅层高（2.9–3.0 m）
+ESTATES = OUTDIR / 'estate_floors.json'   # 由 research/refs/dossiers/residential.json 生成（--dossiers 重新生成）
+
 # Overture 高度黑名单（名称 → 依据）：不参与修正
 OVT_BLACKLIST = {
     '西安公路研究院': 'height=800 为错标',
@@ -248,6 +262,29 @@ def curated_public():
     return out
 
 
+def build_estate_table(dossiers):
+    """residential.json（房天下成交记录的“总层数”）→ 精简表 research/audit/estate_floors.json：
+    每个小区 名称 / 世界坐标 / landuse 多边形名 / 高层(≥12)与小高层(8–11)真实层数集合 / 置信度"""
+    src = Path(dossiers) / 'residential.json'
+    if not src.exists():
+        return None
+    out = []
+    for it in json.loads(src.read_text('utf-8')):
+        ld = it.get('local_data') or {}
+        fl = sorted({int(f) for f in (ld.get('fang_transaction_floors') or []) if f})
+        cs = str(it.get('coord_source') or '')
+        lu = [q.strip() for m in re.findall(r'landuse_polygon_centroid\(([^;)]*)', cs) for q in re.split(r'[、,，]', m) if q.strip()]
+        xz = it.get('world_xz')
+        if not xz:
+            continue
+        out.append(dict(name=it['name'], x=xz[0], z=xz[1], landuse=lu, confidence=it.get('confidence'),
+                        high=[f for f in fl if f >= 12], mid=[f for f in fl if 8 <= f <= 11], year=it.get('year')))
+    doc = dict(source='research/refs/dossiers/residential.json（房天下成交记录“总层数”，2026-09-28 调研）', estates=out)
+    ESTATES.parent.mkdir(parents=True, exist_ok=True)
+    ESTATES.write_text(json.dumps(doc, ensure_ascii=False, indent=1), 'utf-8')
+    return doc
+
+
 def estates(P):
     """每栋所在的住宅用地多边形下标（landuse residential），不在任何地块内 = -1"""
     import shapely
@@ -285,7 +322,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--fix', action='store_true', help='写回 skyline.json 与 buildings.bin')
     ap.add_argument('--out', default=str(OUTDIR))
+    ap.add_argument('--dossiers', default=str(ROOT / 'research' / 'refs' / 'dossiers'),
+                    help='逐栋档案目录；有 residential.json 时重新生成 research/audit/estate_floors.json')
     args = ap.parse_args()
+    if build_estate_table(args.dossiers):
+        log(f'由 {args.dossiers}/residential.json 重新生成 {ESTATES}')
     import shapely
     t0 = time.time()
     B, P = AC.load_bin(BIN)
@@ -503,6 +544,82 @@ def main():
                             h1[i] = med
                             src[i] = 'sibling_snap'
                             n_sib_snap += 1
+
+    # —— 小区真实层数（房天下成交记录）：CMAB 分档（高度÷3 m）内按高度名次做分位映射到真实层数集合 ——
+    est_rec = []
+    if ESTATES.exists():
+        L_lu = json.loads((AC.DATA / 'landuse.json').read_text('utf-8'))['polys']
+        lu = [(shapely.make_valid(shapely.Polygon(np.array(q['outer']).reshape(-1, 2))), q.get('n') or '')
+              for q in L_lu if q['k'] == 'residential' and len(q['outer']) >= 6]
+        cen = shapely.centroid(P)
+        ctree = shapely.STRtree(cen)
+        for e in json.loads(ESTATES.read_text('utf-8'))['estates']:
+            if e.get('confidence') == 'low' or not (e['high'] or e['mid']):
+                continue
+            keys = {AC.norm(e['name'])} | {AC.norm(q) for q in e.get('landuse') or []}
+            polys = [pg for pg, nm in lu if nm and AC.norm(nm) in keys]
+            if not polys:
+                pt = shapely.Point(e['x'], e['z'])
+                polys = [pg for pg, nm in lu if pg.contains(pt)]
+            if not polys:
+                est_rec.append(dict(n=e['name'], note='无 landuse 多边形，跳过'))
+                continue
+            U = shapely.union_all(polys)
+            inside = [int(j) for j in ctree.query(U, predicate='contains')]
+            cand = [j for j in inside if kind[j] in (0, 1) and src[j] == 'orig' and not measured0[j] and area[j] >= 120]
+            ch = {}
+            for tier, lo, hi, vals in (('high', 12, 99, e['high']), ('mid', 8, 11, e['mid'])):
+                mem = [j for j in cand if lo <= round(h0[j] / 3.0) <= hi]
+                if not vals or not mem:
+                    continue
+                vals = sorted(vals)
+                hs = np.array([h0[j] for j in mem])
+                # 同高并列取平均名次
+                order = np.argsort(hs, kind='stable')
+                ranks = np.empty(len(mem))
+                ranks[order] = np.arange(len(mem))
+                for v in np.unique(hs):
+                    ranks[hs == v] = ranks[hs == v].mean()
+                for j, rk in zip(mem, ranks):
+                    q = (rk + 0.5) / len(mem)
+                    f = vals[min(int(q * len(vals)), len(vals) - 1)]
+                    nh = f * RES_FLOOR_H
+                    # 只抬高不降低：成交记录只是抽样（层数集合不含频次），用来纠正 CMAB/模型的封顶与压低，不据此把楼压矮
+                    if nh - h1[j] >= 1.0:
+                        ch[j] = (float(h1[j]), nh)
+                        h1[j] = nh
+                        src[j] = 'estate'
+            if ch:
+                b = np.array([v[0] for v in ch.values()])
+                a = np.array([v[1] for v in ch.values()])
+                est_rec.append(dict(n=e['name'], changed=len(ch), before_max=float(b.max()), after_max=float(a.max()),
+                                    before_med=float(np.median(b)), after_med=float(np.median(a)), high=e['high'], mid=e['mid']))
+            elif e['high'] and not any(round(h0[j] / 3.0) >= 12 for j in inside):
+                est_rec.append(dict(n=e['name'], note=f'成交记录有 {max(e["high"])} 层，但 CMAB 该小区内没有高层轮廓（影像早于建成/漏提），高度无法修，需轮廓数据'))
+        n_est = sum(r.get('changed', 0) for r in est_rec)
+        log(f'小区真实层数：{sum(1 for r in est_rec if r.get("changed"))} 个小区、{n_est} 栋改高；'
+            f'{sum(1 for r in est_rec if "note" in r)} 个小区无法修（见报告）')
+    # —— 公共建筑层数：只抬高主楼 ——
+    pubf_rec = []
+    if PUBLIC_FLOORS:
+        Ofull = Ofull if Ofull is not None else AC.load_overture_buildings(only_named_or_measured=False)
+        for q in PUBLIC_FLOORS:
+            ks = [k for k, oid in enumerate(Ofull['id']) if any(str(oid).startswith(pfx) for pfx in q['ovt'])]
+            mem = []
+            for k in ks:
+                g = Ofull['geom'][k]
+                for j in btree.query(g, predicate='intersects'):
+                    if shapely.area(shapely.intersection(P[j], g)) >= 0.5 * area[j] and area[j] >= 200:
+                        mem.append(int(j))
+            mem = sorted(set(mem), key=lambda j: (-h1[j], -area[j]))
+            done = []
+            for j, v in zip(mem, q['top']):
+                if v > h1[j]:
+                    done.append((j, float(h1[j]), v))
+                    h1[j] = v
+                    src[j] = 'public_floors'
+            pubf_rec.append(dict(n=q['n'], bins=done, why=q['why'], found=len(mem)))
+        log('公共建筑层数：' + '；'.join(f"{r['n']}×{len(r['bins'])}" for r in pubf_rec))
     h1 = np.round(h1, 1)
 
     # —— 6. 统计（修正前 / 后）——
@@ -547,6 +664,18 @@ def main():
     md += ['', '## 逐栋档案（research/refs/dossiers）直接给定的高度（POINT_FIX）', '']
     for r in pf_rec:
         md.append(f"- **{r['n']}** → {r['h']} m：" + ('、'.join(f'#{j}（原 {hb:.1f} m）' for j, hb in r['bins']) or '未命中 buildings.bin（另由 landmarks2026 建模）')
+                  + f"。{r['why']}")
+    md += ['', '## 小区真实层数（房天下成交记录“总层数”，research/audit/estate_floors.json）', '',
+           f'方法：小区 landuse 多边形内、无实测的住宅/通用楼，按 CMAB 高度÷3 m 分档（高层 ≥12、小高层 8–11），档内按高度名次做分位映射到'
+           f'成交记录中该档的真实层数集合，高度 = 层数 × {RES_FLOOR_H} m；只抬高不降低（成交记录是抽样、不含频次）；多层/低层不动。', '',
+           '| 小区 | 改高栋数 | 修前最高/中位 m | 修后最高/中位 m | 成交记录高层层数 |', '|---|---|---|---|---|']
+    for r in est_rec:
+        if r.get('changed'):
+            md.append(f"| {r['n']} | {r['changed']} | {r['before_max']:.1f} / {r['before_med']:.1f} | {r['after_max']:.1f} / {r['after_med']:.1f} | {r['high']} |")
+    md += [''] + [f"- {r['n']}：{r['note']}" for r in est_rec if 'note' in r]
+    md += ['', '## 公共建筑层数（public.json，只抬高主楼）', '']
+    for r in pubf_rec:
+        md.append(f"- **{r['n']}**：" + ('、'.join(f'#{j} {a:.1f}→{b:.1f} m' for j, a, b in r['bins']) or f'无需改（轮廓内 {r["found"]} 栋已不低于资料）')
                   + f"。{r['why']}")
     md += ['', '## 模型预测值 vs 本次新增实测（修正前无实测、现有公开资料/Overture 值的楼）', '',
            '| 模型值区间 m | 栋数 | 实测中位 m | 实测 25–75% m |', '|---|---|---|---|']
@@ -597,7 +726,8 @@ def main():
         why = {'public': '公开资料：' + (pub[j_pub[i]][0] if j_pub[i] >= 0 else ''),
                'overture': f'Overture {O["rid"][j_ov[i]] if j_ov[i] >= 0 else ""} {O["name"][j_ov[i]] if j_ov[i] >= 0 else ""}',
                'skyline': 'skyline.json', 'podium': '整片综合体轮廓→裙房高', 'bigcap': '大面积无实测上限',
-               'sibling': '同型楼实测', 'sibling_snap': '同型楼组内中位', 'dossier': '逐栋档案：' + dos_name.get(int(i), '')}.get(src[i], src[i])
+               'sibling': '同型楼实测', 'sibling_snap': '同型楼组内中位', 'dossier': '逐栋档案：' + dos_name.get(int(i), ''),
+               'estate': '小区成交记录层数', 'public_floors': '公共建筑层数'}.get(src[i], src[i])
         md.append(f'| {i} | {bname(i)} | {B["ax"][i]:.0f},{B["az"][i]:.0f} | {area[i]:.0f} | {h0[i]:.1f} | {h1[i]:.1f} | {why} |')
     (out / 'heights_report.md').write_text('\n'.join(md) + '\n', 'utf-8')
     log(f'写出 {out / "heights_report.md"}、heights_changes.json（{time.time() - t0:.0f}s）')
@@ -624,7 +754,7 @@ def main():
     md_ = np.frombuffer(bytes(raw[o_m:o_m + 2 * n]), '<u2').copy()
     md_ = np.minimum(md_, np.maximum(hd.astype(np.int64) - 10, 0)).astype('<u2')
     fl = flags0.copy()
-    meas = np.isin(src, ['public', 'overture', 'skyline', 'sibling', 'dossier'])
+    meas = np.isin(src, ['public', 'overture', 'skyline', 'sibling', 'dossier', 'estate', 'public_floors'])
     fl[meas] |= 1
     fl = np.where(hd >= 1000, fl | 4, fl & ~np.uint8(4)).astype(np.uint8)
     fl[np.isfinite(ref_sk)] |= 8

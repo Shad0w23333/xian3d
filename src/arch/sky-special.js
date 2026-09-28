@@ -456,6 +456,8 @@ export function buildHall(env, poly, { h = 18, rise = 7, name = null } = {}) {
 }
 
 // ================= 行政中心（新唐风：石材墙面 + 深灰庑殿/歇山式大屋顶） =================
+// 注：SPECIAL.gov（FP.gov）实为未央路以东的市委/人大/政协院落与东侧西安市中医医院（research/refs/dossiers/north.json）；
+//   西安市人民政府在未央路以西 (−669,−9258)（OSM r18903162，约 240×247 m 对称院落），目前由通用建筑表达
 export function buildGovBlock(env, poly, { h, roof = true }) {
   const { ctx, fb, solid, mats } = env;
   const p = G.ccw(poly);

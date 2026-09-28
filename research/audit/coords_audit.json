@@ -1102,10 +1102,18 @@
    "list": "towers",
    "name": "西北国金中心A座",
    "cs": "estimated",
-   "src": "near",
+   "src": "fix",
    "x": -1022.5,
    "z": -8973.4,
-   "cands": []
+   "cands": [],
+   "fix": {
+    "x": -915,
+    "z": -8719,
+    "moved": 276,
+    "h": 205,
+    "skip": false,
+    "note": "原坐标 (−1024,−8973) 取到的 OSM w1418071031 是住宅；卫星图带八角停机坪的塔顶在文景路×凤城七路西北角约 (−915,−8719)（research/refs/dossiers/north.json）；该处 Overture 无塔楼轮廓，按 50×48 m 合成；主塔 205 m（百科/官网）与 210 m/50F 两说，取 205"
+   }
   },
   {
    "list": "towers",
@@ -1179,7 +1187,15 @@
      "d": 1027,
      "in_bld": true
     }
-   ]
+   ],
+   "fix": {
+    "x": null,
+    "z": null,
+    "moved": null,
+    "h": null,
+    "skip": false,
+    "note": "清单坐标 108.954153,34.344043 实为西安市中医医院 POI；真正的市政府在未央路以西 (−669,−9258)（OSM r18903162，240×247 m 对称院落）；sky-data 的 FP.gov 是未央路以东的市委/人大/政协与中医医院楼群（north.json）。本条 already_modeled，不生成"
+   }
   },
   {
    "list": "towers",
