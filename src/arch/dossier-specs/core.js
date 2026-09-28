@@ -1093,5 +1093,6 @@ const qichezhan = {
 export default [
   kaiyuan, belltower, youju, baohua, zhonghuan, baisheng, zhongda, xingzhengyuan, qunguang, hongfu, kaiai, jiaohang,
   huangcheng, aoluo, rmjy, yisu, shengzhengfu, renmindasha, hilton, kejiguan, minsheng, wandaMly, yuehui, zhongyi, zhongxin,
-  changan, hehui, haosheng, zhongmao, fuyou, xinchengqu, qichezhan,
+  hehui, haosheng, zhongmao, fuyou, xinchengqu, qichezhan,
+  // 华侨城·长安国际中心由 south.js 负责（照片 changan_gj_2/3：后排挂“华侨城·长安国际”的塔明显高于前排，south 的前低后高更符合照片）
 ];
