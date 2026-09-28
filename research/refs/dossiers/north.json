@@ -367,7 +367,7 @@
   "year": 2011,
   "massing": [
    {
-    "part": "主楼",
+    "part": "主塔（约31层）",
     "shape": "rect",
     "size_m": [
      38.3,
@@ -382,38 +382,87 @@
     "top_m": null,
     "setbacks": [],
     "taper": null,
-    "notes": "暂取 OSM w1267005415（38×37 m 近方形）为塔楼轮廓；OSM 命名轮廓 w337115081 只有 13.5×11 m 且标 26 层，与 31 层口径冲突，疑为局部。卫星影像中该处多栋高层阴影交叠，未能独立确认塔楼边界"
+    "notes": "暂取 OSM w1267005415（38×37 m 近方形），与照片中方形主塔相符；OSM 命名轮廓 w337115081 只有 13.5×11 m 且标 26 层，疑为顶部小体量。照片数窗约27排+顶部3层拱窗段，与31层口径一致"
+   },
+   {
+    "part": "东侧/南侧翼楼（约17–18层，U形）",
+    "shape": "U",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：主塔右侧连一组较低翼楼，顶层为拱形窗+檐口，转角有壁柱；位置对应 OSM w1267004711/w1267005076 等（未逐一核对）"
+   },
+   {
+    "part": "入口穹顶",
+    "shape": "round",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "裙房屋面中部一个小型玻璃/格构穹顶（夜间白光）"
    }
   ],
   "crown": {
-   "type": null,
+   "type": "parapet",
    "height_m": null,
-   "description": "无可用照片"
+   "description": "照片：新古典（欧式）塔顶——最上2–3层为一排半圆拱窗，上下各一道厚檐口；屋顶正中小方形机房体，外挂红橙色喜来登“S”圆形标志"
   },
   "facade": {
-   "primary": null,
-   "glass_color_hex": null,
+   "primary": "米黄色石材（新古典风格）：竖向壁柱、方形窗洞网格、多道水平檐口",
+   "glass_color_hex": "#2f3b46",
    "frame_color_hex": null,
-   "wall_color_hex": null,
-   "pattern": null,
+   "wall_color_hex": "#e6dcc6",
+   "pattern": "方窗均匀网格；顶部与翼楼顶层为半圆拱窗；首层大拱窗",
    "floor_height_m": null,
-   "notes": "未找到可用外观照片"
+   "notes": "携程图库照片（酒店官方图）取色近似"
   },
   "podium": {
    "floors": null,
    "height_m": null,
-   "shape": null,
-   "facade": null,
-   "entrance": "地址未央路32号，地铁2号线龙首原站B口旁（携程）"
+   "shape": "带拱形门廊的裙房",
+   "facade": "石材+拱窗",
+   "entrance": "门廊为拱形山墙式，红色 Sheraton 字；地址未央路32号，龙首原站B口旁"
   },
-  "signage": [],
-  "night": null,
+  "signage": [
+   {
+    "text": "S（喜来登圆形标志）",
+    "color_hex": "#e8542c",
+    "position": "主塔屋顶机房外侧",
+    "approx_height_m": null
+   },
+   {
+    "text": "Sheraton",
+    "color_hex": "#d2232a",
+    "position": "入口拱形门廊",
+    "approx_height_m": null
+   }
+  ],
+  "night": "官方夜景照：檐口与壁柱暖白泛光勾勒，顶部 S 标志发红橙光，入口穹顶白光",
   "photos": [
    {
-    "file": "scratchpad/dossier_north/sat/sheraton.jpg",
-    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "file": "scratchpad/dossier_north/art/sheraton_04.jpg",
+    "url": "https://m.ctrip.com/html5/hotel/hoteldetail/396430.html",
     "date": null,
-    "what": "卫星俯视：龙首原站西北，多栋高层阴影交叠"
+    "what": "夜景全貌（酒店官方图）"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/sheraton_03.jpg",
+    "url": "https://m.ctrip.com/html5/hotel/hoteldetail/396430.html",
+    "date": null,
+    "what": "入口门廊夜景"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/sheraton_00.jpg",
+    "url": "https://m.ctrip.com/html5/hotel/hoteldetail/396430.html",
+    "date": null,
+    "what": "日景全貌"
    }
   ],
   "sources": [
@@ -421,7 +470,7 @@
    "https://m.ctrip.com/html5/hotel/hoteldetail/396430.html",
    "https://www.marriott.com.cn/hotels/xiync-sheraton-xian-north-city-hotel/events/"
   ],
-  "confidence": "low",
+  "confidence": "medium",
   "notes": "试业 2011-11-08（WebSearch 摘要）；携程标“2012年开业”。万豪官网：活动空间约1583–1700㎡，麟德大宴会厅 121.4×52.2×23.6 英尺（626㎡）。现有 landmarks2026 按 26 层 / 90 m 建模，层数与本条 31 层冲突。"
  },
  {
@@ -2072,25 +2121,31 @@
    "description": "卫星：屋面散布 8–9 个白色椭圆采光顶，中部一个较大的椭圆穹顶；东南部有一块浅色矩形高出体量（疑影院盒子）"
   },
   "facade": {
-   "primary": "“全钢式商业建筑”，LOW-E 玻璃（商策网）",
-   "glass_color_hex": null,
-   "frame_color_hex": null,
-   "wall_color_hex": null,
-   "pattern": null,
+   "primary": "米白/浅驼色横向条带实墙（窄竖向窗缝）为主；东南圆弧转角为蓝色网格玻璃幕墙体量，顶部一道白色弧形檐带",
+   "glass_color_hex": "#4f7ea8",
+   "frame_color_hex": "#d9d4c8",
+   "wall_color_hex": "#d8c9ae",
+   "pattern": "实墙横向分缝；南立面有一条红色竖向丝带形品牌装置",
    "floor_height_m": null,
-   "notes": "本次未找到外立面照片，颜色留空"
+   "notes": "中国日报网 2023-07 航拍照取色；资料称“全钢式商业建筑”、LOW-E 玻璃（商策网）"
   },
   "podium": null,
   "signage": [
    {
-    "text": "CityOn 熙地港",
-    "color_hex": null,
-    "position": "未找到照片确认位置",
+    "text": "CITY ON",
+    "color_hex": "#ffffff",
+    "position": "东南圆弧转角顶部白色檐带上（O 为黄色）",
     "approx_height_m": null
    }
   ],
   "night": null,
   "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/cdxdg_03.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "东南向航拍：熙地港圆弧转角+CITY ON 字，后为 EHB，左前为未央国际"
+   },
    {
     "file": "scratchpad/dossier_north/sat/xidigang.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
@@ -2099,6 +2154,7 @@
    }
   ],
   "sources": [
+   "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
    "https://www.businesswire.com/news/home/20160428006710/en/Taubman-Asia-Wangfujing-Celebrate-CityOn.Xi%E2%80%99an-Shopping-Center",
    "https://www.sych100.com/nd.jsp?id=81",
    "http://xa.winshang.com/news-574717.html",
@@ -2168,25 +2224,37 @@
    "description": "卫星：一条浅色弧形屋面带从北端沿西北圆弧延伸下来，其余为平屋面+设备"
   },
   "facade": {
-   "primary": null,
+   "primary": "（效果图）沿弧线连续的玻璃幕墙+横向线条",
    "glass_color_hex": null,
    "frame_color_hex": null,
    "wall_color_hex": null,
-   "pattern": null,
+   "pattern": "横向线条",
    "floor_height_m": null,
-   "notes": "未找到外立面照片"
+   "notes": "只找到 2018 年搜狐文章里的夜景效果图（效果图中另有4栋玻璃塔，是否建成未确认）和草坪上的红色“大融城”立体字，无建成后外立面实景"
   },
   "podium": null,
   "signage": [
    {
-    "text": "大融城 IMIX PARK",
-    "color_hex": null,
-    "position": "未确认",
+    "text": "大融城（红色立体字，另有 IMIX PARK logo）",
+    "color_hex": "#d9242b",
+    "position": "草坪/广场落地字（照片）；立面招牌位置未确认",
     "approx_height_m": null
    }
   ],
   "night": null,
   "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/drc_01.jpg",
+    "url": "https://www.sohu.com/a/228816749_99965925",
+    "date": "2018（文章日期）",
+    "what": "夜景效果图"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/drc_05.jpg",
+    "url": "https://www.sohu.com/a/228816749_99965925",
+    "date": null,
+    "what": "红色“大融城”落地字"
+   },
    {
     "file": "scratchpad/dossier_north/sat/darongcheng.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
@@ -2287,6 +2355,12 @@
    },
    {
     "text": "INTERCONTINENTAL",
+    "color_hex": "#ffffff",
+    "position": "另一立面顶部（中国日报网 2023-07 照片）",
+    "approx_height_m": null
+   },
+   {
+    "text": "INTERCONTINENTAL",
     "color_hex": "#c8a45a",
     "position": "首层门廊檐口",
     "approx_height_m": 6
@@ -2299,6 +2373,12 @@
     "url": "https://www.aliseochina.com/project/西安经开洲际酒店",
     "date": null,
     "what": "主立面"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/cdxdg_06.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "由北向南远景：板楼+转角通高玻璃竖带"
    },
    {
     "file": "scratchpad/dossier_north/art/ihg_01.jpg",
@@ -2374,39 +2454,45 @@
   "crown": {
    "type": "parapet",
    "height_m": null,
-   "description": "照片：顶部玻璃女儿墙/幕墙高出屋面一截，呈通透框"
+   "description": "照片：顶部一圈玻璃幕墙高出屋面（通透女儿墙），平顶"
   },
   "facade": {
-   "primary": "全玻璃 Low-E 中空幕墙，竖向线条",
-   "glass_color_hex": "#6f93b0",
-   "frame_color_hex": "#9aa7b3",
+   "primary": "蓝绿色玻璃幕墙（全玻璃 Low-E 中空，notes.md 引官网）",
+   "glass_color_hex": "#2f6f7a",
+   "frame_color_hex": "#6d8f96",
    "wall_color_hex": null,
-   "pattern": "竖向分格；立面上可见粉/蓝竖条色带（疑为 LED 或反射）",
+   "pattern": "每个立面中部一条竖向媒体幕墙带（竖向线形 LED，黄昏照中显示红/粉与蓝白色）；约1/2高度和底部各有一道浅色横带（疑设备/避难层）",
    "floor_height_m": null,
-   "notes": "照片为远景，颜色近似"
+   "notes": "中国日报网 2023-07 航拍照取色"
   },
   "podium": null,
   "signage": [
    {
     "text": "EHB 企业总部大厦",
     "color_hex": "#ffffff",
-    "position": "塔楼顶部立面（照片自行政中心站 D 口方向）",
+    "position": "塔楼顶部横带（南/东立面，航拍照与行政中心站 D 口照均可见）",
     "approx_height_m": null
    }
   ],
   "night": null,
   "photos": [
    {
+    "file": "scratchpad/dossier_north/art/cdxdg_03.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "航拍：EHB 媒体幕墙与顶部字样"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/cdxdg_06.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "由北向南：EHB、洲际、地铁大厦"
+   },
+   {
     "file": "scratchpad/dossier_north/photos/Exit_D_of_XINGZHENGZHONGXIN_Station_Xi_an_Metro_Apr_25_2023_.jpg",
     "url": "https://commons.wikimedia.org/wiki/File:Exit_D_of_XINGZHENGZHONGXIN_Station,_Xi'an_Metro_(Apr_25,_2023).jpg",
     "date": "2023-04-25",
     "what": "背景塔楼顶部字样“EHB 企业总部大厦”"
-   },
-   {
-    "file": "scratchpad/dossier_north/sat/ehb.jpg",
-    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-    "date": null,
-    "what": "卫星俯视：洲际北侧塔楼"
    }
   ],
   "sources": [
@@ -2654,18 +2740,31 @@
    "description": null
   },
   "facade": {
-   "primary": null,
+   "primary": "浅灰白色墙面+规整方窗网格",
    "glass_color_hex": null,
    "frame_color_hex": null,
-   "wall_color_hex": null,
-   "pattern": null,
+   "wall_color_hex": "#dfe1e2",
+   "pattern": "方窗均匀网格",
    "floor_height_m": null,
-   "notes": null
+   "notes": "中国日报网 2023-07 航拍照：熙地港屋面以上可数出约20排窗，下部被商场遮挡，总层数无法确认"
   },
   "podium": null,
-  "signage": [],
+  "signage": [
+   {
+    "text": "Holiday Inn Express（绿色标志+白字）",
+    "color_hex": "#6cc04a",
+    "position": "楼顶女儿墙外侧",
+    "approx_height_m": null
+   }
+  ],
   "night": null,
   "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/cdxdg_03.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "左侧白色板楼，顶部绿色 Holiday Inn Express 招牌"
+   },
    {
     "file": "scratchpad/dossier_north/sat/zhixuan.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
@@ -3141,21 +3240,27 @@
   "crown": {
    "type": "slope",
    "height_m": null,
-   "description": "卫星：外圈深灰色屋面四边内倾（类四坡顶），中央方形浅蓝玻璃天窗"
+   "description": "照片：深灰色缓坡四坡大屋顶、深出檐（与市政府同一风格）；卫星：屋顶中央为方形浅蓝玻璃天窗（回字形中庭）"
   },
   "facade": {
-   "primary": null,
-   "glass_color_hex": null,
+   "primary": "白色石材立面，通高白色竖向壁柱与深色竖条窗相间",
+   "glass_color_hex": "#3b4d5e",
    "frame_color_hex": null,
-   "wall_color_hex": null,
-   "pattern": null,
+   "wall_color_hex": "#e4e4e0",
+   "pattern": "竖向线条（壁柱/窗带），无明显横向分层",
    "floor_height_m": null,
-   "notes": null
+   "notes": "中国日报网 2023-07 照片，竖条窗无法数层"
   },
   "podium": null,
   "signage": [],
   "night": null,
   "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/cdxdg_06.jpg",
+    "url": "http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html",
+    "date": "2023-07（文章日期）",
+    "what": "中部大屋顶白色楼"
+   },
    {
     "file": "scratchpad/dossier_north/sat/metro_bldg.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
@@ -3918,10 +4023,10 @@
     "what": "站房正立面"
    },
    {
-    "file": "scratchpad/dossier_north/sat/beizhan.jpg",
-    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "file": "scratchpad/dossier_north/photos/bz_north_01.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:未央_西安北站北站房_01.jpg",
     "date": null,
-    "what": "卫星俯视：菱形天窗屋脊与雨棚"
+    "what": "北站房"
    }
   ],
   "sources": [
