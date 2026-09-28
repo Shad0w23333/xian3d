@@ -459,6 +459,49 @@ function beam(ax, ay, az, bx, by, bz, w) {
   return g;
 }
 
+/** 三角形列表（每 9 个数一个三角形）→ 几何；零面积三角形丢弃，法线统一朝上（up=true）、背离参考点 ref、或与水平方向 dir=[dx,dz] 同向 */
+function triGeom(pos, { up = true, ref = null, dir = null } = {}) {
+  const out = [];
+  for (let i = 0; i < pos.length; i += 9) {
+    const ax = pos[i], ay = pos[i + 1], az = pos[i + 2];
+    const e1 = [pos[i + 3] - ax, pos[i + 4] - ay, pos[i + 5] - az], e2 = [pos[i + 6] - ax, pos[i + 7] - ay, pos[i + 8] - az];
+    const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (Math.hypot(...n) < 1e-6) continue;
+    let flip;
+    if (ref) {
+      const m = [(ax + pos[i + 3] + pos[i + 6]) / 3 - ref[0], (ay + pos[i + 4] + pos[i + 7]) / 3 - ref[1], (az + pos[i + 5] + pos[i + 8]) / 3 - ref[2]];
+      flip = n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0;
+    } else if (dir) flip = n[0] * dir[0] + n[2] * dir[1] < 0;
+    else flip = up && n[1] < 0;
+    if (flip) out.push(ax, ay, az, pos[i + 6], pos[i + 7], pos[i + 8], pos[i + 3], pos[i + 4], pos[i + 5]);
+    else for (let k = 0; k < 9; k++) out.push(pos[i + k]);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+  g.computeVertexNormals();
+  return g;
+}
+/**
+ * 四坡顶 / 庑殿顶 / 盝顶（截顶四坡）：局部矩形 W×D（W 沿 u），中心 (cx,cz)，rot 为 G 约定（弧度，= −地图角）；
+ * y0 檐口（坡面起点）高程，rise 坡高，ridge 正脊长（默认 W−D：四面等坡），flat∈(0,1) 截顶比例（盝顶，顶部平台）。
+ */
+function hipGeom(cx, cz, W, D, rot, y0, rise, ridge, flat) {
+  const c = Math.cos(rot), s = Math.sin(rot);
+  const P = (u, v, y) => [cx + u * c - v * s, y, cz + u * s + v * c];
+  const hw = W / 2, hd = D / 2, r = Math.min(hw, Math.max(0, ridge / 2));
+  const t = flat > 0 && flat < 1 ? flat : 1;
+  const iu = hw - t * (hw - r), iv = hd * (1 - t), yt = y0 + rise * t;
+  const O = [P(-hw, -hd, y0), P(hw, -hd, y0), P(hw, hd, y0), P(-hw, hd, y0)];
+  const I = [P(-iu, -iv, yt), P(iu, -iv, yt), P(iu, iv, yt), P(-iu, iv, yt)];
+  const pos = [];
+  for (let k = 0; k < 4; k++) {
+    const j = (k + 1) % 4;
+    pos.push(...O[k], ...O[j], ...I[j], ...O[k], ...I[j], ...I[k]);
+  }
+  if (t < 1) pos.push(...I[0], ...I[1], ...I[2], ...I[0], ...I[2], ...I[3]);
+  return triGeom(pos);
+}
+
 // ═════════════════════════ 塔冠 ═════════════════════════
 const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid']);
 function normCrowns(c) {
@@ -468,7 +511,8 @@ function normCrowns(c) {
 /**
  * 在体块 P 顶上依次构建塔冠（buildTower 已处理的 lantern/slope/spire/helipad(塔楼体块) 跳过）。
  * 体量类（glassCylinder/disk/frame/pyramid）会把“当前高度游标”抬高，后续塔冠叠在其上；
- * 屋面类（dome/arch/masts/spire/helipad）不抬游标（除非 stack:true）。crown.y（离地米）可显式指定起点。
+ * 屋面类（dome/arch/masts/spire/helipad/hip/sawtooth/crane）不抬游标（除非 stack:true）。crown.y（离地米）可显式指定起点。
+ * hip：四坡顶/庑殿/盝顶 + 出檐；sawtooth：锯齿天窗；crane：在建塔吊（2026-09 城北档案新增，见 docs/DOSSIER_KIT.md §3.6）。
  */
 function buildCrowns(env, R, P, crowns, yTop, handled) {
   const { fb, solid, detail, mats, beacons } = env;
@@ -570,6 +614,7 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         const [rx, rz] = [].concat(cr.r ?? 10).length > 1 ? cr.r : [cr.r ?? 10, cr.r ?? 10];
         const g = new THREE.SphereGeometry(1, cr.seg ?? 28, 10, 0, TAU, 0, Math.PI / 2);
         g.scale(rx, cr.h ?? Math.min(rx, rz) * 0.5, rz);
+        if (cr.rot) g.rotateY(cr.rot * D); // rot：rx 轴的地图方位角（度，北 = 90），椭圆穹顶/梭形天窗顺建筑走向
         g.translate(c.x, yb, c.z);
         solid.add(g, solidMat(env, cr.mat || 'glassRoof'));
         if (cr.ring !== false) detail.add(G.cyl(c.x, yb - 0.1, c.z, Math.max(rx, rz) + 0.5, Math.max(rx, rz) + 0.5, 0.8, cr.seg ?? 28), mats.parapet);
@@ -603,6 +648,74 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
           detail.add(G.box(c.x + Math.cos(a) * r, hy + 0.5, c.z + Math.sin(a) * r, 0.3, 0.3, 0.3), mats.lampWarm);
         }
         if (cr.stack) yNext = hy + 0.4;
+        break;
+      }
+      case 'hip': { // 四坡顶/庑殿顶/盝顶 + 出檐：size:[长,宽]+at/offset+rot，或默认取体块顶部轮廓的最小外接矩形
+        let w, d, rot, cx = c.x, cz = c.z;
+        if (cr.size) {
+          [w, d] = cr.size;
+          rot = -(cr.rot || 0) * D;
+        } else {
+          const o = G.obb(topPoly);
+          ({ w, d, rot } = o); cx = o.cx; cz = o.cz;
+        }
+        if (d > w && cr.ridge == null) { [w, d] = [d, w]; rot += Math.PI / 2; }
+        const ov = cr.over ?? 2, W = w + 2 * ov, Dd = d + 2 * ov;
+        const eave = cr.eave ?? 0.8, rise = cr.h ?? Dd * 0.2;
+        const ridge = cr.ridge ?? Math.max(0, W - Dd);
+        const y0 = yb + (cr.lift ?? 0); // 檐口底
+        const mat = solidMat(env, cr.mat || { color: '#62686d', metalness: 0.55, roughness: 0.45 });
+        const eaveMat = solidMat(env, cr.eaveMat || cr.mat || { color: '#62686d', metalness: 0.55, roughness: 0.45 });
+        const rect = G.rect(cx, cz, W, Dd, rot);
+        if (eave > 0) {
+          solid.add(G.wallGeometry(rect, rect, y0, y0 + eave), eaveMat);
+          solid.add(G.capGeometry(rect, y0, { down: true }), cr.soffit ? solidMat(env, cr.soffit) : eaveMat);
+        }
+        solid.add(hipGeom(cx, cz, W, Dd, rot, y0 + eave, rise, ridge, cr.flat), mat);
+        if (cr.glow) detail.add(ribbon(rect, () => y0 + eave * 0.2, cr.glowH ?? 0.3, 0.06), glowMat(env, cr.glow, { base: cr.glowBase || '#d9d4c8', night: cr.strength ?? 2.4 }));
+        yNext = y0 + eave + rise * (cr.flat > 0 && cr.flat < 1 ? cr.flat : 1);
+        break;
+      }
+      case 'sawtooth': { // 锯齿形天窗屋面（老厂房）：沿长边 n 个齿，竖直采光面朝 face 方位（默认北）
+        let w, d, rot, cx = c.x, cz = c.z;
+        if (cr.size) {
+          [w, d] = cr.size;
+          rot = -(cr.rot || 0) * D;
+        } else {
+          const o = G.obb(topPoly);
+          ({ w, d, rot } = o); cx = o.cx; cz = o.cz;
+        }
+        const cs = Math.cos(rot), sn = Math.sin(rot);
+        const P = (u, v, yy) => [cx + u * cs - v * sn, yy, cz + u * sn + v * cs];
+        // 采光面朝向：局部 +u 对应的世界方向与 face 同向则不翻转
+        const fd = faceDir(cr.face ?? 'N'), sgn = cs * fd[0] + sn * fd[1] >= 0 ? 1 : -1;
+        const n = Math.max(1, cr.n ?? Math.round(w / 12)), h = cr.h ?? 4, step = w / n, pos = [], glass = [];
+        for (let k = 0; k < n; k++) {
+          const u0 = sgn * (-w / 2 + k * step), u1 = sgn * (-w / 2 + (k + 1) * step);
+          const A = P(u0, -d / 2, yb), B = P(u0, d / 2, yb), C = P(u1, -d / 2, yb + h), Dp = P(u1, d / 2, yb + h);
+          const C0 = P(u1, -d / 2, yb), D0 = P(u1, d / 2, yb);
+          pos.push(...A, ...C, ...Dp, ...A, ...Dp, ...B); // 背坡
+          pos.push(...A, ...C0, ...C, ...B, ...Dp, ...D0); // 两端三角山墙
+          glass.push(...C0, ...D0, ...Dp, ...C0, ...Dp, ...C); // 竖直采光面
+        }
+        const ref = [cx, yb - 50, cz];
+        solid.add(triGeom(pos, { ref }), solidMat(env, cr.mat || { color: '#8e8a84', roughness: 0.85 }));
+        solid.add(triGeom(glass, { dir: [sgn * cs, sgn * sn] }), solidMat(env, cr.glass || { color: '#5b6f7c', metalness: 0.6, roughness: 0.2, glow: cr.glow || null }));
+        yNext = yb + h;
+        break;
+      }
+      case 'crane': { // 塔吊（在建）：塔身从 from（离地米，默认 0）到 top，吊臂朝 rot（地图角），长 jib，配重臂 counter
+        const q = cr.at ? { x: cr.at[0], z: cr.at[1] } : offsetPt(c0, cr.offset);
+        const top = g0 + (cr.top ?? (yb - g0) + 30), bot = g0 + (cr.from ?? 0);
+        const [ux, uz] = dirOf(cr.rot ?? 0), jib = cr.jib ?? 55, cnt = cr.counter ?? 16;
+        const ry = -(cr.rot ?? 0) * D;
+        detail.add(G.box(q.x, (bot + top) / 2, q.z, 2.0, top - bot, 2.0), mats.yellow);
+        detail.add(G.box(q.x + (ux * jib) / 2, top + 1, q.z + (uz * jib) / 2, jib, 1.6, 1.4, ry), mats.yellow);
+        detail.add(G.box(q.x - (ux * cnt) / 2, top + 1, q.z - (uz * cnt) / 2, cnt, 1.4, 2.2, ry), mats.yellow);
+        detail.add(G.box(q.x - ux * (cnt - 3), top - 0.5, q.z - uz * (cnt - 3), 5, 3, 3, ry), mats.roof);
+        detail.add(G.box(q.x, top + 5, q.z, 1.0, 9, 1.0), mats.yellow);
+        beacons.add(q.x, top + 10, q.z, 0, 4);
+        beacons.add(q.x + ux * (jib - 3), top + 2, q.z + uz * (jib - 3), 1, 2.5);
         break;
       }
       case 'slope':
@@ -673,9 +786,15 @@ function buildPart(env, R, P) {
 function buildSigns(env, R) {
   const { signs } = env;
   for (const sg of R.spec.signs || []) {
-    const P = findPart(R, sg.part ?? 0);
     const opts = { color: sg.color || '#ffffff', weight: sg.weight ?? 800, serif: !!sg.serif, glow: sg.glow || null, bg: sg.bg || null };
     const h = sg.h ?? 4;
+    if (sg.part === null && sg.at && sg.face !== 'roof') {
+      // 不挂体块的独立字牌（挂在别的模块/旧模型的墙面上、落地字等）：at 世界坐标、face 朝向、y 离地（本栋地面）
+      const [nx, nz] = faceDir(sg.face ?? 'S');
+      signs.place(sg.text, { x: sg.at[0] + nx * (sg.out ?? 0.3), y: R.ground + (sg.y ?? h), z: sg.at[1] + nz * (sg.out ?? 0.3) }, nx, nz, h, sg.maxW ?? 1e9, opts);
+      continue;
+    }
+    const P = findPart(R, sg.part ?? 0);
     if (sg.face === 'roof') {
       const c = sg.at ? { x: sg.at[0], z: sg.at[1] } : offsetPt(partCentroid(P), sg.offset);
       placeFlat(signs, sg.text, c.x, R.ground + (sg.y ?? P.top) + 0.35, c.z, h, sg.rot ?? 0, sg.maxW ?? 1e9, opts);
@@ -764,7 +883,7 @@ function buildNight(env, R) {
     const w = Math.min(m.width ?? e.L * 0.8, e.L * 0.95), off = m.out ?? 0.5;
     const cx = e.mx + e.nx * off + e.ex * (m.shift ?? 0), cz = e.mz + e.nz * off + e.ez * (m.shift ?? 0);
     const ax = cx - (e.ex * w) / 2, az = cz - (e.ez * w) / 2, bx = cx + (e.ex * w) / 2, bz = cz + (e.ez * w) / 2;
-    env.fb.panel(ax, az, bx, bz, R.ground + m.from, R.ground + m.to, mkStyle({ ...PATTERNS[m.pattern || 'screen'], seed: 3, tint: [0.02, 0.02, 0.02], spd: [0.2, 0.2, 0.2] }));
+    env.fb.panel(ax, az, bx, bz, R.ground + m.from, R.ground + m.to, mkStyle({ ...PATTERNS[m.pattern || 'screen'], seed: 3, tint: m.tint ?? [0.02, 0.02, 0.02], spd: m.spd ?? [0.2, 0.2, 0.2], ...(m.style || {}) }));
   }
 }
 

@@ -146,6 +146,7 @@
 - `y` 字中心离地高（默认体块顶下 0.9×字高）、`h` 字高、`fill` 最大宽度占边长比例（0.8）、`out` 离墙距离、`color` / `glow` / `serif` / `weight` / `bg`。
 - `face:'roof'`：屋面文字，`at`/`offset` 定中心，`rot` 为文字行进方向（地图角度），`maxW` 最大宽度。
 - 所有招牌进同一张图集（夜间自发光）。字要写**档案 signage 里的原文**，颜色用档案 `color_hex`。
+- `part: null` + `at:[x,z]` + `face`（方位/角度）+ `y`（离本栋地面米）：不挂体块的独立字牌——挂在旧模型/别的模块的墙面上（如未央国际裙房的 CUB GROCERY）、落地字等。
 
 ### 3.5 装饰线条与夜景
 
@@ -156,6 +157,7 @@ night: {
   outline:    [{ part: 'towerN', color: '#ff9a3c', y: 81, w: 0.6, vertical: false }], // 轮廓灯：体块顶沿一圈（vertical 同时勾转角竖线）
   floodlight: [{ part: 'body', color: '#3f7dff', strength: 0.32, from: 26, to: 180 }],  // 泛光：立面外加色光幕，自下而上渐隐，仅夜间
   media:      [{ part: 'mall', face: 'W', from: 8, to: 24, width: 40, shift: 0, pattern: 'screen' }], // LED 屏
+  // media 另可给 tint / spd（白天的玻璃色，默认近黑）与 style（覆盖立面参数）：EHB 的竖向 LED 媒体带白天仍是幕墙色
 }
 ```
 - `bands`：沿体块轮廓的水平线条（白天是实体金属/铝板带，`glow` 给了就在夜间发光）；`wave` 让线条沿周长上下起伏（“波浪线条灯”）。
@@ -177,7 +179,10 @@ night: {
 | `frame` | `h`、`inset`、`step`、`post`、`mat`、`glow`、`color` | 屋顶通透构架 / 设备屏风 |
 | `pyramid` | `h`、`inset`、`spire`、`mat` | 玻璃棱锥 + 可选塔尖 |
 | `arch` | `h`（矢高）；`size:[长,跨]`+`at`/`offset`+`rot`，或默认取体块外接矩形（`along:'short'` 换向） | 筒拱：采光中庭、拱形屋面 |
-| `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring` | 穹顶 |
+| `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring`、`rot` | 穹顶；`rot`（度，地图角）把椭圆的第一轴转到该方位（梭形天窗、斜放的椭圆顶；此时建议 `ring:false`） |
+| `hip` | `size:[长,宽]`+`at`/`offset`+`rot`（或默认取体块顶部外接矩形）、`over` 出檐、`eave` 檐口厚、`h` 坡高、`ridge` 正脊长（默认 长−宽，四面等坡）、`flat`∈(0,1) 截顶比例（盝顶，顶部平台）、`lift`、`mat`、`eaveMat`、`soffit`、`glow`（檐口夜间线灯） | 四坡顶 / 庑殿顶 / 盝顶 + 出檐（行政中心、北站等“大屋顶”）。屋面类：多个 `hip` 可叠在同一体块上，L/U 形楼按每个臂一个矩形，坡面在转角自然相交；`stack:true` 才抬游标 |
+| `sawtooth` | `size`+`at`+`rot`（或外接矩形）、`n` 齿数、`h` 齿高、`face` 采光面朝向（默认北）、`mat`、`glass`（可带 `glow`） | 锯齿形天窗屋面（老厂房），齿沿 `size[0]` 方向排列 |
+| `crane` | `at`/`offset`、`from`（塔身底，离地米，默认 0）、`top`（塔身顶离地）、`jib` 吊臂长、`counter` 配重臂长、`rot` 吊臂方位 | 在建塔楼的塔吊（黄色塔身 + 吊臂 + 障碍灯） |
 
 叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
 `dome / arch / masts / spire / helipad` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
