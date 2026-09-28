@@ -216,6 +216,115 @@ def local_rot(fp, x, z):
     return math.atan2(c[1][1] - c[0][1], c[1][0] - c[0][0])
 
 
+# ───────────────────────── 轮廓选择与合成（防穿模） ─────────────────────────
+# 轮廓面积上限：对位时超过上限的候选一律不要（曾把“世纪金花(钟楼店)”对到 1100 万 m² 的城墙整环，
+# 渲染成盖住整个城墙内的 12 m 大盒子，并让其中的通用建筑、回民街、古建全部让位/穿模）
+MAX_AREA = {'tower': 15000, 'mall': 250000, 'venue': 250000, 'stadium': 200000, 'campus': 40000}
+# 地下商场（地面只有出入口/下沉广场）：不生成地上体量，只做标注
+UNDERGROUND = r'地下商场为主|以地下为主|主体在.{0,8}地下|地上仅|地面仅.{0,6}出入口'
+SAME_BLD = 0.6      # 较小者 ≥ 60% 落在另一条目轮廓内 → 视为同一栋（后出现的丢弃）
+ROAD_KEEP = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified',
+             'motorway_link', 'trunk_link', 'primary_link', 'secondary_link'}
+
+
+def poly_of(pts):
+    return Polygon(np.array(pts, float).reshape(-1, 2))
+
+
+def same_building(p, q):
+    """同一栋：交叠 ≥ 较小者的 60%，且两者面积相近（塔楼落在商场裙房里不算）"""
+    a0, a1 = sorted((p.area, q.area))
+    return a0 >= 0.35 * a1 and p.intersection(q).area >= SAME_BLD * a0
+
+
+class Obstacles:
+    """合成矩形要避开的东西：机动车道路面（中心线按路宽/2 缓冲，隧道除外）、skyline.json 实测高层（渲染端通用塔楼）、
+    已放置的其他地标轮廓。通用建筑（buildings.bin）不算：它们会给地标让位。"""
+
+    def __init__(self):
+        from shapely.geometry import LineString
+        R = json.loads((ROOT / 'public/data/roads.json').read_text('utf-8'))
+        keep = {i for i, c in enumerate(R['classes']) if c in ROAD_KEEP}
+        g = []
+        for f in R['features']:
+            if f['c'] not in keep or f.get('t'):
+                continue
+            q, hw = f['p'], max(2.0, (f.get('w') or 8) / 2)
+            for i in range(0, len(q) - 2, 2):
+                g.append(LineString([(q[i], q[i + 1]), (q[i + 2], q[i + 3])]).buffer(hw, cap_style='flat'))
+        sk = json.loads((ROOT / 'public/data/skyline.json').read_text('utf-8'))
+        for f in sk['features']:
+            o = f.get('outer') or []
+            if len(o) >= 6 and (f.get('h') or 0) >= 34:
+                p = poly_of(o)
+                if p.is_valid:
+                    g.append(p)
+        self.static = g
+        self.tree = STRtree(g)
+        self.placed = []
+
+    def overlap(self, p):
+        a = sum(self.static[i].intersection(p).area for i in self.tree.query(p, predicate='intersects'))
+        return a + sum(q.intersection(p).area for q in self.placed if q.intersects(p))
+
+
+def fit_rect(obs, x, z, w, d, rot):
+    """合成矩形落位：在 ±30 m、缩放 1.0~0.6 内找与障碍（道路/实测高层/其他地标）重叠最小的位置；原位无重叠则不动"""
+    base = Polygon(np.array(rect(x, z, w, d, rot), float).reshape(-1, 2))
+    ov0 = obs.overlap(base)
+    if ov0 < 1:
+        return rect(x, z, w, d, rot), 0.0
+    c, s = math.cos(rot), math.sin(rot)
+    best = (3 * ov0 / base.area, x, z, 1.0)
+    for sc in (1.0, 0.9, 0.8, 0.7, 0.6):
+        for du in range(-30, 31, 6):
+            for dv in range(-30, 31, 6):
+                cx, cz = x + du * c - dv * s, z + du * s + dv * c
+                q = Polygon(np.array(rect(cx, cz, w * sc, d * sc, rot), float).reshape(-1, 2))
+                cost = 3 * obs.overlap(q) / q.area + 0.004 * math.hypot(du, dv) + 0.5 * (1 - sc)
+                if cost < best[0] - 1e-6:
+                    best = (cost, cx, cz, sc)
+    _, cx, cz, sc = best
+    pts = rect(cx, cz, w * sc, d * sc, rot)
+    ov = obs.overlap(Polygon(np.array(pts, float).reshape(-1, 2)))
+    if ov > ov0 - max(50.0, 0.3 * ov0):   # 改善不明显则不动（重复运行时保持稳定）
+        return rect(x, z, w, d, rot), ov0
+    return pts, ov
+
+
+def rect_params(pts):
+    """由 rect() 生成的四边形反求 (cx, cz, w, d, rot)"""
+    q = np.array(pts, float).reshape(-1, 2)
+    cx, cz = q.mean(0)
+    e0, e1 = q[1] - q[0], q[2] - q[1]
+    return cx, cz, float(np.hypot(*e0)), float(np.hypot(*e1)), math.atan2(e0[1], e0[0])
+
+
+def contains_fp(fp, x, z, min_area, max_area, used):
+    """合成前兜底：若点落在某个面积合理的实测轮廓内（对位时因面积与调研尺寸相差过大被拒），直接用它"""
+    P = Point(x, z)
+    c = [j for j in fp.near(x, z, 5) if j not in used and min_area <= fp.polys[j].area <= max_area and fp.polys[j].contains(P)]
+    return min(c, key=lambda j: fp.polys[j].area) if c else None
+
+
+def podium_rects(pts, n):
+    """综合体里的塔楼：落在商场轮廓内沿长边排布（34×30 m）"""
+    P = Polygon(np.array(pts, float).reshape(-1, 2))
+    r = P.minimum_rotated_rectangle
+    c = list(r.exterior.coords)
+    e0 = np.subtract(c[1], c[0])
+    e1 = np.subtract(c[2], c[1])
+    ax, L = (e0, np.hypot(*e0)) if np.hypot(*e0) >= np.hypot(*e1) else (e1, np.hypot(*e1))
+    u = ax / max(L, 1e-6)
+    rot = math.atan2(u[1], u[0])
+    cx, cz = P.centroid.x, P.centroid.y
+    out = []
+    for k in range(n):
+        off = (k - (n - 1) / 2) * min(70, L / max(1, n))
+        out.append(rect(cx + u[0] * off, cz + u[1] * off, 34, 30, rot))
+    return out
+
+
 # ───────────────────────── 风格推断 ─────────────────────────
 COLORS = [
     (r'金|香槟|铜', '#5a4a32', '#b8a37a'), (r'深蓝|宝蓝|蓝色|蓝绿|湖蓝', '#2f4a63', '#5b6b78'),
@@ -290,7 +399,10 @@ def taper_from(it):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--report', action='store_true')
+    ap.add_argument('--refit', action='store_true', help='只对现有 landmarks2026.json 重做轮廓选择/合成（不改坐标/高度等其他字段）')
     args = ap.parse_args()
+    if args.refit:
+        return refit(args)
     places = {}
     pf = ROOT / 'data-src/amap/places.json'
     if pf.exists():
@@ -300,6 +412,9 @@ def main():
                 lon, lat = map(float, p['location'].split(','))
                 places[n] = project(*gcj2wgs(lon, lat))
     fp = Footprints()
+    obs = Obstacles()
+    placed_tw = []  # 已放置的塔楼轮廓（塔楼之间不许交叠）
+    used = set()   # 已被某个地标占用的轮廓（同一轮廓不再分给第二个条目：长安云南/北馆、两校同名图书馆……）
     out = {'version': 1, 'towers': [], 'malls': [], 'heritage': [], 'labels': []}
     report = []
     seen = []
@@ -321,19 +436,20 @@ def main():
         seen.append((k, x, z))
         return False
 
-    def match(it, x, z, want_area, min_area, r):
-        """对位轮廓：同名 > 含点且面积合理 > 半径内最近且面积合理"""
+    def match(it, x, z, want_area, min_area, r, kind):
+        """对位轮廓：同名 > 含点且面积合理 > 半径内最近且面积合理；超过 MAX_AREA 或已被其他地标占用的轮廓不要"""
+        max_area = MAX_AREA[kind]
         i = fp.by_name(it.get('name'), x, z)
         if i is None:
             for al in it.get('aliases') or []:
                 i = fp.by_name(al, x, z)
                 if i is not None:
                     break
-        ok = lambda p: p.area >= min_area and (want_area is None or 0.2 * want_area <= p.area <= 5 * want_area)
-        if i is not None and ok(fp.polys[i]):
+        ok = lambda p: min_area <= p.area <= max_area and (want_area is None or 0.2 * want_area <= p.area <= 5 * want_area)
+        if i is not None and i not in used and ok(fp.polys[i]):
             return i, 'name'
         P = Point(x, z)
-        cand = [j for j in fp.near(x, z, r) if ok(fp.polys[j])]
+        cand = [j for j in fp.near(x, z, r) if j not in used and ok(fp.polys[j])]
         inside = [j for j in cand if fp.polys[j].contains(P)]
         if inside:
             return min(inside, key=lambda j: fp.polys[j].area), 'contains'
@@ -341,7 +457,21 @@ def main():
             j = min(cand, key=lambda j: fp.polys[j].distance(P))
             if fp.polys[j].distance(P) < r:
                 return j, 'near'
+        j = contains_fp(fp, x, z, min_area, max_area, used)
+        if j is not None:
+            return j, 'contains'
         return None, 'synth'
+
+    def place(pts, i, name):
+        """登记轮廓；与已放置地标是同一栋则返回 False（条目丢弃）"""
+        P = poly_of(pts)
+        if any(same_building(P, q) for q in obs.placed):
+            report.append(('重复', name, '同一轮廓', '', 0))
+            return False
+        if i is not None:
+            used.add(i)
+        obs.placed.append(P)
+        return True
 
     # —— 塔楼 ——
     for it in load_list('towers'):
@@ -360,13 +490,21 @@ def main():
             continue
         sz = it.get('footprint_size_m')
         want = (num(sz[0]) or 40) * (num(sz[1]) or 40) if isinstance(sz, list) and len(sz) == 2 else None
-        i, how = match(it, x, z, want, 250, 45)
+        i, how = match(it, x, z, want, 250, 45, 'tower')
         key = key_of(name)
         if i is not None:
             pts = poly_out(fp.polys[i])
         else:
             w, d = (num(sz[0]) or 42, num(sz[1]) or 42) if isinstance(sz, list) and len(sz) == 2 else (42, 42)
-            pts = rect(x, z, min(w, 90), min(d, 90), local_rot(fp, x, z))
+            pts, _ = fit_rect(obs, x, z, min(w, 90), min(d, 90), local_rot(fp, x, z))
+        if i is not None and any(q.intersection(poly_of(pts)).area > 0.1 * min(q.area, poly_of(pts).area) for q in placed_tw):
+            # 与已放置塔楼交叠（就近对位拿到了别的塔的底盘）：改为合成
+            w, d = (num(sz[0]) or 42, num(sz[1]) or 42) if isinstance(sz, list) and len(sz) == 2 else (42, 42)
+            pts, _ = fit_rect(obs, x, z, min(w, 90), min(d, 90), local_rot(fp, x, z))
+            i, how = None, 'synth'
+        if not place(pts, i, name):
+            continue
+        placed_tw.append(poly_of(pts))
         crown, roof = crown_from(it, key, h)
         spec = {'key': key, 'name': name, 'pts': pts, 'h': round(h, 1), 'style': style_from(it, key, 'tower'), 'src': how}
         if crown:
@@ -392,17 +530,23 @@ def main():
             continue
         x, z = xz
         key = key_of(name)
+        if re.search(UNDERGROUND, ' '.join(str(it.get(k) or '') for k in ('form', 'facade', 'remark'))):
+            out['labels'].append({'n': name, 'x': round(x, 1), 'z': round(z, 1), 'cat': 'mall'})
+            report.append(('标注', name, 'underground', cs, 0))
+            continue
         fl = num(it.get('floors_above'))
         h = num(it.get('height_m')) or (fl * 5.2 + 3 if fl else 28)
         h = max(12, min(h, 60))
         sz = it.get('footprint_size_m')
         want = (num(sz[0]) or 120) * (num(sz[1]) or 80) if isinstance(sz, list) and len(sz) == 2 else None
-        i, how = match(it, x, z, want, 1500, 70)
+        i, how = match(it, x, z, want, 1500, 70, 'mall')
         if i is not None:
             pts = poly_out(fp.polys[i], 0.8)
         else:
             w, d = (num(sz[0]) or 140, num(sz[1]) or 90) if isinstance(sz, list) and len(sz) == 2 else (140, 90)
-            pts = rect(x, z, min(w, 320), min(d, 260), local_rot(fp, x, z))
+            pts, _ = fit_rect(obs, x, z, min(w, 320), min(d, 260), local_rot(fp, x, z))
+        if not place(pts, i, name):
+            continue
         sign = str(it.get('short_sign') or name).strip()
         spec = {'key': key, 'name': name, 'pts': pts, 'h': round(h, 1), 'style': style_from(it, key, 'mall'), 'src': how,
                 'signs': [{'text': sign[:12], 'h': round(max(3.5, min(7, h * 0.18)), 1), 'faces': 2, 'color': sign_color(it)}]}
@@ -411,21 +555,11 @@ def main():
         # 综合体里的塔楼：落在商场轮廓内沿长边排布
         tws = [t for t in it.get('towers') or [] if num(t.get('height_m')) and num(t.get('height_m')) > h + 15]
         if tws:
-            P = Polygon(np.array(pts, float).reshape(-1, 2))
-            r = P.minimum_rotated_rectangle
-            c = list(r.exterior.coords)
-            e0 = np.subtract(c[1], c[0])
-            e1 = np.subtract(c[2], c[1])
-            ax, L = (e0, np.hypot(*e0)) if np.hypot(*e0) >= np.hypot(*e1) else (e1, np.hypot(*e1))
-            u = ax / max(L, 1e-6)
-            rot = math.atan2(u[1], u[0])
-            cx, cz = P.centroid.x, P.centroid.y
+            rects = podium_rects(pts, len(tws[:4]))
             for k, t in enumerate(tws[:4]):
-                off = (k - (len(tws[:4]) - 1) / 2) * min(70, L / max(1, len(tws[:4])))
-                tx, tz = cx + u[0] * off, cz + u[1] * off
                 th = num(t['height_m'])
                 tk = key_of(name + str(t.get('name') or k))
-                out['towers'].append({'key': tk, 'name': t.get('name') or f'{name}{k + 1}号楼', 'pts': rect(tx, tz, 34, 30, rot),
+                out['towers'].append({'key': tk, 'name': t.get('name') or f'{name}{k + 1}号楼', 'pts': rects[k],
                                       'h': round(th, 1), 'base': None, 'onPodium': key,
                                       'style': style_from(it, tk, 'tower'), 'crown': {'h': 5, 'color': '#dfe9ff'} if th > 90 else None,
                                       'src': 'synth'})
@@ -453,7 +587,7 @@ def main():
         spec = {'key': key, 'name': name, 'h': round(h, 1), 'style': style_from(it, key, 'venue'), 'cat': cat}
         if cat == 'stadium':
             a, b = (L or 260) / 2, (W or 220) / 2
-            i, how = match(it, x, z, None, 8000, 80)
+            i, how = match(it, x, z, None, 8000, 80, 'stadium')
             if i is not None:
                 P = fp.polys[i]
                 x, z = P.centroid.x, P.centroid.y
@@ -469,12 +603,14 @@ def main():
             spec['src'] = how
         else:
             want = L * W if L and W else None
-            i, how = match(it, x, z, want, 1200, 80)
+            i, how = match(it, x, z, want, 1200, 80, 'venue')
             if i is not None:
                 spec['pts'] = poly_out(fp.polys[i], 0.8)
             else:
-                spec['pts'] = rect(x, z, min(L or 110, 400), min(W or 80, 300), local_rot(fp, x, z))
+                spec['pts'], _ = fit_rect(obs, x, z, min(L or 110, 400), min(W or 80, 300), local_rot(fp, x, z))
             spec['src'] = how
+        if not place(spec['pts'], i, name):
+            continue
         st = str(it.get('sign_text') or '').strip()
         if st and st not in ('无', 'null') and len(st) <= 14:
             spec['signs'] = [{'text': st, 'h': round(max(3, min(6, h * 0.14)), 1), 'faces': 1, 'color': sign_color(it)}]
@@ -567,9 +703,11 @@ def main():
             if not bn or re.search(r'校门|大门|牌楼|门$', bn):
                 continue
             j = fp.by_name(bn, x, z, r=1500)
-            if j is None or fp.polys[j].area < 600 or fp.polys[j].area > 40000:
+            if j is None or j in used or fp.polys[j].area < 600 or fp.polys[j].area > MAX_AREA['campus']:
                 continue
             P = fp.polys[j]
+            if not place(poly_out(P, 0.8), j, f'{name} {bn}'):
+                continue
             desc = json.dumps(lb, ensure_ascii=False) if isinstance(lb, dict) else bn
             h = num(lb.get('height_m')) if isinstance(lb, dict) else None
             h = h or (40 if re.search(r'主楼|中心楼', bn) else 26)
@@ -620,6 +758,163 @@ def main():
     if args.report:
         for r in report:
             print('  ', *r)
+
+
+# ───────────────────────── --refit：只重做轮廓 ─────────────────────────
+def refit(args):
+    """对现有 landmarks2026.json 重做“轮廓选择与合成”，其余字段（坐标来源、高度、立面、招牌……）原样保留：
+      1. 调研清单标明地下商场的条目 → 去掉体量，改为标注；
+      2. 轮廓面积超上限（对位错到城墙整环/整片街区）→ 用清单坐标重新对位（带上限），对不上则合成矩形；
+      3. 合成矩形（src=synth）：点落在面积合理的实测轮廓内则改用该轮廓，否则避开道路/实测高层/其他地标重新落位；
+      4. 与前面条目是同一栋（长安云南/北馆、两校同名图书馆……）→ 丢弃；
+      5. 商场轮廓变了，其综合体塔楼（onPodium）按新轮廓重新排布；商场被丢弃则其塔楼一并丢弃。
+    （data-src/amap/places.json 缺失时完整重建会改变坐标；日常修轮廓用本模式即可）
+    """
+    data = json.loads(OUT.read_text('utf-8'))
+    fp = Footprints()
+    obs = Obstacles()
+    used = set()
+    lists = {}
+    for nm in ('towers', 'malls', 'venues', 'universities'):
+        for it in load_list(nm):
+            if it.get('name'):
+                lists.setdefault(it['name'], it)
+
+    def pos(it):
+        lon, lat = num(it.get('lon')), num(it.get('lat'))
+        if lon is None or lat is None or not (108.3 < lon < 109.7 and 33.6 < lat < 34.9):
+            return None
+        return project(lon, lat)
+
+    def kind_of(sec, e):
+        if sec == 'towers':
+            return 'tower'
+        c = e.get('cat')
+        return 'stadium' if c == 'stadium' else 'campus' if c == 'campus' else 'venue' if c else 'mall'
+
+    def rematch(it, x, z, kind):
+        mn = {'tower': 250, 'mall': 1500, 'venue': 1200, 'stadium': 8000, 'campus': 600}[kind]
+        mx = MAX_AREA[kind]
+        ok = lambda j: j not in used and mn <= fp.polys[j].area <= mx
+        for nm in [it.get('name')] + list(it.get('aliases') or []):
+            j = fp.by_name(nm, x, z) if nm else None
+            if j is not None and ok(j):
+                return j
+        P = Point(x, z)
+        c = [j for j in fp.near(x, z, 45 if kind == 'tower' else 70) if ok(j)]
+        inside = [j for j in c if fp.polys[j].contains(P)]
+        if inside:
+            return min(inside, key=lambda j: fp.polys[j].area)
+        return min(c, key=lambda j: fp.polys[j].distance(P)) if c else None
+
+    labels = {l['n']: (l['x'], l['z']) for l in data['labels']}
+
+    def campus_d(e):
+        c = poly_of(e['pts']).centroid
+        L = labels.get(e['name'].split(' ')[0])
+        return math.hypot(c.x - L[0], c.y - L[1]) if L else 1e9
+
+    log = []
+    placed_e = []
+    changed_malls, dropped_keys = set(), set()
+    new = {'towers': [], 'malls': []}
+    RANK = {'name': 0, 'contains': 1, 'near': 2, 'synth': 3}
+    placed_tw = []
+    for sec in ('towers', 'malls'):
+        # 按对位可靠度处理（同名 > 含点 > 就近 > 合成），输出仍保持原顺序
+        idx = {id(e): k for k, e in enumerate(data[sec])}
+        for e in sorted(data[sec], key=lambda e: RANK.get(e.get('src'), 3)):
+            if e.get('onPodium'):
+                new[sec].append(e)
+                continue
+            kind = kind_of(sec, e)
+            it = lists.get(e['name'].split(' ')[0] if kind == 'campus' else e['name'], {})
+            P = poly_of(e['pts'])
+            old = list(e['pts'])
+            if kind != 'campus' and it and re.search(UNDERGROUND, ' '.join(str(it.get(k) or '') for k in ('form', 'facade', 'remark'))):
+                c = P.centroid
+                xz = pos(it) or (c.x, c.y)
+                data['labels'].append({'n': e['name'], 'x': round(xz[0], 1), 'z': round(xz[1], 1), 'cat': 'mall'})
+                dropped_keys.add(e['key'])
+                log.append(('地下商场→标注', e['name'], round(P.area)))
+                continue
+            if P.area > MAX_AREA[kind] or not P.is_valid:
+                xz = pos(it) if it else None
+                if xz is None:
+                    dropped_keys.add(e['key'])
+                    log.append(('轮廓超限且无坐标→丢弃', e['name'], round(P.area)))
+                    continue
+                j = rematch(it, *xz, kind)
+                if j is not None:
+                    e['pts'], e['src'] = poly_out(fp.polys[j], 0.6 if kind == 'tower' else 0.8), 'name'
+                    used.add(j)
+                else:
+                    sz = it.get('footprint_size_m')
+                    dflt = (42, 42) if kind == 'tower' else (140, 90)
+                    w, d = (num(sz[0]) or dflt[0], num(sz[1]) or dflt[1]) if isinstance(sz, list) and len(sz) == 2 else dflt
+                    e['pts'], _ = fit_rect(obs, xz[0], xz[1], min(w, 320), min(d, 260), local_rot(fp, *xz))
+                    e['src'] = 'synth'
+                log.append(('轮廓超限→重新对位', e['name'], round(P.area), e['src'], round(poly_of(e['pts']).area)))
+            elif e.get('src') == 'synth' and kind != 'stadium':
+                cx, cz, w, d, rot = rect_params(e['pts'])
+                mn = {'tower': 250, 'mall': 1500, 'venue': 1200, 'campus': 600}[kind]
+                j = contains_fp(fp, cx, cz, mn, MAX_AREA[kind], used)
+                if j is not None:
+                    e['pts'], e['src'] = poly_out(fp.polys[j], 0.6 if kind == 'tower' else 0.8), 'contains'
+                    used.add(j)
+                    log.append(('合成→实测轮廓', e['name'], round(P.area), round(fp.polys[j].area)))
+                else:
+                    ov0 = obs.overlap(P)
+                    pts, ov = fit_rect(obs, cx, cz, w, d, rot)
+                    if ov < ov0 - 1:   # 没挪动就保留原坐标（反求矩形参数有取整误差）
+                        e['pts'] = pts
+                        log.append(('合成矩形避让', e['name'], f'重叠 {ov0:.0f}→{ov:.0f} m²'))
+            Q = poly_of(e['pts'])
+            if kind == 'tower' and any(q.intersection(Q).area > 0.1 * min(q.area, Q.area) for q in placed_tw):
+                # 两座塔楼轮廓交叠（“就近”对位把相邻综合体的整块底盘分给了另一座塔）：可靠度低的一座改按清单坐标合成
+                xz = pos(it) if it else None
+                if xz is not None:
+                    sz = it.get('footprint_size_m')
+                    w, d = (num(sz[0]) or 42, num(sz[1]) or 42) if isinstance(sz, list) and len(sz) == 2 else (42, 42)
+                    e['pts'], ov = fit_rect(obs, xz[0], xz[1], min(w, 90), min(d, 90), local_rot(fp, *xz))
+                    e['src'] = 'synth'
+                    Q = poly_of(e['pts'])
+                    log.append(('塔楼轮廓互相交叠→合成', e['name'], round(P.area), f'重叠 {ov:.0f} m²'))
+            hit = [k for k, q in enumerate(obs.placed) if same_building(Q, q)]
+            if hit and kind == 'campus' and len(hit) == 1 and placed_e[hit[0]].get('cat') == 'campus':
+                # 两个校区的标志楼对到同一轮廓（如“雁塔校区图书馆”）：留给校区标注更近的那个
+                o = placed_e[hit[0]]
+                if campus_d(e) < campus_d(o):
+                    new[sec].remove(o)
+                    dropped_keys.add(o['key'])
+                    log.append(('同一栋重复→丢弃', o['name'], round(obs.placed[hit[0]].area)))
+                    del obs.placed[hit[0]], placed_e[hit[0]]
+                    hit = []
+            if hit:
+                dropped_keys.add(e['key'])
+                log.append(('同一栋重复→丢弃', e['name'], round(Q.area)))
+                continue
+            obs.placed.append(Q)
+            placed_e.append(e)
+            if kind == 'tower':
+                placed_tw.append(Q)
+            if sec == 'malls' and e['pts'] != old:
+                changed_malls.add(e['key'])
+            new[sec].append(e)
+        new[sec].sort(key=lambda e: idx[id(e)])
+    # 综合体塔楼：商场轮廓变了则重新排布
+    for m in new['malls']:
+        if m['key'] not in changed_malls:
+            continue
+        tws = [t for t in new['towers'] if t.get('onPodium') == m['key']]
+        for t, r in zip(tws, podium_rects(m['pts'], len(tws))):
+            t['pts'] = r
+    new['towers'] = [t for t in new['towers'] if t.get('onPodium') not in dropped_keys]
+    data['towers'], data['malls'] = new['towers'], new['malls']
+    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), 'utf-8')
+    print(f'--refit：塔楼 {len(data["towers"])}、商场/场馆 {len(data["malls"])}，改动 {len(log)} 条')
+    for r in log:
+        print('  ', *r)
 
 
 if __name__ == '__main__':
