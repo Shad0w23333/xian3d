@@ -597,11 +597,11 @@ const stadium = {
       name: 't' + (i + 1), kind: 'podium', pts: ellipse(ST.cx, ST.cz, a, b), holes: [ellipse(ST.cx, ST.cz, ha, hb)], base: 0, top,
       style: { ...STADIUM_SKIN, seed: 140 + i }, roofMat: { color: '#c8452c', roughness: 0.85 }, // 顶面 = 红色座椅
     })),
-    // 东、西主看台后部结构 + 白色平挑罩棚（卫星位置已扣除倾斜，约 ±8 m）
+    // 东、西主看台后部结构 + 白色平挑罩棚（按卫星量取；此处影像条带倾斜很小——同幅美术博物馆圆鼓屋面与 OSM 轮廓重合——未做倾斜改正，±5 m）
     { name: 'standW', pts: box(-551, 2944, -531, 3084), base: 0, top: 34, style: { ...STADIUM_SKIN, seed: 150 }, roof: { mech: false, parapet: 0.3 } },
-    { name: 'standE', pts: box(-368, 2944, -350, 3084), base: 0, top: 33, style: { ...STADIUM_SKIN, seed: 151 }, roof: { mech: false, parapet: 0.3 } },
+    { name: 'standE', pts: box(-352, 2940, -334, 3080), base: 0, top: 33, style: { ...STADIUM_SKIN, seed: 151 }, roof: { mech: false, parapet: 0.3 } },
     { name: 'canopyW', kind: 'solid', pts: box(-552, 2942, -508, 3086), base: 34, top: 35.6, mat: { color: '#eeeeea', roughness: 0.55 } },
-    { name: 'canopyE', kind: 'solid', pts: box(-393, 2942, -349, 3086), base: 33, top: 34.6, mat: { color: '#eeeeea', roughness: 0.55 } },
+    { name: 'canopyE', kind: 'solid', pts: box(-374, 2936, -330, 3080), base: 33, top: 34.6, mat: { color: '#eeeeea', roughness: 0.55 } },
   ],
   bands: [{ part: 't3', levels: [14], wave: { amp: 4, len: 160, phase: 0.6 }, h: 2.2, depth: 0.4, color: '#c8322a' }], // 红色水平波浪饰带
   signs: [{ text: '陕西省体育场', part: 'canopyW', face: 'W', y: 34.8, h: 1.4, color: '#d7261e' }],
