@@ -551,11 +551,13 @@ const xidigang = {
         .map(([x, z, rx, rz], i) => ({ type: 'dome', at: [x, z], r: [rx, rz], h: i === 1 ? 6.5 : 3.2, mat: { color: '#eef0f0', roughness: 0.35, metalness: 0.15 }, ring: false })) },
     { name: 'corner', shape: 'circle', size: [2 * XDG_C.r, 2 * XDG_C.r], at: [XDG_C.x, XDG_C.z], base: 0, top: 31, setbacks: [{ at: 22, inset: 1.5 }, { at: 27, inset: 3 }],
       style: { pattern: 'grid', tint: '#4f7ea8', spd: '#d9d4c8', floorH: 4.85, colW: 2.4, spandrel: 0.12, mullW: 0.18, lit: 0.8 }, roof: { mech: false, parapet: 1.1 } },
-    { name: 'eave', kind: 'solid', mat: { color: '#eeebe4', roughness: 0.6 }, pts: arcBand(XDG_C.x, XDG_C.z, XDG_C.r - 1, XDG_C.r + 1.2, -0.15, Math.PI * 0.62), base: 31, top: 36.5 },
+    // 顶部弧形檐带（照片：约 1.5 层高的暖灰/米色弧形实墙带，上挂 CITY 白字、ON 金字）
+    { name: 'eave', kind: 'solid', mat: { color: '#c9c2b5', roughness: 0.7 }, pts: arcBand(XDG_C.x, XDG_C.z, XDG_C.r - 1, XDG_C.r + 1.2, -0.15, Math.PI * 0.62), base: 29.5, top: 37 },
     { name: 'glassbox', shape: 'rect', size: [16, 3], at: [-140, -8712.2], base: 0, top: 34, style: { pattern: 'grid', tint: '#4f7ea8', spd: '#d9d4c8', floorH: 4.85, colW: 2, spandrel: 0.1, lit: 0.8 }, roof: { mech: false, parapet: 0.6 } },
     { name: 'cinema', shape: 'rect', size: [53, 26], at: [-88.5, -8731], base: 34, top: 41, style: { pattern: 'stoneWindows', spd: '#d4d0c6', tint: '#3b4650', floorH: 7, colW: 9, spandrel: 0.9, mullW: 8.8, lit: 0.1 }, roof: { mech: true, parapet: 0.8 } },
   ],
-  signs: [{ text: 'CITY ON', part: 'eave', face: 'SE', y: 33.8, h: 3.8, color: '#ffffff' }],
+  // 照片（东南航拍）：CITY 在左（偏南）、ON 在右（偏东）且更高更大；弧面上按方向各贴一块
+  signs: [{ text: 'CITY', part: 'eave', face: -62, y: 32.6, h: 3.6, color: '#ffffff', glow: '#ffffff' }, { text: 'ON', part: 'eave', face: -24, y: 34.6, h: 4.4, color: '#e0b23c', glow: '#ffc94a' }],
   bands: [{ part: 'mall', levels: [9.7, 14.5, 19.4, 24.2, 29.1], h: 0.25, depth: 0.12, color: '#c9b99c', glow: '#ffc27a', strength: 1.6 }],
   supersede: { keys: ['xidigang'], names: ['CityOn熙地港（西安）购物中心', 'CityOn熙地港', '熙地港'] },
   meta: {
@@ -563,7 +565,7 @@ const xidigang = {
     sources: ['OSM w1372139894', '塔博曼新闻稿 seven-level（weiyang/notes.md）', 'http://shx.chinadaily.com.cn/a/202307/21/WS64b9d1d3a3109d7585e45cc9.html'],
     photos: ['scratchpad/dossier_north/art/cdxdg_03.jpg', 'sat/xidigang.jpg', 'sat/n_xdg.jpg'], confidence: 'medium',
     notes: '高度未查到：7 层 × 4.85 m ≈ 34 m（与原模型相同，现有照片层数依据）；影院盒高出 7 m 按卫星位移估。椭圆采光顶位置沿用 sky-data2 的卫星量取值。'
-      + '原招牌“CityOn熙地港”挂在东南斜切面与东立面；照片为东南圆弧转角檐带上的“CITY ON”（ON 为金色，这里整行白色）。',
+      + '原招牌“CityOn熙地港”挂在东南斜切面与东立面；照片为东南圆弧转角檐带上的“CITY”（白）“ON”（金，略高），按弧面方向分贴两块。',
   },
 };
 
