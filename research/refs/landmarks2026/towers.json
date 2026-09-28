@@ -1,0 +1,2638 @@
+[
+ {
+  "name": "国瑞·西安金融中心（IFC）",
+  "lon": 108.877793,
+  "lat": 34.194663,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   55,
+   55
+  ],
+  "height_m": 350,
+  "floors": 75,
+  "year": 2022,
+  "status": "completed",
+  "form": "方形平面四角切角，塔身上部轻微收分；平顶塔冠+停机坪",
+  "facade": "浅蓝灰 Low-E 玻璃幕墙，竖向铝合金竖挺（推测）",
+  "crown": "顶部约 16 m 玻璃围合塔冠（模型 crown.h=16），屋顶停机坪；320 m 观景层",
+  "sign_text": "国瑞（推测）",
+  "sign_color": "白（推测）",
+  "night": "竖向线性灯带+塔冠内透光（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://m.maigoo.com/top/411804.html",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js",
+   "OSM w550214180"
+  ],
+  "osm_centroid": [
+   108.877793,
+   34.194663
+  ],
+  "osm_id": "w550214180",
+  "height_note": "公开口径 350 m；skyline.json 记为 330 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": 330,
+   "osm_height": 350.0,
+   "osm_levels": 75
+  }
+ },
+ {
+  "name": "西安绿地中心A座",
+  "lon": 108.876023,
+  "lat": 34.196499,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   56,
+   43
+  ],
+  "height_m": 270,
+  "floors": 57,
+  "year": 2018,
+  "status": "completed",
+  "form": "双塔之一；切角方形平面，顶部斜切坡面（与B座反向）",
+  "facade": "银灰/浅蓝玻璃幕墙+竖向金属线条",
+  "crown": "斜切坡顶塔冠，内透光",
+  "sign_text": "绿地",
+  "sign_color": "金黄（模型 #f2c14e）",
+  "night": "斜顶轮廓灯+竖向灯带（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js",
+   "OSM w986974316"
+  ],
+  "osm_centroid": [
+   108.876023,
+   34.196499
+  ],
+  "osm_id": "w986974316",
+  "notes": "锦业路与丈八二路东北角",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": 270.0,
+   "osm_height": 270.0,
+   "osm_levels": 57
+  }
+ },
+ {
+  "name": "西安绿地中心B座（天安人寿中心）",
+  "lon": 108.874471,
+  "lat": 34.196194,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   85,
+   55
+  ],
+  "height_m": 270,
+  "floors": 57,
+  "year": 2018,
+  "status": "completed",
+  "form": "双塔之一；切角方形塔楼坐落于 85×55 m 裙房上，顶部斜切坡面",
+  "facade": "银灰/浅蓝玻璃幕墙+竖向金属线条",
+  "crown": "斜切坡顶塔冠",
+  "sign_text": "绿地",
+  "sign_color": "金黄",
+  "night": "斜顶轮廓灯+竖向灯带（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://news.qq.com/rain/a/20240318A08SNJ00",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.874471,
+   34.196194
+  ],
+  "osm_id": "w986974317",
+  "notes": "锦业路与丈八二路西北角；OSM 轮廓含裙房，塔楼约 50×50 m",
+  "alt_names": [
+   "天安人寿中心"
+  ],
+  "local_data": {
+   "cmab_h": 36.7,
+   "skyline_h": 270.0,
+   "osm_height": 270.0,
+   "osm_levels": 57
+  }
+ },
+ {
+  "name": "中铁西安中心",
+  "lon": 108.879232,
+  "lat": 34.19468,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   40,
+   40
+  ],
+  "height_m": 230,
+  "floors": 51,
+  "year": 2016,
+  "status": "completed",
+  "form": "40×40 m 方塔，顶部 15 m 框架塔冠",
+  "facade": "蓝灰玻璃幕墙（推测）",
+  "crown": "框架式塔冠",
+  "sign_text": "中国中铁",
+  "sign_color": "红",
+  "night": "塔冠泛光（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://news.qq.com/rain/a/20240318A08SNJ00",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.879232,
+   34.19468
+  ],
+  "osm_id": "w550214178",
+  "notes": "锦业路与丈八一路交汇处；2012-12 开工，2016-06 交付",
+  "local_data": {
+   "cmab_h": 230.0,
+   "skyline_h": 230.0,
+   "osm_height": 230.0,
+   "osm_levels": 51
+  }
+ },
+ {
+  "name": "迈科中心（迈科商业中心写字楼）",
+  "lon": 108.876402,
+  "lat": 34.19444,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   54,
+   50
+  ],
+  "height_m": 216,
+  "floors": 45,
+  "year": 2018,
+  "status": "completed",
+  "form": "与君悦酒店塔楼经裙房连体（西北首座全钢结构连体建筑）；塔楼约 55×50 m",
+  "facade": "浅蓝玻璃幕墙（推测）",
+  "crown": "平顶+14 m 塔冠",
+  "sign_text": "迈科",
+  "sign_color": "白",
+  "night": "塔冠内透光（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://xian.kbgok.com/news/4507",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.876402,
+   34.19444
+  ],
+  "osm_id": "w1546339320",
+  "local_data": {
+   "cmab_h": 55.9,
+   "skyline_h": 216.0,
+   "osm_height": null,
+   "osm_levels": 45
+  }
+ },
+ {
+  "name": "西安君悦酒店（迈科中心酒店塔）",
+  "lon": 108.875958,
+  "lat": 34.194085,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   67,
+   37
+  ],
+  "height_m": 155.35,
+  "floors": 34,
+  "year": 2019,
+  "status": "completed",
+  "form": "迈科中心连体双塔中的酒店塔，平面不规则五边形",
+  "facade": "玻璃幕墙（推测）",
+  "crown": "平顶 8 m 塔冠",
+  "sign_text": "君悦酒店 / GRAND HYATT",
+  "sign_color": "暖白",
+  "night": "客房内透光（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js",
+   "OSM w985455592"
+  ],
+  "osm_centroid": [
+   108.875958,
+   34.194085
+  ],
+  "osm_id": "w985455592",
+  "height_note": "OSM/模型 155.35 m；腾讯新闻 2022 列表为 165 m",
+  "local_data": {
+   "cmab_h": 216.0,
+   "skyline_h": 155.3,
+   "osm_height": 155.35,
+   "osm_levels": 34
+  }
+ },
+ {
+  "name": "陕西永利国际金融中心",
+  "lon": 108.879175,
+  "lat": 34.193425,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   87,
+   31
+  ],
+  "height_m": 212,
+  "floors": 46,
+  "year": 2017,
+  "status": "completed",
+  "form": "87×31 m 板式矩形塔",
+  "facade": "深蓝玻璃幕墙（推测）",
+  "crown": "平顶+10 m 构架",
+  "sign_text": null,
+  "sign_color": null,
+  "night": "轮廓灯（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js",
+   "OSM w1387164542"
+  ],
+  "osm_centroid": [
+   108.879175,
+   34.193425
+  ],
+  "osm_id": "w1387164542",
+  "notes": "丈八一路与锦业一路交汇处西南角",
+  "height_note": "口径不一：199.8 m（腾讯 2022）/205.9 m（搜狐）/212 m（OSM、模型）",
+  "local_data": {
+   "cmab_h": 212.0,
+   "skyline_h": 212.0,
+   "osm_height": 212.0,
+   "osm_levels": 46
+  }
+ },
+ {
+  "name": "永威·时代中心",
+  "lon": 108.876107,
+  "lat": 34.19247,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   66,
+   64
+  ],
+  "height_m": 212,
+  "floors": 47,
+  "year": 2019,
+  "status": "completed",
+  "form": "66×64 m 方塔",
+  "facade": "灰蓝玻璃幕墙（推测）",
+  "crown": "平顶，屋面停机坪",
+  "sign_text": null,
+  "sign_color": null,
+  "night": "塔冠泛光（推测）",
+  "district": "高新CBD·锦业路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.876107,
+   34.19247
+  ],
+  "osm_id": "w772926961",
+  "notes": "锦业一路与丈八二路交汇处东南角",
+  "local_data": {
+   "cmab_h": 32.2,
+   "skyline_h": 212.0,
+   "osm_height": 212.0,
+   "osm_levels": 47
+  }
+ },
+ {
+  "name": "秦商国际中心（天朗·秦商国际总部大厦）1号楼",
+  "lon": 108.877883,
+  "lat": 34.193634,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   43,
+   34
+  ],
+  "height_m": 220,
+  "floors": null,
+  "year": 2024,
+  "status": "topped_out",
+  "form": "方形超高层塔楼+百米住宅副楼（2号楼）",
+  "facade": "玻璃幕墙（推测）",
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "https://house.cnr.cn/csdb/20240102/t20240102_526544562.shtml",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://m.maigoo.com/top/411804.html"
+  ],
+  "notes": "锦业路与丈八一路交汇处西南角（官方口径）。坐标取 IFC 与永利之间一块 Overture ML 轮廓（43×34 m），未经影像确认；2020-03 开工，2024-01 主体封顶",
+  "height_note": "央广网 220 m；腾讯 2022 列表 200 m；知乎/买购 228 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "泰信大厦",
+  "lon": 108.87805,
+  "lat": 34.19245,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 214,
+  "floors": 36,
+  "year": 2023,
+  "status": "topped_out",
+  "form": "超高层写字楼（钢骨混凝土）",
+  "facade": null,
+  "crown": "装饰构架至 214 m（结构 199.7 m）",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "https://www.163.com/dy/article/HR1GI5FO0535HX8T.html",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "notes": "锦业一路以南、三环辅道以北、永利以西、永威/中投国际以东；锦业一路6号。2023-01-08 封顶。本地数据无轮廓",
+  "height_note": "建筑高度 199.7 m，装饰高度 214 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安ICC环贸中心 主塔",
+  "lon": 108.8663,
+  "lat": 34.1946,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 163,
+  "floors": null,
+  "year": 2024,
+  "status": "topped_out",
+  "form": "超高层写字楼+86 m 万豪酒店楼+4 栋街区商业",
+  "facade": null,
+  "crown": "顶层停机坪",
+  "sign_text": "ICC（推测）",
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "http://sx.sina.cn/news/brand/2024-06-17/detail-inayzhak0294286.d.html",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "notes": "丈八四路与锦业路十字东南角；西部机场集团+越秀地产；2024-06-15 主体封顶；含城市航空候机楼。本地数据无对应轮廓",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安ICC环贸中心 万豪酒店楼",
+  "lon": 108.8672,
+  "lat": 34.1942,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 86,
+  "floors": null,
+  "year": 2024,
+  "status": "topped_out",
+  "form": "酒店板楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": "万豪 Marriott（推测）",
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "http://sx.sina.cn/news/brand/2024-06-17/detail-inayzhak0294286.d.html"
+  ],
+  "notes": "同上地块；位置在主塔东侧为推测",
+  "local_data": {
+   "cmab_h": 26.3,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "中投国际A座",
+  "lon": 108.877237,
+  "lat": 34.192681,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   57,
+   32
+  ],
+  "height_m": 110,
+  "floors": 26,
+  "year": null,
+  "status": "completed",
+  "form": "57×32 m 板式塔楼",
+  "facade": "玻璃幕墙（推测）",
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "https://www.sohu.com/a/963602448_121484367",
+   "OSM w772926963"
+  ],
+  "osm_centroid": [
+   108.877237,
+   34.192681
+  ],
+  "osm_id": "w772926963",
+  "height_note": "26 层，按 4.2 m 层高估算 ~110 m",
+  "local_data": {
+   "cmab_h": 19.9,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "粤汉国际C座",
+  "lon": 108.868685,
+  "lat": 34.194781,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   118,
+   46
+  ],
+  "height_m": 108.3,
+  "floors": 34,
+  "year": null,
+  "status": "completed",
+  "form": "长条板楼（118×46 m 含裙房）",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "public/data/skyline.json"
+  ],
+  "osm_centroid": [
+   108.868685,
+   34.194781
+  ],
+  "osm_id": "w546712322",
+  "height_note": "skyline.json 108.3 m（由 34 层推算）",
+  "local_data": {
+   "cmab_h": 108.8,
+   "skyline_h": 108.3,
+   "osm_height": null,
+   "osm_levels": 34
+  }
+ },
+ {
+  "name": "西安安达仕酒店（迈科）",
+  "lon": 108.87,
+  "lat": 34.1922,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 247.4,
+  "floors": 50,
+  "year": null,
+  "status": "stalled_under_construction",
+  "form": "奥雷·舍人设计的超高层酒店+公寓",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新CBD·锦业路",
+  "already_modeled": false,
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3137852",
+   "http://m.winshang.com/news654952.html",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "notes": "锦业一路与丈八三路十字西南角；2022 年约 20 层，2024-03 停工（高楼迷）。不建议作为完工楼建模，可做半截在建体量",
+  "height_note": "宣传 260 m，设计 247.4 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕西国际体育之窗1号楼",
+  "lon": 108.88654,
+  "lat": 34.20519,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   72,
+   44
+  ],
+  "height_m": 262,
+  "floors": 54,
+  "year": null,
+  "status": "topped_out",
+  "form": "圆角矩形塔楼（三塔组团之首），裙房 171×160 m",
+  "facade": "浅色玻璃幕墙（推测）",
+  "crown": "12 m 塔冠",
+  "sign_text": "陕西国际体育之窗（裙房）",
+  "sign_color": null,
+  "night": null,
+  "district": "高新·唐延路",
+  "already_modeled": true,
+  "sources": [
+   "https://m.maigoo.com/top/411804.html",
+   "http://m.cnwest.com/xian/a/2020/03/18/18584050.html",
+   "src/arch/sky-data.js"
+  ],
+  "notes": "唐延路与科技八路东南侧；唐延路最高楼。坐标为现有模型位置（卫星核对过）；竣工投用日期未查到",
+  "local_data": {
+   "cmab_h": 16.0,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕西国际体育之窗2号楼",
+  "lon": 108.886551,
+  "lat": 34.204435,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   60,
+   42
+  ],
+  "height_m": 188,
+  "floors": null,
+  "year": null,
+  "status": "topped_out",
+  "form": "圆角矩形塔楼",
+  "facade": null,
+  "crown": "8 m 塔冠",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新·唐延路",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js"
+  ],
+  "notes": "坐标为现有模型位置",
+  "local_data": {
+   "cmab_h": 11.0,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "延长石油科研中心",
+  "lon": 108.886257,
+  "lat": 34.207356,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   84,
+   58
+  ],
+  "height_m": 217.3,
+  "floors": 46,
+  "year": 2019,
+  "status": "completed",
+  "form": "多边形切角塔楼+长条裙房（OSM 整体 236×62 m）",
+  "facade": "“瀑布幕墙飞流直下”——竖向叠落的玻璃幕墙",
+  "crown": "12 m 塔冠",
+  "sign_text": "延长石油",
+  "sign_color": "白",
+  "night": "瀑布式竖向灯光（推测）",
+  "district": "高新·唐延路",
+  "already_modeled": true,
+  "sources": [
+   "https://xian.kbgok.com/news/4507",
+   "https://www.sohu.com/a/148188030_216726",
+   "src/arch/sky-data.js"
+  ],
+  "notes": "唐延路与科技八路东北角；OSM w969143238 为塔楼+裙房合并轮廓",
+  "local_data": {
+   "cmab_h": 32.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "禾盛京广中心A座",
+  "lon": 108.885725,
+  "lat": 34.231823,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   44,
+   36
+  ],
+  "height_m": 200,
+  "floors": 41,
+  "year": 2021,
+  "status": "completed",
+  "form": "双塔之一，44×36 m",
+  "facade": "浅蓝玻璃（推测）",
+  "crown": "8 m 塔冠",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新·唐延路",
+  "already_modeled": true,
+  "sources": [
+   "https://www.sohu.com/a/148188030_216726",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.885725,
+   34.231823
+  ],
+  "osm_id": "w988359467",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": 200.0,
+   "osm_height": 200.0,
+   "osm_levels": 41
+  }
+ },
+ {
+  "name": "禾盛京广中心B座",
+  "lon": 108.885809,
+  "lat": 34.231148,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   53,
+   31
+  ],
+  "height_m": 200,
+  "floors": 41,
+  "year": 2021,
+  "status": "completed",
+  "form": "双塔之一，53×31 m",
+  "facade": "浅蓝玻璃（推测）",
+  "crown": "8 m 塔冠",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "高新·唐延路",
+  "already_modeled": true,
+  "sources": [
+   "https://www.sohu.com/a/148188030_216726",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.885809,
+   34.231148
+  ],
+  "osm_id": "w988359468",
+  "local_data": {
+   "cmab_h": 200.0,
+   "skyline_h": 200.0,
+   "osm_height": 200.0,
+   "osm_levels": 41
+  }
+ },
+ {
+  "name": "陕西电信广场",
+  "lon": 108.898278,
+  "lat": 34.232308,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   115,
+   63
+  ],
+  "height_m": 160,
+  "floors": 50,
+  "year": null,
+  "status": "completed",
+  "form": "折线形板楼（115×63 m）",
+  "facade": null,
+  "crown": "7 m 塔冠",
+  "sign_text": "中国电信",
+  "sign_color": "蓝",
+  "night": null,
+  "district": "高新·科技路",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.898278,
+   34.232308
+  ],
+  "osm_id": "w278233167",
+  "local_data": {
+   "cmab_h": 26.3,
+   "skyline_h": 160.0,
+   "osm_height": 160.0,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西港国际大厦（招商银行大厦）",
+  "lon": 108.90017,
+  "lat": 34.241543,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   49,
+   36
+  ],
+  "height_m": 218,
+  "floors": 48,
+  "year": null,
+  "status": "completed",
+  "form": "约 49×36 m 矩形塔楼，筒中筒结构",
+  "facade": "玻璃幕墙（推测）",
+  "crown": null,
+  "sign_text": "招商银行（推测）",
+  "sign_color": "红（推测）",
+  "night": null,
+  "district": "高新·科技路/南二环",
+  "already_modeled": false,
+  "sources": [
+   "https://m.leju.com/sx/house/45063/",
+   "https://xian.kbgok.com/news/4507",
+   "https://www.sohu.com/a/582274929_216726",
+   "OSM w991636994"
+  ],
+  "osm_centroid": [
+   108.90017,
+   34.241543
+  ],
+  "osm_id": "w991636994",
+  "notes": "高新二路与南二环交汇处东南角；曾称“西高新第一高楼”；搜狐将其与招商银行大厦并称",
+  "height_note": "公开口径 218 m；OSM 220 m / 46 层",
+  "alt_names": [
+   "招商银行大厦"
+  ],
+  "local_data": {
+   "cmab_h": 19.9,
+   "skyline_h": null,
+   "osm_height": 220.0,
+   "osm_levels": 46
+  }
+ },
+ {
+  "name": "中国人寿陕西省分公司综合楼",
+  "lon": 108.885789,
+  "lat": 34.208363,
+  "coord_source": "skyline",
+  "footprint_size_m": [
+   102,
+   45
+  ],
+  "height_m": 100,
+  "floors": 20,
+  "year": null,
+  "status": "completed",
+  "form": "102×45 m 板楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": "中国人寿（推测）",
+  "sign_color": "绿（推测）",
+  "night": null,
+  "district": "高新·唐延路",
+  "already_modeled": false,
+  "sources": [
+   "public/data/skyline.json",
+   "OSM w768807502"
+  ],
+  "osm_centroid": [
+   108.885789,
+   34.208363
+  ],
+  "osm_id": "w768807502",
+  "local_data": {
+   "cmab_h": 100.0,
+   "skyline_h": 100.0,
+   "osm_height": 100.0,
+   "osm_levels": 20
+  }
+ },
+ {
+  "name": "西安香格里拉大酒店（高新）",
+  "lon": 108.892728,
+  "lat": 34.234909,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   125,
+   125
+  ],
+  "height_m": 75,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "125×125 m 组团（塔楼+裙房）",
+  "facade": null,
+  "crown": null,
+  "sign_text": "香格里拉 SHANGRI-LA",
+  "sign_color": "金（推测）",
+  "night": null,
+  "district": "高新·科技路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w28594595"
+  ],
+  "osm_centroid": [
+   108.892728,
+   34.234909
+  ],
+  "osm_id": "w28594595",
+  "notes": "知名五星酒店，<100 m",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 26.3,
+   "skyline_h": 17,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安丽思卡尔顿酒店",
+  "lon": 108.893188,
+  "lat": 34.225172,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   151,
+   60
+  ],
+  "height_m": 100,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "与中大国际同体，151×60 m",
+  "facade": null,
+  "crown": null,
+  "sign_text": "THE RITZ-CARLTON 丽思卡尔顿",
+  "sign_color": "白（推测）",
+  "night": null,
+  "district": "高新·科技路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w929222953"
+  ],
+  "osm_centroid": [
+   108.893188,
+   34.225172
+  ],
+  "osm_id": "w929222953",
+  "notes": "科技二路50号",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 26.3,
+   "skyline_h": 10,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安高新希尔顿酒店",
+  "lon": 108.882725,
+  "lat": 34.222577,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   77,
+   53
+  ],
+  "height_m": 90,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "HILTON 希尔顿",
+  "sign_color": "白/蓝（推测）",
+  "night": null,
+  "district": "高新·科技路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1417902909"
+  ],
+  "osm_centroid": [
+   108.882725,
+   34.222577
+  ],
+  "osm_id": "w1417902909",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 9.0,
+   "skyline_h": 9,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕西信息大厦",
+  "lon": 108.935228,
+  "lat": 34.232492,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   44,
+   43
+  ],
+  "height_m": 228,
+  "floors": 51,
+  "year": 2011,
+  "status": "completed",
+  "form": "44×43 m 方塔，四棱锥顶+尖塔",
+  "facade": "玻璃+石材（推测）",
+  "crown": "四棱锥塔顶（16 m）+ 24 m 尖塔（模型）",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "小寨·南二环",
+  "already_modeled": true,
+  "sources": [
+   "https://xian.kbgok.com/news/4507",
+   "https://www.sohu.com/a/148188030_216726",
+   "https://news.qq.com/rain/a/20240318A08SNJ00",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.935228,
+   34.232492
+  ],
+  "osm_id": "w1284311588",
+  "notes": "南二环与朱雀大街十字东北角；1996-05 开工，2011-12-27 竣工；8 度抗震区钢筋混凝土结构最高建筑",
+  "height_note": "228 m（含尖塔；qq 2024 写 238 m）",
+  "local_data": {
+   "cmab_h": 228.0,
+   "skyline_h": null,
+   "osm_height": 228.0,
+   "osm_levels": 51
+  }
+ },
+ {
+  "name": "西安皇冠假日酒店",
+  "lon": 108.935449,
+  "lat": 34.233086,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   132,
+   81
+  ],
+  "height_m": 80,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "CROWNE PLAZA 皇冠假日",
+  "sign_color": null,
+  "night": null,
+  "district": "南门/南关",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1284311475",
+   "public/data/pois.json"
+  ],
+  "osm_centroid": [
+   108.935449,
+   34.233086
+  ],
+  "osm_id": "w1284311475",
+  "notes": "朱雀大街/南关；<100 m",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "长安国际中心（南关正街）",
+  "lon": 108.944405,
+  "lat": 34.241925,
+  "coord_source": "overture_place",
+  "footprint_size_m": null,
+  "height_m": 98,
+  "floors": 22,
+  "year": null,
+  "status": "completed",
+  "form": "5 栋错落体量，A 座办公、B 座酒店/公寓",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "南门/南稍门",
+  "already_modeled": false,
+  "sources": [
+   "https://xaxzl.com/index.php?a=xiangxi&g=Mobile&id=74&m=Office",
+   "https://m.sohu.com/a/874398332_121484367"
+  ],
+  "notes": "南关正街88号。坐标为 Overture place 原始值（meta 源，按协调方要求不做纠偏），落在长安路东侧紫晶大厦附近；若按 GCJ-02 纠偏则在路西 OSM w1284310904（120×44 m）附近 108.93976,34.24352——两者差约 450 m，需影像确认",
+  "height_note": "3 号楼 22 层“近百米”",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "中贸广场（南稍门）",
+  "lon": 108.941226,
+  "lat": 34.244287,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   100,
+   35
+  ],
+  "height_m": 100,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "100×35 m 板楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "南稍门",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1284311133"
+  ],
+  "osm_centroid": [
+   108.941226,
+   34.244287
+  ],
+  "osm_id": "w1284311133",
+  "notes": "南稍门地标商业+办公",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "钟楼饭店",
+  "lon": 108.941452,
+  "lat": 34.260239,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   161,
+   44
+  ],
+  "height_m": 40,
+  "floors": null,
+  "year": 1983,
+  "status": "completed",
+  "form": "161×44 m 板式饭店",
+  "facade": null,
+  "crown": null,
+  "sign_text": "钟楼饭店",
+  "sign_color": null,
+  "night": null,
+  "district": "钟楼",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1290155887"
+  ],
+  "osm_centroid": [
+   108.941452,
+   34.260239
+  ],
+  "osm_id": "w1290155887",
+  "notes": "南大街110号，老牌涉外饭店；年份为推测",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "宏府大厦（北大街）",
+  "lon": 108.941595,
+  "lat": 34.268992,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   104,
+   71
+  ],
+  "height_m": 100,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "104×71 m 塔楼+裙房",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "北大街",
+  "already_modeled": false,
+  "sources": [
+   "OSM w461320500"
+  ],
+  "osm_centroid": [
+   108.941595,
+   34.268992
+  ],
+  "osm_id": "w461320500",
+  "notes": "北大街西侧；老城内高度受限",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 15.4,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕西省人民政府（新城大院）",
+  "lon": 108.949535,
+  "lat": 34.267053,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   180,
+   48
+  ],
+  "height_m": 30,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "180×48 m 对称行政楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "北大街/新城广场",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1465146336",
+   "public/data/pois.json"
+  ],
+  "osm_centroid": [
+   108.949535,
+   34.267053
+  ],
+  "osm_id": "w1465146336",
+  "notes": "政府大楼",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安赛瑞喜来登大酒店",
+  "lon": 108.941942,
+  "lat": 34.292305,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   13,
+   11
+  ],
+  "height_m": 90,
+  "floors": 26,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "SHERATON 喜来登",
+  "sign_color": null,
+  "night": null,
+  "district": "北关/未央路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w337115081"
+  ],
+  "osm_centroid": [
+   108.941942,
+   34.292305
+  ],
+  "osm_id": "w337115081",
+  "height_note": "26 层估 ~90 m；OSM 轮廓仅 13×11 m（疑为局部，需影像确认）",
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": 26
+  }
+ },
+ {
+  "name": "金花豪生国际大酒店",
+  "lon": 108.93877,
+  "lat": 34.251692,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   106,
+   90
+  ],
+  "height_m": 70,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "HOWARD JOHNSON 豪生",
+  "sign_color": null,
+  "night": null,
+  "district": "南门/环城南路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1284310797"
+  ],
+  "osm_centroid": [
+   108.93877,
+   34.251692
+  ],
+  "osm_id": "w1284310797",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "荣民金融中心",
+  "lon": 108.943371,
+  "lat": 34.303255,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   56,
+   56
+  ],
+  "height_m": 270,
+  "floors": 58,
+  "year": 2026,
+  "status": "topped_out",
+  "form": "方塔，“缓缓开启的信札”造型",
+  "facade": "双银 Low-E 玻璃幕墙",
+  "crown": "12 m 塔冠+停机坪",
+  "sign_text": "荣民金融中心（裙房）",
+  "sign_color": null,
+  "night": null,
+  "district": "未央路·大明宫西",
+  "already_modeled": true,
+  "sources": [
+   "http://m.cnwest.com/zwyw/a/2024/05/16/22606577.html",
+   "https://xa.house.163.com/26/0413/10/KQD0RDBL021598CD.html",
+   "OSM w1370944673",
+   "src/arch/sky-data.js"
+  ],
+  "osm_centroid": [
+   108.943371,
+   34.303255
+  ],
+  "osm_id": "w1370944673",
+  "notes": "大明宫西站上盖，未央路东侧；2022-12-31 核心筒封顶，2024-05-16 封顶仪式；2026 年中交付（网易 2026-04）。注意：现有模型位置在 OSM 轮廓北约 160 m",
+  "local_data": {
+   "cmab_h": 270.0,
+   "skyline_h": null,
+   "osm_height": 270.0,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "利君V时代",
+  "lon": 108.943231,
+  "lat": 34.314743,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   79,
+   30
+  ],
+  "height_m": 140,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "79×30 m 板式塔楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "未央路",
+  "already_modeled": false,
+  "sources": [
+   "OSM r18889791"
+  ],
+  "osm_centroid": [
+   108.943231,
+   34.314743
+  ],
+  "osm_id": "r18889791",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": 140.0,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安环球贸易中心2号楼（环贸晶樽）",
+  "lon": 108.944048,
+  "lat": 34.32984,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   80,
+   36
+  ],
+  "height_m": 149.75,
+  "floors": 29,
+  "year": 2019,
+  "status": "topped_out",
+  "form": "矩形塔楼，MASA 精装办公及公寓",
+  "facade": null,
+  "crown": "8 m 塔冠",
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "未央路·凤城五路",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20241216A05JFU00",
+   "src/arch/sky-data.js"
+  ],
+  "notes": "凤城五路十字东南角；2019 年底封顶；坐标为现有模型位置",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安环球贸易中心1号楼（IGC）",
+  "lon": 108.9438,
+  "lat": 34.3305,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 299.75,
+  "floors": 62,
+  "year": null,
+  "status": "under_construction",
+  "form": "超高层写字楼+五星酒店",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "未央路·凤城五路",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20240514A018SB00",
+   "https://news.qq.com/rain/a/20241216A05JFU00",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "notes": "凤城五路与未央路十字东南角；2012 年开工多次停工，2024-05 核心筒约百米，中建四局接手；商业部分称 2025 Q3 开业，但未见主塔封顶报道 → 2026-09 仍未建成（结论：未完工）。坐标为推测",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西北国金中心A座",
+  "lon": 108.931228,
+  "lat": 34.341583,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   59,
+   54
+  ],
+  "height_m": 205,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "超高层甲级写字楼，钢结构（LEED 金级预认证）；综合体含13万m²购物中心、西安海荣JW万豪酒店",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·凤城八路",
+  "already_modeled": false,
+  "sources": [
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%8C%97%E5%9B%BD%E9%87%91%E4%B8%AD%E5%BF%83/23012153",
+   "https://www.xibeiguojin.cn/"
+  ],
+  "notes": "凤城八路168号，凤城八路与文景路十字西南角，市政府对面，距4号线文景路站136 m。坐标取该角地块内唯一方形 OSM 轮廓 w1418071031（59×54 m），未确认；是否已竣工只从“B座9楼/F座”地址和 JW万豪营业间接推断",
+  "height_note": "百科/官网口径 205 m（任务所给 228 m 未找到出处）",
+  "alt_names": [
+   "海荣西北国金中心"
+  ],
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "未央国际",
+  "lon": 108.94145,
+  "lat": 34.338424,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   75,
+   37
+  ],
+  "height_m": 99.6,
+  "floors": 25,
+  "year": null,
+  "status": "completed",
+  "form": "直角三角形塔楼+西侧退台庭院",
+  "facade": "镜面灰幕墙",
+  "crown": null,
+  "sign_text": "未央国际",
+  "sign_color": "白",
+  "night": null,
+  "district": "经开·凤城七路",
+  "already_modeled": true,
+  "sources": [
+   "research/refs/weiyang/notes.md",
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 78.7,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "EHB企业总部大厦",
+  "lon": 108.940777,
+  "lat": 34.341633,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   50,
+   36
+  ],
+  "height_m": 160,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "EHB",
+  "sign_color": "白",
+  "night": null,
+  "district": "经开·赛高街区",
+  "already_modeled": true,
+  "sources": [
+   "research/refs/weiyang/notes.md",
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安经开洲际酒店",
+  "lon": 108.940402,
+  "lat": 34.341149,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   69,
+   67
+  ],
+  "height_m": 95,
+  "floors": 22,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "洲际酒店 InterContinental",
+  "sign_color": "暖白",
+  "night": null,
+  "district": "经开·赛高街区",
+  "already_modeled": true,
+  "sources": [
+   "research/refs/weiyang/notes.md",
+   "src/arch/sky-data2.js"
+  ],
+  "osm_centroid": [
+   108.940402,
+   34.341149
+  ],
+  "osm_id": "w1372139874",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "旭辉中心A座",
+  "lon": 108.938314,
+  "lat": 34.339552,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   79,
+   54
+  ],
+  "height_m": 88,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·凤城七路",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 86.4,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "旭辉中心B座",
+  "lon": 108.93844,
+  "lat": 34.340751,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   129,
+   82
+  ],
+  "height_m": 86,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·凤城七路",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 19.9,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安市人民政府（行政中心）主楼",
+  "lon": 108.954153,
+  "lat": 34.344043,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 60,
+  "floors": null,
+  "year": 2011,
+  "status": "completed",
+  "form": "对称行政建筑群",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·张家堡",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-footprints.js FP.gov"
+  ],
+  "notes": "凤城八路北侧；已作为 skyline 行政中心（FP.gov，33 个轮廓）建模，坐标取最大轮廓质心；未列在任务的已建清单里",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "中国电信大厦（未央路）",
+  "lon": 108.941679,
+  "lat": 34.327276,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   98,
+   79
+  ],
+  "height_m": 80,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "未央路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1372140211"
+  ],
+  "osm_centroid": [
+   108.941679,
+   34.327276
+  ],
+  "osm_id": "w1372140211",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "长庆苏里格大厦",
+  "lon": 108.931801,
+  "lat": 34.328826,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   97,
+   36
+  ],
+  "height_m": 90,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·文景路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1418071545"
+  ],
+  "osm_centroid": [
+   108.931801,
+   34.328826
+  ],
+  "osm_id": "w1418071545",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "天朗·经开中心",
+  "lon": 108.925788,
+  "lat": 34.332054,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   84,
+   62
+  ],
+  "height_m": 100,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "经开·凤城五路",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1418071423"
+  ],
+  "osm_centroid": [
+   108.925788,
+   34.332054
+  ],
+  "osm_id": "w1418071423",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕西广播电视塔（西部之光）",
+  "lon": 108.94185,
+  "lat": 34.19765,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   56,
+   54
+  ],
+  "height_m": 245,
+  "floors": null,
+  "year": 1987,
+  "status": "completed",
+  "form": "八角形塔身，塔楼似宫灯",
+  "facade": null,
+  "crown": "桅杆",
+  "sign_text": null,
+  "sign_color": null,
+  "night": "彩色渐变泛光",
+  "district": "曲江/小寨南",
+  "already_modeled": true,
+  "sources": [
+   "https://m.maigoo.com/top/411804.html",
+   "src/arch/sky-special.js"
+  ],
+  "osm_centroid": [
+   108.94185,
+   34.19765
+  ],
+  "osm_id": "w254328023",
+  "local_data": {
+   "cmab_h": 9.5,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "华润国际文化商业中心A座",
+  "lon": 108.944237,
+  "lat": 34.198368,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   49,
+   43
+  ],
+  "height_m": 147.6,
+  "floors": 33,
+  "year": 2023,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·电视塔东",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js",
+   "OSM w1344060603"
+  ],
+  "osm_centroid": [
+   108.944237,
+   34.198368
+  ],
+  "osm_id": "w1344060603",
+  "local_data": {
+   "cmab_h": 147.6,
+   "skyline_h": null,
+   "osm_height": 147.6,
+   "osm_levels": 33
+  }
+ },
+ {
+  "name": "华润国际文化商业中心B座",
+  "lon": 108.944229,
+  "lat": 34.196831,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   49,
+   42
+  ],
+  "height_m": 148.8,
+  "floors": 32,
+  "year": 2023,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·电视塔东",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js",
+   "OSM w1344060011"
+  ],
+  "osm_centroid": [
+   108.944229,
+   34.196831
+  ],
+  "osm_id": "w1344060011",
+  "local_data": {
+   "cmab_h": 148.8,
+   "skyline_h": null,
+   "osm_height": 148.8,
+   "osm_levels": 32
+  }
+ },
+ {
+  "name": "华润国际文化商业中心C座",
+  "lon": 108.94489,
+  "lat": 34.196186,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   61,
+   30
+  ],
+  "height_m": 150.95,
+  "floors": 37,
+  "year": 2023,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·电视塔东",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js",
+   "OSM w1344060344"
+  ],
+  "osm_centroid": [
+   108.94489,
+   34.196186
+  ],
+  "osm_id": "w1344060344",
+  "local_data": {
+   "cmab_h": 151.0,
+   "skyline_h": null,
+   "osm_height": 150.95,
+   "osm_levels": 37
+  }
+ },
+ {
+  "name": "华润国际文化商业中心D座",
+  "lon": 108.94489,
+  "lat": 34.198968,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   61,
+   30
+  ],
+  "height_m": 150.95,
+  "floors": 37,
+  "year": 2023,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·电视塔东",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data.js",
+   "OSM w1344060508"
+  ],
+  "osm_centroid": [
+   108.94489,
+   34.198968
+  ],
+  "osm_id": "w1344060508",
+  "local_data": {
+   "cmab_h": 151.0,
+   "skyline_h": null,
+   "osm_height": 150.95,
+   "osm_levels": 37
+  }
+ },
+ {
+  "name": "西安W酒店",
+  "lon": 108.984449,
+  "lat": 34.198358,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   58,
+   50
+  ],
+  "height_m": 91.7,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "下大上小、斜面收尖（“山”字形三塔之一）",
+  "facade": null,
+  "crown": null,
+  "sign_text": "W",
+  "sign_color": null,
+  "night": null,
+  "district": "曲江池",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data2.js SPECIAL2.w"
+  ],
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "万众国际A座",
+  "lon": 108.983666,
+  "lat": 34.196758,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   62,
+   50
+  ],
+  "height_m": 96,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "斜面收尖塔楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江池",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "万众国际B座",
+  "lon": 108.984558,
+  "lat": 34.196956,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   60,
+   50
+  ],
+  "height_m": 96,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "斜面收尖塔楼",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江池",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 16.0,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "曲江文创中心1#楼",
+  "lon": 109.0111,
+  "lat": 34.2043,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   73,
+   53
+  ],
+  "height_m": 238,
+  "floors": 42,
+  "year": 2022,
+  "status": "topped_out",
+  "form": "238 m 双塔之一，二层裙房；顶部设 JW万豪大堂，180 m 空中餐厅；另有 5 栋百米写字楼",
+  "facade": "玻璃幕墙（推测）",
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江二期·南三环",
+  "already_modeled": false,
+  "sources": [
+   "https://m.thepaper.cn/newsDetail_forward_4236152",
+   "https://www.thepaper.cn/newsDetail_forward_17973875",
+   "https://m.maigoo.com/top/411804.html"
+  ],
+  "notes": "南三环与雁翔路交会处东南角（另一说“南三环与金花南路西北角”）。计划 2022-11 全面封顶、2023 投用，未找到竣工报道。坐标取该地块南侧一对 OSM 方形轮廓之一（w1370887088），未确认",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "曲江文创中心2#楼",
+  "lon": 109.0109,
+  "lat": 34.2051,
+  "coord_source": "estimated",
+  "footprint_size_m": [
+   63,
+   52
+  ],
+  "height_m": 238,
+  "floors": 42,
+  "year": 2022,
+  "status": "topped_out",
+  "form": "双塔之一",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江二期·南三环",
+  "already_modeled": false,
+  "sources": [
+   "https://m.thepaper.cn/newsDetail_forward_4236152"
+  ],
+  "notes": "同上；候选轮廓 w1370887031",
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "曲江云松间9号楼（西安华尔道夫酒店）",
+  "lon": 109.0,
+  "lat": 34.185,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 266,
+  "floors": 51,
+  "year": null,
+  "status": "under_construction",
+  "form": "超高层豪宅+酒店，34-47F 客房、48F 大堂、50-51F 屋顶酒廊",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·绕城曲江出口",
+  "already_modeled": false,
+  "sources": [
+   "https://www.sohu.com/a/615757899_336604",
+   "https://eu.36kr.com/zh/p/3875029661481608",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "notes": "“曲江绕城高速曲江出口旁”；原计划 2025 开业，2026 仍未开（36氪“四年过去仍未迎来华尔道夫”）。坐标纯推测",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安威斯汀大酒店",
+  "lon": 108.957476,
+  "lat": 34.216232,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "year": 2014,
+  "status": "completed",
+  "form": "低层院落式酒店（非高层）",
+  "facade": null,
+  "crown": null,
+  "sign_text": "THE WESTIN",
+  "sign_color": null,
+  "night": null,
+  "district": "曲江·大雁塔",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json"
+  ],
+  "notes": "知名酒店但不是塔楼，可仅做标注",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安浐灞艾美酒店",
+  "lon": 109.010482,
+  "lat": 34.340913,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   42,
+   33
+  ],
+  "height_m": 147,
+  "floors": 32,
+  "year": 2017,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "LE MERIDIEN 艾美",
+  "sign_color": "白",
+  "night": null,
+  "district": "浐灞·半岛",
+  "already_modeled": true,
+  "sources": [
+   "research/refs/chanba/notes.md",
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 86.4,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "欧亚国际 ICC",
+  "lon": 109.011502,
+  "lat": 34.33365,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   69,
+   22
+  ],
+  "height_m": 120,
+  "floors": 27,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "欧亚国际",
+  "sign_color": "白",
+  "night": null,
+  "district": "浐灞·欧亚大道",
+  "already_modeled": true,
+  "sources": [
+   "research/refs/chanba/notes.md",
+   "src/arch/sky-data2.js"
+  ],
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安浐灞凯悦酒店（欧亚国际三期商业4号楼）",
+  "lon": 109.0175,
+  "lat": 34.33,
+  "coord_source": "overture_place",
+  "footprint_size_m": null,
+  "height_m": 100,
+  "floors": 23,
+  "year": 2025,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": "HYATT REGENCY 凯悦",
+  "sign_color": null,
+  "night": null,
+  "district": "浐灞·欧亚大道",
+  "already_modeled": false,
+  "sources": [
+   "research/refs/chanba/notes.md"
+  ],
+  "notes": "欧亚大道3566号；2025-09-21 开业。坐标为 Overture place 原始值（Microsoft 源，仅 4 位小数），按协调方要求未纠偏；chanba/notes.md 曾按 GCJ-02 反算得 109.01254,34.33135（欧亚大道×浐河西路西南 156 m，与“源创中心在该路口西南角”吻合）。原始值落在浐河东岸，建议以影像定夺",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "源创中心（欧亚国际三期）超高层1",
+  "lon": 109.0118,
+  "lat": 34.3316,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 180,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "双塔之一，玻璃幕墙；与凯悦 B2/1F 连通",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "浐灞·欧亚大道",
+  "already_modeled": false,
+  "sources": [
+   "https://house.leju.com/sx/121463/",
+   "https://m.163.com/dy/article/K0J039EK0556D3AO.html",
+   "research/refs/chanba/notes.md"
+  ],
+  "notes": "欧亚大道与浐河西路西南角；在售“一线品牌入驻”写字楼 → 推断已建成；坐标推测",
+  "height_note": "规划口径 180 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "源创中心（欧亚国际三期）超高层2",
+  "lon": 109.0114,
+  "lat": 34.3306,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 180,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "双塔之一",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "浐灞·欧亚大道",
+  "already_modeled": false,
+  "sources": [
+   "https://house.leju.com/sx/121463/"
+  ],
+  "notes": "同上，坐标推测",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "长安塔（世园会）",
+  "lon": 109.055014,
+  "lat": 34.323356,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   53,
+   43
+  ],
+  "height_m": 99,
+  "floors": null,
+  "year": 2011,
+  "status": "completed",
+  "form": "方形唐风楼阁式塔，钢+玻璃",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": "塔身泛光",
+  "district": "浐灞·世博园",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/sky-special.js"
+  ],
+  "osm_centroid": [
+   109.055014,
+   34.323356
+  ],
+  "osm_id": "w252885706",
+  "local_data": {
+   "cmab_h": 19.9,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "浐灞中心",
+  "lon": 109.041188,
+  "lat": 34.318223,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   130,
+   30
+  ],
+  "height_m": 60,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "130×30 m 弧形/板楼（推测）",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "浐灞·金融商务区",
+  "already_modeled": false,
+  "sources": [
+   "OSM w692999271"
+  ],
+  "osm_centroid": [
+   109.041188,
+   34.318223
+  ],
+  "osm_id": "w692999271",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "招商局丝路中心 北塔",
+  "lon": 109.034,
+  "lat": 34.3735,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 144,
+  "floors": 31,
+  "year": null,
+  "status": "completed",
+  "form": "“奥体之翼、中轴之门”对称双塔之一",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "奥体/港务",
+  "already_modeled": false,
+  "sources": [
+   "https://www.sunyat.com/shangyezongheti/319.html",
+   "https://www.jzda001.com/index/index/details?type=1&id=6269"
+  ],
+  "notes": "北地块：北邻港兴三路、东为欧亚大道、南为港兴二路；双寨站上盖。坐标推测",
+  "height_note": "144 m / 31F",
+  "local_data": {
+   "cmab_h": 16.0,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "招商局丝路中心 南塔",
+  "lon": 109.0345,
+  "lat": 34.37,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 144,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "对称双塔之一",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "奥体/港务",
+  "already_modeled": false,
+  "sources": [
+   "https://www.sunyat.com/shangyezongheti/319.html"
+  ],
+  "notes": "南地块，隔奥体中轴“长安谷”与北塔对称；坐标推测",
+  "local_data": {
+   "cmab_h": 14.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "西安国际港务区管委会大楼",
+  "lon": 109.034327,
+  "lat": 34.362375,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   122,
+   27
+  ],
+  "height_m": 50,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": "122×27 m 板楼（推测）",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "港务区",
+  "already_modeled": false,
+  "sources": [
+   "OSM w982182689"
+  ],
+  "osm_centroid": [
+   109.034327,
+   34.362375
+  ],
+  "osm_id": "w982182689",
+  "notes": "OSM 名“国际港务区”；也可能指港务区站旁综合楼，需影像确认",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 12.6,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "中国国际丝路中心大厦（绿地）",
+  "lon": 108.7685,
+  "lat": 34.2585,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 300,
+  "floors": 61,
+  "year": null,
+  "status": "stalled_under_construction",
+  "form": "设计 498 m 超高层（原 501 m），核心筒+外框钢结构",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "西咸·沣东",
+  "already_modeled": false,
+  "sources": [
+   "https://finance.sina.com.cn/roll/2025-05-29/doc-ineyexrz8360879.shtml",
+   "https://news.qq.com/rain/a/20240318A08SNJ00",
+   "https://www.kbgok.com/news/12683"
+  ],
+  "notes": "沣东大道与复兴大道交汇处东南角；2017-07 开工，2024-03 核心筒 61 层约 300 m、外框钢结构 40+ 层、幕墙 15 层；2023 起因空军飞行学院限高要求重审降高，2026-06 仍停工。height_m 取现存核心筒高度约 300 m（任务所说“300 m 级”即此）。坐标推测",
+  "height_note": "设计 498 m；现状约 300 m 核心筒",
+  "local_data": {
+   "cmab_h": 71.0,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "秦汉新城兰池大厦",
+  "lon": 108.85157,
+  "lat": 34.39573,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   119,
+   54
+  ],
+  "height_m": 100,
+  "floors": 23,
+  "year": null,
+  "status": "completed",
+  "form": "主塔 23F + 副塔 13F",
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "西咸·秦汉",
+  "already_modeled": false,
+  "sources": [
+   "http://www.thy.cn/project/Inner/359",
+   "OSM w737718900"
+  ],
+  "osm_centroid": [
+   108.85157,
+   34.39573
+  ],
+  "osm_id": "w737718900",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 18.8,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "秦汉文创大厦",
+  "lon": 108.845963,
+  "lat": 34.393795,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   128,
+   99
+  ],
+  "height_m": 60,
+  "floors": null,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "西咸·秦汉",
+  "already_modeled": false,
+  "sources": [
+   "OSM w1263230196"
+  ],
+  "osm_centroid": [
+   108.845963,
+   34.393795
+  ],
+  "osm_id": "w1263230196",
+  "height_note": "估计值（未查到公开高度；buildings.bin 在此处高度明显偏低不可用），需照片核对",
+  "local_data": {
+   "cmab_h": 14.2,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ },
+ {
+  "name": "陕铁大厦",
+  "lon": 108.99,
+  "lat": 34.147,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "height_m": 95,
+  "floors": 23,
+  "year": null,
+  "status": "completed",
+  "form": null,
+  "facade": null,
+  "crown": null,
+  "sign_text": null,
+  "sign_color": null,
+  "night": null,
+  "district": "航天基地·东长安街",
+  "already_modeled": false,
+  "sources": [
+   "https://m.sych100.com/h-nd-2071.html"
+  ],
+  "notes": "航天基地核心区，23F 顶层观景；坐标纯推测",
+  "height_note": "23 层估 ~95 m",
+  "local_data": {
+   "cmab_h": null,
+   "skyline_h": null,
+   "osm_height": null,
+   "osm_levels": null
+  }
+ }
+]

@@ -1,0 +1,3180 @@
+[
+ {
+  "name": "西安SKP",
+  "short_sign": "SKP",
+  "district": "南门",
+  "lon": 108.944069,
+  "lat": 34.249189,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   245,
+   116
+  ],
+  "osm_centroid": [
+   108.944069,
+   34.249189
+  ],
+  "osm_footprint_area_m2": 25491,
+  "osm_building_name": "西安SKP",
+  "overture_building_id": "810b42f0-f0c4-423d-abbb-7a146f123298",
+  "poi_lonlat": [
+   108.944129,
+   34.249274
+  ],
+  "floors_above": 13,
+  "height_m": 72,
+  "height_estimated": true,
+  "open_year": 2018,
+  "status": "open",
+  "form": "南门外东南角大体量方盒，四角略倒圆，裙楼与主体一体，13层高体量",
+  "facade": "深黑色石材/金属幕墙通体黑色，首层金色外墙与金色门楣",
+  "sign_color": "#D4AF37",
+  "towers": [],
+  "night": "夜间金色灯带勾勒楼体边线和竖向装饰，首层金色橱窗通透",
+  "already_modeled": false,
+  "sources": [
+   "https://www.jiemian.com/article/2210976.html",
+   "http://m.winshang.com/xm55419.html",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "赛格国际购物中心",
+  "short_sign": "赛格",
+  "district": "小寨",
+  "lon": 108.943642,
+  "lat": 34.225119,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   220,
+   138
+  ],
+  "osm_centroid": [
+   108.943642,
+   34.225119
+  ],
+  "osm_footprint_area_m2": 18767,
+  "osm_building_name": "赛格国际购物中心",
+  "overture_building_id": "5dfb5e1c-d051-4f6a-a088-5b2038187946",
+  "poi_lonlat": [
+   108.943715,
+   34.225295
+  ],
+  "floors_above": 11,
+  "height_m": 55,
+  "height_estimated": true,
+  "open_year": 2013,
+  "status": "open",
+  "form": "长条弧形大盒子，外立面曲面转角",
+  "facade": "浅色金属/玻璃幕墙，大面积LED屏",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "大面积LED媒体立面",
+  "already_modeled": true,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "开元商城(钟楼店)",
+  "short_sign": "开元商城",
+  "district": "钟楼",
+  "lon": 108.943548,
+  "lat": 34.260186,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   139,
+   113
+  ],
+  "osm_centroid": [
+   108.943548,
+   34.260186
+  ],
+  "osm_footprint_area_m2": 10805,
+  "osm_building_name": "开元商城(钟楼店)",
+  "overture_building_id": "30650632-ce6a-47cb-a025-6ca5eeb80ba0",
+  "poi_lonlat": [
+   108.943538,
+   34.26014
+  ],
+  "floors_above": 9,
+  "height_m": 45,
+  "height_estimated": true,
+  "open_year": 1996,
+  "status": "open",
+  "form": "钟楼东南角方正盒体，转角弧形入口",
+  "facade": "米黄色石材+玻璃",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "顶部红色字牌，立面泛光",
+  "already_modeled": true,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "大明宫万达广场",
+  "short_sign": "万达广场",
+  "district": "大明宫",
+  "lon": 108.968182,
+  "lat": 34.316859,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   292,
+   134
+  ],
+  "osm_centroid": [
+   108.968182,
+   34.316859
+  ],
+  "osm_footprint_area_m2": 36239,
+  "osm_building_name": "大明宫万达广场",
+  "overture_building_id": "09a279fb-3883-46b6-ac27-24d0be531d19",
+  "poi_lonlat": [
+   108.96816,
+   34.31721
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条形室内步行街式大盒子(约290m)，两端主力店",
+  "facade": "浅灰铝板+玻璃，万达标准立面",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "立面LED线条灯，万达广场白色发光字",
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "CityOn熙地港(西安)购物中心",
+  "short_sign": "熙地港",
+  "district": "未央路(行政中心)",
+  "lon": 108.94079,
+  "lat": 34.339903,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   196,
+   165
+  ],
+  "osm_centroid": [
+   108.94079,
+   34.339903
+  ],
+  "osm_footprint_area_m2": 23910,
+  "osm_building_name": "CityOn熙地港（西安）购物中心",
+  "overture_building_id": "f11bb986-ac67-47e1-9876-1dc376213c25",
+  "poi_lonlat": [
+   108.94074,
+   34.340061
+  ],
+  "floors_above": 6,
+  "height_m": 35,
+  "height_estimated": true,
+  "open_year": 2016,
+  "status": "open",
+  "form": "椭圆/弧形大盒子，流线型立面",
+  "facade": "白色与银灰色金属格栅幕墙",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "立面格栅透光",
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)",
+   "https://xian.cityoncenter.com/?locale=zh_cn"
+  ]
+ },
+ {
+  "name": "西安大融城IMIXPARK",
+  "short_sign": "大融城",
+  "district": "未央路(行政中心)",
+  "lon": 108.944307,
+  "lat": 34.340126,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   254,
+   123
+  ],
+  "osm_centroid": [
+   108.944307,
+   34.340126
+  ],
+  "osm_footprint_area_m2": 18351,
+  "osm_building_name": "西安大融城IMIXPARK",
+  "overture_building_id": "2d48acd6-3e3e-4ed2-b47e-e034983cbb72",
+  "poi_lonlat": [
+   108.944355,
+   34.340362
+  ],
+  "floors_above": 6,
+  "height_m": 35,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条形购物中心，与熙地港隔未央路相对",
+  "facade": "玻璃幕墙+彩色金属饰面",
+  "sign_color": "#E4007F",
+  "towers": [],
+  "night": "LED立面",
+  "already_modeled": true,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "未央国际(未央国际中心+168商业街区)",
+  "short_sign": "未央国际",
+  "district": "未央路(行政中心)",
+  "lon": 108.941529,
+  "lat": 34.338319,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   108,
+   60
+  ],
+  "osm_centroid": [
+   108.941529,
+   34.338319
+  ],
+  "osm_footprint_area_m2": 5160,
+  "osm_building_name": "未央国际",
+  "overture_building_id": "8561b37d-f490-4050-b1b1-cb33c1cee082",
+  "floors_above": 25,
+  "height_m": 99.6,
+  "height_estimated": false,
+  "open_year": 2020,
+  "status": "open",
+  "form": "塔楼(25层,99.6m)+裙房商业街区",
+  "facade": "玻璃幕墙塔楼，裙房开放街区",
+  "sign_color": "#FFFFFF",
+  "towers": [
+   {
+    "name": "未央国际中心",
+    "height_m": 99.6,
+    "floors": 25
+   }
+  ],
+  "night": "168商业街区24小时夜间经济",
+  "already_modeled": true,
+  "sources": [
+   "https://www.sohu.com/a/759681992_216726",
+   "https://www.sxjzy.org/h-nd-29884.html",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安万象城(华润CCBD)",
+  "short_sign": "万象城",
+  "district": "曲江(长安南路/雁展路)",
+  "lon": 108.944747,
+  "lat": 34.197405,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   326,
+   117
+  ],
+  "osm_centroid": [
+   108.944747,
+   34.197405
+  ],
+  "osm_footprint_area_m2": 12790,
+  "osm_building_name": "西安万象城",
+  "overture_building_id": "5a5d2da3-9ccd-4df4-b3b9-e81090a3c5be",
+  "poi_lonlat": [
+   108.944589,
+   34.197607
+  ],
+  "floors_above": 6,
+  "height_m": 40,
+  "height_estimated": true,
+  "open_year": 2024,
+  "status": "open",
+  "form": "四座约150m塔楼对称+双曲屋面商业裙楼，Heatherwick\"生命之树\"七层退台平台",
+  "facade": "特制彩釉仿古构件幕墙，坊格肌理、飞檐式外框；生命之树为清水混凝土/石材层叠平台+绿植",
+  "sign_color": "#C8A063",
+  "towers": [
+   {
+    "name": "CCBD塔楼T1",
+    "height_m": 150,
+    "floors": null
+   },
+   {
+    "name": "CCBD塔楼T2",
+    "height_m": 150,
+    "floors": null
+   },
+   {
+    "name": "CCBD塔楼T3",
+    "height_m": 150,
+    "floors": null
+   },
+   {
+    "name": "CCBD塔楼T4",
+    "height_m": 150,
+    "floors": null
+   }
+  ],
+  "night": "生命之树层叠平台暖光；塔楼顶部飞檐线条灯",
+  "already_modeled": true,
+  "sources": [
+   "https://news.qq.com/rain/a/20241201A05VT700",
+   "https://www.archiposition.com/items/20250206062420",
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "OSM轮廓(326x117m)只覆盖部分裙楼，实际综合体更大(总建面56.5万㎡)"
+ },
+ {
+  "name": "西安万象天地",
+  "short_sign": "万象天地",
+  "district": "曲江(长安南路/雁展路)",
+  "lon": 108.947341,
+  "lat": 34.201459,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   182,
+   129
+  ],
+  "osm_centroid": [
+   108.947341,
+   34.201459
+  ],
+  "osm_footprint_area_m2": 13678,
+  "osm_building_name": null,
+  "overture_building_id": "053d5a2c-2a3a-417d-8b26-e4acf36d3664",
+  "poi_lonlat": [
+   108.946481,
+   34.200636
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "街区+盒子式低层商业，与万象城同属CCBD",
+  "facade": "玻璃+金属板，开放街区",
+  "sign_color": "#C8A063",
+  "towers": [],
+  "night": "街区灯光",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西咸万象城(华润)",
+  "short_sign": "万象城",
+  "district": "西咸(三桥/沣东)",
+  "lon": 108.824443,
+  "lat": 34.292158,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   384,
+   181
+  ],
+  "osm_centroid": [
+   108.824443,
+   34.292158
+  ],
+  "osm_footprint_area_m2": 40399,
+  "osm_building_name": "西咸万象城",
+  "overture_building_id": "af5df361-df1d-426c-99cc-d796fb5cda7a",
+  "poi_lonlat": [
+   108.825042,
+   34.292056
+  ],
+  "floors_above": 5,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": 2017,
+  "status": "open",
+  "form": "大尺度长条购物中心(约380x180m)+写字楼(华润国际广场)",
+  "facade": "浅色石材+玻璃幕墙",
+  "sign_color": "#C8A063",
+  "towers": [],
+  "night": "立面泛光+万象城金色字",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)",
+   "https://m.winshang.com/news729223.html"
+  ]
+ },
+ {
+  "name": "西安曲江大悦城",
+  "short_sign": "大悦城",
+  "district": "曲江(大雁塔)",
+  "lon": 108.957427,
+  "lat": 34.218226,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   208,
+   167
+  ],
+  "osm_centroid": [
+   108.957427,
+   34.218226
+  ],
+  "osm_footprint_area_m2": 22471,
+  "osm_building_name": "西安曲江大悦城",
+  "overture_building_id": "08923485-dd2a-45d6-841c-718430bb605e",
+  "poi_lonlat": [
+   108.957372,
+   34.218554
+  ],
+  "floors_above": 4,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2016,
+  "status": "open",
+  "form": "方形大盒子+仿古坡顶/庑殿顶、屋顶花园，正门钻石形光电玻璃入口",
+  "facade": "U型玻璃幕墙为主，局部仿唐坡屋顶",
+  "sign_color": "#E50012",
+  "towers": [],
+  "night": "U玻立面整体内透发光，钻石入口光电玻璃",
+  "already_modeled": false,
+  "sources": [
+   "http://m.winshang.com/news651008.html",
+   "https://m.sidd.com.cn/yanjie/409.html",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "open_year 2016 为记忆值，建议核对"
+ },
+ {
+  "name": "西安金地广场(曲江)",
+  "short_sign": "金地广场",
+  "district": "曲江(曲江池)",
+  "lon": 108.983689,
+  "lat": 34.204572,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   209,
+   80
+  ],
+  "osm_centroid": [
+   108.983689,
+   34.204572
+  ],
+  "osm_footprint_area_m2": 13372,
+  "osm_building_name": "西安金地广场",
+  "overture_building_id": "e600a090-733a-4ef1-adfb-add9bd9fc849",
+  "poi_lonlat": [
+   108.983719,
+   34.204707
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条形购物中心(约210x80m)",
+  "facade": "浅色石材+玻璃",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规泛光",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "曲江银泰城(A馆+B馆)",
+  "short_sign": "银泰城",
+  "district": "曲江(大雁塔南)",
+  "lon": 108.958668,
+  "lat": 34.207846,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   58,
+   49
+  ],
+  "osm_centroid": [
+   108.958668,
+   34.207846
+  ],
+  "osm_footprint_area_m2": 2736,
+  "osm_building_name": "银泰城A馆",
+  "overture_building_id": "5fc5f88e-2cc2-46c6-b44d-8d831d0f489d",
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2011,
+  "status": "open",
+  "form": "A/B两馆，B馆为长条盒子(约233x52m)",
+  "facade": "米色石材+玻璃",
+  "sign_color": "#D7000F",
+  "towers": [],
+  "night": "红色银泰城字牌",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "坐标/轮廓为A馆；B馆轮廓质心[108.960058,34.208604]，约233x52m"
+ },
+ {
+  "name": "龙湖西安曲江天街",
+  "short_sign": "天街",
+  "district": "曲江(雁翔路)",
+  "lon": 108.987284,
+  "lat": 34.217738,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   355,
+   58
+  ],
+  "osm_centroid": [
+   108.987284,
+   34.217738
+  ],
+  "osm_footprint_area_m2": 14281,
+  "osm_building_name": "龙湖西安曲江天街",
+  "overture_building_id": "19c447dd-feb2-4bb0-923e-60730f9c28c1",
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": false,
+  "open_year": 2023,
+  "status": "open",
+  "form": "狭长条形(约355x58m)沿街展开的购物中心",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "沿街线性灯带",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20240531A01KPZ00",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "曼蒂广场(曲江)",
+  "short_sign": "曼蒂广场",
+  "district": "曲江(大雁塔南)",
+  "lon": 108.961306,
+  "lat": 34.214521,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   203,
+   73
+  ],
+  "osm_centroid": [
+   108.961306,
+   34.214521
+  ],
+  "osm_footprint_area_m2": 8168,
+  "osm_building_name": "曼蒂广场",
+  "overture_building_id": "13956d9c-88bc-4955-b2c1-09f2e6944980",
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条裙楼(约200x73m)",
+  "facade": "米色石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "李家村万达广场",
+  "short_sign": "万达广场",
+  "district": "李家村",
+  "lon": 108.95704,
+  "lat": 34.244942,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   232,
+   111
+  ],
+  "osm_centroid": [
+   108.95704,
+   34.244942
+  ],
+  "osm_footprint_area_m2": 25092,
+  "osm_building_name": "李家村万达广场",
+  "overture_building_id": "084dd040-9c4e-46dc-8c8b-cec8e1e94d04",
+  "poi_lonlat": [
+   108.95705,
+   34.244936
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2008,
+  "status": "open",
+  "form": "长方形盒子(约232x111m)+万达大厦写字楼",
+  "facade": "浅灰石材+玻璃",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "万达广场发光字+立面线条灯",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "万达广场(西安民乐园店)",
+  "short_sign": "万达广场",
+  "district": "解放路",
+  "lon": 108.959594,
+  "lat": 34.269705,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   192,
+   129
+  ],
+  "osm_centroid": [
+   108.959594,
+   34.269705
+  ],
+  "osm_footprint_area_m2": 22706,
+  "osm_building_name": "万达广场(西安民乐园店)",
+  "overture_building_id": "59f97ca8-f14a-47f7-99e3-15f98451f9cd",
+  "poi_lonlat": [
+   108.959593,
+   34.269606
+  ],
+  "floors_above": 5,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约192x129m)，与希尔顿酒店塔楼同地块",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [
+   {
+    "name": "西安万达希尔顿酒店",
+    "height_m": null,
+    "floors": null
+   }
+  ],
+  "night": "LED线条立面",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安高新万达广场",
+  "short_sign": "万达广场",
+  "district": "高新(唐延路)",
+  "lon": 108.88713,
+  "lat": 34.210043,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   281,
+   153
+  ],
+  "osm_centroid": [
+   108.88713,
+   34.210043
+  ],
+  "osm_footprint_area_m2": 33331,
+  "osm_building_name": "万达广场(高新店)",
+  "overture_building_id": "722384aa-015d-4a85-9cad-1d683de5802f",
+  "poi_lonlat": [
+   108.887076,
+   34.210178
+  ],
+  "floors_above": 5,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "大盒子(约281x153m)+万达ONE写字楼/公寓",
+  "facade": "银灰铝板+玻璃，波浪线条立面",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "立面动态LED线条",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安丰禾万达广场",
+  "short_sign": "万达广场",
+  "district": "土门/丰禾路",
+  "lon": 108.894697,
+  "lat": 34.282725,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   199,
+   70
+  ],
+  "osm_centroid": [
+   108.894697,
+   34.282725
+  ],
+  "osm_footprint_area_m2": 11714,
+  "osm_building_name": null,
+  "overture_building_id": "f1879522-e9b2-4058-9be8-92a44286860c",
+  "poi_lonlat": [
+   108.895121,
+   34.282606
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "条形盒子(约199x70m, OSM未命名轮廓)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "LED线条立面",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "银泰城(小寨店)",
+  "short_sign": "银泰城",
+  "district": "小寨",
+  "lon": 108.935942,
+  "lat": 34.225142,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   95,
+   88
+  ],
+  "osm_centroid": [
+   108.935942,
+   34.225142
+  ],
+  "osm_footprint_area_m2": 8110,
+  "osm_building_name": "银泰城(小寨店)",
+  "overture_building_id": "57401636-14e3-4836-8ce3-068eea1eed21",
+  "poi_lonlat": [
+   108.935945,
+   34.225172
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约95x88m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#D7000F",
+  "towers": [],
+  "night": "红色字牌",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "凯德广场(新地城店)",
+  "short_sign": "凯德广场",
+  "district": "小寨",
+  "lon": 108.931612,
+  "lat": 34.230366,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   113,
+   86
+  ],
+  "osm_centroid": [
+   108.931612,
+   34.230366
+  ],
+  "osm_footprint_area_m2": 9347,
+  "osm_building_name": "凯德广场(新地城店)",
+  "overture_building_id": "64bf188c-9aac-4930-81e1-ee75da2684e6",
+  "poi_lonlat": [
+   108.93163,
+   34.230317
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约113x86m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#0055A5",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "凯德广场(御锦城店)",
+  "short_sign": "凯德广场",
+  "district": "浐灞(长乐东路)",
+  "lon": 109.038036,
+  "lat": 34.278146,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   226,
+   56
+  ],
+  "osm_centroid": [
+   109.038036,
+   34.278146
+  ],
+  "osm_footprint_area_m2": 11112,
+  "osm_building_name": "凯德广场(御锦城店)",
+  "overture_building_id": "bb5fcf23-1b30-4181-a237-b548ac90fc8b",
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条(约226x56m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#0055A5",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "金莎国际购物广场",
+  "short_sign": "金莎国际",
+  "district": "小寨",
+  "lon": 108.942808,
+  "lat": 34.227807,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   119,
+   59
+  ],
+  "osm_centroid": [
+   108.942808,
+   34.227807
+  ],
+  "osm_footprint_area_m2": 6957,
+  "osm_building_name": "金莎国际购物广场",
+  "overture_building_id": "9f8d120c-b944-48a4-af8c-057acae6a8ef",
+  "poi_lonlat": [
+   108.942806,
+   34.227834
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约119x59m)含酒店",
+  "facade": "玻璃幕墙",
+  "sign_color": "#D4AF37",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "百盛购物中心(西大街/时代盛典)",
+  "short_sign": "百盛",
+  "district": "钟楼(西大街)",
+  "lon": 108.934848,
+  "lat": 34.261744,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   93,
+   43
+  ],
+  "osm_centroid": [
+   108.934848,
+   34.261744
+  ],
+  "osm_footprint_area_m2": 3936,
+  "osm_building_name": "时代盛典大厦C",
+  "overture_building_id": "138e0828-662a-4b32-82f2-21bfb30cfeec",
+  "poi_lonlat": [
+   108.934977,
+   34.261381
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "西大街仿古风貌街区内的方盒商业楼",
+  "facade": "仿唐灰瓦坡顶+石材",
+  "sign_color": "#C8102E",
+  "towers": [],
+  "night": "西大街仿古街夜景泛光",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "轮廓匹配到OSM\"时代盛典大厦C\"，需核对"
+ },
+ {
+  "name": "中大国际(南大街店)",
+  "short_sign": "中大国际",
+  "district": "钟楼(南大街)",
+  "lon": 108.941522,
+  "lat": 34.255599,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   76,
+   42
+  ],
+  "osm_centroid": [
+   108.941522,
+   34.255599
+  ],
+  "osm_footprint_area_m2": 3176,
+  "osm_building_name": "中大国际(南大街店)",
+  "overture_building_id": "7410a065-b0fd-40a4-b546-0c0e130ff412",
+  "poi_lonlat": [
+   108.941521,
+   34.255602
+  ],
+  "floors_above": 7,
+  "height_m": 35,
+  "height_estimated": true,
+  "open_year": 1998,
+  "status": "open",
+  "form": "南大街沿街方盒(约76x42m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#1B1B1B",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "中大国际商业中心(高新店)",
+  "short_sign": "中大国际",
+  "district": "高新(高新路)",
+  "lon": 108.892899,
+  "lat": 34.223743,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   238,
+   50
+  ],
+  "osm_centroid": [
+   108.892899,
+   34.223743
+  ],
+  "osm_footprint_area_m2": 10669,
+  "osm_building_name": "中大国际商业中心（高新店）",
+  "overture_building_id": "92f0f927-0b73-4a56-b609-dbc932f6136e",
+  "poi_lonlat": [
+   108.892866,
+   34.223746
+  ],
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条(约238x50m)精品商业",
+  "facade": "玻璃+金属",
+  "sign_color": "#1B1B1B",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "世纪金花购物中心(钟楼店)",
+  "short_sign": "世纪金花",
+  "district": "钟楼",
+  "lon": 108.941018,
+  "lat": 34.261512,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 1,
+  "height_m": 6,
+  "height_estimated": true,
+  "open_year": 1996,
+  "status": "open",
+  "form": "钟鼓楼广场地下商场为主，地上仅出入口/下沉广场",
+  "facade": "地下商场，地面仅玻璃出入口",
+  "sign_color": "#C9A063",
+  "towers": [],
+  "night": "下沉广场灯光",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json"
+  ],
+  "remark": "主体在钟鼓楼广场地下，无地上楼体；建模只需下沉广场/出入口"
+ },
+ {
+  "name": "世纪金花(高新/科技路店)",
+  "short_sign": "世纪金花",
+  "district": "高新(科技路)",
+  "lon": 108.89881,
+  "lat": 34.234043,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   167,
+   104
+  ],
+  "osm_centroid": [
+   108.89881,
+   34.234043
+  ],
+  "osm_footprint_area_m2": 12079,
+  "osm_building_name": "世纪金花(科技路店)",
+  "overture_building_id": "7e7bfa2d-4df2-443a-b12a-d912e258d988",
+  "poi_lonlat": [
+   108.8986,
+   34.234064
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约167x104m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#C9A063",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "世纪金花赛高购物中心",
+  "short_sign": "世纪金花",
+  "district": "未央路(赛高)",
+  "lon": 108.941312,
+  "lat": 34.33067,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   206,
+   85
+  ],
+  "osm_centroid": [
+   108.941312,
+   34.33067
+  ],
+  "osm_footprint_area_m2": 11944,
+  "osm_building_name": null,
+  "overture_building_id": "ab5385f3-76d1-4165-8de4-5e31eb83490d",
+  "poi_lonlat": [
+   108.941294,
+   34.330574
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条盒子(约206x85m)，赛高街区裙房",
+  "facade": "石材+玻璃",
+  "sign_color": "#C9A063",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安民生百货(解放路店)",
+  "short_sign": "民生百货",
+  "district": "解放路",
+  "lon": 108.959135,
+  "lat": 34.268055,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   117,
+   103
+  ],
+  "osm_centroid": [
+   108.959135,
+   34.268055
+  ],
+  "osm_footprint_area_m2": 11583,
+  "osm_building_name": "西安民生百货(解放路店)",
+  "overture_building_id": "cf1cc837-61f8-475c-8242-04a2f396baab",
+  "poi_lonlat": [
+   108.959148,
+   34.26805
+  ],
+  "floors_above": 7,
+  "height_m": 35,
+  "height_estimated": true,
+  "open_year": 1959,
+  "status": "open",
+  "form": "解放路沿街方盒(约117x103m)",
+  "facade": "米色石材",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "红色字牌",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "民生百货(五路口店)",
+  "short_sign": "民生",
+  "district": "解放路(五路口)",
+  "lon": 108.959137,
+  "lat": 34.270991,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   92,
+   53
+  ],
+  "osm_centroid": [
+   108.959137,
+   34.270991
+  ],
+  "osm_footprint_area_m2": 4575,
+  "osm_building_name": "民生百货(五路口店)",
+  "overture_building_id": "5dc3714d-74dd-43e2-ae02-c731511cfb23",
+  "poi_lonlat": [
+   108.959131,
+   34.270998
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约92x53m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安市百货大厦",
+  "short_sign": "百货大厦",
+  "district": "钟楼(南大街)",
+  "lon": 108.942999,
+  "lat": 34.25709,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   91,
+   72
+  ],
+  "osm_centroid": [
+   108.942999,
+   34.25709
+  ],
+  "osm_footprint_area_m2": 6355,
+  "osm_building_name": "西安市百货大厦",
+  "overture_building_id": "2d541387-2e5c-4ebf-9b70-e9c46c2c1a01",
+  "poi_lonlat": [
+   108.943001,
+   34.257068
+  ],
+  "floors_above": 7,
+  "height_m": 35,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "南大街沿街方盒(约91x72m)，含酒店",
+  "facade": "石材",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "兴正元广场(钟楼东大街)",
+  "short_sign": "兴正元",
+  "district": "钟楼(东大街)",
+  "lon": 108.946426,
+  "lat": 34.260201,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   150,
+   141
+  ],
+  "osm_centroid": [
+   108.946426,
+   34.260201
+  ],
+  "osm_footprint_area_m2": 19333,
+  "osm_building_name": "兴正元广场",
+  "overture_building_id": "b6b34bea-c212-4b74-a8c9-b0a649daaa94",
+  "poi_lonlat": [
+   108.946416,
+   34.260142
+  ],
+  "floors_above": 5,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "钟楼东北侧仿唐风格大体量商业(约150x141m)",
+  "facade": "仿唐灰瓦坡顶+石材",
+  "sign_color": "#8B5A2B",
+  "towers": [],
+  "night": "仿古檐口轮廓灯",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "中环广场(西大街)",
+  "short_sign": "中环广场",
+  "district": "钟楼(西大街)",
+  "lon": 108.938071,
+  "lat": 34.260303,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   95,
+   71
+  ],
+  "osm_centroid": [
+   108.938071,
+   34.260303
+  ],
+  "osm_footprint_area_m2": 6233,
+  "osm_building_name": "中环广场",
+  "overture_building_id": "c4e942fe-d592-4a76-af3d-7769ab14e32a",
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约95x71m)",
+  "facade": "仿古风貌石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "西大街仿古泛光",
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "群光广场",
+  "short_sign": "群光广场",
+  "district": "钟楼(东大街)",
+  "lon": 108.950559,
+  "lat": 34.262219,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   191,
+   113
+  ],
+  "osm_centroid": [
+   108.950559,
+   34.262219
+  ],
+  "osm_footprint_area_m2": 16119,
+  "osm_building_name": "群光广场",
+  "overture_building_id": "540b5a6d-995a-497a-ae90-f4dbf0af3b77",
+  "floors_above": 7,
+  "height_m": 38,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "东大街大盒子(约191x113m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安新世界时尚广场(北大街店)",
+  "short_sign": "新世界",
+  "district": "北大街",
+  "lon": 108.941519,
+  "lat": 34.264272,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   70,
+   54
+  ],
+  "osm_centroid": [
+   108.941519,
+   34.264272
+  ],
+  "osm_footprint_area_m2": 2943,
+  "osm_building_name": "宏府嘉会广场-B座",
+  "overture_building_id": "999d30f4-4d8c-411e-8a44-c3453902bb10",
+  "poi_lonlat": [
+   108.941497,
+   34.264187
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "北大街沿街方盒(宏府嘉会广场B座)",
+  "facade": "石材+玻璃",
+  "sign_color": "#C8102E",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "营业状态未核实，轮廓匹配到OSM\"宏府嘉会广场-B座\""
+ },
+ {
+  "name": "大洋百货(北大街店)",
+  "short_sign": "大洋百货",
+  "district": "北大街",
+  "lon": 108.941595,
+  "lat": 34.268992,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   105,
+   71
+  ],
+  "osm_centroid": [
+   108.941595,
+   34.268992
+  ],
+  "osm_footprint_area_m2": 6652,
+  "osm_building_name": "宏府大厦",
+  "overture_building_id": "0ea538d2-b569-43a7-83fb-3ab6a0f48c22",
+  "poi_lonlat": [
+   108.941782,
+   34.268993
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(宏府大厦裙房)",
+  "facade": "石材+玻璃",
+  "sign_color": "#0055A5",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "营业状态未核实(大洋百货西安店可能已调整/关闭)，轮廓为OSM\"宏府大厦\""
+ },
+ {
+  "name": "益田假日世界购物中心(朝阳门)",
+  "short_sign": "益田假日世界",
+  "district": "解放路(朝阳门)",
+  "lon": 108.96894,
+  "lat": 34.270474,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   178,
+   118
+  ],
+  "osm_centroid": [
+   108.96894,
+   34.270474
+  ],
+  "osm_footprint_area_m2": 15398,
+  "osm_building_name": "益田假日世界购物中心",
+  "overture_building_id": "718f90e5-119c-439c-a8e1-dc2935fe9492",
+  "poi_lonlat": [
+   108.968954,
+   34.270653
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约178x118m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安悦荟广场(解放路)",
+  "short_sign": "悦荟广场",
+  "district": "解放路",
+  "lon": 108.957467,
+  "lat": 34.264929,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   129,
+   99
+  ],
+  "osm_centroid": [
+   108.957467,
+   34.264929
+  ],
+  "osm_footprint_area_m2": 10719,
+  "osm_building_name": "西安悦荟广场",
+  "overture_building_id": "94eff4d9-de0b-4d0d-bf16-eb9a68256822",
+  "poi_lonlat": [
+   108.957416,
+   34.265055
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约129x99m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "王府井百货(永宁门店)",
+  "short_sign": "王府井",
+  "district": "南门",
+  "lon": 108.941328,
+  "lat": 34.249242,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   125,
+   82
+  ],
+  "osm_centroid": [
+   108.941328,
+   34.249242
+  ],
+  "osm_footprint_area_m2": 10257,
+  "osm_building_name": "西安王府井百货(永宁门店)",
+  "overture_building_id": "3786683c-f19c-40b1-aa94-2f58501926ef",
+  "poi_lonlat": [
+   108.941328,
+   34.249242
+  ],
+  "floors_above": 8,
+  "height_m": 40,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "南门外西南方盒(约125x82m)，紧邻SKP",
+  "facade": "石材+玻璃",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "营业状态未核实"
+ },
+ {
+  "name": "中贸广场",
+  "short_sign": "中贸广场",
+  "district": "南门(小雁塔)",
+  "lon": 108.941226,
+  "lat": 34.244287,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   100,
+   35
+  ],
+  "osm_centroid": [
+   108.941226,
+   34.244287
+  ],
+  "osm_footprint_area_m2": 2527,
+  "osm_building_name": "中贸广场",
+  "overture_building_id": "15894f53-b501-4fe1-9cba-4c5cc0fbec89",
+  "poi_lonlat": [
+   108.941205,
+   34.244417
+  ],
+  "floors_above": 6,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条裙楼+写字楼",
+  "facade": "石材+玻璃",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "立丰国际购物广场(东二环)",
+  "short_sign": "立丰国际",
+  "district": "东二环(长乐路)",
+  "lon": 108.99282,
+  "lat": 34.248794,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   132,
+   70
+  ],
+  "osm_centroid": [
+   108.99282,
+   34.248794
+  ],
+  "osm_footprint_area_m2": 9073,
+  "osm_building_name": null,
+  "overture_building_id": "0b8c4f42-49d3-4788-b1b8-b78020ab6ad7",
+  "poi_lonlat": [
+   108.992806,
+   34.248746
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约132x70m, OSM未命名轮廓)",
+  "facade": "玻璃+石材",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "老城根G PARK",
+  "short_sign": "G PARK",
+  "district": "大兴新区(城墙西北)",
+  "lon": 108.913961,
+  "lat": 34.286298,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   596,
+   66
+  ],
+  "osm_centroid": [
+   108.913961,
+   34.286298
+  ],
+  "osm_footprint_area_m2": 28525,
+  "osm_building_name": "老城根G PARK",
+  "overture_building_id": "01773a5a-6396-43a3-a025-ff9333d4ba6b",
+  "poi_lonlat": [
+   108.913825,
+   34.286313
+  ],
+  "floors_above": 3,
+  "height_m": 18,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "超长条(约596x66m)低层开放街区式购物中心，沿城墙外环",
+  "facade": "红砖+玻璃，低层街区",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "街区灯光",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "轮廓为超长条596x66m，可能是多个体量合并"
+ },
+ {
+  "name": "龙湖西安大兴星悦荟",
+  "short_sign": "星悦荟",
+  "district": "大兴新区",
+  "lon": 108.915132,
+  "lat": 34.287094,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   169,
+   79
+  ],
+  "osm_centroid": [
+   108.915132,
+   34.287094
+  ],
+  "osm_footprint_area_m2": 7733,
+  "osm_building_name": null,
+  "overture_building_id": "189727a4-979b-4993-ad78-708fb840754f",
+  "poi_lonlat": [
+   108.914904,
+   34.287078
+  ],
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "条形盒子(约169x79m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20240531A01KPZ00",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "太奥广场",
+  "short_sign": "太奥广场",
+  "district": "土门/丰禾路",
+  "lon": 108.891236,
+  "lat": 34.283606,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 5,
+  "height_m": 26,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "无OSM轮廓",
+  "facade": "未知",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "未知",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "印象城(龙首店)",
+  "short_sign": "印象城",
+  "district": "未央路(龙首)",
+  "lon": 108.943582,
+  "lat": 34.295804,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   222,
+   95
+  ],
+  "osm_centroid": [
+   108.943582,
+   34.295804
+  ],
+  "osm_footprint_area_m2": 20467,
+  "osm_building_name": "印象城(龙首店)",
+  "overture_building_id": "4598ad5b-acaa-4f09-b3eb-1bfd5e1534d1",
+  "poi_lonlat": [
+   108.943579,
+   34.296121
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条盒子(约222x95m)",
+  "facade": "玻璃+彩色铝板",
+  "sign_color": "#E4002B",
+  "towers": [],
+  "night": "LED立面",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "太白印象城",
+  "short_sign": "印象城",
+  "district": "小寨(太白路)",
+  "lon": 108.916468,
+  "lat": 34.237179,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   108,
+   99
+  ],
+  "osm_centroid": [
+   108.916468,
+   34.237179
+  ],
+  "osm_footprint_area_m2": 6145,
+  "osm_building_name": null,
+  "overture_building_id": "32920ade-65c0-4206-8376-366688117b2e",
+  "poi_lonlat": [
+   108.916271,
+   34.236898
+  ],
+  "floors_above": 5,
+  "height_m": 26,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约108x99m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E4002B",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "浐灞印象城",
+  "short_sign": "印象城",
+  "district": "浐灞",
+  "lon": 108.992217,
+  "lat": 34.309063,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   180,
+   113
+  ],
+  "osm_centroid": [
+   108.992217,
+   34.309063
+  ],
+  "osm_footprint_area_m2": 17187,
+  "osm_building_name": "浐灞印象城",
+  "overture_building_id": "15f93542-b36f-4126-a543-6f75d37c8fe3",
+  "poi_lonlat": [
+   108.99217,
+   34.309092
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约180x113m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E4002B",
+  "towers": [],
+  "night": "LED立面",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "汉神购物广场(文景店)",
+  "short_sign": "汉神",
+  "district": "未央路(文景路)",
+  "lon": 108.931954,
+  "lat": 34.339936,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   136,
+   123
+  ],
+  "osm_centroid": [
+   108.931954,
+   34.339936
+  ],
+  "osm_footprint_area_m2": 13170,
+  "osm_building_name": "汉神购物广场(文景店)",
+  "overture_building_id": "53291cb1-7b2e-49c3-946a-8d12f2d09251",
+  "poi_lonlat": [
+   108.931928,
+   34.340008
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约136x123m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "中登广场",
+  "short_sign": "中登广场",
+  "district": "未央路(凤城五路)",
+  "lon": 108.938614,
+  "lat": 34.327077,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   167,
+   149
+  ],
+  "osm_centroid": [
+   108.938614,
+   34.327077
+  ],
+  "osm_footprint_area_m2": 23668,
+  "osm_building_name": "中登广场",
+  "overture_building_id": "ae3d8a23-0c7f-43aa-928c-3b9400c2bf84",
+  "poi_lonlat": [
+   108.938614,
+   34.327193
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "大方盒(约167x149m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "首创禧悦里",
+  "short_sign": "禧悦里",
+  "district": "北客站(经开)",
+  "lon": 108.935227,
+  "lat": 34.360581,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   157,
+   128
+  ],
+  "osm_centroid": [
+   108.935227,
+   34.360581
+  ],
+  "osm_footprint_area_m2": 17564,
+  "osm_building_name": "首创禧悦里",
+  "overture_building_id": "5ee2f30b-fac7-43c8-8482-9e749288a912",
+  "poi_lonlat": [
+   108.935275,
+   34.360502
+  ],
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约157x128m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "静安荟生活奥特莱斯(北关)",
+  "short_sign": "静安荟",
+  "district": "北关",
+  "lon": 108.941528,
+  "lat": 34.286884,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   179,
+   138
+  ],
+  "osm_centroid": [
+   108.941528,
+   34.286884
+  ],
+  "osm_footprint_area_m2": 9717,
+  "osm_building_name": null,
+  "overture_building_id": "d2fb9ac0-9967-42de-aaa1-87f5dbae694a",
+  "poi_lonlat": [
+   108.941507,
+   34.286739
+  ],
+  "floors_above": 4,
+  "height_m": 20,
+  "height_estimated": true,
+  "open_year": 2022,
+  "status": "open",
+  "form": "方盒(约179x138m, OSM未命名轮廓)",
+  "facade": "玻璃+金属",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "静安荟奥莱公园(泾河)",
+  "short_sign": "静安荟",
+  "district": "泾河/高陵",
+  "lon": 108.942058,
+  "lat": 34.501733,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": 12,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "低层奥莱街区",
+  "facade": "未知",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "砂之船(西安)奥莱",
+  "short_sign": "砂之船奥莱",
+  "district": "浐灞(奥体东)",
+  "lon": 109.040894,
+  "lat": 34.345672,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   208,
+   188
+  ],
+  "osm_centroid": [
+   109.040894,
+   34.345672
+  ],
+  "osm_footprint_area_m2": 32248,
+  "osm_building_name": "砂之船(西安)奥莱",
+  "overture_building_id": "6f013ca6-dbab-4da5-af62-b1cee8479818",
+  "poi_lonlat": [
+   109.041224,
+   34.345402
+  ],
+  "floors_above": 3,
+  "height_m": 18,
+  "height_estimated": true,
+  "open_year": 2017,
+  "status": "open",
+  "form": "大型奥莱(约208x188m)低层街区",
+  "facade": "欧式坡顶+石材",
+  "sign_color": "#1F3A93",
+  "towers": [],
+  "night": "街区暖光",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安华南城购物中心",
+  "short_sign": "华南城",
+  "district": "浐灞(纺织城北)",
+  "lon": 109.038689,
+  "lat": 34.358741,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   608,
+   114
+  ],
+  "osm_centroid": [
+   109.038689,
+   34.358741
+  ],
+  "osm_footprint_area_m2": 69123,
+  "osm_building_name": "华南城购物中心",
+  "overture_building_id": "3c9a5018-1443-4323-8119-84f8f59b215f",
+  "poi_lonlat": [
+   109.038691,
+   34.358741
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "超长条(约608x114m)批发/购物中心",
+  "facade": "浅色金属板+玻璃",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "龙湖西安香醍天街",
+  "short_sign": "天街",
+  "district": "浐灞(长乐东路)",
+  "lon": 109.032712,
+  "lat": 34.263873,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   151,
+   114
+  ],
+  "osm_centroid": [
+   109.032712,
+   34.263873
+  ],
+  "osm_footprint_area_m2": 12128,
+  "osm_building_name": "龙湖天街",
+  "overture_building_id": "299193aa-6015-45e3-99e5-3d0ddaf82a55",
+  "poi_lonlat": [
+   109.032647,
+   34.263725
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2020,
+  "status": "open",
+  "form": "方盒(约151x114m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "LED线条",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20240531A01KPZ00",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "龙湖西安长乐天街",
+  "short_sign": "天街",
+  "district": "幸福林带(长乐路)",
+  "lon": 109.008624,
+  "lat": 34.283387,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   376,
+   70
+  ],
+  "osm_centroid": [
+   109.008624,
+   34.283387
+  ],
+  "osm_footprint_area_m2": 23214,
+  "osm_building_name": "龙湖西安长乐天街",
+  "overture_building_id": "3d865e49-328a-4913-9674-94fc0f01b98e",
+  "poi_lonlat": [
+   109.008654,
+   34.28293
+  ],
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "A/B两馆沿林带长条展开(约376x70m)，巨幅玻璃连廊串联",
+  "facade": "玻璃幕墙+铝板，全透光城市客厅",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "玻璃连廊通透发光",
+  "already_modeled": false,
+  "sources": [
+   "http://sx.sina.cn/news/brand/2025-11-14/detail-infxkanu9175913.d.html",
+   "https://news.qq.com/rain/a/20250904A04XDU00",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "龙湖西安未央天街",
+  "short_sign": "天街",
+  "district": "未央(团结村/徐家湾)",
+  "lon": 108.9806,
+  "lat": 34.3464,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2024,
+  "status": "open",
+  "form": "约15.8万㎡综合体，秦岭\"峪\"山谷概念，层叠体块+流水曲线",
+  "facade": "玻璃+层叠铝板，点状星空灯",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "\"月光星河\"夜晚立面，点状灯光",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20241227A0A9B800",
+   "https://news.qq.com/rain/a/20240531A01KPZ00",
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm"
+  ],
+  "remark": "OSM无轮廓；坐标为景云路以东/众德路以西/仁宇路以北/仁里路以南地块中心(用roads.json求交)"
+ },
+ {
+  "name": "西安西咸吾悦广场",
+  "short_sign": "吾悦广场",
+  "district": "西咸(沣东)",
+  "lon": 108.818621,
+  "lat": 34.255425,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   265,
+   148
+  ],
+  "osm_centroid": [
+   108.818621,
+   34.255425
+  ],
+  "osm_footprint_area_m2": 35617,
+  "osm_building_name": "西安西咸吾悦广场",
+  "overture_building_id": "51dcba42-d3a5-43dd-af33-9005bbbf80da",
+  "poi_lonlat": [
+   108.818526,
+   34.255221
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2019,
+  "status": "open",
+  "form": "大盒子(约265x148m)+写字楼",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "红色吾悦字牌+LED",
+  "already_modeled": false,
+  "sources": [
+   "https://m.seazen.com.cn/business/details-1139.html",
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "open_year 2019 为推断(与延安吾悦同日9月27日开业)，建议核对"
+ },
+ {
+  "name": "西安沣西吾悦广场",
+  "short_sign": "吾悦广场",
+  "district": "西咸(沣西)",
+  "lon": 108.725734,
+  "lat": 34.303347,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2020,
+  "status": "open",
+  "form": "购物中心(无OSM轮廓)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "红色吾悦字牌",
+  "already_modeled": false,
+  "sources": [
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E6%B2%A3%E8%A5%BF%E5%90%BE%E6%82%A6%E5%B9%BF%E5%9C%BA/24559073",
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "西安宜家荟聚购物中心",
+  "short_sign": "荟聚",
+  "district": "高新(西太路/长安)",
+  "lon": 108.896802,
+  "lat": 34.17411,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   427,
+   184
+  ],
+  "osm_centroid": [
+   108.896802,
+   34.17411
+  ],
+  "osm_footprint_area_m2": 58619,
+  "osm_building_name": "西安宜家荟聚购物中心",
+  "overture_building_id": "4bf6d413-0649-43de-9a38-2d202d84c062",
+  "poi_lonlat": [
+   108.898325,
+   34.174087
+  ],
+  "floors_above": 3,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": 2024,
+  "status": "open",
+  "form": "超大盒子(约427x184m)，含宜家",
+  "facade": "深色金属板+玻璃，宜家蓝色体块",
+  "sign_color": "#F39800",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "http://sx.sina.cn/news/brand/2024-04-19/detail-inasiqcw7501080.d.html",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "阳光天地购物中心",
+  "short_sign": "阳光天地",
+  "district": "长安(郭杜)",
+  "lon": 108.863445,
+  "lat": 34.171933,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   276,
+   211
+  ],
+  "osm_centroid": [
+   108.863445,
+   34.171933
+  ],
+  "osm_footprint_area_m2": 27579,
+  "osm_building_name": "阳光天地购物中心",
+  "overture_building_id": "e54dc8b4-960d-4510-ba67-aa69ce277d72",
+  "poi_lonlat": [
+   108.863846,
+   34.171391
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "大方盒(约276x211m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "方圆荟(长安店)",
+  "short_sign": "方圆荟",
+  "district": "长安(郭杜)",
+  "lon": 108.861142,
+  "lat": 34.167355,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   233,
+   96
+  ],
+  "osm_centroid": [
+   108.861142,
+   34.167355
+  ],
+  "osm_footprint_area_m2": 20094,
+  "osm_building_name": "方圆荟(长安店)",
+  "overture_building_id": "c370d50e-66d6-4c9b-9a1a-3bd9cf47e2e6",
+  "poi_lonlat": [
+   108.861143,
+   34.167354
+  ],
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条(约233x96m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "长安万科广场",
+  "short_sign": "万科广场",
+  "district": "长安(韦曲)",
+  "lon": 108.892139,
+  "lat": 34.16009,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   183,
+   55
+  ],
+  "osm_centroid": [
+   108.892139,
+   34.16009
+  ],
+  "osm_footprint_area_m2": 9283,
+  "osm_building_name": "长安万科广场",
+  "overture_building_id": "da297b79-4013-4337-b85c-784e6e03a2da",
+  "poi_lonlat": [
+   108.892142,
+   34.1601
+  ],
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "长条(约183x55m)+写字楼",
+  "facade": "玻璃+石材",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "西安首创奥特莱斯",
+  "short_sign": "首创奥莱",
+  "district": "高新(西太路)",
+  "lon": 108.755037,
+  "lat": 34.151101,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": 14,
+  "height_estimated": true,
+  "open_year": 2019,
+  "status": "open",
+  "form": "低层奥莱街区(无OSM轮廓)",
+  "facade": "欧式街区",
+  "sign_color": "#1F3A93",
+  "towers": [],
+  "night": "街区暖光",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "王府井奥莱·西咸小镇(机场)",
+  "short_sign": "王府井奥莱",
+  "district": "西咸(空港)",
+  "lon": 108.726024,
+  "lat": 34.397849,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": 12,
+  "height_estimated": true,
+  "open_year": 2016,
+  "status": "open",
+  "form": "低层奥莱小镇(无OSM轮廓)",
+  "facade": "欧式小镇",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "街区暖光",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "王府井奥莱·临潼小镇",
+  "short_sign": "王府井奥莱",
+  "district": "临潼",
+  "lon": 109.171059,
+  "lat": 34.366006,
+  "coord_source": "poi",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": 12,
+  "height_estimated": true,
+  "open_year": 2016,
+  "status": "open",
+  "form": "低层奥莱小镇(无OSM轮廓)",
+  "facade": "仿古/欧式小镇",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "街区暖光",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "local:public/data/pois.json"
+  ]
+ },
+ {
+  "name": "益田假日里购物中心",
+  "short_sign": "假日里",
+  "district": "高新(锦业路)",
+  "lon": 108.877523,
+  "lat": 34.196418,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   154,
+   122
+  ],
+  "osm_centroid": [
+   108.877523,
+   34.196418
+  ],
+  "osm_footprint_area_m2": 16630,
+  "osm_building_name": "益田假日里购物中心",
+  "overture_building_id": "1d5901f2-a735-4f29-996d-381d47e3bf32",
+  "poi_lonlat": [
+   108.877566,
+   34.196406
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约154x122m)，邻绿地中心双塔",
+  "facade": "玻璃+铝板",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "立丰城LECITY",
+  "short_sign": "立丰城",
+  "district": "高新(丈八东路)",
+  "lon": 108.899093,
+  "lat": 34.198522,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   203,
+   107
+  ],
+  "osm_centroid": [
+   108.899093,
+   34.198522
+  ],
+  "osm_footprint_area_m2": 18123,
+  "osm_building_name": "立丰城LECITY",
+  "overture_building_id": "eafbdaae-a9de-41dd-8620-5f983803afd1",
+  "poi_lonlat": [
+   108.899113,
+   34.1987
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约203x107m)",
+  "facade": "玻璃+铝板",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "大都荟·都荟茂",
+  "short_sign": "都荟茂",
+  "district": "高新(科技路)",
+  "lon": 108.889687,
+  "lat": 34.238971,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   156,
+   100
+  ],
+  "osm_centroid": [
+   108.889687,
+   34.238971
+  ],
+  "osm_footprint_area_m2": 13197,
+  "osm_building_name": "都荟茂",
+  "overture_building_id": "42951ec9-6f9f-4e31-b226-b186b5d3c5d1",
+  "poi_lonlat": [
+   108.88959,
+   34.238809
+  ],
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "裙房(约156x100m)+大都荟7栋塔楼",
+  "facade": "玻璃+石材",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "禾盛京广T11购物中心",
+  "short_sign": "T11",
+  "district": "高新(唐延路)",
+  "lon": 108.886455,
+  "lat": 34.231524,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   198,
+   119
+  ],
+  "osm_centroid": [
+   108.886455,
+   34.231524
+  ],
+  "osm_footprint_area_m2": 20954,
+  "osm_building_name": "禾盛京广t11购物中心",
+  "overture_building_id": "0b974a7e-8018-4108-815b-9ccb119b0e74",
+  "poi_lonlat": [
+   108.88656,
+   34.231483
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "裙房(约198x119m)+禾盛京广中心双塔",
+  "facade": "玻璃幕墙",
+  "sign_color": "#FFFFFF",
+  "towers": [
+   {
+    "name": "禾盛京广中心A座",
+    "height_m": 200,
+    "floors": 41
+   },
+   {
+    "name": "禾盛京广中心B座",
+    "height_m": 200,
+    "floors": 41
+   }
+  ],
+  "night": "塔楼顶部泛光",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)",
+   "local:public/data/skyline.json"
+  ]
+ },
+ {
+  "name": "盛大时代广场",
+  "short_sign": "盛大时代广场",
+  "district": "高新(科技路)",
+  "lon": 108.88638,
+  "lat": 34.236752,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   156,
+   132
+  ],
+  "osm_centroid": [
+   108.88638,
+   34.236752
+  ],
+  "osm_footprint_area_m2": 20207,
+  "osm_building_name": "盛大时代广场",
+  "overture_building_id": "b03fae7b-c4f3-42bd-9a28-73af1f5a8995",
+  "poi_lonlat": [
+   108.886381,
+   34.236749
+  ],
+  "floors_above": 5,
+  "height_m": 26,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约156x132m)",
+  "facade": "石材+玻璃",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "金鹰国际购物中心(高新店)",
+  "short_sign": "金鹰",
+  "district": "高新(科技路)",
+  "lon": 108.897156,
+  "lat": 34.234813,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   136,
+   79
+  ],
+  "osm_centroid": [
+   108.897156,
+   34.234813
+  ],
+  "osm_footprint_area_m2": 9057,
+  "osm_building_name": "金鹰国际购物中心(高新店)",
+  "overture_building_id": "a1e223ab-9e44-4689-a641-c339174058ec",
+  "poi_lonlat": [
+   108.896926,
+   34.235088
+  ],
+  "floors_above": 6,
+  "height_m": 32,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "open",
+  "form": "方盒(约136x79m)",
+  "facade": "玻璃+石材",
+  "sign_color": "#D4AF37",
+  "towers": [],
+  "night": "常规",
+  "already_modeled": false,
+  "sources": [
+   "local:public/data/pois.json",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "大唐西市购物中心",
+  "short_sign": "大唐西市",
+  "district": "西市(劳动南路)",
+  "lon": 108.90331,
+  "lat": 34.246797,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   102,
+   93
+  ],
+  "osm_centroid": [
+   108.90331,
+   34.246797
+  ],
+  "osm_footprint_area_m2": 9178,
+  "osm_building_name": null,
+  "overture_building_id": "7c1cb0ef-8173-45df-b10c-dcebb02206f8",
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2012,
+  "status": "open",
+  "form": "仿唐风格方盒(约102x93m)，位于大唐西市文化街区",
+  "facade": "仿唐灰瓦坡顶+土黄色墙面",
+  "sign_color": "#8B5A2B",
+  "towers": [],
+  "night": "仿古檐口轮廓灯",
+  "already_modeled": false,
+  "sources": [
+   "https://36kr.com/p/3054234254119047",
+   "local:data-src/overture/building.parquet(OSM)"
+  ]
+ },
+ {
+  "name": "DT51(陕西国际体育之窗·NMC中心)",
+  "short_sign": "DT51",
+  "district": "高新(唐延路/省体育馆)",
+  "lon": 108.886559,
+  "lat": 34.204799,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   171,
+   160
+  ],
+  "osm_centroid": [
+   108.886559,
+   34.204799
+  ],
+  "osm_footprint_area_m2": 21437,
+  "osm_building_name": "陕西国际体育之窗",
+  "overture_building_id": "2eecb7da-0cb1-4c7e-8c32-a88bf9c7a49a",
+  "floors_above": 4,
+  "height_m": 24,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "大方盒(约171x160m)，地下1层+地上4层，TOD(地铁6/8号线省体育馆站)",
+  "facade": "时尚精品百货立面(待照片核对)",
+  "sign_color": "#1B1B1B",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://www.guandian.cn/article/20250930/515007.html",
+   "https://news.qq.com/rain/a/20251006A05G4D00",
+   "https://news.qq.com/rain/a/20250323A062VA00",
+   "https://www.163.com/dy/article/JCS6S6IA0515DC4C.html",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "即此前传闻的\"高新SKP\"项目，最终品牌为DT51；OSM轮廓名\"陕西国际体育之窗\""
+ },
+ {
+  "name": "西安环贸中心(ICC环贸天地)",
+  "short_sign": "环贸中心",
+  "district": "高新(锦业路/丈八四路)",
+  "lon": 108.866,
+  "lat": 34.1942,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "163m超高层写字楼+86m酒店+4栋街区商业(B1-L4)",
+  "facade": "玻璃幕墙超高层",
+  "sign_color": "#FFFFFF",
+  "towers": [
+   {
+    "name": "ICC环贸中心写字楼",
+    "height_m": 163.1,
+    "floors": null
+   },
+   {
+    "name": "ICC环贸中心酒店",
+    "height_m": 86,
+    "floors": null
+   }
+  ],
+  "night": "塔楼竖向线条灯",
+  "already_modeled": false,
+  "sources": [
+   "http://cn.chinadaily.com.cn/a/202406/18/WS6671220ea3107cd55d267595.html",
+   "https://news.qq.com/rain/a/20230918A013XR00",
+   "https://news.qq.com/rain/a/20250904A04XDU00",
+   "https://news.qq.com/rain/a/20251006A05G4D00"
+  ],
+  "remark": "对角位资料冲突：中国日报称丈八四路与锦业路东南角，另一文称西南；此处取东南角估计"
+ },
+ {
+  "name": "明德·盛荟",
+  "short_sign": "明德·盛荟",
+  "district": "雁塔(朱雀大街/明德门)",
+  "lon": 108.9362,
+  "lat": 34.208,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 3,
+  "height_m": 20,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "商业地上3层+写字楼，流线型",
+  "facade": "LOW-E中空玻璃幕墙+流线型金属饰面",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "智能灯光系统演绎立面",
+  "already_modeled": false,
+  "sources": [
+   "http://business.china.com.cn/2025-06/23/content_43152192.html",
+   "https://news.qq.com/rain/a/20250516A0918Z00"
+  ]
+ },
+ {
+  "name": "航天城·星璇广场",
+  "short_sign": "星璇广场",
+  "district": "航天基地",
+  "lon": 108.9705,
+  "lat": 34.1485,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 5,
+  "height_m": 30,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "\"飞船/星际之门\"流线型大盒子，地上5层(Mall L1-L4+1)",
+  "facade": "银白金属流线型饰面+玻璃",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "夜间灯光勾勒流线轮廓",
+  "already_modeled": false,
+  "sources": [
+   "https://finance.sina.com.cn/stock/estate/integration/2025-12-07/doc-infzyxec2498264.shtml",
+   "https://m.sohu.com/a/970306938_121119259",
+   "https://news.qq.com/rain/a/20250904A04XDU00"
+  ],
+  "remark": "另有资料写作\"星旋广场\"；坐标为航新路以西/神舟四路以东/航天南路以北地块中心估计"
+ },
+ {
+  "name": "西安高新GT Mall",
+  "short_sign": "GT Mall",
+  "district": "高新(团结南路/唐兴路)",
+  "lon": 108.8763,
+  "lat": 34.2333,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 5,
+  "height_m": 26,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "\"街区+盒子\"，三层连廊",
+  "facade": "彩色马赛克艺术砖拼贴连廊",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20250515A07QPG00",
+   "https://news.qq.com/rain/a/20250516A0918Z00",
+   "https://news.qq.com/rain/a/20250323A062VA00"
+  ],
+  "remark": "OSM在估计点处只有\"睿中心\"写字楼，未找到商场轮廓"
+ },
+ {
+  "name": "西安浐灞万象汇(华润)",
+  "short_sign": "万象汇",
+  "district": "港务区(双寨站)",
+  "lon": 109.033569,
+  "lat": 34.371647,
+  "coord_source": "osm_footprint",
+  "footprint_size_m": [
+   238,
+   143
+  ],
+  "osm_centroid": [
+   109.033569,
+   34.371647
+  ],
+  "osm_footprint_area_m2": 20390,
+  "osm_building_name": null,
+  "overture_building_id": "46d30957-37d2-462b-8e27-0161c87c72c8",
+  "floors_above": 5,
+  "height_m": 28,
+  "height_estimated": true,
+  "open_year": 2026,
+  "status": "open",
+  "form": "大盒子(OSM未命名轮廓约238x143m)，B2-L5，双寨站TOD上盖",
+  "facade": "\"丝绸之路\"主题立面(待照片核对)",
+  "sign_color": "#C8A063",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20260913A08OSS00",
+   "https://news.qq.com/rain/a/20260906A0BCAZ00",
+   "https://news.qq.com/rain/a/20260203A0709500",
+   "local:data-src/overture/building.parquet(OSM)"
+  ],
+  "remark": "OSM轮廓未命名，距地块估计点83m，位于港兴二路南/欧亚大道西/和悦路东地块内，基本可信"
+ },
+ {
+  "name": "源创Oya街区",
+  "short_sign": "Oya",
+  "district": "浐灞(欧亚大道/广运潭)",
+  "lon": 109.011,
+  "lat": 34.332,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 3,
+  "height_m": 15,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "去天花板开放街区，台地景观、空中连廊、屋顶花园",
+  "facade": "多栋低层",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "街区灯光",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20250904A04XDU00",
+   "https://news.qq.com/rain/a/20251006A05G4D00"
+  ]
+ },
+ {
+  "name": "高新新天地生活奥莱",
+  "short_sign": "新天地",
+  "district": "高新(团结南路/科技三路)",
+  "lon": 108.878,
+  "lat": 34.223,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 4,
+  "height_m": 22,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "既有商业综合体(高新新天地3栋)改造为生活奥莱，约6万㎡",
+  "facade": "待核对",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://view.inews.qq.com/a/20251203A07LIA00",
+   "https://xa.jiwu.com/loupan/276936.html"
+  ],
+  "remark": "OSM在估计点处只有\"航海科技园\"，未找到商场轮廓"
+ },
+ {
+  "name": "真珠港购物中心(航天城壹街区)",
+  "short_sign": "真珠港",
+  "district": "航天基地",
+  "lon": 108.97,
+  "lat": 34.1745,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 3,
+  "height_m": 16,
+  "height_estimated": true,
+  "open_year": 2025,
+  "status": "open",
+  "form": "5万㎡以下社区购物中心",
+  "facade": "待核对",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://xa.city8.com/shopping/80l4q57c3th1b1cb22",
+   "https://news.qq.com/rain/a/20250516A0918Z00"
+  ]
+ },
+ {
+  "name": "月澜嘉奥特莱斯(火车站北广场)",
+  "short_sign": "月澜嘉奥莱",
+  "district": "火车站北",
+  "lon": 108.9625,
+  "lat": 34.2825,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": null,
+  "height_m": null,
+  "height_estimated": true,
+  "open_year": 2026,
+  "status": "under_construction",
+  "form": "火车站北广场东侧4栋既有新楼改造，约5.9万㎡",
+  "facade": "待核对",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20251118A03ME900"
+  ]
+ },
+ {
+  "name": "百联奥莱(幸福林带地下商业街)",
+  "short_sign": "百联奥莱",
+  "district": "幸福林带",
+  "lon": 109.005,
+  "lat": 34.258,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 0,
+  "height_m": 0,
+  "height_estimated": false,
+  "open_year": 2026,
+  "status": "under_construction",
+  "form": "幸福林带韩森路至咸宁路段地下商业街，约5.7万㎡，地面仅下沉入口",
+  "facade": "地下",
+  "sign_color": "#E60012",
+  "towers": [],
+  "night": "林带下沉广场灯光",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20260609A05AR500"
+  ]
+ },
+ {
+  "name": "中粮·大悦广场",
+  "short_sign": "大悦广场",
+  "district": "港务区(奥体北)",
+  "lon": 109.018,
+  "lat": 34.387,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": null,
+  "height_m": null,
+  "height_estimated": true,
+  "open_year": 2026,
+  "status": "under_construction",
+  "form": "开放式街区+独栋办公，约21万㎡(商业3.6万㎡)",
+  "facade": "待核对",
+  "sign_color": "#E50012",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://www.sohu.com/a/973088091_122104537",
+   "https://news.qq.com/rain/a/20260203A0709500",
+   "https://www.sohu.com/a/983194028_121443915"
+  ]
+ },
+ {
+  "name": "王府井国际港丝路购物中心",
+  "short_sign": "王府井",
+  "district": "港务区(欧亚大道)",
+  "lon": 109.04,
+  "lat": 34.38,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": null,
+  "height_m": null,
+  "height_estimated": true,
+  "open_year": null,
+  "status": "under_construction",
+  "form": "约15万㎡，含绿地全球丝路贸易港/陆港之翼；原定2024开业，已延期",
+  "facade": "待核对",
+  "sign_color": "#C8161D",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20231121A0AC4500"
+  ]
+ },
+ {
+  "name": "银池国际",
+  "short_sign": "银池国际",
+  "district": "未央路(行政中心)",
+  "lon": 108.944,
+  "lat": 34.342,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": null,
+  "height_m": null,
+  "height_estimated": true,
+  "open_year": 2026,
+  "status": "under_construction",
+  "form": "约2万㎡精致商业体",
+  "facade": "待核对",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://news.qq.com/rain/a/20260203A0709500",
+   "https://www.sohu.com/a/983194028_121443915"
+  ]
+ },
+ {
+  "name": "Insula·绿洲(沣东)",
+  "short_sign": "Insula绿洲",
+  "district": "西咸(沣东)",
+  "lon": 108.821,
+  "lat": 34.262,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": 12,
+  "height_estimated": true,
+  "open_year": 2026,
+  "status": "under_construction",
+  "form": "\"群岛式\"28栋独栋低层建筑，商业4.2万㎡，邻《赳赳大秦》剧场",
+  "facade": "待核对",
+  "sign_color": "#FFFFFF",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://m.fang.com/news/xian/03_52337949.html",
+   "https://news.qq.com/rain/a/20260203A0709500",
+   "https://news.qq.com/rain/a/20250516A0918Z00"
+  ]
+ },
+ {
+  "name": "西安太古里",
+  "short_sign": "太古里",
+  "district": "小雁塔(友谊路/朱雀大街)",
+  "lon": 108.938,
+  "lat": 34.2397,
+  "coord_source": "estimated",
+  "footprint_size_m": null,
+  "floors_above": 2,
+  "height_m": null,
+  "height_estimated": true,
+  "open_year": 2027,
+  "status": "under_construction",
+  "form": "低密度开放街区，DK-12地上2层、DK-13最高7层，总建面约26.9万㎡",
+  "facade": "待核对(太古里常用灰砖/金属格栅)",
+  "sign_color": "#1B1B1B",
+  "towers": [],
+  "night": "待核对",
+  "already_modeled": false,
+  "sources": [
+   "https://www.163.com/dy/article/JCS6S6IA0515DC4C.html",
+   "https://news.qq.com/rain/a/20251006A05G4D00"
+  ]
+ }
+]

@@ -235,6 +235,7 @@ async function main() {
   const post = new Post(renderer, scene, camera, quality, reversed);
   const controls = new Controls(camera, renderer.domElement, terrain);
   app.controls = controls;
+  ctx.controls = controls; // 地铁地下浏览等模块运行时需要接管地面高度
   app.post = post;
 
   // 起始视角
@@ -342,6 +343,28 @@ async function main() {
   ui.on('labels', (v) => setLayer('labels', v));
   ui.on('buildings', (v) => setLayer('buildings', v));
   ui.on('districts', (v) => setLayer('districts', v));
+  // —— 地铁：透视俯视 / 进入地下 ——
+  const metroXray = () => {
+    const m = ctx.metro;
+    if (!m) return ui.toast('地铁数据未加载');
+    if (m.underground) m.setUnder(false);
+    m.setXray(!m.xray);
+    ui.setLayer('metro', m.xray);
+    ui.toast(m.xray ? '地铁透视：线网按官方色显示（X 返回）' : '已退出地铁透视');
+  };
+  const metroUnder = () => {
+    const m = ctx.metro;
+    if (!m) return ui.toast('地铁数据未加载');
+    m.setUnder(!m.underground);
+    ui.setLayer('metro', false);
+    ui.toast(m.underground ? `已进入地铁 ${m.station} 站（G 切换步行/飞行，U 返回地面）` : '已返回地面');
+  };
+  app.metroXray = metroXray;
+  app.metroUnder = metroUnder;
+  if (params.get('metro') === 'xray') setTimeout(metroXray, 0);
+  if (params.get('metro') === 'under') setTimeout(metroUnder, 0);
+  ui.on('metro', () => metroXray());
+  ui.on('metroUnder', () => metroUnder());
   sky.speed = 0.1666667;
 
   window.addEventListener('keydown', (e) => {
@@ -360,6 +383,8 @@ async function main() {
       case 'KeyG': controls.setMode(controls.mode === 'walk' ? 'fly' : 'walk'); ui.toast(controls.mode === 'walk' ? '步行模式（空格跳跃）' : '飞行模式'); break;
       case 'KeyO': controls.setMode(controls.mode === 'orbit' ? 'fly' : 'orbit'); ui.toast(controls.mode === 'orbit' ? '环绕展示模式' : '飞行模式'); break;
       case 'KeyL': setLayer('labels', !layers.labels); break;
+      case 'KeyX': metroXray(); break;
+      case 'KeyU': metroUnder(); break;
       case 'KeyM': ui.toggleMinimap(); break;
       case 'KeyP': ui.togglePanel(); break;
       case 'KeyH': case 'Slash': ui.toggleHelp(); break;

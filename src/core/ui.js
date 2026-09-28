@@ -105,6 +105,8 @@ export class UI {
         <label><input type="checkbox" class="l-labels" checked /> 地名标注</label>
         <label><input type="checkbox" class="l-buildings" checked /> 城市建筑</label>
         <label><input type="checkbox" class="l-districts" /> 行政区界·商圈·地铁线（高德）</label>
+        <label><input type="checkbox" class="l-metro" /> 地铁透视俯视（X）</label>
+        <button class="b-metro-under">进入地铁·地下浏览（U）</button>
       </div>
       <button class="collapse" title="收起/展开">⟩</button>`;
     root.appendChild(this.panel);
@@ -160,6 +162,7 @@ export class UI {
             <h3>时间与显示</h3>
             <p><kbd>N</kbd> 日/夜切换，<kbd>T</kbd> 时间流逝开关，<kbd>[</kbd> <kbd>]</kbd> 时间 ±30 分钟</p>
             <p><kbd>L</kbd> 地名标注，<kbd>M</kbd> 小地图，<kbd>P</kbd> 控制面板</p>
+            <p><kbd>X</kbd> 地铁透视俯视，<kbd>U</kbd> 进入地铁/返回地面</p>
             <p><kbd>F</kbd> 全屏，<kbd>K</kbd> 截图保存 PNG</p>
             <p><kbd>H</kbd> 或 <kbd>?</kbd> 打开/关闭本帮助</p>
             <h3>画质</h3>
@@ -190,6 +193,8 @@ export class UI {
     $('.l-labels').addEventListener('change', (e) => this.emit('labels', e.target.checked));
     $('.l-buildings').addEventListener('change', (e) => this.emit('buildings', e.target.checked));
     $('.l-districts').addEventListener('change', (e) => this.emit('districts', e.target.checked));
+    $('.l-metro').addEventListener('change', () => this.emit('metro'));
+    $('.b-metro-under').addEventListener('click', () => this.emit('metroUnder'));
     $('.collapse').addEventListener('click', () => this.togglePanel());
     // 面板内交互不触发画面锁定
     for (const el of [this.panel, this.info, this.mini]) el.addEventListener('mousedown', (e) => e.stopPropagation());
