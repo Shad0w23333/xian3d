@@ -1,11 +1,13 @@
 // 道路与轨道交通：路面（沥青 PBR + 着色器车道线/斑马线/箭头/导流线）、人行道与路缘石、中央分隔带、
 // 桥梁高架（桥面板/护栏/箱梁/桥墩/匝道）、路灯（五种灯型实例化 + 远景光点 + 着色器贴地光斑）、
 // 铁路（道砟/轨枕/钢轨、高铁与地铁高架箱梁 + 桥墩）。
-// 路面高度统一使用 core/roadheight.js 的 roadY / bridgeLift（与车流模块一致）。
+// 路面高度统一使用 core/roadheight.js 的 roadY / bridgeLift（与车流模块一致）：build 开头先在整张路网上求纵断面
+// （prepareRoadProfiles：桥链按里程平滑 + 最大坡度约束 + 两端顺接地面、立交按层保证净空、地面路取不入土的包络），
+// 路面/人行道/桥面断面与纵断面节点对齐（profileStepFn）；被抬高的地面路段（引桥路堤）两侧加挡土墙。
 // 分块：主要道路按 5 km 网格合并（视锥裁剪），支路按 2.5 km 网格合并并只在相机附近显示，核心区外只画高等级道路（粗采样）。
 import * as THREE from 'three';
-import { LIFT, RAMP, BRIDGE_UNIT, roadY, bridgeLift } from '../core/roadheight.js';
-import { buildRoadNet, placeLamps, annotateBridgeJoints, buildRailNet, lampStyleFor, F, KIND, LAMP } from '../arch/roads_net.js';
+import { LIFT, roadY, bridgeLift, prepareRoadProfiles, profileStepFn } from '../core/roadheight.js';
+import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, F, KIND, LAMP } from '../arch/roads_net.js';
 import { SurfWriter, StructWriter, sampleSections } from '../arch/roads_mesh.js';
 import { createSurfaceMaterial, createStructMaterial } from '../arch/roads_shader.js';
 import { lampGeometries, lampMaterial, lampPointsMaterial } from '../arch/roads_lamps.js';
@@ -22,18 +24,16 @@ export default {
   id: 'roads',
   name: '道路与轨道交通',
 
-  prepare(ctx) {
-    // 给桥梁要素标注两端衔接高度（h0/h1），供将来 roadheight 规则使用；不改变现有高度
-    try {
-      annotateBridgeJoints(ctx.data.roads, BRIDGE_UNIT);
-    } catch (e) {
-      console.warn('[roads] annotateBridgeJoints', e);
-    }
-  },
-
   async build(ctx) {
     const t0 = performance.now();
     const terrain = ctx.terrain;
+    // 纵断面：所有模块 prepare（含各处平整区）完成后才求，traffic / 路名 / skyline 桥塔随后直接复用
+    try {
+      const st = prepareRoadProfiles(ctx.data.roads, terrain);
+      console.warn('[roads] 纵断面 ' + JSON.stringify(st));
+    } catch (e) {
+      console.warn('[roads] 纵断面求解失败，退回逐段规则', e);
+    }
     const root = new THREE.Group();
     root.name = '道路与轨道交通';
     ctx.scene.add(root);
@@ -201,8 +201,8 @@ export default {
       if (sB - sA < 1.5) continue;
       const isBridge = !!E.b;
       const base = core ? 36 : 75;
-      const rs = core ? 9 : 16;
-      const stepFn = isBridge ? (s) => (s < RAMP + 8 || tot - s < RAMP + 8 ? rs : core ? 28 : 60) : () => base;
+      // 断面落在纵断面节点上（桥 10 m、核心区地面 16 m、远郊 48 m），线性插值后不入土、桥面曲线不被削平
+      const stepFn = profileStepFn(f, isBridge ? (core ? 12 : 20) : base);
       const T = core ? (minor ? T_MINOR : T_MAJOR) : T_FAR;
       const tag = core ? (minor ? 'n' : 'm') : 'f';
       const grid = { x0: G0, z0: G0, T };
@@ -240,7 +240,7 @@ export default {
           if (!on) continue;
           const rA = E.s0 + E.sw0 + 0.5, rB = E.s1 - E.sw1 - 0.5;
           if (rB - rA < 4) continue;
-          const s2 = sampleSections(f.p, ch, rA, rB, () => base, grid);
+          const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
           if (!s2) continue;
           const y2 = sectionYs(s2, f, tot);
           const sideLamp = side === 1 ? lb & LAMPR : lb & (LAMPL | LAMPM) ? LAMPL : 0;
@@ -266,7 +266,7 @@ export default {
         const g2 = Math.min(E.gap / 2, E.gap < 14 ? 99 : 1.5);
         const rA = E.s0 + Math.max(E.R0 + 1.5, E.sw0 * 0.5, 1), rB = E.s1 - Math.max(E.R1 + 1.5, E.sw1 * 0.5, 1);
         if (rB - rA > 8) {
-          const s2 = sampleSections(f.p, ch, rA, rB, () => base, grid);
+          const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
           if (s2) {
             const y2 = sectionYs(s2, f, tot);
             const H = 0.2;
@@ -287,6 +287,48 @@ export default {
       }
       // —— 桥梁：桥面板 + 护栏 + 箱梁 + 桥墩 ——
       if (isBridge) buildBridgeDeck(E, f, ch, tot, secs, ys, valid, core);
+      // —— 被纵断面抬高的地面路段（引桥路堤/匝道）：两侧挡土墙，避免路面悬空露缝 ——
+      else embankWalls(E, secs, ys, valid, cfg);
+    }
+
+    function embankWalls(E, secs, ys, valid, cfg) {
+      const n = secs.n;
+      const ground = new Float32Array(n);
+      let any = false;
+      for (let i = 0; i < n; i++) {
+        ground[i] = terrain.heightAt(secs.x[i], secs.z[i]);
+        if (valid[i] && ys[i] - ground[i] - LIFT > 0.6) any = true;
+      }
+      if (!any) return;
+      const hw = E.W / 2;
+      for (const side of [1, -1]) {
+        const swOn = cfg.sw > 0 && (side === 1 ? E.swR : E.swL);
+        // 横向坐标约定 o 以前进方向左侧为正（世界位置 = 中心 − 右法线 × o）；side=1 为右侧墙
+        const oo = -side * (hw + (swOn ? cfg.sw : 0) + 0.05);
+        let prev = -1;
+        SW.ensure(n * 2, n * 6);
+        for (let i = 0; i < n; i++) {
+          // 抬高不足 0.3 m 的断面不建墙（两端各留一个断面作收口）
+          const lift = ys[i] - ground[i] - LIFT;
+          const keep = valid[i] && (lift > 0.3 || (i > 0 && ys[i - 1] - ground[i - 1] - LIFT > 0.3) || (i + 1 < n && ys[i + 1] - ground[i + 1] - LIFT > 0.3));
+          if (!keep) { prev = -1; continue; }
+          const rx = secs.rx[i], rz = secs.rz[i];
+          const rl = Math.hypot(rx, rz) || 1;
+          const x = secs.x[i] - rx * oo, z = secs.z[i] - rz * oo;
+          const g = terrain.heightAt(x, z) - 0.4;
+          const top = ys[i] + (swOn ? 0.15 : 0.02);
+          const nx = (side * rx) / rl, nz = (side * rz) / rl; // 朝外
+          const col = [176, 172, 164, 0];
+          const b = SW.n;
+          SW.v(x, top, z, nx, 0, nz, secs.s[i], 0, col);
+          SW.v(x, Math.min(g, top - 0.05), z, nx, 0, nz, secs.s[i], top - g, col);
+          if (prev >= 0) {
+            if (side === 1) { SW.tri(prev, prev + 1, b); SW.tri(prev + 1, b + 1, b); }
+            else { SW.tri(prev, b, prev + 1); SW.tri(prev + 1, b, b + 1); }
+          }
+          prev = b;
+        }
+      }
     }
 
     function buildBridgeDeck(E, f, ch, tot, secs, ys, valid, core) {
