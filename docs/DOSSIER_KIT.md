@@ -81,6 +81,7 @@
   grow: 0.15,                       // 轮廓外扩（米，负数内缩）
   roundCorners: 9,                  // 凸角倒圆半径（“四角圆润”的商场）
   holes: 'fp' | [[x,z,...]],        // 内院/天井（podium 支持：院内立面朝内、屋面挖空）；'fp' 取 Overture 内环
+  cut: { face: 'S', by: 7 },        // 沿某方位切掉一截（保留离该方位最远点 by 米以内以外的部分）；可为数组。用于“沿街立面逐层退台”、1/4 圆转角等
   // —— 高度 ——
   base: 0, top: 180,                // 离地米数；叠在别的体块上就把 base 设为下层 top
   setbacks: [{ at: 120, inset: 2 }, { at: 160, inset: 4.5 }], // 退台：离地 at 米以上整体内缩 inset 米（累计值）
@@ -88,6 +89,7 @@
   style: { pattern: 'curtain', tint: '#23507e', spd: '#e6e6e6', floorH: 3.6, lit: 0.4 }, // 立面，见 3.3
   roof: { mech: false, parapet: 1.2 }, // 屋面：mech 屋顶设备盒（默认：没有塔冠时 true）
   mat: 'stone' | '#ebe8e1' | { color, roughness, metalness, glow }, // kind:'solid' 的材质
+  sink: 2,                          // kind:'solid' 向下多挤的米数：默认落地体块 2 m（埋进地形）、悬空体块（base>0.5，挑檐板/连廊）0 并补底面
   roofMat: '#6f8a5b',               // kind:'podium' 的屋面材质（绿色屋面、深色屋面等）
   crown: 'flat' | {type,...} | [ {type,...}, ... ], // 塔冠，见 3.6
   seed: 12,                         // 立面随机种子（不写自动递增）
@@ -177,13 +179,14 @@ night: {
 | `frame` | `h`、`inset`、`step`、`post`、`mat`、`glow`、`color` | 屋顶通透构架 / 设备屏风 |
 | `pyramid` | `h`、`inset`、`spire`、`mat` | 玻璃棱锥 + 可选塔尖 |
 | `arch` | `h`（矢高）；`size:[长,跨]`+`at`/`offset`+`rot`，或默认取体块外接矩形（`along:'short'` 换向） | 筒拱：采光中庭、拱形屋面 |
-| `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring` | 穹顶 |
+| `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring`、`full`（整球：底落在起点，`h` 为整球高） | 穹顶 / 球体 |
+| `tangRoof` | `eave` 出檐（默认 2.5）、`h` 檐口到正脊高、`ridge` 正脊长/长半轴（默认 A−B 等坡；0 = 攒尖）、`curve` 举折凹曲（默认 0.45，0 = 平直坡）、`lift` 翼角起翘、`base` 檐口比屋面高（默认 1 m，盖住女儿墙）、`band` 盝顶（只做檐口一圈宽 band 米的坡面、中间平屋面）、`double:{gap,out,h}` 重檐下檐、`mat`（默认 roofTile）、`ridgeMat`、`glow` 夜间檐口金色轮廓灯；`size`+`at`/`offset`+`rot` 可显式指定（不含出檐），否则取体块外接矩形 | 唐风庑殿大屋顶（四坡面网格、戗脊精确闭合、正脊 + 鸱吻）：仿唐商场/酒店/公建屋顶、屋顶楼阁、盝顶挑檐 |
 
-叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
+叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet / tangRoof` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
 `dome / arch / masts / spire / helipad` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
 需要挂招牌或有明确层数的顶部体量（如信息大厦的玻璃圆筒）建议写成一个 **part**（`base` = 下层 `top`），而不是塔冠。
 
-材质名：`stone`、`white`、`dark`、`metal`、`parapet`、`glassRoof`、`roof`、`granite`、`membrane`，或 `'#rrggbb'`，或 `{color, roughness, metalness, glow}`。
+材质名：`stone`、`white`、`dark`、`metal`、`parapet`、`glassRoof`、`roof`、`granite`、`membrane`、`roofTile`（灰筒瓦），或 `'#rrggbb'`，或 `{color, roughness, metalness, glow}`。
 
 ---
 
