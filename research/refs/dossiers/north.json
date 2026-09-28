@@ -702,7 +702,7 @@
   },
   "height_m": 270,
   "floors": 58,
-  "height_source": "西部网 2024-05-16、网易 2026-04 及 WebSearch 摘要：270 m，地上58层、地下3层；OSM w1370944673 height=270",
+  "height_source": "西部网 2024-05-16、网易 2026-04 及 WebSearch 摘要：270 m，地上58层、地下3层；CTBUH Skyscraper Center：270 m、57层、预计2026竣工；OSM w1370944673 height=270",
   "year": 2026,
   "massing": [
    {
@@ -762,19 +762,20 @@
    }
   ],
   "sources": [
+   "https://www.skyscrapercenter.com/building/rongmin-financial-center/34291",
    "http://m.cnwest.com/zwyw/a/2024/05/16/22606577.html",
    "https://xa.house.163.com/26/0413/10/KQD0RDBL021598CD.html",
    "https://news.qq.com/rain/a/20240514A018SB00",
    "https://commons.wikimedia.org/wiki/File:Exit_C_of_DAMINGGONGXI_Station,_Xi'an_Metro_(Aug_25,_2023).jpg"
   ],
   "confidence": "high",
-  "notes": "未央路与凤城南路十字东南角、地铁大明宫西站上盖；2024-05 封顶，2026 年中交付（网易 2026-04，据 landmarks2026）。year 取交付年。"
+  "notes": "未央路与凤城南路十字东南角、地铁大明宫西站上盖；2024-05 封顶，2026 年中交付（网易 2026-04，据 landmarks2026）。year 取交付年。层数：国内报道58层，CTBUH 记57层（计数口径不同），此处取58。"
  },
  {
   "id": "lijun",
   "name": "利君V时代",
   "aliases": [
-   "利君V时代广场"
+   "利君V时代A座/B座"
   ],
   "category": "office",
   "lon": 108.943231,
@@ -801,13 +802,13 @@
    ],
    "area_m2": 2367
   },
-  "height_m": 140,
+  "height_m": null,
   "floors": null,
-  "height_source": "OSM r18889791 height=140（未见官方出处）；搜狐 2025-07 软文称“近百米高度”“A/B两栋百米高层”，两者矛盾",
+  "height_source": "高度口径冲突：有租网与搜狐稿均称“近百米”；OSM r18889791 标 height=140（无出处）。未能确认，写 null",
   "year": null,
   "massing": [
    {
-    "part": "主楼（板式）",
+    "part": "A座/B座（OSM 只有一块 80×30 m 南北向板）",
     "shape": "rect",
     "size_m": [
      80.1,
@@ -819,10 +820,10 @@
     ],
     "rotation_deg": -90.0,
     "base_m": 0,
-    "top_m": 140,
+    "top_m": null,
     "setbacks": [],
     "taper": null,
-    "notes": "OSM 80×30 m，南北向长板；卫星上北侧有很长的投影。top_m 暂用 OSM 值"
+    "notes": "资料称由A、B两栋组成，OSM 仅一块轮廓；卫星上北侧有很长的投影"
    }
   ],
   "crown": {
@@ -831,20 +832,20 @@
    "description": "无照片"
   },
   "facade": {
-   "primary": "LOW-E 中空玻璃幕墙 + 流线型铝板（搜狐软文）",
+   "primary": "灰色 LOW-E 中空玻璃幕墙（有租网）；搜狐软文另称“玻璃幕墙与流线型铝板结合”",
    "glass_color_hex": null,
    "frame_color_hex": null,
    "wall_color_hex": null,
    "pattern": null,
-   "floor_height_m": 3.9,
-   "notes": "3.9 m 层高、约12 m 挑高大堂、12部电梯均出自搜狐软文（该文把项目写成“高新区核心”“紧邻6号线”，可信度低）"
+   "floor_height_m": null,
+   "notes": "无外观照片，不取色"
   },
   "podium": {
    "floors": null,
    "height_m": null,
    "shape": null,
    "facade": null,
-   "entrance": "凤城一路6号（WebSearch 摘要）"
+   "entrance": "凤城一路6号；A座首层有美食城（city8）"
   },
   "signage": [],
   "night": null,
@@ -857,12 +858,12 @@
    }
   ],
   "sources": [
+   "https://www.youzuw.com/index.php?g=Mobile&m=Office&a=xiangxi&id=219",
    "https://www.sohu.com/a/910559718_121484367",
-   "https://www.sohu.com/a/898031775_121484367",
-   "https://baike.baidu.com/item/利君V时代/4839771"
+   "https://xa.city8.com/cater/80kghy7c6upvb9323b_address"
   ],
   "confidence": "low",
-  "notes": "总建筑面积约12万㎡（软文）。"
+  "notes": "总建筑面积 5.6万㎡（有租网摘要），搜狐软文写“约12万㎡”，互相矛盾；搜狐文还把项目写成“高新区核心、紧邻6号线”，可信度低。现有 landmarks2026 按 140 m 建模。"
  },
  {
   "id": "chengbei_bus",
@@ -2125,7 +2126,7 @@
    "glass_color_hex": "#4f7ea8",
    "frame_color_hex": "#d9d4c8",
    "wall_color_hex": "#d8c9ae",
-   "pattern": "实墙横向分缝；南立面有一条红色竖向丝带形品牌装置",
+   "pattern": "实墙横向分缝；南立面中段嵌一个竖向玻璃盒子，东南角为逐层退台的玻璃体量（露台有绿植）；西段有深色竖幅上的红色丝带图形（疑为广告画面）",
    "floor_height_m": null,
    "notes": "中国日报网 2023-07 航拍照取色；资料称“全钢式商业建筑”、LOW-E 玻璃（商策网）"
   },
@@ -2134,11 +2135,11 @@
    {
     "text": "CITY ON",
     "color_hex": "#ffffff",
-    "position": "东南圆弧转角顶部白色檐带上（O 为黄色）",
+    "position": "东南圆弧转角顶部米色弧形檐带上（“CITY”白色，“ON”金黄色）",
     "approx_height_m": null
    }
   ],
-  "night": null,
+  "night": "黄昏航拍：米色实墙的横向分缝处有暖色线形灯，玻璃体量内透暖光",
   "photos": [
    {
     "file": "scratchpad/dossier_north/art/cdxdg_03.jpg",
@@ -3079,6 +3080,12 @@
     "what": "凤城八路南侧看市政府"
    },
    {
+    "file": "scratchpad/dossier_north/art/gym2_02.jpg",
+    "url": "https://www.gooood.cn/xian-city-sports-park-landscape-improvement-project-by-china-northwest-architecture-design-and-research-institute.htm",
+    "date": null,
+    "what": "航拍（左侧标注“西安市政府”）：四角翼楼+中部两座U形高楼，均为灰色四坡顶"
+   },
+   {
     "file": "scratchpad/dossier_north/sat/gov_west.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
     "date": null,
@@ -3426,21 +3433,27 @@
   "crown": {
    "type": "pyramid",
    "height_m": null,
-   "description": "卫星：浅蓝白色四坡锥形屋面，外围一圈外露的白色空间桁架（屋架在屋面之上可见）"
+   "description": "卫星+航拍：浅蓝灰色四坡锥形屋面，四周一圈外露的白色空间桁架/拱架高出屋檐"
   },
   "facade": {
-   "primary": null,
+   "primary": "白色外露钢桁架围合 + 白色墙面与玻璃带",
    "glass_color_hex": null,
    "frame_color_hex": "#f0f0f0",
-   "wall_color_hex": null,
-   "pattern": null,
+   "wall_color_hex": "#ecebe6",
+   "pattern": "八边形平面，每边一段桁架",
    "floor_height_m": null,
-   "notes": "只有卫星俯视"
+   "notes": "gooood 航拍图分辨率低，只能看出整体形态"
   },
   "podium": null,
   "signage": [],
   "night": null,
   "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/gym2_02.jpg",
+    "url": "https://www.gooood.cn/xian-city-sports-park-landscape-improvement-project-by-china-northwest-architecture-design-and-research-institute.htm",
+    "date": null,
+    "what": "城市运动公园航拍（右上为体育馆，左为市政府）"
+   },
    {
     "file": "scratchpad/dossier_north/sat/gym.jpg",
     "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
@@ -3449,10 +3462,12 @@
    }
   ],
   "sources": [
-   "https://baike.baidu.com/item/西安城市运动公园体育馆/64077672"
+   "https://tyj.shaanxi.gov.cn/ywzx/tyss/202012/t20201207_3203882.html",
+   "https://baike.baidu.com/item/西安城市运动公园体育馆/64077672",
+   "https://www.gooood.cn/xian-city-sports-park-landscape-improvement-project-by-china-northwest-architecture-design-and-research-institute.htm"
   ],
   "confidence": "medium",
-  "notes": "1999 年建成，按法国波城体育馆图纸建造，7597 座，2020 年改造（均为 landmarks2026 引百度百科，本次未重新核对）。"
+  "notes": "未央路168号；1996 年为第四届全国城运会开建，1999 年竣工，标准座位7597个；2019-06 起内部提升改造，“对场馆外观不进行任何改动”（陕西省体育局 2020-12 摘要）。landmarks2026 另称按法国波城体育馆图纸建造（未核对）。"
  },
  {
   "id": "tcm",
