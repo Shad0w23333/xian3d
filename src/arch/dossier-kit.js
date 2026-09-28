@@ -232,7 +232,7 @@ export function facadeStyle(st = {}, seed) {
 }
 
 // ═════════════════════════ 材质 ═════════════════════════
-const NAMED = { stone: 'stone', white: 'white', dark: 'dark', metal: 'metal', parapet: 'parapet', glassRoof: 'glassRoof', roof: 'roof', granite: 'granite', membrane: 'membrane', roofTile: 'roofTile' };
+const NAMED = { stone: 'stone', white: 'white', dark: 'dark', metal: 'metal', parapet: 'parapet', glassRoof: 'glassRoof', roof: 'roof', granite: 'granite', membrane: 'membrane', roofTile: 'roofTile', grass: 'grass' };
 /** 'stone' | 'white' | … | '#rrggbb' | {color, metalness, roughness, emissive, glow} → 材质（同参数复用） */
 export function solidMat(env, m) {
   if (!m) return env.mats.stone;
@@ -703,7 +703,58 @@ function tangGeometry(P, A, B, rh, y0, h, curve, lift, { nt = 18, ns = 8, sMax =
 }
 
 // ═════════════════════════ 塔冠 ═════════════════════════
-const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid', 'hip', 'cnhip', 'slab', 'tangRoof']);
+const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid', 'hip', 'cnhip', 'slab', 'tangRoof', 'pubHip']);
+
+/**
+ * 坡屋顶（hip 塔冠）：中心 (cx,cz)、长 w（沿 rot 方向）、宽 d，檐口高 y0（绝对）。返回屋顶高（檐口到正脊）。
+ * o: {h 矢高（默认 0.3·宽）, eave 挑檐（默认 1.5 m）, ridge 正脊长占屋面长的比例（默认四坡等坡 (W−D)/W；取大些近似歇山，
+ *     1 = 两坡硬山）, top:[长, 宽] 平顶四坡（盝顶 / 行政楼“大挑檐帽”，给了就不做正脊）, topMat 平顶材质（默认同 mat）, eaveH 檐口厚（默认 0.8）,
+ *     mat 屋面（默认 roofTile 深灰瓦）, eaveMat 檐口（默认 dark）, ridgeH 正脊高（默认 0.6，0 不建）}
+ */
+function hipRoof(env, cx, cz, w, d, rot, y0, o = {}) {
+  const ov = o.eave ?? 1.5, W = w + ov * 2, Dd = d + ov * 2;
+  const rh = o.h ?? Dd * 0.3;
+  const half = Math.max(0, Math.min(W / 2, o.ridge != null ? (o.ridge * W) / 2 : (W - Dd) / 2));
+  const c = Math.cos(rot), s = Math.sin(rot);
+  const P = (u, v, y) => [cx + u * c - v * s, y, cz + u * s + v * c];
+  const a = P(-W / 2, -Dd / 2, y0), b = P(W / 2, -Dd / 2, y0), cc = P(W / 2, Dd / 2, y0), dd = P(-W / 2, Dd / 2, y0);
+  let pos, topPos = null;
+  if (o.top) {
+    // 平顶四坡（“盝顶”/大挑檐帽）：顶面 top:[长, 宽]，四个梯形坡面 + 平顶（平顶可用 topMat 单独给材质，如只有一圈琉璃挑檐的平屋面）
+    const tw = Math.min(o.top[0], W) / 2, td = Math.min(o.top[1] ?? o.top[0], Dd) / 2, yt = y0 + rh;
+    const ta = P(-tw, -td, yt), tb = P(tw, -td, yt), tc = P(tw, td, yt), tdd = P(-tw, td, yt);
+    pos = [...a, ...ta, ...b, ...b, ...ta, ...tb, ...b, ...tb, ...cc, ...cc, ...tb, ...tc, ...cc, ...tc, ...dd, ...dd, ...tc, ...tdd,
+      ...dd, ...tdd, ...a, ...a, ...tdd, ...ta];
+    topPos = [...ta, ...tdd, ...tb, ...tb, ...tdd, ...tc];
+  } else {
+    const r1 = P(-half, 0, y0 + rh), r2 = P(half, 0, y0 + rh);
+    pos = [...a, ...r1, ...b, ...b, ...r1, ...r2, ...b, ...r2, ...cc, ...cc, ...r2, ...dd, ...dd, ...r2, ...r1, ...dd, ...r1, ...a];
+  }
+  const upGeo = (arr) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    g.computeVertexNormals();
+    // 统一法线朝上（坐标系手性与 rot 无关）
+    const pa = g.attributes.position.array, na = g.attributes.normal.array;
+    for (let i = 0; i < pa.length; i += 9) if (na[i + 1] < 0) for (let k = 0; k < 3; k++) { const t = pa[i + 3 + k]; pa[i + 3 + k] = pa[i + 6 + k]; pa[i + 6 + k] = t; }
+    g.computeVertexNormals();
+    return g;
+  };
+  env.solid.add(upGeo(pos), solidMat(env, o.mat || 'roofTile'), null, { worldUV: 1 });
+  if (topPos) env.solid.add(upGeo(topPos), solidMat(env, o.topMat || o.mat || 'roofTile'), null, { worldUV: 1 });
+  // 檐口厚度（深色）+ 檐底
+  const eh = o.eaveH ?? 0.8;
+  const eave = G.rect(cx, cz, W, Dd, rot);
+  env.solid.add(G.wallGeometry(eave, eave, y0 - eh, y0), solidMat(env, o.eaveMat || 'dark'));
+  env.solid.add(G.capGeometry(eave, y0 - eh, { down: true }), solidMat(env, o.eaveMat || 'dark'));
+  // 正脊
+  const rH = o.ridgeH ?? 0.6;
+  if (!o.top && rH > 0 && half > 0.5) {
+    const m = P(0, 0, 0);
+    env.detail.add(G.box(m[0], y0 + rh + rH / 2 - 0.1, m[2], half * 2 + 0.6, rH, 0.5, rot), solidMat(env, o.eaveMat || 'dark'));
+  }
+  return rh;
+}
 function normCrowns(c) {
   if (!c) return [];
   return [].concat(c).map((x) => (typeof x === 'string' ? { type: x } : x));
@@ -1034,6 +1085,37 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         yNext = yb + h;
         break;
       }
+      case 'pubHip': { // 坡屋顶（公共建筑的仿古大屋顶 / 屋顶亭阁 / 行政楼大挑檐帽）：四坡（庑殿）或长脊近似歇山，挑檐 + 檐口厚度
+        let w, d, rot, cx = c.x, cz = c.z;
+        if (cr.size) {
+          [w, d] = cr.size;
+          rot = -(cr.rot || 0) * D;
+        } else {
+          const o = G.obb(topPoly);
+          ({ w, d, rot } = o); cx = o.cx; cz = o.cz;
+          if (cr.along === 'short') { [w, d] = [d, w]; rot += Math.PI / 2; }
+        }
+        yNext = yb + hipRoof(env, cx, cz, w, d, rot, yb, cr);
+        break;
+      }
+      case 'sphere': { // 整球（球幕影院 / 网壳球体）：r 半径，cy 球心离地高（默认 r，即球底落地），at/offset 定中心
+        const r = cr.r ?? 10, cy = g0 + (cr.cy ?? r);
+        const g = new THREE.SphereGeometry(r, cr.seg ?? 40, Math.max(12, Math.round((cr.seg ?? 40) / 2)));
+        g.translate(c.x, cy, c.z);
+        solid.add(g, solidMat(env, cr.mat || 'glassRoof'));
+        if (cr.ribs !== false) { // 网壳经线（细杆，远看成三角分格感）
+          const n = cr.ribs ?? 16;
+          for (let k = 0; k < n; k++) {
+            const a = (k / n) * Math.PI;
+            const ring = new THREE.TorusGeometry(r + 0.05, cr.ribW ?? 0.12, 4, 48);
+            ring.rotateY(a);
+            ring.translate(c.x, cy, c.z);
+            detail.add(ring, solidMat(env, cr.ribMat || '#3c3f42'));
+          }
+        }
+        if (cr.stack) yNext = cy + r;
+        break;
+      }
       case 'slope':
         break;
       default:
@@ -1296,8 +1378,8 @@ function buildPart(env, R, P) {
       slope: slope ? { dir: faceDir(slope.dir ?? 'N'), drop: slope.drop } : null,
       roof: {
         mech: part.roof?.mech ?? crowns.every((c) => handled.has(c) || c.type === 'flat'),
-        // 中式坡屋顶直接压在屋面上时，女儿墙压低到 0.2 m（否则会从檐口下戳出来）
-        parapet: par ? par.h : part.roof?.parapet ?? (crowns.some((c) => c.type === 'hip' && c.y == null) ? 0.2 : undefined),
+        // 中式坡屋顶（cnhip）直接压在屋面上时女儿墙压低到 0.2 m；公建坡屋顶（pubHip）默认几乎不做女儿墙（否则会从挑檐坡面下穿出来）
+        parapet: par ? par.h : part.roof?.parapet ?? (crowns.some((c) => c.type === 'cnhip' && c.y == null) ? 0.2 : crowns.some((c) => c.type === 'pubHip') ? 0.05 : undefined),
         helipad: !!heli, helipadY: heli?.lift ?? 2.5,
       },
     };
@@ -1317,10 +1399,11 @@ function buildPart(env, R, P) {
     yTop = base + H; // 塔冠从屋面起算（女儿墙 1.2 m 另计）
   } else if (kind === 'solid') {
     const mat = solidMat(env, part.mat || 'stone');
-    // 落地实体向下多挤 2 m 埋进地形；悬空实体（挑檐板、连廊等，base > 0.5）不下挤，并补底面
+    // 落地实体向下多挤 2 m 埋进地形；悬空实体（挑檐板、连廊等，base > 0.5）不下挤，并补底面；taper 收分（方尖塔、锥形墩柱）
     const sink = part.sink ?? (P.base <= 0.5 ? 2 : 0);
-    solid.add(G.wallGeometry(P.pts, P.pts, base - sink, base + H), mat, null, { worldUV: 1 });
-    solid.add(G.capGeometry(P.pts, base + H), mat, null, { worldUV: 1 });
+    const topPts = part.taper && part.taper !== 1 ? polyAt(P, P.top) : P.pts;
+    solid.add(G.wallGeometry(P.pts, topPts, base - sink, base + H), mat, null, { worldUV: 1 });
+    solid.add(G.capGeometry(topPts, base + H), mat, null, { worldUV: 1 });
     if (!sink) solid.add(G.capGeometry(P.pts, base, { down: true }), mat, null, { worldUV: 1 });
   } else if (kind === 'facade') {
     // 只有立面、没有屋面处理的直筒（被上部体块盖住的中段等）；有 topPts 时为放样直纹面
