@@ -1458,7 +1458,19 @@ export default {
     // ==================================================================
     // 帧更新
     // ==================================================================
+    // 图层开关：vehicles = 道路车辆，trains = 铁路/地铁列车，traffic = 两者（旧的总开关）。
+    // 关闭的部分不仿真、不写实例（count=0 且隐藏），真正省掉 CPU 与绘制开销。
+    let vehOn = true, trainOn = true;
     let enabled = true;
+    const vehMeshes = [carMesh, heavyMesh, farMesh];
+    const trainMeshes = [trainNearMesh, trainFarMesh];
+    const applyLayers = () => {
+      enabled = vehOn || trainOn;
+      root.visible = enabled;
+      for (const m of vehMeshes) { m.visible = vehOn; if (!vehOn) m.count = 0; }
+      for (const m of trainMeshes) { m.visible = trainOn; if (!trainOn) m.count = 0; }
+      if (!enabled) lightMesh.count = 0;
+    };
     let statsShown = false;
     let perfMs = 0;
     const prof = { refresh: 0, sim: 0, balance: 0, drawV: 0, drawT: 0 };
@@ -1473,27 +1485,29 @@ export default {
         refreshT -= dt;
         let tq = performance.now();
         const mark = (k) => { const n = performance.now(); if (n - tq > prof[k]) prof[k] = n - tq; tq = n; };
-        if (first || refreshT <= 0) {
-          refreshActive();
-          refreshT = 0.4;
-          first = false;
+        if (vehOn) {
+          if (first || refreshT <= 0) {
+            refreshActive();
+            refreshT = 0.4;
+            first = false;
+          }
+          mark('refresh');
+          // 大步长时分两次积分
+          if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
+          mark('sim');
+          balT -= dt;
+          if (balT <= 0) { balance(); balT = 0.25; }
+          mark('balance');
         }
-        mark('refresh');
-        // 大步长时分两次积分
-        if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
-        mark('sim');
-        balT -= dt;
-        if (balT <= 0) { balance(); balT = 0.25; }
-        mark('balance');
         camera.updateMatrixWorld();
         projScreen.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
         frustum.setFromProjectionMatrix(projScreen, camera.coordinateSystem, camera.reversedDepth);
         const night = ctx.uniforms.uNight.value;
         for (const w of WL) w.reset();
         tq = performance.now();
-        drawVehicles(night);
+        if (vehOn) drawVehicles(night);
         mark('drawV');
-        drawTrains(simTime, night);
+        if (trainOn) drawTrains(simTime, night);
         mark('drawT');
         for (const w of WL) w.commit();
         lightMesh.visible = night > 0.02;
@@ -1504,9 +1518,14 @@ export default {
         pixelU.value = (2 * Math.tan(fov / 2)) / Math.max(1, hgt);
       },
       setLayer(name, on) {
-        if (name !== 'traffic') return;
-        enabled = on;
-        root.visible = on;
+        on = !!on;
+        if (name === 'traffic') vehOn = trainOn = on;
+        else if (name === 'vehicles') {
+          if (on && !vehOn) refreshT = 0; // 重新打开：立即按当前视点刷新活动区
+          vehOn = on;
+        } else if (name === 'trains') trainOn = on;
+        else return;
+        applyLayers();
       },
       setQuality(q) {
         level = Math.max(0, Math.min(3, q.level ?? level));
