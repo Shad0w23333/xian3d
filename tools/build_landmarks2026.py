@@ -249,7 +249,7 @@ def taper_from(it):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--report', action='store_true')
-    a = ap.parse_args()
+    args = ap.parse_args()
     places = {}
     pf = ROOT / 'data-src/amap/places.json'
     if pf.exists():
@@ -449,35 +449,130 @@ def main():
         if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
             continue
         x, z = xz
+        it_lon, it_lat = num(it.get('lon')), num(it.get('lat'))
         o = str(it.get('orientation') or '坐北朝南')
         rot = {'东': math.pi / 2, '西': -math.pi / 2, '北': math.pi}.get(next((c for c in ('东', '西', '北') if f'朝{c}' in o), ''), 0.0)
         cs_m = it.get('compound_size_m')
         cw, cd = (num(cs_m[0]) or 80, num(cs_m[1]) or 120) if isinstance(cs_m, list) and len(cs_m) == 2 else (80, 120)
         bl = []
+        cr, sr = math.cos(rot), math.sin(rot)
+        # 局部 → 世界：局部 +Z 为正面（朝南），rot 为绕 Y 的旋转（three.js：x' = x cos + z sin, z' = -x sin + z cos）
+        to_w = lambda lx, lz: (x + lx * cr + lz * sr, z - lx * sr + lz * cr)
+        to_l = lambda wx, wz: ((wx - x) * cr - (wz - z) * sr, (wx - x) * sr + (wz - z) * cr)
+        axis_z = cd / 2 - 12   # 顺序排布：从南（正面，+Z）往北
+        used = set()
         for b in it.get('main_buildings') or []:
-            dims = b.get('dimensions') or b.get('dimensions_m') or []
-            if isinstance(dims, dict):
-                dims = [dims.get('w') or dims.get('width'), dims.get('d') or dims.get('depth'), dims.get('h') or dims.get('height')]
-            dims = [num(v) for v in (dims if isinstance(dims, list) else [])]
+            bw, bd, bh = num(b.get('width_m')), num(b.get('depth_m')), num(b.get('height_m'))
+            typ = str(b.get('type') or 'hall')
+            posx = str(b.get('position') or '')
+            lx = lz = None
+            brot = 0.0
+            j = fp.by_name(b.get('name'), x, z, r=max(cw, cd) * 0.8) if b.get('name') and len(norm(b.get('name'))) >= 2 else None
+            if j is not None and j not in used and fp.polys[j].area < 20000:
+                used.add(j)
+                P = fp.polys[j]
+                lx, lz = to_l(P.centroid.x, P.centroid.y)
+                r = P.minimum_rotated_rectangle
+                c = list(r.exterior.coords)
+                s0, s1 = math.hypot(c[1][0] - c[0][0], c[1][1] - c[0][1]), math.hypot(c[2][0] - c[1][0], c[2][1] - c[1][1])
+                if not bw or not bd:
+                    bw, bd = max(s0, s1), min(s0, s1)
+            else:
+                mlat = re.search(r'lat\s*(3[34]\.\d+)', posx)
+                mlon = re.search(r'lon\s*(10[89]\.\d+)', posx)
+                if mlat or mlon:
+                    wx, wz = project(float(mlon.group(1)) if mlon else it_lon, float(mlat.group(1)) if mlat else it_lat)
+                    lx, lz = to_l(wx, wz)
+                    if not mlon:
+                        lx = 0.0
+            bw = bw or {'pagoda': 10, 'pavilion': 8, 'paifang': 14, 'tower': 10, 'mound': 150, 'platform': 60}.get(typ, 24)
+            bd = bd or {'pagoda': 10, 'pavilion': 8, 'paifang': 2, 'tower': 10, 'mound': 150, 'platform': 40}.get(typ, 14)
+            if lx is None:
+                side = -1 if '西' in posx and '东' not in posx else 1 if '东' in posx and '西' not in posx else 0
+                if side:
+                    lx, lz = side * (min(cw / 2 - bw / 2 - 4, 26 + bw / 2)), axis_z
+                else:
+                    lx, lz = 0.0, axis_z - bd / 2
+                    axis_z -= bd + 14
+            # 与已放置的建筑重叠（顺序排布/东西配殿常见）：往北挪，直到不重叠
+            for _ in range(12):
+                if not any(abs(lx - q['x']) < (bw + q['w']) / 2 + 3 and abs(lz - q['z']) < (bd + q['d']) / 2 + 3 for q in bl):
+                    break
+                lz -= bd + 6
             bl.append({
-                'n': b.get('name') or '', 'type': str(b.get('type') or 'hall'),
-                'w': dims[0] if len(dims) > 0 and dims[0] else None, 'd': dims[1] if len(dims) > 1 and dims[1] else None,
-                'h': dims[2] if len(dims) > 2 and dims[2] else num(b.get('height_m')),
+                'n': b.get('name') or '', 'type': typ,
+                'x': round(lx, 1), 'z': round(lz, 1), 'rot': round(brot, 3),
+                'w': round(min(bw, 400), 1), 'd': round(min(bd, 400), 1), 'h': bh,
                 'bays': int(num(b.get('bays'), 0) or 0), 'storeys': int(num(b.get('storeys'), 1) or 1),
                 'roof': str(b.get('roof') or ''), 'color': str(b.get('roof_color') or ''),
-                'pos': b.get('position'),
             })
         out['heritage'].append({'key': key_of(name), 'name': name, 'x': round(x, 1), 'z': round(z, 1), 'rot': round(rot, 4),
                                 'w': round(min(cw, 400), 1), 'd': round(min(cd, 500), 1), 'b': bl,
-                                'era': it.get('era') or it.get('dynasty') or '', 'kind': it.get('category') or it.get('type') or ''})
+                                'era': ' '.join(str(it.get(k) or '') for k in ('style', 'era', 'dynasty')).strip(), 'kind': it.get('category') or it.get('type') or ''})
         report.append(('古建', name, f'{len(bl)} 座', cs, 0))
+
+    # —— 高校（校区标注 + 能对上 OSM 轮廓的标志楼：校门/主楼/图书馆） ——
+    for it in load_list('universities'):
+        name = (it.get('name') or '') + (('·' + it['campus']) if it.get('campus') and it['campus'] not in (it.get('name') or '') else '')
+        xz, cs = pos(it)
+        if not name or not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
+            continue
+        x, z = xz
+        out['labels'].append({'n': name, 'x': round(x, 1), 'z': round(z, 1), 'cat': 'campus'})
+        lbs = it.get('landmark_buildings') or []
+        for lb in lbs if isinstance(lbs, list) else []:
+            bn = lb.get('name') if isinstance(lb, dict) else str(lb)
+            if not bn or re.search(r'校门|大门|牌楼|门$', bn):
+                continue
+            j = fp.by_name(bn, x, z, r=1500)
+            if j is None or fp.polys[j].area < 600 or fp.polys[j].area > 40000:
+                continue
+            P = fp.polys[j]
+            desc = json.dumps(lb, ensure_ascii=False) if isinstance(lb, dict) else bn
+            h = num(lb.get('height_m')) if isinstance(lb, dict) else None
+            h = h or (40 if re.search(r'主楼|中心楼', bn) else 26)
+            key = key_of(name + bn)
+            out['malls'].append({'key': key, 'name': f'{name} {bn}', 'pts': poly_out(P, 0.8), 'h': round(min(h, 90), 1), 'cat': 'campus',
+                                 'style': style_from({'facade': desc, 'form': desc}, key, 'venue'), 'src': 'name'})
+            report.append(('高校楼', f'{name} {bn}', 'name', cs, h))
+
+    # —— 下沉广场 ——
+    out['sunken'] = []
+    for it in load_list('sunken'):
+        name = it.get('name')
+        if not name:
+            continue
+        xz, cs = pos(it)
+        if not xz or math.hypot(*xz) > MAX_R:
+            continue
+        x, z = xz
+        sz = it.get('size_m')
+        L, W = (num(sz[0]) or 60, num(sz[1]) or 40) if isinstance(sz, list) and len(sz) == 2 else (60, 40)
+        dep = num(it.get('depth_m')) or 6.0
+        feat = ' '.join(str(v) for v in (it.get('features') if isinstance(it.get('features'), list) else [it.get('features') or '']))
+        shape = str(it.get('shape') or '')
+        out['sunken'].append({
+            'key': key_of('sk' + name), 'name': name, 'x': round(x, 1), 'z': round(z, 1),
+            'L': round(min(max(L, 16), 260), 1), 'W': round(min(max(W, 12), 200), 1), 'depth': round(min(max(dep, 3), 16), 1),
+            'rot': round(local_rot(fp, x, z), 4),
+            'round': bool(re.search(r'圆|环形', shape)),
+            'terrace': bool(re.search(r'退台|阶梯|台阶|看台|多层', shape + feat)),
+            'water': bool(re.search(r'水|喷泉|镜面', feat)),
+            'stage': bool(re.search(r'舞台|演艺|表演', feat)),
+            'bar': bool(re.search(r'酒吧|外摆|餐', feat + name)),
+            'skylight': bool(re.search(r'天窗|玻璃顶|采光', feat)),
+            'escal': bool(re.search(r'扶梯', feat)),
+            'levels': int(num(it.get('levels'), 1) or 1),
+            'cs': cs,
+        })
+        report.append(('下沉', name, '', cs, dep))
 
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')), 'utf-8')
     from collections import Counter
     print(f'写出 {OUT}：塔楼 {len(out["towers"])}、商场/场馆 {len(out["malls"])}、古建院落 {len(out["heritage"])}、仅标注 {len(out["labels"])}')
     print('轮廓来源：', dict(Counter(r[2] for r in report if r[0] in ('塔楼', '商场', '场馆'))))
     print('坐标来源：', dict(Counter(r[3] for r in report)))
-    if a.report:
+    if args.report:
         for r in report:
             print('  ', *r)
 

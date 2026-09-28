@@ -1,0 +1,4182 @@
+[
+ {
+  "name": "西安钟楼",
+  "category": "other",
+  "lon": 108.942342,
+  "lat": 34.261012,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   35.5,
+   35.5
+  ],
+  "orientation": "四面对称（十字券洞）",
+  "main_buildings": [
+   {
+    "name": "钟楼",
+    "type": "tower",
+    "bays": 3,
+    "width_m": 35.5,
+    "depth_m": 35.5,
+    "height_m": 36,
+    "roof": "cuanjian",
+    "roof_color": "green",
+    "storeys": 2,
+    "position": "路口中心",
+    "note": "砖基座高 8.6 m；重檐三滴水四角攒尖，鎏金宝顶"
+   }
+  ],
+  "dynasty": "明（1384 建，1582 迁今址）",
+  "style": "明清",
+  "night": "基座与楼体暖金泛光，屋脊青白轮廓灯",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/belltower.js 注释"
+  ]
+ },
+ {
+  "name": "西安鼓楼",
+  "category": "other",
+  "lon": 108.93884,
+  "lat": 34.26176,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   51.5,
+   36
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "鼓楼",
+    "type": "tower",
+    "bays": 7,
+    "width_m": 51.5,
+    "depth_m": 36,
+    "height_m": 34,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "北院门南端",
+    "note": "台基高 7.7 m；重檐三滴水歇山，灰瓦绿琉璃剪边"
+   }
+  ],
+  "dynasty": "明（1380）",
+  "style": "明清",
+  "night": "同钟楼泛光",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/belltower.js 注释"
+  ]
+ },
+ {
+  "name": "西安明城墙（含永宁门/安远门/长乐门/安定门、四角楼）",
+  "category": "site",
+  "lon": 108.9423,
+  "lat": 34.261,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   3400,
+   2600
+  ],
+  "orientation": "矩形城池",
+  "main_buildings": [
+   {
+    "name": "永宁门正楼",
+    "type": "tower",
+    "bays": 7,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 36,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "南门"
+   },
+   {
+    "name": "箭楼",
+    "type": "tower",
+    "bays": 11,
+    "width_m": 52.6,
+    "depth_m": 13,
+    "height_m": 32,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 4,
+    "position": "瓮城外"
+   }
+  ],
+  "dynasty": "明（1370–1378，唐皇城基础上扩建）",
+  "style": "明清",
+  "night": "城墙轮廓灯带、城门楼泛光",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/citywall.js 注释"
+  ]
+ },
+ {
+  "name": "大雁塔·大慈恩寺",
+  "category": "pagoda",
+  "lon": 108.959428,
+  "lat": 34.219778,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   164,
+   327
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南端"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线中部"
+   },
+   {
+    "name": "大雁塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 25,
+    "depth_m": 25,
+    "height_m": 64.5,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 7,
+    "position": "大殿北",
+    "note": "方形楼阁式砖塔，台基 45.7×48.7 m"
+   },
+   {
+    "name": "玄奘三藏院大遍觉堂",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "塔北"
+   }
+  ],
+  "dynasty": "唐（652，704 重修）；寺明清重建",
+  "style": "唐塔+明清殿",
+  "night": "塔身泛光、北广场音乐喷泉",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/pagoda.js 注释"
+  ]
+ },
+ {
+  "name": "大唐不夜城",
+  "category": "street",
+  "lon": 108.959406,
+  "lat": 34.211231,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   66,
+   1250
+  ],
+  "orientation": "南北步行街",
+  "main_buildings": [],
+  "dynasty": "2009 起建",
+  "style": "仿唐",
+  "night": "全城最重要夜景：檐口/屋脊 LED、灯光秀",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/datang.js 注释"
+  ]
+ },
+ {
+  "name": "大唐芙蓉园（紫云楼）",
+  "category": "park",
+  "lon": 108.96907,
+  "lat": 34.21406,
+  "coord_source": "osm_footprint",
+  "compound_size_m": null,
+  "orientation": "紫云楼坐南朝北",
+  "main_buildings": [
+   {
+    "name": "紫云楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 39,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 4,
+    "position": "园中心南岸"
+   }
+  ],
+  "dynasty": "2005",
+  "style": "仿唐",
+  "night": "全园金色轮廓灯、水幕秀",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/qujiang.js 注释"
+  ]
+ },
+ {
+  "name": "曲江池遗址公园",
+  "category": "park",
+  "lon": 108.97943,
+  "lat": 34.20186,
+  "coord_source": "osm_footprint",
+  "compound_size_m": null,
+  "orientation": null,
+  "main_buildings": [
+   {
+    "name": "阅江楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "南岸"
+   }
+  ],
+  "dynasty": "2008",
+  "style": "仿唐",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/qujiang.js 注释"
+  ]
+ },
+ {
+  "name": "唐城墙遗址公园（曲江段）",
+  "category": "park",
+  "lon": 108.96346,
+  "lat": 34.20608,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "东西带状",
+  "main_buildings": [],
+  "dynasty": "唐城夯土遗存",
+  "style": "遗址公园",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/qujiang.js 注释"
+  ]
+ },
+ {
+  "name": "寒窑遗址公园",
+  "category": "park",
+  "lon": 108.98653,
+  "lat": 34.20019,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": null,
+  "main_buildings": [],
+  "dynasty": "传说唐代（王宝钏）",
+  "style": "仿古",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/qujiang.js 注释"
+  ],
+  "notes": "坐标按 qujiang 模块概位估，建模时以模块内实际坐标为准"
+ },
+ {
+  "name": "小雁塔·荐福寺",
+  "category": "pagoda",
+  "lon": 108.937386,
+  "lat": 34.240851,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   160,
+   370
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南端"
+   },
+   {
+    "name": "慈氏阁",
+    "type": "pavilion",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "钟鼓楼北"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线中部"
+   },
+   {
+    "name": "藏经楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "大殿北"
+   },
+   {
+    "name": "小雁塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 11.38,
+    "depth_m": 11.38,
+    "height_m": 43.4,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 13,
+    "position": "藏经楼北",
+    "note": "方形密檐砖塔，现存 13 层，顶毁"
+   },
+   {
+    "name": "白衣阁",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线北端"
+   }
+  ],
+  "dynasty": "唐（707–709）；寺明清",
+  "style": "唐塔+明清殿",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "西安博物院",
+  "category": "museum",
+  "lon": 108.935581,
+  "lat": 34.238946,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   78,
+   78
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "主馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": 78,
+    "depth_m": 78,
+    "height_m": null,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "荐福寺西北",
+    "note": "天圆地方，张锦秋 2007"
+   }
+  ],
+  "dynasty": "2007",
+  "style": "现代唐风",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "唐大明宫丹凤门遗址博物馆",
+  "category": "museum",
+  "lon": 108.959537,
+  "lat": 34.282838,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   74.5,
+   33
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "丹凤门",
+    "type": "gate",
+    "bays": 5,
+    "width_m": 83,
+    "depth_m": 44,
+    "height_m": 33,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "大明宫南墙正门",
+    "note": "五门道；钢结构外覆淡棕黄色"
+   }
+  ],
+  "dynasty": "唐址/2010 保护建筑",
+  "style": "仿唐（张锦秋）",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "大明宫含元殿遗址",
+  "category": "site",
+  "lon": 108.959439,
+  "lat": 34.289124,
+  "coord_source": "osm_footprint",
+  "compound_size_m": null,
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "含元殿台基",
+    "type": "platform",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "龙尾道北",
+    "note": "三层大台+翔鸾/栖凤阙台"
+   }
+  ],
+  "dynasty": "唐（663）",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "大明宫宣政殿·紫宸殿遗址",
+  "category": "site",
+  "lon": 108.959417,
+  "lat": 34.292923,
+  "coord_source": "osm_footprint",
+  "compound_size_m": null,
+  "orientation": "坐北朝南",
+  "main_buildings": [],
+  "dynasty": "唐",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "陕西历史博物馆（小寨本馆）",
+  "category": "museum",
+  "lon": 108.950602,
+  "lat": 34.225746,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   250,
+   275
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "中央殿堂",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "中轴北"
+   },
+   {
+    "name": "四隅崇楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "四角"
+   }
+  ],
+  "dynasty": "1991",
+  "style": "仿唐（张锦秋，灰瓦白墙）",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "兴庆宫公园",
+  "category": "park",
+  "lon": 108.97984,
+  "lat": 34.255065,
+  "coord_source": "osm_footprint",
+  "compound_size_m": null,
+  "orientation": null,
+  "main_buildings": [
+   {
+    "name": "沉香亭",
+    "type": "pavilion",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "cuanjian",
+    "roof_color": "yellow",
+    "storeys": 2,
+    "position": "湖北岸"
+   },
+   {
+    "name": "花萼相辉楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "湖南岸"
+   }
+  ],
+  "dynasty": "唐址/1958 建园",
+  "style": "仿唐",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/heritage.js 注释"
+  ]
+ },
+ {
+  "name": "化觉巷清真大寺",
+  "category": "temple",
+  "lon": 108.936364,
+  "lat": 34.263374,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   252,
+   54
+  ],
+  "orientation": "坐西朝东（礼拜殿面东）",
+  "main_buildings": [
+   {
+    "name": "木牌坊",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "第一进"
+   },
+   {
+    "name": "省心楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "第三进"
+   },
+   {
+    "name": "礼拜大殿",
+    "type": "hall",
+    "bays": 7,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "green",
+    "storeys": 1,
+    "position": "轴线西端"
+   }
+  ],
+  "dynasty": "明（1392）",
+  "style": "明清中国式清真寺",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/huimin-gen.js（COMPOUNDS，程序化院落）",
+   "research/refs/huimin/notes.md"
+  ],
+  "notes": "回民街模块内为通用古建大屋顶，可升级精建"
+ },
+ {
+  "name": "大学习巷清真寺",
+  "category": "temple",
+  "lon": 108.93111,
+  "lat": 34.26376,
+  "coord_source": "poi",
+  "compound_size_m": [
+   81,
+   34
+  ],
+  "orientation": "坐西朝东",
+  "main_buildings": [],
+  "dynasty": "唐创/明清",
+  "style": "明清",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/huimin-gen.js"
+  ]
+ },
+ {
+  "name": "洒金桥清真古寺",
+  "category": "temple",
+  "lon": 108.92783,
+  "lat": 34.26627,
+  "coord_source": "poi",
+  "compound_size_m": [
+   82,
+   43
+  ],
+  "orientation": "坐西朝东",
+  "main_buildings": [],
+  "dynasty": "明",
+  "style": "明清",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/huimin-gen.js"
+  ]
+ },
+ {
+  "name": "西安都城隍庙",
+  "category": "temple",
+  "lon": 108.932668,
+  "lat": 34.263033,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   56,
+   150
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "戏楼",
+    "type": "pavilion",
+    "bays": null,
+    "width_m": 19.4,
+    "depth_m": 7.1,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "轴线南部"
+   },
+   {
+    "name": "城隍殿",
+    "type": "hall",
+    "bays": null,
+    "width_m": 40.6,
+    "depth_m": 22.6,
+    "height_m": null,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线北部"
+   }
+  ],
+  "dynasty": "明（1432 迁今址）",
+  "style": "明清",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/huimin-gen.js",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）"
+  ]
+ },
+ {
+  "name": "高家大院",
+  "category": "other",
+  "lon": 108.938733,
+  "lat": 34.264605,
+  "coord_source": "estimated",
+  "compound_size_m": [
+   28,
+   40
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [],
+  "dynasty": "明末清初",
+  "style": "关中民居四合院",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/arch/huimin-gen.js"
+  ],
+  "notes": "坐标由 huimin COMPOUNDS 矩形中心 (-332,-400) 反算"
+ },
+ {
+  "name": "北院门·回坊历史街区",
+  "category": "street",
+  "lon": 108.936907,
+  "lat": 34.265054,
+  "coord_source": "estimated",
+  "compound_size_m": [
+   1200,
+   750
+  ],
+  "orientation": "南北主街",
+  "main_buildings": [],
+  "dynasty": "明清",
+  "style": "仿明清街房",
+  "night": "红灯笼、灯箱",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/huimin.js",
+   "research/refs/huimin/notes.md"
+  ]
+ },
+ {
+  "name": "西安美术馆（曲江）",
+  "category": "museum",
+  "lon": 108.95872,
+  "lat": 34.21269,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   45,
+   32
+  ],
+  "orientation": "坐西朝东（面不夜城）",
+  "main_buildings": [
+   {
+    "name": "主楼",
+    "type": "modern",
+    "bays": 7,
+    "width_m": 45.1,
+    "depth_m": 32.3,
+    "height_m": null,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "贞观广场西"
+   }
+  ],
+  "dynasty": "2009",
+  "style": "仿唐",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "src/modules/datang.js L392",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）"
+  ]
+ },
+ {
+  "name": "大兴善寺",
+  "category": "temple",
+  "lon": 108.938688,
+  "lat": 34.228474,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   180,
+   300
+  ],
+  "orientation": "坐北朝南（中轴 lon≈108.9387）",
+  "main_buildings": [
+   {
+    "name": "南一门（山门）",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 34.7,
+    "depth_m": 11.1,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南端 lat 34.22722"
+   },
+   {
+    "name": "南二门（东侧入口）",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 27.4,
+    "depth_m": 16.7,
+    "height_m": 8,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "山门东约 110 m"
+   },
+   {
+    "name": "钟楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": 7.2,
+    "depth_m": 6.8,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "天王殿前东"
+   },
+   {
+    "name": "鼓楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": 7.0,
+    "depth_m": 6.9,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "天王殿前西"
+   },
+   {
+    "name": "天王殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 45.0,
+    "depth_m": 12.7,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线第二进 lat 34.22760",
+    "note": "资料称重檐歇山；OSM 足迹含两侧连廊"
+   },
+   {
+    "name": "救苦地藏殿 / 平安地藏殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 14,
+    "depth_m": 15,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "天王殿北两侧"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 37.5,
+    "depth_m": 28.1,
+    "height_m": 17,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线中部 lat 34.22847",
+    "note": "面阔五间，单檐歇山（含月台/廊的足迹）"
+   },
+   {
+    "name": "普贤殿 / 文殊殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 14.5,
+    "depth_m": 14.2,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "大殿后东西"
+   },
+   {
+    "name": "观音大士殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 25.9,
+    "depth_m": 10.6,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线 lat 34.22919"
+   },
+   {
+    "name": "金刚堂（转轮藏遗址北）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 22.7,
+    "depth_m": 50.5,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线东侧 lat 34.22972"
+   },
+   {
+    "name": "法堂",
+    "type": "hall",
+    "bays": 7,
+    "width_m": 37.5,
+    "depth_m": 36.3,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线北端 lat 34.22981",
+    "note": "清康熙 1685 建，面阔七间进深三间"
+   },
+   {
+    "name": "舍利塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 5.6,
+    "depth_m": 5.4,
+    "height_m": 15,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 5,
+    "position": "大殿西北（估层数）"
+   }
+  ],
+  "dynasty": "晋创（泰始年间）/隋唐国寺；明清重建",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: 163.com/dy/article/FU1KKABP0521E39S",
+   "WebSearch: baike 大兴善寺",
+   "WebSearch: meet99 大雄宝殿"
+  ],
+  "notes": "西侧“观音阁”47×127 m 足迹为东西禅堂/配殿长条合并，非单体。高度均为按开间估算"
+ },
+ {
+  "name": "青龙寺（青龙寺遗址公园）",
+  "category": "temple",
+  "lon": 108.984365,
+  "lat": 34.234042,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   529,
+   439
+  ],
+  "orientation": "坐北朝南（乐游原北坡）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "南端（估）"
+   },
+   {
+    "name": "惠果空海纪念堂",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 33.3,
+    "depth_m": 33.8,
+    "height_m": 15,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东院主殿 (108.98437,34.23404)",
+    "note": "唐四号殿址北 6 m 复原，面阔五间进深五间方殿"
+   },
+   {
+    "name": "遗址殿台（保护棚）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 73.3,
+    "depth_m": 36.4,
+    "height_m": 10,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "纪念堂北 (108.98434,34.23484)",
+    "note": "OSM class=temple"
+   },
+   {
+    "name": "空海纪念碑",
+    "type": "other",
+    "bays": null,
+    "width_m": 6,
+    "depth_m": 6,
+    "height_m": 10,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "西院",
+    "note": "汉白玉，顶为五轮塔"
+   },
+   {
+    "name": "云峰阁",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 18,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "西院庭园中心",
+    "note": "三层木阁，唐风；位置未对 OSM"
+   },
+   {
+    "name": "西院两层配殿（19 间）",
+    "type": "hall",
+    "bays": 19,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "西院"
+   }
+  ],
+  "dynasty": "隋（582 灵感寺）/唐；1980s 复原",
+  "style": "仿唐",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: sohu 342181613",
+   "WebSearch: meet99 云峰阁",
+   "WebSearch: baike 青龙寺遗址"
+  ],
+  "notes": "3–4 月樱花；遗址公园 park 多边形 529×439 m"
+ },
+ {
+  "name": "卧龙禅寺",
+  "category": "temple",
+  "lon": 108.95016,
+  "lat": 34.25651,
+  "coord_source": "poi",
+  "compound_size_m": [
+   130,
+   140
+  ],
+  "orientation": "坐北朝南（柏树林街东侧）",
+  "main_buildings": [
+   {
+    "name": "石牌坊",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 7,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "轴线南端"
+   },
+   {
+    "name": "山门（弥勒殿）",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 18.9,
+    "depth_m": 13.4,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线 dz≈+12 m"
+   },
+   {
+    "name": "天王殿（背书韦驮殿）",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 18.8,
+    "depth_m": 17.1,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "山门北"
+   },
+   {
+    "name": "钟楼/鼓楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "天王殿两侧"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 18.5,
+    "depth_m": 11.6,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部 (108.95021,34.25685)"
+   },
+   {
+    "name": "千手观音殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "大殿北"
+   },
+   {
+    "name": "法堂",
+    "type": "hall",
+    "bays": 7,
+    "width_m": 61.5,
+    "depth_m": 36.2,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "北端 (108.95025,34.25709)，足迹含配房"
+   },
+   {
+    "name": "禅堂",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西院，440 m²"
+   }
+  ],
+  "dynasty": "汉灵帝时创（福应禅院）/宋改卧龙；清重修",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名轮廓，按轴线配位）",
+   "WebSearch: baike 卧龙寺",
+   "WebSearch: zhihu 711286617"
+  ],
+  "notes": "OSM 轮廓无名称，建筑配位为推断"
+ },
+ {
+  "name": "广仁寺",
+  "category": "temple",
+  "lon": 108.921124,
+  "lat": 34.276153,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   130,
+   170
+  ],
+  "orientation": "坐北朝南（明城墙西北角内）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 13.8,
+    "depth_m": 8.2,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南端 lat 34.27566"
+   },
+   {
+    "name": "康熙碑亭",
+    "type": "pavilion",
+    "bays": 1,
+    "width_m": 5.5,
+    "depth_m": 5.7,
+    "height_m": 8,
+    "roof": "cuanjian",
+    "roof_color": "yellow",
+    "storeys": 1,
+    "position": "山门北"
+   },
+   {
+    "name": "钟楼 / 鼓楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": 4.2,
+    "depth_m": 5.4,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "碑亭北两侧"
+   },
+   {
+    "name": "天王殿（千手观音殿）",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 12.4,
+    "depth_m": 7.8,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "lat 34.27615"
+   },
+   {
+    "name": "长寿殿 / 护法金刚殿",
+    "type": "hall",
+    "bays": 1,
+    "width_m": 7,
+    "depth_m": 8.2,
+    "height_m": 7,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "天王殿北两侧"
+   },
+   {
+    "name": "主殿（绿度母殿）",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 14.5,
+    "depth_m": 8.7,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "yellow",
+    "storeys": 1,
+    "position": "lat 34.27640"
+   },
+   {
+    "name": "财神殿 / 关公殿",
+    "type": "hall",
+    "bays": 1,
+    "width_m": 6.9,
+    "depth_m": 7.5,
+    "height_m": 7,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "主殿北两侧"
+   },
+   {
+    "name": "千佛殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 24.1,
+    "depth_m": 11.7,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "lat 34.27661"
+   },
+   {
+    "name": "藏经阁（金瓦殿）",
+    "type": "tower",
+    "bays": 7,
+    "width_m": 36.2,
+    "depth_m": 17.2,
+    "height_m": 18,
+    "roof": "xieshan",
+    "roof_color": "yellow",
+    "storeys": 2,
+    "position": "轴线北端 lat 34.27684",
+    "note": "金顶，二层藏经"
+   },
+   {
+    "name": "八宝塔（寺前）",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 4,
+    "depth_m": 4,
+    "height_m": 9,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "山门前广场",
+    "note": "藏式白塔组"
+   }
+  ],
+  "dynasty": "清康熙 42 年（1703）",
+  "style": "明清+藏式",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: news.qq 20220515A09WW500",
+   "WebSearch: bendibao guangrensi"
+  ]
+ },
+ {
+  "name": "八仙宫（敕建万寿八仙宫）",
+  "category": "temple",
+  "lon": 108.97513,
+  "lat": 34.26652,
+  "coord_source": "poi",
+  "compound_size_m": [
+   220,
+   170
+  ],
+  "orientation": "坐北朝南（中轴 lon≈108.9751）",
+  "main_buildings": [
+   {
+    "name": "照壁",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南端"
+   },
+   {
+    "name": "大牌楼",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "照壁北"
+   },
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "牌楼北"
+   },
+   {
+    "name": "遇仙桥",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "山门内"
+   },
+   {
+    "name": "灵官殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "第一进"
+   },
+   {
+    "name": "钟楼/鼓楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "两侧"
+   },
+   {
+    "name": "八仙殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 41.5,
+    "depth_m": 12.9,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "主殿（OSM 未命名轮廓 108.97518,34.26687 推定）"
+   },
+   {
+    "name": "斗姥殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "八仙殿北"
+   },
+   {
+    "name": "聚仙阁",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "轴线北端"
+   },
+   {
+    "name": "东跨院 吕祖殿/药王殿/太白殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东跨院"
+   },
+   {
+    "name": "西跨院 邱祖殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西跨院"
+   }
+  ],
+  "dynasty": "宋创/明清扩建",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名）",
+   "WebSearch: baxiangong.cn",
+   "WebSearch: fx361 西安八仙宫总体布局探讨"
+  ],
+  "notes": "南侧长乐坊古玩市场一带；两侧 56 m 长条轮廓为东西廊"
+ },
+ {
+  "name": "香积寺（善导塔）",
+  "category": "temple",
+  "lon": 108.88799,
+  "lat": 34.12477,
+  "coord_source": "poi",
+  "compound_size_m": [
+   120,
+   200
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "南端"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 51,
+    "depth_m": 11,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部（buildings.bin 51×9 m 轮廓）"
+   },
+   {
+    "name": "善导塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 9.5,
+    "depth_m": 9.5,
+    "height_m": 33,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 10,
+    "position": "殿北",
+    "note": "方形砖塔，原 13 层现存 10 层，底边 9.5 m"
+   },
+   {
+    "name": "法堂/藏经楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": 50,
+    "depth_m": 11,
+    "height_m": 12.6,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "北端（buildings.bin 50×11 m）"
+   }
+  ],
+  "dynasty": "唐永隆二年（681）",
+  "style": "唐塔+现代仿古殿",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/buildings.bin（CMAB/OSM 轮廓，城区外）",
+   "WebSearch: zh.wikipedia 香积寺善导塔"
+  ],
+  "notes": "城区 OSM 覆盖外，殿位由 buildings.bin 推定"
+ },
+ {
+  "name": "兴教寺（玄奘塔）",
+  "category": "temple",
+  "lon": 109.03409,
+  "lat": 34.09197,
+  "coord_source": "poi",
+  "compound_size_m": [
+   150,
+   250
+  ],
+  "orientation": "坐北朝南（少陵原畔）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "南端"
+   },
+   {
+    "name": "钟楼/鼓楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "门内对峙"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部"
+   },
+   {
+    "name": "法堂/藏经楼",
+    "type": "tower",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "北部"
+   },
+   {
+    "name": "玄奘塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 5.2,
+    "depth_m": 5.2,
+    "height_m": 21,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 5,
+    "position": "西侧慈恩塔院",
+    "note": "方形五层楼阁式砖塔，669"
+   },
+   {
+    "name": "窥基塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 2.5,
+    "depth_m": 2.5,
+    "height_m": 6.76,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "玄奘塔东"
+   },
+   {
+    "name": "圆测塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 2.5,
+    "depth_m": 2.5,
+    "height_m": 7.1,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "玄奘塔西"
+   }
+  ],
+  "dynasty": "唐总章二年（669）",
+  "style": "唐塔+明清/民国殿",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: wwj.shaanxi.gov.cn 兴教寺塔",
+   "WebSearch: baike 玄奘塔"
+  ],
+  "notes": "世界遗产“丝绸之路”点；OSM 无轮廓"
+ },
+ {
+  "name": "草堂寺（鸠摩罗什舍利塔）",
+  "category": "temple",
+  "lon": 108.73944,
+  "lat": 34.0144,
+  "coord_source": "poi",
+  "compound_size_m": [
+   324,
+   248
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南端"
+   },
+   {
+    "name": "天王殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "第二进"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部"
+   },
+   {
+    "name": "大悲楼",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 15,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "大殿北"
+   },
+   {
+    "name": "法堂",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "北部"
+   },
+   {
+    "name": "藏经阁",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "轴线北端"
+   },
+   {
+    "name": "逍遥三藏殿（清天王殿）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西路"
+   },
+   {
+    "name": "鸠摩罗什舍利塔（八宝玉石塔）",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 1.5,
+    "depth_m": 1.5,
+    "height_m": 2.33,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 12,
+    "position": "西路塔亭内",
+    "note": "唐，玉石 12 层亭阁式，置于塔亭中"
+   }
+  ],
+  "dynasty": "后秦（401）/唐；明清/现代",
+  "style": "明清+现代仿古",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: baike 草堂寺（南北约 248 m、东西约 324 m）",
+   "WebSearch: baike 鸠摩罗什舍利塔"
+  ]
+ },
+ {
+  "name": "东岳庙（西安民俗博物馆）",
+  "category": "temple",
+  "lon": 108.96597,
+  "lat": 34.2626,
+  "coord_source": "poi",
+  "compound_size_m": [
+   80,
+   150
+  ],
+  "orientation": "坐北朝南（东门里西北）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 25.5,
+    "depth_m": 10.4,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "南端（OSM 未命名 108.96598,34.26320）"
+   },
+   {
+    "name": "大殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 25.1,
+    "depth_m": 14.6,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部 (108.96594,34.26250)",
+    "note": "明构，面阔五间进深三间，单檐带廊歇山，521 m²，元末明初壁画"
+   },
+   {
+    "name": "后殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "北部（估）"
+   }
+  ],
+  "dynasty": "北宋政和六年（1116）；明清重修",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名，推定）",
+   "WebSearch: silkroads.org.cn 西安东岳庙",
+   "WebSearch: sina 2013 民俗博物馆"
+  ],
+  "notes": "东侧东岳庙商城（87×104 m 4 层）非古建"
+ },
+ {
+  "name": "湘子庙",
+  "category": "temple",
+  "lon": 108.93958,
+  "lat": 34.25425,
+  "coord_source": "poi",
+  "compound_size_m": [
+   100,
+   50
+  ],
+  "orientation": "坐西朝东（湘子庙街西端）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东端临街"
+   },
+   {
+    "name": "灵官殿（过殿）",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部"
+   },
+   {
+    "name": "湘祖殿（正殿）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西端"
+   }
+  ],
+  "dynasty": "宋（或五代）；明格局；2005 起修复",
+  "style": "明清（青砖青瓦）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 湘子庙",
+   "WebSearch: bendibao xiangzimiao"
+  ]
+ },
+ {
+  "name": "华严寺双塔",
+  "category": "pagoda",
+  "lon": 108.96707,
+  "lat": 34.13705,
+  "coord_source": "poi",
+  "compound_size_m": [
+   80,
+   60
+  ],
+  "orientation": "少陵原北缘，面北临樊川",
+  "main_buildings": [
+   {
+    "name": "杜顺塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 5.6,
+    "depth_m": 5.6,
+    "height_m": 22.8,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 7,
+    "position": "东",
+    "note": "方形七层楼阁式砖塔"
+   },
+   {
+    "name": "清凉国师塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 3.4,
+    "depth_m": 3.0,
+    "height_m": 14.2,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 7,
+    "position": "西",
+    "note": "六角七层实心砖塔"
+   }
+  ],
+  "dynasty": "唐（803 建寺；塔唐）",
+  "style": "唐塔",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 华严寺塔 (西安)",
+   "WebSearch: baike 长安华严寺塔"
+  ]
+ },
+ {
+  "name": "罔极寺",
+  "category": "temple",
+  "lon": 108.97147,
+  "lat": 34.26338,
+  "coord_source": "poi",
+  "compound_size_m": [
+   150,
+   130
+  ],
+  "orientation": "坐北朝南（东关炮房街）",
+  "main_buildings": [
+   {
+    "name": "山门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 34.8,
+    "depth_m": 12.0,
+    "height_m": 8,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线南部（OSM 未命名 34.8×12 m 轮廓推定）"
+   },
+   {
+    "name": "天王殿（韦驮殿）",
+    "type": "hall",
+    "bays": 3,
+    "width_m": 18.1,
+    "depth_m": 13.7,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "清构，寺内最早古建"
+   },
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 30.2,
+    "depth_m": 34.0,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部 (108.97162,34.26344)"
+   },
+   {
+    "name": "法堂",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "北部"
+   }
+  ],
+  "dynasty": "唐神龙元年（705）；明清重修",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名，推定）",
+   "WebSearch: thepaper 2551524",
+   "WebSearch: baike 罔极寺"
+  ]
+ },
+ {
+  "name": "宝庆寺塔（华塔）",
+  "category": "pagoda",
+  "lon": 108.943472,
+  "lat": 34.254742,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   6,
+   6
+  ],
+  "orientation": "书院门西口北侧",
+  "main_buildings": [
+   {
+    "name": "宝庆寺塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 5.6,
+    "depth_m": 5.6,
+    "height_m": 23,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 7,
+    "position": "独立塔",
+    "note": "六角七层实心砖塔，五色彩砖（华塔），底边 2.7 m"
+   }
+  ],
+  "dynasty": "明景泰二年（1451）重建",
+  "style": "明",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "WebSearch: zh.wikipedia 宝庆寺塔"
+  ]
+ },
+ {
+  "name": "圣寿寺塔",
+  "category": "pagoda",
+  "lon": 108.95869,
+  "lat": 34.00761,
+  "coord_source": "poi",
+  "compound_size_m": [
+   40,
+   40
+  ],
+  "orientation": "南五台山麓",
+  "main_buildings": [
+   {
+    "name": "圣寿寺塔",
+    "type": "pagoda",
+    "bays": null,
+    "width_m": 7.5,
+    "depth_m": 7.5,
+    "height_m": 29.5,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 7,
+    "position": "独立塔",
+    "note": "方形七层楼阁式砖塔，隋仁寿/宋修"
+   }
+  ],
+  "dynasty": "隋（601–604）",
+  "style": "隋唐塔",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 长安圣寿寺塔"
+  ]
+ },
+ {
+  "name": "净业寺",
+  "category": "temple",
+  "lon": 108.8176,
+  "lat": 34.02719,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "依凤凰山坡，坐北朝南",
+  "main_buildings": [
+   {
+    "name": "大雄宝殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "山腰台地"
+   }
+  ],
+  "dynasty": "隋唐（律宗祖庭）",
+  "style": "明清/现代",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ],
+  "notes": "山地寺院，距城约 30 km，仅远景"
+ },
+ {
+  "name": "至相寺",
+  "category": "temple",
+  "lon": 108.91578,
+  "lat": 34.02054,
+  "coord_source": "poi",
+  "compound_size_m": [
+   120,
+   25
+  ],
+  "orientation": "坐北朝南（天子峪）",
+  "main_buildings": [
+   {
+    "name": "殿堂群",
+    "type": "hall",
+    "bays": null,
+    "width_m": 121.7,
+    "depth_m": 20.6,
+    "height_m": 7.6,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "buildings.bin 最大轮廓"
+   }
+  ],
+  "dynasty": "隋（华严宗祖庭）",
+  "style": "现代仿古",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/buildings.bin（CMAB/OSM 轮廓，城区外）"
+  ]
+ },
+ {
+  "name": "西安碑林博物馆（西安孔庙）",
+  "category": "museum",
+  "lon": 108.9482,
+  "lat": 34.2555,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   191,
+   322
+  ],
+  "orientation": "坐北朝南（中轴 lon≈108.94813）",
+  "main_buildings": [
+   {
+    "name": "照壁",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "三学街北侧 南端"
+   },
+   {
+    "name": "太和元气坊",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "照壁北"
+   },
+   {
+    "name": "泮池 + 棂星门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 7,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "牌坊北"
+   },
+   {
+    "name": "大成门（戟门）",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 13.3,
+    "depth_m": 7.1,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "lat 34.25468"
+   },
+   {
+    "name": "景云钟 / 大夏石马 碑亭",
+    "type": "pavilion",
+    "bays": 1,
+    "width_m": 6.3,
+    "depth_m": 6.7,
+    "height_m": 8,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "戟门北东西"
+   },
+   {
+    "name": "东/西临展（碑廊）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 6.0,
+    "depth_m": 70.8,
+    "height_m": 6,
+    "roof": "xuanshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线两侧长廊"
+   },
+   {
+    "name": "孝经亭",
+    "type": "pavilion",
+    "bays": 1,
+    "width_m": 7.3,
+    "depth_m": 7.4,
+    "height_m": 12,
+    "roof": "cuanjian",
+    "roof_color": "yellow",
+    "storeys": 2,
+    "position": "lat 34.25571",
+    "note": "重檐亭覆石台孝经"
+   },
+   {
+    "name": "第一碑室（开成石经）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 53.1,
+    "depth_m": 31.9,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "lat 34.25581"
+   },
+   {
+    "name": "第二~第七碑室",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 17.9,
+    "depth_m": 10.0,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "第一碑室北，两列"
+   },
+   {
+    "name": "石刻艺术馆（新，东翼）",
+    "type": "modern",
+    "bays": null,
+    "width_m": 38.9,
+    "depth_m": 62.1,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东 (108.94882,34.25575)，鲁班奖"
+   },
+   {
+    "name": "石刻艺术室（西翼）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 34.0,
+    "depth_m": 58.1,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西 (108.94740,34.25577)"
+   },
+   {
+    "name": "北区新馆（2025 改扩建）",
+    "type": "modern",
+    "bays": null,
+    "width_m": 52.6,
+    "depth_m": 29.5,
+    "height_m": 8,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "北端 (108.94810,34.25675)",
+    "note": "地上 1 层地下 2 层"
+   }
+  ],
+  "dynasty": "北宋元祐二年（1087）碑林；孔庙明清",
+  "style": "明清孔庙+现代展馆",
+  "night": "夜间不开放，门楼泛光",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "WebSearch: sohu 435367511",
+   "WebSearch: gmw 2025-05-07 全面开放"
+  ],
+  "notes": "2025-05-12 改扩建全面开放，landuse 中“碑林博物馆二期 construction”已完工"
+ },
+ {
+  "name": "关中书院",
+  "category": "other",
+  "lon": 108.94485,
+  "lat": 34.25571,
+  "coord_source": "poi",
+  "compound_size_m": [
+   120,
+   200
+  ],
+  "orientation": "坐北朝南（书院门北，宝庆寺塔东）",
+  "main_buildings": [
+   {
+    "name": "头门/二门",
+    "type": "gate",
+    "bays": 3,
+    "width_m": 23.5,
+    "depth_m": 10.3,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "书院门街北侧"
+   },
+   {
+    "name": "允执堂（讲堂）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 32.3,
+    "depth_m": 59.4,
+    "height_m": 11,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "第二进；凸字形平面，两硬山一歇山勾连搭+歇山抱厦"
+   },
+   {
+    "name": "精一堂",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 22.9,
+    "depth_m": 26.4,
+    "height_m": 9,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "泽园北"
+   },
+   {
+    "name": "东西庑廊",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": 100,
+    "height_m": 5,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "两侧百米长"
+   }
+  ],
+  "dynasty": "明万历三十七年（1609）",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "data-src/overture/place.parquet（raw，已为 WGS）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名，推定）",
+   "WebSearch: xawl.edu.cn 关中书院建筑文化漫谈",
+   "WebSearch: sohu 667475135"
+  ]
+ },
+ {
+  "name": "书院门历史文化街区",
+  "category": "street",
+  "lon": 108.9448,
+  "lat": 34.2545,
+  "coord_source": "poi",
+  "compound_size_m": [
+   270,
+   23
+  ],
+  "orientation": "东西步行街（永宁门内东侧）",
+  "main_buildings": [
+   {
+    "name": "书院门牌楼",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西口 (108.94293,34.25436)"
+   },
+   {
+    "name": "街房（两层仿明清）",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 7,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "两侧连续"
+   }
+  ],
+  "dynasty": "明清格局；1990s 仿古改造",
+  "style": "仿明清",
+  "night": "红灯笼、店招",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json（commercial 多边形 270×23 m）"
+  ]
+ },
+ {
+  "name": "三学街",
+  "category": "street",
+  "lon": 108.9478,
+  "lat": 34.2545,
+  "coord_source": "estimated",
+  "compound_size_m": [
+   300,
+   15
+  ],
+  "orientation": "东西街，碑林南侧",
+  "main_buildings": [
+   {
+    "name": "街房",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 7,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "两侧"
+   }
+  ],
+  "dynasty": "明清（长安/咸宁/府三学）",
+  "style": "仿明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/landuse.json（三学街社区）"
+  ],
+  "notes": "街线按碑林照壁南估"
+ },
+ {
+  "name": "德福巷·湘子庙街",
+  "category": "street",
+  "lon": 108.9393,
+  "lat": 34.2555,
+  "coord_source": "poi",
+  "compound_size_m": [
+   90,
+   250
+  ],
+  "orientation": "南北巷（德福巷）+东西街（湘子庙街）",
+  "main_buildings": [
+   {
+    "name": "街房（酒吧/茶馆）",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "两侧"
+   }
+  ],
+  "dynasty": "明清/1990s 改造",
+  "style": "仿明清",
+  "night": "酒吧街暖光",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "place.parquet raw"
+  ]
+ },
+ {
+  "name": "永兴坊",
+  "category": "street",
+  "lon": 108.96541,
+  "lat": 34.26645,
+  "coord_source": "poi",
+  "compound_size_m": [
+   136,
+   94
+  ],
+  "orientation": "坊式，北临东新街、南靠城墙",
+  "main_buildings": [
+   {
+    "name": "牌楼（坊门）",
+    "type": "paifang",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "入口"
+   },
+   {
+    "name": "关中楼",
+    "type": "hall",
+    "bays": null,
+    "width_m": 25.2,
+    "depth_m": 12.5,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "西北"
+   },
+   {
+    "name": "陕南楼",
+    "type": "hall",
+    "bays": null,
+    "width_m": 18.2,
+    "depth_m": 13.5,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "中"
+   },
+   {
+    "name": "陕北楼",
+    "type": "hall",
+    "bays": null,
+    "width_m": 18.2,
+    "depth_m": 9.6,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "中北"
+   },
+   {
+    "name": "戏台",
+    "type": "pavilion",
+    "bays": 1,
+    "width_m": 7.5,
+    "depth_m": 10.8,
+    "height_m": 8,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中西"
+   }
+  ],
+  "dynasty": "唐魏征府旧址；2007 建",
+  "style": "仿明清关中民居",
+  "night": "红灯笼、夜市（摔碗酒）",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "WebSearch: baike 永兴坊（东西 130 m 南北 88 m）"
+  ]
+ },
+ {
+  "name": "大唐西市（含大唐西市博物馆）",
+  "category": "street",
+  "lon": 108.90335,
+  "lat": 34.248,
+  "coord_source": "poi",
+  "compound_size_m": [
+   338,
+   360
+  ],
+  "orientation": "里坊式十字街",
+  "main_buildings": [
+   {
+    "name": "大唐西市博物馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": 43.3,
+    "depth_m": 38.8,
+    "height_m": 16,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "北区 (108.90336,34.24915)",
+    "note": "刘克成设计，12×12 m 展览单元；建面 3.2 万 m²"
+   },
+   {
+    "name": "四角街区大体量唐风建筑",
+    "type": "hall",
+    "bays": null,
+    "width_m": 95,
+    "depth_m": 100,
+    "height_m": 20,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "十字街四象限（OSM 未命名 ~95×100 m ×4）"
+   },
+   {
+    "name": "中心广场楼",
+    "type": "hall",
+    "bays": null,
+    "width_m": 80.7,
+    "depth_m": 65.5,
+    "height_m": 15,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "十字街中心"
+   }
+  ],
+  "dynasty": "唐西市遗址；2009 起建",
+  "style": "仿唐+现代",
+  "night": "唐风轮廓灯",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 大唐西市博物馆"
+  ]
+ },
+ {
+  "name": "易俗社剧场·易俗社文化街区",
+  "category": "other",
+  "lon": 108.94427,
+  "lat": 34.26304,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   60,
+   70
+  ],
+  "orientation": "坐北朝南（西一路）",
+  "main_buildings": [
+   {
+    "name": "易俗社剧场",
+    "type": "hall",
+    "bays": null,
+    "width_m": 20.4,
+    "depth_m": 40.2,
+    "height_m": 14,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东",
+    "note": "1916 建，砖木，重檐歇山"
+   },
+   {
+    "name": "戏台",
+    "type": "pavilion",
+    "bays": null,
+    "width_m": 27.1,
+    "depth_m": 16.0,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西南"
+   },
+   {
+    "name": "百年博物馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": 29.9,
+    "depth_m": 37.1,
+    "height_m": 12,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "西北"
+   }
+  ],
+  "dynasty": "1912 创社，1916 剧场",
+  "style": "民国",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "WebSearch: zh.wikipedia 易俗社剧场"
+  ]
+ },
+ {
+  "name": "八路军西安办事处纪念馆（七贤庄）",
+  "category": "museum",
+  "lon": 108.95058,
+  "lat": 34.27464,
+  "coord_source": "poi",
+  "compound_size_m": [
+   140,
+   90
+  ],
+  "orientation": "坐北朝南（北新街）",
+  "main_buildings": [
+   {
+    "name": "一号院四合院",
+    "type": "hall",
+    "bays": 5,
+    "width_m": 17,
+    "depth_m": 82,
+    "height_m": 6,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "主院（南北 82 m×东西 17 m 两进）"
+   },
+   {
+    "name": "其余院落（3/4/7 号）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东西并列十所院落"
+   }
+  ],
+  "dynasty": "1936",
+  "style": "民国关中四合院（硬山平房）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名条形平房轮廓）",
+   "WebSearch: baike 八路军西安办事处旧址"
+  ]
+ },
+ {
+  "name": "张学良公馆（西安事变纪念馆）",
+  "category": "museum",
+  "lon": 108.96235,
+  "lat": 34.2588,
+  "coord_source": "poi",
+  "compound_size_m": [
+   120,
+   110
+  ],
+  "orientation": "坐北朝南（建国路）",
+  "main_buildings": [
+   {
+    "name": "东/中/西三栋三层西式楼",
+    "type": "modern",
+    "bays": null,
+    "width_m": 23.6,
+    "depth_m": 24.8,
+    "height_m": 12,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "公馆内",
+    "note": "1932 建，砖木西式楼房带坡顶（估）"
+   },
+   {
+    "name": "西安事变纪念馆新馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": 59.3,
+    "depth_m": 21.3,
+    "height_m": 12,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 3,
+    "position": "西北"
+   }
+  ],
+  "dynasty": "1932",
+  "style": "民国西式",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）（未命名，推定）"
+  ]
+ },
+ {
+  "name": "新城黄楼（陕西省人民政府·明秦王府）",
+  "category": "other",
+  "lon": 108.949535,
+  "lat": 34.267053,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   180,
+   48
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "黄楼（省政府主楼）",
+    "type": "modern",
+    "bays": null,
+    "width_m": 180.4,
+    "depth_m": 47.9,
+    "height_m": 18,
+    "roof": "wudian",
+    "roof_color": "yellow",
+    "storeys": 3,
+    "position": "新城广场北",
+    "note": "1950s 苏式大屋顶楼，外墙黄色（估）"
+   },
+   {
+    "name": "明秦王府城墙遗址",
+    "type": "platform",
+    "bays": null,
+    "width_m": 305.7,
+    "depth_m": 51.7,
+    "height_m": 6,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南段 (108.94863,34.26484)"
+   }
+  ],
+  "dynasty": "明洪武秦王府；1950s 建楼",
+  "style": "现代大屋顶+明遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "魁星楼（文昌门）",
+  "category": "other",
+  "lon": 108.94902,
+  "lat": 34.25345,
+  "coord_source": "poi",
+  "compound_size_m": [
+   7,
+   5
+  ],
+  "orientation": "城墙顶（朝向待核）",
+  "main_buildings": [
+   {
+    "name": "魁星楼",
+    "type": "tower",
+    "bays": 1,
+    "width_m": 7.3,
+    "depth_m": 5.2,
+    "height_m": 9,
+    "roof": "cuanjian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "文昌门东城墙顶"
+   }
+  ],
+  "dynasty": "明清（2004 复建）",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）"
+  ],
+  "notes": "在城墙顶；citywall 模块未见专门建模，需核对"
+ },
+ {
+  "name": "西安人民大厦",
+  "category": "other",
+  "lon": 108.95413,
+  "lat": 34.26706,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   105,
+   22
+  ],
+  "orientation": "坐北朝南（东新街）",
+  "main_buildings": [
+   {
+    "name": "主楼",
+    "type": "modern",
+    "bays": null,
+    "width_m": 105.2,
+    "depth_m": 21.6,
+    "height_m": 30,
+    "roof": "xieshan",
+    "roof_color": "green",
+    "storeys": 6,
+    "position": "临街",
+    "note": "1953 苏式+中式大屋顶（绿琉璃，估）"
+   }
+  ],
+  "dynasty": "1953",
+  "style": "现代民族形式",
+  "night": "泛光",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）"
+  ]
+ },
+ {
+  "name": "半坡博物馆",
+  "category": "museum",
+  "lon": 109.04821,
+  "lat": 34.2742,
+  "coord_source": "poi",
+  "compound_size_m": [
+   385,
+   275
+  ],
+  "orientation": "坐北朝南（浐河东岸）",
+  "main_buildings": [
+   {
+    "name": "遗址保护大厅（2006 新厅）",
+    "type": "modern",
+    "bays": null,
+    "width_m": 83.5,
+    "depth_m": 78.6,
+    "height_m": 14,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "中部 (109.04834,34.27467)",
+    "note": "钢结构大跨，建面 4600 m²"
+   },
+   {
+    "name": "展厅（Exhibition Hall）",
+    "type": "modern",
+    "bays": null,
+    "width_m": 82.2,
+    "depth_m": 28.0,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西北"
+   },
+   {
+    "name": "入口仿半坡房屋门阙",
+    "type": "gate",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南端"
+   }
+  ],
+  "dynasty": "仰韶文化（约前 4800–前 4300）；1958 建馆",
+  "style": "现代",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "WebSearch: baike 西安半坡博物馆"
+  ]
+ },
+ {
+  "name": "大明宫国家遗址公园（整体）",
+  "category": "park",
+  "lon": 108.9589,
+  "lat": 34.29413,
+  "coord_source": "poi",
+  "compound_size_m": [
+   1432,
+   2577
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "大明宫遗址博物馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "丹凤门内西侧 (108.95973,34.29037)",
+    "note": "覆土半地下，尺寸待核"
+   },
+   {
+    "name": "太液池/蓬莱岛",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "北部"
+   },
+   {
+    "name": "玄武门/重玄门遗址",
+    "type": "gate",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "北端"
+   },
+   {
+    "name": "麟德殿遗址",
+    "type": "platform",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "西北"
+   }
+  ],
+  "dynasty": "唐（634 起）；2010 建园",
+  "style": "遗址+仿唐标识",
+  "night": "",
+  "already_modeled": true,
+  "sources": [
+   "public/data/landuse.json",
+   "public/data/pois.json（OSM POI）",
+   "src/modules/heritage.js"
+  ],
+  "notes": "丹凤门/含元殿/宣政殿/紫宸殿已建；麟德殿、太液池、遗址博物馆未建"
+ },
+ {
+  "name": "大明宫遗址博物馆",
+  "category": "museum",
+  "lon": 108.95973,
+  "lat": 34.29037,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "遗址博物馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "含元殿西南"
+   }
+  ],
+  "dynasty": "2010",
+  "style": "现代覆土",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ],
+  "notes": "OSM 无对应轮廓；覆土建筑，模型可只做入口与草坡"
+ },
+ {
+  "name": "汉长安城未央宫遗址（前殿）",
+  "category": "site",
+  "lon": 108.8575,
+  "lat": 34.3065,
+  "coord_source": "estimated",
+  "compound_size_m": [
+   200,
+   400
+  ],
+  "orientation": "坐北朝南（南低北高）",
+  "main_buildings": [
+   {
+    "name": "前殿夯土台基",
+    "type": "platform",
+    "bays": null,
+    "width_m": 200,
+    "depth_m": 400,
+    "height_m": 15,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "遗址区中部",
+    "note": "南端高 0.6 m，北部最高 15 m；上有三组院落"
+   },
+   {
+    "name": "椒房殿/少府/天禄阁/石渠阁遗址",
+    "type": "platform",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "前殿北/西北"
+   }
+  ],
+  "dynasty": "西汉（前 200）",
+  "style": "遗址（夯土台+植被标识）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/landuse.json（公园 2505×2818 m）",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: dfz.shaanxi.gov.cn 汉长安城未央宫遗址"
+  ],
+  "notes": "前殿位置取公园多边形中心略北，需影像核对"
+ },
+ {
+  "name": "汉城湖公园",
+  "category": "park",
+  "lon": 108.91519,
+  "lat": 34.31941,
+  "coord_source": "poi",
+  "compound_size_m": [
+   3478,
+   5750
+  ],
+  "orientation": "沿团结水库南北带状",
+  "main_buildings": [
+   {
+    "name": "大风阁",
+    "type": "tower",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 40,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 4,
+    "position": "湖北岸（估）"
+   }
+  ],
+  "dynasty": "2011",
+  "style": "仿汉",
+  "night": "湖岸灯带",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json"
+  ],
+  "notes": "大风阁数据未检索，按记忆估"
+ },
+ {
+  "name": "陕西历史博物馆秦汉馆",
+  "category": "museum",
+  "lon": 108.85962,
+  "lat": 34.40768,
+  "coord_source": "poi",
+  "compound_size_m": [
+   547,
+   583
+  ],
+  "orientation": "坐北朝南（西咸新区秦汉新城）",
+  "main_buildings": [
+   {
+    "name": "主馆 7 座高台建筑（北斗七星排列）",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 20,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "园区中部",
+    "note": "张锦秋，秦汉高台风；架空玻璃复道相连"
+   },
+   {
+    "name": "天汉水景（旱喷雾）",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南侧"
+   }
+  ],
+  "dynasty": "2024 开馆",
+  "style": "仿秦汉（现代）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json",
+   "WebSearch: baike 陕西历史博物馆秦汉馆",
+   "WebSearch: cscec 202405"
+  ],
+  "notes": "建面 39809 m²；单体尺度待影像"
+ },
+ {
+  "name": "秦咸阳宫遗址博物馆",
+  "category": "museum",
+  "lon": 108.855323,
+  "lat": 34.414703,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   36,
+   31
+  ],
+  "orientation": "坐北朝南（咸阳原）",
+  "main_buildings": [
+   {
+    "name": "博物馆",
+    "type": "hall",
+    "bays": null,
+    "width_m": 36.1,
+    "depth_m": 30.6,
+    "height_m": 10,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": ""
+   }
+  ],
+  "dynasty": "秦",
+  "style": "仿秦汉",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "秦咸阳宫一号宫殿（六号宫殿）遗址",
+  "category": "site",
+  "lon": 108.86256,
+  "lat": 34.41639,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": null,
+  "main_buildings": [],
+  "dynasty": "秦",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "阿房宫考古遗址公园（前殿遗址）",
+  "category": "site",
+  "lon": 108.80829,
+  "lat": 34.26433,
+  "coord_source": "poi",
+  "compound_size_m": [
+   1270,
+   426
+  ],
+  "orientation": "东西长台",
+  "main_buildings": [
+   {
+    "name": "前殿夯土台基",
+    "type": "platform",
+    "bays": null,
+    "width_m": 1270,
+    "depth_m": 426,
+    "height_m": 12,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "公园中心",
+    "note": "最高 12 m，西北东三面收分两三级台阶"
+   }
+  ],
+  "dynasty": "秦（未完工）",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/landuse.json",
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: silkroads 阿房宫遗址"
+  ]
+ },
+ {
+  "name": "天坛遗址公园（唐圜丘）",
+  "category": "site",
+  "lon": 108.94535,
+  "lat": 34.20268,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   66,
+   66
+  ],
+  "orientation": "圆坛十二陛（午陛最宽）",
+  "main_buildings": [
+   {
+    "name": "圜丘",
+    "type": "platform",
+    "bays": null,
+    "width_m": 52.45,
+    "depth_m": 52.45,
+    "height_m": 8,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 4,
+    "position": "公园北部",
+    "note": "四层素土圆坛：直径 52.45/40.5/28.4/20.2 m；各层高约 1.9/1.8/1.6/2.0 m"
+   }
+  ],
+  "dynasty": "隋开皇十年（590）",
+  "style": "遗址（覆罩保护）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/landuse.json",
+   "WebSearch: silkroads 圜丘遗址",
+   "WebSearch: baike 圜丘遗址"
+  ]
+ },
+ {
+  "name": "隋唐长安城明德门遗址公园",
+  "category": "site",
+  "lon": 108.93559,
+  "lat": 34.20644,
+  "coord_source": "poi",
+  "compound_size_m": [
+   180,
+   171
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "明德门遗址（五门道）",
+    "type": "gate",
+    "bays": 5,
+    "width_m": 55,
+    "depth_m": 17,
+    "height_m": 3,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": ""
+   }
+  ],
+  "dynasty": "隋唐",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json"
+  ],
+  "notes": "门址尺度按唐五门道估"
+ },
+ {
+  "name": "木塔寺遗址公园",
+  "category": "park",
+  "lon": 108.89094,
+  "lat": 34.21013,
+  "coord_source": "poi",
+  "compound_size_m": [
+   825,
+   724
+  ],
+  "orientation": null,
+  "main_buildings": [],
+  "dynasty": "隋唐木塔寺遗址",
+  "style": "公园",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/landuse.json"
+  ]
+ },
+ {
+  "name": "汉阳陵（汉景帝阳陵博物院）",
+  "category": "tomb",
+  "lon": 108.9426,
+  "lat": 34.44323,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "坐西朝东（帝陵四出阙门）",
+  "main_buildings": [
+   {
+    "name": "帝陵封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 168,
+    "depth_m": 168,
+    "height_m": 32.28,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "陵园中心",
+    "note": "覆斗形；底边约 168 m（估）"
+   },
+   {
+    "name": "帝陵外藏坑保护展示厅",
+    "type": "modern",
+    "bays": null,
+    "width_m": 64.1,
+    "depth_m": 54.3,
+    "height_m": 5.8,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "封土东北，覆土地下",
+    "note": "buildings.bin 64×54 m"
+   },
+   {
+    "name": "南阙门遗址保护展示厅",
+    "type": "gate",
+    "bays": null,
+    "width_m": 120,
+    "depth_m": 30,
+    "height_m": 14,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "封土南 (108.94076,34.44387)",
+    "note": "仿汉三出阙外观"
+   },
+   {
+    "name": "考古陈列馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 8,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "东南 (108.94788,34.44035)"
+   }
+  ],
+  "dynasty": "西汉（前 153 起）",
+  "style": "汉陵+现代保护厅",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/buildings.bin（CMAB/OSM 轮廓，城区外）",
+   "WebSearch: gmw 2006 地下遗址博物馆",
+   "WebSearch: cnwest 2024-08-30"
+  ]
+ },
+ {
+  "name": "汉宣帝杜陵",
+  "category": "tomb",
+  "lon": 109.02268,
+  "lat": 34.18105,
+  "coord_source": "poi",
+  "compound_size_m": [
+   843,
+   986
+  ],
+  "orientation": "坐西朝东（覆斗）",
+  "main_buildings": [
+   {
+    "name": "杜陵封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 175,
+    "depth_m": 175,
+    "height_m": 29,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "陵园中心",
+    "note": "覆斗形，底边 175 m，顶边 50 m"
+   }
+  ],
+  "dynasty": "西汉（前 49）",
+  "style": "汉陵",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json",
+   "WebSearch: zh.wikipedia 汉杜陵"
+  ]
+ },
+ {
+  "name": "周陵（周文王陵/周武王陵，实为秦惠文王公陵、秦武王永陵）",
+  "category": "tomb",
+  "lon": 108.72566,
+  "lat": 34.40931,
+  "coord_source": "poi",
+  "compound_size_m": [
+   108,
+   300
+  ],
+  "orientation": "南北排列",
+  "main_buildings": [
+   {
+    "name": "“文王陵”封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 108,
+    "depth_m": 103,
+    "height_m": 11.8,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南 (108.72566,34.40931)",
+    "note": "截锥形"
+   },
+   {
+    "name": "“武王陵”封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 63,
+    "depth_m": 76,
+    "height_m": 14,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "北约 150 m (108.72524,34.41124)",
+    "note": "圆锥形"
+   },
+   {
+    "name": "祠庙献殿（明清）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "封土南"
+   }
+  ],
+  "dynasty": "战国秦（宋以来误称周陵）",
+  "style": "陵+明清祠",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 周文王陵",
+   "WebSearch: sxlib 秦惠文王公陵"
+  ]
+ },
+ {
+  "name": "汉高祖长陵",
+  "category": "tomb",
+  "lon": 108.87663,
+  "lat": 34.43476,
+  "coord_source": "poi",
+  "compound_size_m": [
+   400,
+   300
+  ],
+  "orientation": "东西双冢（帝陵西、后陵东）",
+  "main_buildings": [
+   {
+    "name": "长陵封土（西冢）",
+    "type": "mound",
+    "bays": null,
+    "width_m": 160,
+    "depth_m": 140,
+    "height_m": 30,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": ""
+   },
+   {
+    "name": "吕后陵封土（东冢）",
+    "type": "mound",
+    "bays": null,
+    "width_m": 150,
+    "depth_m": 130,
+    "height_m": 30,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "东约 280 m（估）"
+   }
+  ],
+  "dynasty": "西汉（前 195）",
+  "style": "汉陵",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: baike 长陵"
+  ]
+ },
+ {
+  "name": "汉惠帝安陵",
+  "category": "tomb",
+  "lon": 108.84139,
+  "lat": 34.42305,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "覆斗",
+  "main_buildings": [
+   {
+    "name": "安陵封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 170,
+    "depth_m": 140,
+    "height_m": 25,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "",
+    "note": "尺度估"
+   }
+  ],
+  "dynasty": "西汉",
+  "style": "汉陵",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ],
+  "notes": "封土尺寸未检索"
+ },
+ {
+  "name": "汉文帝霸陵（江村大墓）",
+  "category": "tomb",
+  "lon": 109.11082,
+  "lat": 34.23809,
+  "coord_source": "osm_footprint",
+  "compound_size_m": [
+   39,
+   70
+  ],
+  "orientation": "无封土（凤凰嘴误传）",
+  "main_buildings": [
+   {
+    "name": "保护展示建筑",
+    "type": "modern",
+    "bays": null,
+    "width_m": 38.6,
+    "depth_m": 70.4,
+    "height_m": 6,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": ""
+   }
+  ],
+  "dynasty": "西汉",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "OSM 建筑轮廓 data-src/overture/building.parquet（2026-09）",
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "唐顺陵",
+  "category": "tomb",
+  "lon": 108.79871,
+  "lat": 34.46528,
+  "coord_source": "poi",
+  "compound_size_m": [
+   388,
+   1206
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "顺陵封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 48,
+    "depth_m": 48,
+    "height_m": 12.6,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "北部",
+    "note": "尺度估"
+   },
+   {
+    "name": "走狮/天禄石刻",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 4,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "南门神道"
+   }
+  ],
+  "dynasty": "唐（武则天母杨氏）",
+  "style": "唐陵",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json"
+  ],
+  "notes": "封土数据未检索"
+ },
+ {
+  "name": "秦始皇帝陵（丽山园）",
+  "category": "tomb",
+  "lon": 109.25384,
+  "lat": 34.38142,
+  "coord_source": "poi",
+  "compound_size_m": [
+   1060,
+   2260
+  ],
+  "orientation": "坐西朝东",
+  "main_buildings": [
+   {
+    "name": "帝陵封土",
+    "type": "mound",
+    "bays": null,
+    "width_m": 345,
+    "depth_m": 350,
+    "height_m": 51,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "陵园中心",
+    "note": "现高约 51–52.5 m，底 345×350 m"
+   },
+   {
+    "name": "铜车马博物馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "西北 (109.24941,34.37893)"
+   }
+  ],
+  "dynasty": "秦（前 246–前 208）",
+  "style": "秦陵（林地覆盖封土）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json",
+   "WebSearch: zh.wikipedia 秦始皇陵",
+   "WebSearch: dili360"
+  ]
+ },
+ {
+  "name": "秦始皇帝陵博物院·兵马俑",
+  "category": "museum",
+  "lon": 109.27767,
+  "lat": 34.38751,
+  "coord_source": "poi",
+  "compound_size_m": [
+   804,
+   925
+  ],
+  "orientation": "俑阵面东",
+  "main_buildings": [
+   {
+    "name": "一号坑保护大厅",
+    "type": "hall",
+    "bays": null,
+    "width_m": 230,
+    "depth_m": 72,
+    "height_m": 22,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(109.27316,34.38497)",
+    "note": "落地钢拱架圆拱厅，建面 15911 m²；坑 230×62 m；跨度/高度为估"
+   },
+   {
+    "name": "二号坑展厅",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 15,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(109.27403,34.38607)"
+   },
+   {
+    "name": "三号坑展厅",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 10,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(109.27228,34.3856)"
+   },
+   {
+    "name": "文物陈列厅",
+    "type": "modern",
+    "bays": null,
+    "width_m": 60.5,
+    "depth_m": 30.2,
+    "height_m": 12.6,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "(109.27545,34.38612)"
+   }
+  ],
+  "dynasty": "秦",
+  "style": "现代保护大厅",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json",
+   "public/data/buildings.bin（CMAB/OSM 轮廓，城区外）",
+   "WebSearch: baike 秦始皇陵兵马俑一号坑",
+   "WebSearch: bmy.com.cn"
+  ]
+ },
+ {
+  "name": "华清宫",
+  "category": "park",
+  "lon": 109.20754,
+  "lat": 34.36495,
+  "coord_source": "poi",
+  "compound_size_m": [
+   410,
+   329
+  ],
+  "orientation": "坐南朝北（依骊山）",
+  "main_buildings": [
+   {
+    "name": "九龙湖畔飞霜殿",
+    "type": "hall",
+    "bays": 7,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 20,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "湖南岸",
+    "note": "仿唐"
+   },
+   {
+    "name": "沉香殿",
+    "type": "hall",
+    "bays": null,
+    "width_m": 46.2,
+    "depth_m": 29.4,
+    "height_m": 16,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(OSM/bin 命名)"
+   },
+   {
+    "name": "长生殿（长恨歌实景舞台背景）",
+    "type": "hall",
+    "bays": null,
+    "width_m": 132.5,
+    "depth_m": 48.5,
+    "height_m": 26,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": "buildings.bin 最大轮廓（推定）"
+   },
+   {
+    "name": "御汤遗址博物馆",
+    "type": "hall",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(109.20777,34.36412)"
+   },
+   {
+    "name": "五间厅（西安事变旧址）",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 7,
+    "roof": "yingshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "(109.20835,34.36433)"
+   }
+  ],
+  "dynasty": "唐（天宝六年 747 定名）；1959 起复建",
+  "style": "仿唐",
+  "night": "《长恨歌》实景演出灯光（骊山山体投光）",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json",
+   "public/data/buildings.bin（CMAB/OSM 轮廓，城区外）",
+   "WebSearch: zh.wikipedia 华清宫遗址",
+   "WebSearch: sohu 1013636887"
+  ]
+ },
+ {
+  "name": "陕西考古博物馆",
+  "category": "museum",
+  "lon": 108.87807,
+  "lat": 34.12024,
+  "coord_source": "poi",
+  "compound_size_m": [
+   200,
+   200
+  ],
+  "orientation": "坐北朝南（中轴对称）",
+  "main_buildings": [
+   {
+    "name": "主馆",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 36,
+    "roof": "wudian",
+    "roof_color": "gray",
+    "storeys": 4,
+    "position": "园区中心",
+    "note": "张锦秋，唐风大屋顶覆盖，“建筑为山”；建面约 3.6 万 m²"
+   }
+  ],
+  "dynasty": "2022 开馆",
+  "style": "仿唐（现代）",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "WebSearch: zh.wikipedia 陕西考古博物馆",
+   "WebSearch: archina 16840"
+  ],
+  "notes": "buildings.bin 中无完整主馆轮廓，平面待影像"
+ },
+ {
+  "name": "咸阳博物院（咸阳文庙）",
+  "category": "museum",
+  "lon": 108.72007,
+  "lat": 34.33583,
+  "coord_source": "poi",
+  "compound_size_m": [
+   80,
+   150
+  ],
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "大成殿",
+    "type": "hall",
+    "bays": 5,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 13,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "轴线北部"
+   }
+  ],
+  "dynasty": "明洪武四年（1371）文庙",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ],
+  "notes": "建筑数据未检索"
+ },
+ {
+  "name": "丰镐遗址车马坑",
+  "category": "site",
+  "lon": 108.7136,
+  "lat": 34.20496,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": null,
+  "main_buildings": [
+   {
+    "name": "车马坑保护展厅",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 6,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": ""
+   }
+  ],
+  "dynasty": "西周",
+  "style": "遗址",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "周文王灵台",
+  "category": "temple",
+  "lon": 108.74495,
+  "lat": 34.12574,
+  "coord_source": "poi",
+  "compound_size_m": null,
+  "orientation": "坐北朝南",
+  "main_buildings": [
+   {
+    "name": "灵台（夯土台）+ 平等寺殿",
+    "type": "hall",
+    "bays": 3,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "xieshan",
+    "roof_color": "gray",
+    "storeys": 1,
+    "position": "台顶"
+   }
+  ],
+  "dynasty": "西周（传）/明清寺",
+  "style": "明清",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "昆明池·七夕公园",
+  "category": "park",
+  "lon": 108.7734,
+  "lat": 34.20438,
+  "coord_source": "poi",
+  "compound_size_m": [
+   4334,
+   3732
+  ],
+  "orientation": null,
+  "main_buildings": [
+   {
+    "name": "牛郎织女像/楼阁",
+    "type": "other",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": null,
+    "roof": null,
+    "roof_color": null,
+    "storeys": 1,
+    "position": "湖畔"
+   }
+  ],
+  "dynasty": "汉武帝昆明池遗址；2015 建园",
+  "style": "仿汉",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/landuse.json",
+   "public/data/pois.json（OSM POI）"
+  ]
+ },
+ {
+  "name": "杨虎城止园别墅（西安事变旧址）",
+  "category": "other",
+  "lon": 108.9352,
+  "lat": 34.2728,
+  "coord_source": "poi",
+  "compound_size_m": [
+   270,
+   217
+  ],
+  "orientation": "坐北朝南（青年路）",
+  "main_buildings": [
+   {
+    "name": "止园别墅",
+    "type": "modern",
+    "bays": null,
+    "width_m": null,
+    "depth_m": null,
+    "height_m": 9,
+    "roof": "modern",
+    "roof_color": "gray",
+    "storeys": 2,
+    "position": ""
+   }
+  ],
+  "dynasty": "1930s",
+  "style": "民国",
+  "night": "",
+  "already_modeled": false,
+  "sources": [
+   "public/data/pois.json（OSM POI）",
+   "public/data/landuse.json（止园饭店）"
+  ]
+ }
+]
