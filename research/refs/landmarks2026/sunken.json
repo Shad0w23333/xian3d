@@ -1,0 +1,957 @@
+{
+ "asof": "2026-09-28",
+ "count": 27,
+ "notes": "WGS84；x/z 为世界坐标（原点钟楼，X东Z南）。size_m=[长,宽]，除注明外为估计；depth_m 为自然地面至下沉地坪高差，多为按一层地下室（5–7m）或地铁站厅层推测。confidence=low 的条目为清单候选但未证实为下沉广场。",
+ "items": [
+  {
+   "name": "未央城市广场（张家堡下沉广场集群）",
+   "lon": 108.942614,
+   "lat": 34.342279,
+   "x": 25,
+   "z": -9051,
+   "coord_source": "osm_subway_entrances_centroid(行政中心站) — 下沉广场位于原张家堡环岛十字路口四象限",
+   "size_m": [
+    320,
+    320
+   ],
+   "depth_m": {
+    "value": 7,
+    "estimated": true,
+    "note": "地铁站厅层标高（B1）"
+   },
+   "shape": "四象限花瓣形/涟漪状曲线多层台地（A西北/B西南/C东南/D东北 四个下沉庭院围绕十字路口）",
+   "features": [
+    "多层台地",
+    "电扶梯",
+    "景观楼梯",
+    "西南象限水景+台阶步道",
+    "西北象限双层商业+集中绿地",
+    "东南象限檐下避雨廊+林中步道+座椅",
+    "东北象限一坡到底绿坡+出挑商业",
+    "18个地铁/市政出入口（由22个整合）",
+    "政务服务中心东西双厅开放式入口"
+   ],
+   "levels": 2,
+   "connects": [
+    "地铁2/4号线 行政中心站（A1/B1/C1/D1通道）",
+    "CityOn熙地港（B2-B3间无编号出口）",
+    "西安大融城（C2-C3间无编号出口）",
+    "陕西/西安市政务服务中心东西双厅",
+    "城市运动公园"
+   ],
+   "night": "智能照明；四庭院曲线轮廓灯带，俯瞰如盛放花朵（\"花开四季，长乐未央\"）",
+   "sources": [
+    "https://news.qq.com/rain/a/20260210A03X5C00",
+    "https://m.jiemian.com/article/13993598.html",
+    "https://c.m.163.com/news/a/KLHP6SKU0525HAAA.html",
+    "https://zh.wikipedia.org/wiki/行政中心站"
+   ],
+   "opened": "2026-02-08",
+   "note": "西安规模最大下沉广场集群，每个象限规模均超过钟鼓楼地下广场；OSM 出入口数据为改造前（环岛内 A/B/C/D 已拆除）"
+  },
+  {
+   "name": "钟鼓楼广场下沉广场（世纪金花钟楼店）",
+   "lon": 108.940712,
+   "lat": 34.261281,
+   "x": -150,
+   "z": -30,
+   "coord_source": "osm_poi(钟鼓楼广场) — 下沉区具体位置为估计",
+   "size_m": [
+    110,
+    45
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场 + 下沉式商业街，大台阶跌落",
+   "features": [
+    "宽大石台阶",
+    "下沉式商业街",
+    "商铺环绕（世纪金花B1-B2）",
+    "玻璃采光廊/入口",
+    "地面层音乐喷泉与九经九纬草坪（唐里坊格局）"
+   ],
+   "levels": 2,
+   "connects": [
+    "世纪金花购物中心（钟楼店）",
+    "钟楼地下环形通道→钟楼站（2/6号线）",
+    "鼓楼、回民街"
+   ],
+   "night": "钟楼、鼓楼金色泛光正对，广场灯光与喷泉；夜间千人合唱名场面",
+   "sources": [
+    "https://m.xa.bendibao.com/jingdian/xianzhonggulouguangchang/content/",
+    "https://www.tsinghua.org.cn/info/1951/41504.htm",
+    "https://news.qq.com/rain/a/20260210A03X5C00"
+   ],
+   "opened": "1998",
+   "designer": "张锦秋",
+   "note": "广场总面积约6万㎡；地面为绿化广场，地下为世纪金花"
+  },
+  {
+   "name": "钟楼盘道地下环形通道（钟楼地下通道）",
+   "lon": 108.942961,
+   "lat": 34.260581,
+   "x": 57,
+   "z": 48,
+   "coord_source": "osm_poi(钟楼地下通道)",
+   "size_m": [
+    140,
+    140
+   ],
+   "depth_m": {
+    "value": 5,
+    "estimated": true
+   },
+   "shape": "环形（围绕钟楼盘道一周的地下环廊，四向放射出口）",
+   "features": [
+    "环形地下通道",
+    "多向楼梯/扶梯出入口",
+    "通往钟楼登楼入口",
+    "零星商铺/售票"
+   ],
+   "levels": 1,
+   "connects": [
+    "钟楼站（2/6号线，11个出入口）",
+    "开元商城",
+    "世纪金花",
+    "钟鼓楼广场",
+    "东/西/南/北大街"
+   ],
+   "night": "出口正对钟楼，夜景最佳机位",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/钟楼站_(西安市)",
+    "local:public/data/pois.json"
+   ]
+  },
+  {
+   "name": "端履门地下通道",
+   "lon": 108.949439,
+   "lat": 34.26112,
+   "x": 653,
+   "z": -12,
+   "coord_source": "osm_poi(端履门地下通道)",
+   "size_m": [
+    60,
+    30
+   ],
+   "depth_m": {
+    "value": 5,
+    "estimated": true
+   },
+   "shape": "十字形地下过街通道",
+   "features": [
+    "楼梯出入口",
+    "过街通道"
+   ],
+   "levels": 1,
+   "connects": [
+    "东大街",
+    "端履门",
+    "大差市站（4/6号线，约800m）"
+   ],
+   "night": "普通照明",
+   "sources": [
+    "local:public/data/pois.json"
+   ],
+   "confidence": "low"
+  },
+  {
+   "name": "骡马市步行街地下广场",
+   "lon": 108.945559,
+   "lat": 34.259269,
+   "x": 296,
+   "z": 194,
+   "coord_source": "osm_poi(骡马市)",
+   "size_m": [
+    60,
+    40
+   ],
+   "depth_m": {
+    "value": 5,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场（地上/地下双层广场）",
+   "features": [
+    "台阶",
+    "商铺环绕",
+    "餐饮小吃",
+    "步行街节点广场"
+   ],
+   "levels": 1,
+   "connects": [
+    "东大街",
+    "易俗社文化街区",
+    "钟楼站（约400m）"
+   ],
+   "night": "步行街霓虹与招牌灯",
+   "sources": [
+    "https://gs.ctrip.com/html5/you/sight/xian7/5167824.html",
+    "local:public/data/landuse.json(骡马市商业步行街区)"
+   ]
+  },
+  {
+   "name": "北大街站地下商业街",
+   "lon": 108.942472,
+   "lat": 34.271477,
+   "x": 12,
+   "z": -1165,
+   "coord_source": "osm_subway_entrances_centroid(北大街站)",
+   "size_m": [
+    180,
+    20
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "线形地下商业街（沿北大街）",
+   "features": [
+    "地下商铺两侧排布",
+    "通道",
+    "C口进入"
+   ],
+   "levels": 1,
+   "connects": [
+    "北大街站（1/2号线）C出口"
+   ],
+   "night": "室内照明",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/北大街站_(西安市)"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "name": "永宁里（南大街南端地下商业空间）",
+   "lon": 108.943559,
+   "lat": 34.25405,
+   "x": 112,
+   "z": 775,
+   "coord_source": "overture_building_name(永宁里)",
+   "size_m": [
+    120,
+    60
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形地下商业层（负一层）+下沉入口",
+   "features": [
+    "负一层商铺",
+    "下沉入口台阶",
+    "餐饮酒吧"
+   ],
+   "levels": 1,
+   "connects": [
+    "永宁门（南门）内",
+    "南大街",
+    "永宁门站（2号线，约400m）"
+   ],
+   "night": "城墙泛光下的南门里夜生活",
+   "sources": [
+    "https://m.city8.com/xa/cater/80kgk87c5je5b37852_address",
+    "local:data-src/overture/building.parquet"
+   ]
+  },
+  {
+   "name": "南门榴园（永宁门外西翼下沉广场）",
+   "lon": 108.940168,
+   "lat": 34.25104,
+   "x": -200,
+   "z": 1110,
+   "coord_source": "estimated — 南门外护城河南岸映像公园西侧，按\"南门外两翼下沉广场\"描述与护城河位置推定",
+   "size_m": [
+    150,
+    40
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "弧形沿护城河带状下沉庭院，多层退台",
+   "features": [
+    "台阶",
+    "酒吧外摆",
+    "商铺环绕",
+    "石榴主题景观",
+    "可远眺城墙/护城河"
+   ],
+   "levels": 1,
+   "connects": [
+    "永宁门站（2号线）A口",
+    "南门地下隧道",
+    "南门广场（永宁门迎宾广场）"
+   ],
+   "night": "\"夜西安\"地标：酒吧一条街外摆、城墙与护城河倒影、城墙灯光",
+   "sources": [
+    "https://news.qq.com/rain/a/20260210A03X5C00",
+    "https://xa.city8.com/cater/80kho37c5ieibf7e88_address",
+    "https://www.douyin.com/search/西安酒吧一条街榴园夜市",
+    "https://m.winshang.com/news702457.html"
+   ],
+   "note": "地址记载为\"南门外护城河畔映像公园榴园\"；坐标为估计"
+  },
+  {
+   "name": "南门合生汇下沉广场（21区BLOCK，东翼）",
+   "lon": 108.943538,
+   "lat": 34.250681,
+   "x": 110,
+   "z": 1150,
+   "coord_source": "overture_building_name(南门合生汇) 西北侧偏移估计",
+   "size_m": [
+    80,
+    35
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形双首层下沉广场",
+   "features": [
+    "双首层入口",
+    "立体导视",
+    "艺术装置",
+    "高透玻璃幕墙",
+    "负一层21区街区（深夜食堂/潮玩）",
+    "中庭通高玻璃天窗"
+   ],
+   "levels": 1,
+   "connects": [
+    "西安南门合生汇 B1",
+    "永宁门站（2号线）",
+    "南门地下隧道",
+    "西安SKP、王府井百货（一路之隔）"
+   ],
+   "night": "漂浮式呼吸灯光立面，21区24小时夜生活",
+   "sources": [
+    "https://m.winshang.com/news702457.html",
+    "https://news.qq.com/rain/a/20221223A09GUG00"
+   ],
+   "opened": "2022-12"
+  },
+  {
+   "name": "西安SKP 地下连通入口（永宁门站B口）",
+   "lon": 108.94407,
+   "lat": 34.249189,
+   "x": 159,
+   "z": 1316,
+   "coord_source": "overture_building_name(西安SKP)",
+   "size_m": [
+    40,
+    20
+   ],
+   "depth_m": {
+    "value": 7,
+    "estimated": true
+   },
+   "shape": "地下连通入口（非开敞下沉广场）",
+   "features": [
+    "B口直达商场B1",
+    "扶梯"
+   ],
+   "levels": 1,
+   "connects": [
+    "永宁门站（2号线）B口",
+    "SKP二期（规划，与永宁门站无缝衔接）"
+   ],
+   "night": "黑金立面金色灯带",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/永宁门站",
+    "https://www.nbd.com.cn/articles/2022-05-26/2297653.html"
+   ],
+   "confidence": "low",
+   "note": "未找到\"SKP下沉广场\"的确切报道，保留为地下连通节点"
+  },
+  {
+   "name": "老城根G PARK 下沉广场（晶梦星谷）",
+   "lon": 108.913963,
+   "lat": 34.286296,
+   "x": -2611,
+   "z": -2815,
+   "coord_source": "overture_building_name(老城根G PARK)",
+   "size_m": [
+    120,
+    60
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场，上覆ETFE充气膜天幕",
+   "features": [
+    "ETFE膜结构天幕（西部最大）",
+    "潮流运动品牌商铺环绕",
+    "小木屋打卡点",
+    "主题广场（欢乐/水舞/水晶/创意）",
+    "台阶"
+   ],
+   "levels": 1,
+   "connects": [
+    "老城根G PARK购物中心",
+    "玉祥门/劳动路一带"
+   ],
+   "night": "天幕灯光与水舞广场",
+   "sources": [
+    "https://you.ctrip.com/shopping/xian7/1453778-vista.html",
+    "https://news.qq.com/rain/a/20260210A03X5C00"
+   ]
+  },
+  {
+   "name": "安定门（西门外）下沉广场",
+   "lon": 108.917897,
+   "lat": 34.26147,
+   "x": -2249,
+   "z": -51,
+   "coord_source": "osm_subway_entrance(安定门-D口)",
+   "size_m": [
+    60,
+    40
+   ],
+   "depth_m": {
+    "value": 7,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场（连通地铁D口）",
+   "features": [
+    "台阶",
+    "扶梯",
+    "地铁出入口",
+    "城墙景观"
+   ],
+   "levels": 1,
+   "connects": [
+    "安定门站（6号线）D出入口",
+    "西门（安定门）瓮城",
+    "环城西路"
+   ],
+   "night": "西门城楼泛光",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/安定门站_(西安市)"
+   ],
+   "opened": "2023-10",
+   "note": "2023-04-05~10-30 因下沉广场施工关闭D口"
+  },
+  {
+   "name": "延平门站D3下沉广场（高新CBD·唐城墙遗址公园）",
+   "lon": 108.883953,
+   "lat": 34.239441,
+   "x": -5372,
+   "z": 2401,
+   "coord_source": "osm_subway_entrance(延平门-D3口)",
+   "size_m": [
+    70,
+    35
+   ],
+   "depth_m": {
+    "value": 7,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场（公园绿带内）",
+   "features": [
+    "台阶",
+    "扶梯",
+    "地铁出入口",
+    "绿化"
+   ],
+   "levels": 1,
+   "connects": [
+    "延平门站（3/8号线）D3出入口",
+    "唐城墙遗址公园（唐延路绿带）",
+    "高新CBD 科技路/唐延路"
+   ],
+   "night": "公园灯光",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/延平门站"
+   ],
+   "note": "按\"高新CBD下沉广场\"候选处理，是否即民间所称\"高新CBD下沉广场\"待核实"
+  },
+  {
+   "name": "曲江大悦城 拾光中庭（室内下沉广场）",
+   "lon": 108.957428,
+   "lat": 34.218223,
+   "x": 1388,
+   "z": 4762,
+   "coord_source": "overture_building_name(西安曲江大悦城)",
+   "size_m": [
+    50,
+    30
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "椭圆/矩形室内下沉中庭，跨层",
+   "features": [
+    "阳光穹顶（张悬梁玻璃天窗）",
+    "跨层中庭",
+    "活动秀场舞台",
+    "商铺环绕",
+    "400米曲线动线"
+   ],
+   "levels": 2,
+   "connects": [
+    "西安曲江大悦城 B1-B2",
+    "大雁塔南广场",
+    "大雁塔站（3/4号线）"
+   ],
+   "night": "玻璃穹顶透出灯光；室外街区与大雁塔夜景",
+   "sources": [
+    "http://m.winshang.com/news651008.html",
+    "https://zhuanlan.zhihu.com/p/610699193"
+   ],
+   "area_m2": 1500,
+   "opened": "2018-12-16",
+   "note": "西安最大室内下沉广场"
+  },
+  {
+   "name": "大唐不夜城 贞观文化广场四个下沉式广场",
+   "lon": 108.959396,
+   "lat": 34.212039,
+   "x": 1569,
+   "z": 5450,
+   "coord_source": "osm_poi(贞观之治雕塑)",
+   "size_m": [
+    140,
+    120
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "四个矩形下沉广场分布于中轴两侧文化建筑前",
+   "features": [
+    "台阶",
+    "下沉广场连通地下活动空间",
+    "雕塑",
+    "商铺"
+   ],
+   "levels": 1,
+   "connects": [
+    "陕西大剧院",
+    "西安音乐厅",
+    "曲江美术馆",
+    "曲江太平洋影城",
+    "大唐不夜城步行街"
+   ],
+   "night": "唐风建筑金色灯光、中轴灯饰、不倒翁等表演",
+   "sources": [
+    "https://k.sina.cn/article_7880068251_1d5b04c9b06801hw7k.html",
+    "https://baike.baidu.com/item/大唐不夜城/7820254"
+   ]
+  },
+  {
+   "name": "大雁塔北广场（多层退台水景广场）",
+   "lon": 108.959559,
+   "lat": 34.222627,
+   "x": 1584,
+   "z": 4272,
+   "coord_source": "osm_poi(大雁塔北广场)",
+   "size_m": [
+    480,
+    218
+   ],
+   "depth_m": {
+    "value": 9,
+    "estimated": true,
+    "note": "南高北低九级叠水总落差"
+   },
+   "shape": "多层退台（九级叠水）",
+   "features": [
+    "亚洲最大矩阵式音乐喷泉",
+    "叠水",
+    "台阶",
+    "雕塑群",
+    "大雁塔地下宫入口"
+   ],
+   "levels": 0,
+   "connects": [
+    "大雁塔",
+    "大雁塔北广场站（曲江有轨电车）",
+    "大雁塔站（3/4号线）"
+   ],
+   "night": "音乐喷泉水舞光影秀",
+   "sources": [
+    "https://k.sina.cn/article_7880069198_1d5b0504e06801ye22.html"
+   ],
+   "note": "非严格\"下沉\"，为逐级跌落的退台广场"
+  },
+  {
+   "name": "万众国际 WFIVE PARK B1下沉广场",
+   "lon": 108.984014,
+   "lat": 34.197594,
+   "x": 3834,
+   "z": 7057,
+   "coord_source": "osm_poi(万众国际)",
+   "size_m": [
+    90,
+    40
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形下沉广场",
+   "features": [
+    "台阶",
+    "餐厅/酒吧外摆",
+    "市集摊位",
+    "景观点缀",
+    "商铺环绕"
+   ],
+   "levels": 1,
+   "connects": [
+    "W酒店",
+    "WFIVE PARK 1-4层商业",
+    "寒窑遗址公园",
+    "曲江池"
+   ],
+   "night": "W酒店双塔楼灯光秀、酒吧夜生活",
+   "sources": [
+    "https://www.sohu.com/a/310825648_100100724",
+    "http://m.winshang.com/news642550.html"
+   ],
+   "opened": "2019-04-27"
+  },
+  {
+   "name": "西安CCBD 中央广场（生命之树 下沉层）",
+   "lon": 108.945364,
+   "lat": 34.19763,
+   "x": 278,
+   "z": 7053,
+   "coord_source": "osm_poi(生命之树)",
+   "size_m": [
+    150,
+    100
+   ],
+   "depth_m": {
+    "value": 8,
+    "estimated": true
+   },
+   "shape": "多层立体广场（树形塔从地下层拔地而起）",
+   "features": [
+    "57m高\"生命之树\"56片叶片露台",
+    "陶板立柱与曲梁",
+    "可攀爬台阶",
+    "地下层广场",
+    "商铺环绕"
+   ],
+   "levels": 2,
+   "connects": [
+    "华润国际文化商业中心",
+    "电视塔站（2/8号线）"
+   ],
+   "night": "陶板立面与树形塔灯光",
+   "sources": [
+    "https://www.gooood.cn/xi-an-ccbd-by-heatherwick-studio.htm",
+    "https://www.archiposition.com/items/20241219115612"
+   ],
+   "opened": "2024-12",
+   "designer": "Heatherwick Studio"
+  },
+  {
+   "name": "西安火车站 丹凤门广场地下交通枢纽",
+   "lon": 108.958004,
+   "lat": 34.282847,
+   "x": 1441,
+   "z": -2431,
+   "coord_source": "osm_poi(丹凤门广场)",
+   "size_m": [
+    300,
+    100
+   ],
+   "depth_m": {
+    "value": 10,
+    "estimated": true
+   },
+   "shape": "大型地下换乘层+下沉出入口",
+   "features": [
+    "地下快速进站区",
+    "扶梯",
+    "地铁换乘通道",
+    "出租/公交地下接驳"
+   ],
+   "levels": 2,
+   "connects": [
+    "西安站（国铁）北站房",
+    "西安站（4号线）",
+    "丹凤门、大明宫遗址"
+   ],
+   "night": "丹凤门遗址保护建筑泛光",
+   "sources": [
+    "https://sx.sina.cn/news/xian/2021-05-29/detail-ikmyaawc8156216.d.html",
+    "http://m.cnwest.com/bwyc/a/2023/01/07/21178460.html"
+   ],
+   "opened": "2021"
+  },
+  {
+   "name": "小寨十字地下连通（赛格国际B2/小寨站）",
+   "lon": 108.943646,
+   "lat": 34.225117,
+   "x": 120,
+   "z": 3995,
+   "coord_source": "overture_building_name(赛格国际购物中心)",
+   "size_m": [
+    220,
+    138
+   ],
+   "depth_m": {
+    "value": 10,
+    "estimated": true
+   },
+   "shape": "地下连通商业层（非开敞下沉）",
+   "features": [
+    "D口直达赛格",
+    "地下商业两层",
+    "扶梯"
+   ],
+   "levels": 2,
+   "connects": [
+    "小寨站（2/3号线）D口",
+    "赛格国际购物中心",
+    "小寨地下过街"
+   ],
+   "night": "赛格外立面灯光",
+   "sources": [
+    "https://xa.bendibao.com/traffic/2015417/51725.shtm",
+    "https://news.qq.com/rain/a/20260210A03X5C00"
+   ],
+   "confidence": "low",
+   "note": "小寨缺少真正的开敞下沉广场（城记文章称小寨缺地铁出入口广场）"
+  },
+  {
+   "name": "皇城里·民乐园步行街（十字轴节点）",
+   "lon": 108.959733,
+   "lat": 34.269635,
+   "x": 1600,
+   "z": -960,
+   "coord_source": "overture_building_name(万达广场民乐园店) 附近",
+   "size_m": [
+    300,
+    330
+   ],
+   "depth_m": {
+    "value": 0,
+    "estimated": true
+   },
+   "shape": "十字轴步行街（地面）",
+   "features": [
+    "世纪之瞳装置",
+    "地面投影",
+    "灯光秀"
+   ],
+   "levels": 0,
+   "connects": [
+    "万达广场（民乐园店）",
+    "五路口站（1/4号线）"
+   ],
+   "night": "沉浸式灯光秀街区",
+   "sources": [
+    "https://news.qq.com/rain/a/20230824A08GTU00",
+    "https://xincheng.xiancity.cn/system/2023/11/29/031106315.shtml"
+   ],
+   "confidence": "low",
+   "note": "未查到下沉广场，按清单候选保留，建模前需核实"
+  },
+  {
+   "name": "长安乐·一带一路文化艺术中心 外广场",
+   "lon": 109.012535,
+   "lat": 34.373029,
+   "x": 6458,
+   "z": -12478,
+   "coord_source": "overture_building_name(长安乐一带一路文化艺术中心)",
+   "size_m": [
+    300,
+    200
+   ],
+   "depth_m": {
+    "value": null,
+    "estimated": true
+   },
+   "shape": "五组埙形建筑围合的广场（是否下沉未证实）",
+   "features": [
+    "埙形风帆建筑",
+    "大台阶"
+   ],
+   "levels": null,
+   "connects": [
+    "奥体中心站（14号线）",
+    "西安奥体中心"
+   ],
+   "night": "建筑泛光",
+   "sources": [
+    "http://shx.chinadaily.com.cn/a/202310/16/WS652cb738a310d5acd876a0fe.html"
+   ],
+   "confidence": "low",
+   "note": "未找到下沉广场报道，建议不建模下沉"
+  },
+  {
+   "name": "西安环贸中心 ICC（丈八四路 陆空TOD）",
+   "lon": 108.865888,
+   "lat": 34.195589,
+   "x": -7034,
+   "z": 7280,
+   "coord_source": "osm_subway_entrances_centroid(丈八四路站)",
+   "size_m": [
+    150,
+    120
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "开放漫步式街区 + B1 地铁层",
+   "features": [
+    "B1双地铁口",
+    "三层立体交通",
+    "三层连廊接云巴",
+    "开放街区"
+   ],
+   "levels": 1,
+   "connects": [
+    "丈八四路站（6号线）B1",
+    "西安云巴丈八四路站（写字楼3层）",
+    "城市候机楼"
+   ],
+   "night": "163m塔楼灯光",
+   "sources": [
+    "https://m.winshang.com/news736233.html",
+    "https://sn.ifeng.com/c/8n3KGBU2adi"
+   ],
+   "opened": "2025-09-28",
+   "confidence": "medium"
+  },
+  {
+   "name": "西安太古里（建设中）",
+   "lon": 108.938864,
+   "lat": 34.23945,
+   "x": -320,
+   "z": 2400,
+   "coord_source": "estimated — 友谊路以南/长安路以西/体育场北路以北/朱雀大街以东 地块中心",
+   "size_m": [
+    340,
+    360
+   ],
+   "depth_m": {
+    "value": null,
+    "estimated": true
+   },
+   "shape": "低密度开放街区（预计含下沉庭院）",
+   "features": [
+    "地下建筑约23万㎡"
+   ],
+   "levels": 2,
+   "connects": [
+    "小雁塔",
+    "南稍门站（2/5号线）",
+    "体育场站（2号线）"
+   ],
+   "night": null,
+   "sources": [
+    "https://www.eeo.com.cn/2026/0921/1044442.shtml",
+    "https://www.jiemian.com/article/7900780.html"
+   ],
+   "status": "under_construction",
+   "note": "2026-09 首开区封顶，2027 分阶段开业；当前不应建模为已开放"
+  },
+  {
+   "name": "中贸广场步行街（地下两层商业）",
+   "lon": 108.941201,
+   "lat": 34.244418,
+   "x": -105,
+   "z": 1847,
+   "coord_source": "osm_poi(中贸广场)",
+   "size_m": [
+    200,
+    30
+   ],
+   "depth_m": {
+    "value": 5,
+    "estimated": true
+   },
+   "shape": "线形步行街+地下两层",
+   "features": [
+    "餐饮街",
+    "商铺",
+    "地下两层"
+   ],
+   "levels": 2,
+   "connects": [
+    "中贸广场购物中心",
+    "小雁塔",
+    "南门"
+   ],
+   "night": "夜经济街区，营业至凌晨",
+   "sources": [
+    "https://shx.chinadaily.com.cn/a/202408/01/WS66ab3eeaa310054d254eb0f2.html"
+   ],
+   "confidence": "low",
+   "note": "街区本身为地面，地下为商场层"
+  },
+  {
+   "name": "西安站南广场（下沉进站/地铁C口）",
+   "lon": 108.957113,
+   "lat": 34.278132,
+   "x": 1359,
+   "z": -1906,
+   "coord_source": "osm_poi(西安站南广场)",
+   "size_m": [
+    270,
+    95
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "矩形广场+下沉进站口",
+   "features": [
+    "地下快速进站区",
+    "地铁C口"
+   ],
+   "levels": 1,
+   "connects": [
+    "西安站（4号线）C口",
+    "西安火车站南站房"
+   ],
+   "night": "站房灯光",
+   "sources": [
+    "https://zh.wikipedia.org/wiki/西安站_(地铁)"
+   ],
+   "confidence": "medium"
+  },
+  {
+   "name": "熙地港/大融城 地下连廊（凤城五路）",
+   "lon": 108.942548,
+   "lat": 34.340026,
+   "x": 19,
+   "z": -8800,
+   "coord_source": "overture_building_name(熙地港/大融城) 两者中点",
+   "size_m": [
+    330,
+    60
+   ],
+   "depth_m": {
+    "value": 6,
+    "estimated": true
+   },
+   "shape": "线形地下连廊",
+   "features": [
+    "B1直连地铁",
+    "商铺"
+   ],
+   "levels": 1,
+   "connects": [
+    "CityOn熙地港 B1",
+    "西安大融城",
+    "行政中心站（2/4号线）",
+    "未央城市广场下沉广场集群"
+   ],
+   "night": "商场灯光",
+   "sources": [
+    "https://www.cityoncenter.com/html/XiAn/youshi/",
+    "https://zh.wikipedia.org/wiki/行政中心站"
+   ],
+   "confidence": "medium"
+  }
+ ]
+}
