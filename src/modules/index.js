@@ -11,6 +11,7 @@ export const MODULES = [
   { id: 'qujiang', load: () => import('./qujiang.js') },
   { id: 'heritage', load: () => import('./heritage.js') },
   { id: 'heritage26', load: () => import('./heritage26.js') },
+  { id: 'mixc', load: () => import('./mixc.js') }, // 电视塔东侧：西安万象城（华润 CCBD）+ 西安万象天地；须在 skyline 之前（排除区）
   { id: 'skyline', load: () => import('./skyline.js') },
   { id: 'huimin', load: () => import('./huimin.js') },
   { id: 'sunken', load: () => import('./sunken.js') },

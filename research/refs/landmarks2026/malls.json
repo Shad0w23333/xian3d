@@ -295,46 +295,49 @@
    108.944589,
    34.197607
   ],
-  "floors_above": 6,
-  "height_m": 40,
+  "floors_above": null,
+  "height_m": 35.3,
   "height_estimated": true,
   "open_year": 2024,
   "status": "open",
-  "form": "四座约150m塔楼对称+双曲屋面商业裙楼，Heatherwick\"生命之树\"七层退台平台",
-  "facade": "特制彩釉仿古构件幕墙，坊格肌理、飞檐式外框；生命之树为清水混凝土/石材层叠平台+绿植",
-  "sign_color": "#C8A063",
+  "form": "雁展路南、长安南路东：四座约150m弧形凹顶塔楼(A/B/C/D)+Heatherwick陶板框架裙楼(规划公示3栋3-4层,分块盒子，最高1区35.3m/5F)，中央圆形下沉庭院内“生命之树”(自地下一层起57m,56个花瓣平台)",
+  "facade": "10万余片釉面陶板(米白/粉米/浅褐)包裹立柱与曲梁，檐口中间下垂两端上翘；上部深红竖向褶皱板，下部深色玻璃古铜竖框；屋顶花园与叶形玻璃天窗",
+  "sign_color": "#EFE2C2",
   "towers": [
    {
-    "name": "CCBD塔楼T1",
-    "height_m": 150,
-    "floors": null
+    "name": "华润国际文化商业中心A座",
+    "height_m": 147.6,
+    "floors": 33
    },
    {
-    "name": "CCBD塔楼T2",
-    "height_m": 150,
-    "floors": null
+    "name": "华润国际文化商业中心B座",
+    "height_m": 148.8,
+    "floors": 32
    },
    {
-    "name": "CCBD塔楼T3",
-    "height_m": 150,
-    "floors": null
+    "name": "华润国际文化商业中心C座",
+    "height_m": 150.95,
+    "floors": 37
    },
    {
-    "name": "CCBD塔楼T4",
-    "height_m": 150,
-    "floors": null
+    "name": "华润国际文化商业中心D座",
+    "height_m": 150.95,
+    "floors": 37
    }
   ],
-  "night": "生命之树层叠平台暖光；塔楼顶部飞檐线条灯",
+  "night": "生命之树扇形底板暖金投光、平台边缘与下沉坑栏杆蓝色灯带；裙楼橱窗暖光",
   "already_modeled": true,
   "sources": [
    "https://news.qq.com/rain/a/20241201A05VT700",
    "https://www.archiposition.com/items/20250206062420",
    "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
    "local:public/data/pois.json",
-   "local:data-src/overture/building.parquet(OSM)"
+   "local:data-src/overture/building.parquet(OSM)",
+   "https://news.qq.com/rain/a/20220331A04QK200",
+   "https://www.gooood.cn/xi-an-ccbd-by-heatherwick-studio.htm",
+   "https://heatherwick.com/projects/buildings/xian-ccbd/"
   ],
-  "remark": "OSM轮廓(326x117m)只覆盖部分裙楼，实际综合体更大(总建面56.5万㎡)"
+  "remark": "2026-09-28 核实并由 src/modules/mixc.js 精建（调研 research/refs/mixc/notes.md）；height_m 取 OSM 1区 35.3m，裙楼其余盒子 9–30m"
  },
  {
   "name": "西安万象天地",
@@ -358,22 +361,26 @@
    108.946481,
    34.200636
   ],
-  "floors_above": 4,
+  "floors_above": null,
   "height_m": 24,
   "height_estimated": true,
-  "open_year": null,
+  "open_year": 2021,
   "status": "open",
-  "form": "街区+盒子式低层商业，与万象城同属CCBD",
-  "facade": "玻璃+金属板，开放街区",
-  "sign_color": "#C8A063",
+  "form": "雁展路北(雁展路1111号)：街区+Mall，集中式商场+大小不一的独栋围合街巷，圆形广场(3层弧形退台+下沉扶梯)；街区内8栋高层(约54–160m，卫星双视差估算，未证实)",
+  "facade": "银灰穿孔铝板+玻璃；招牌盒为白色横向百叶玻璃盒子(照片)",
+  "sign_color": "#D9466C",
   "towers": [],
-  "night": "街区灯光",
-  "already_modeled": false,
+  "night": "街巷暖光、橱窗通亮；招牌发光",
+  "already_modeled": true,
   "sources": [
    "https://m.xa.bendibao.com/wangdian/gouwushangchang/list2.htm",
    "local:public/data/pois.json",
-   "local:data-src/overture/building.parquet(OSM)"
-  ]
+   "local:data-src/overture/building.parquet(OSM)",
+   "https://baike.baidu.com/item/%E8%A5%BF%E5%AE%89%E4%B8%87%E8%B1%A1%E5%A4%A9%E5%9C%B0/61097631",
+   "https://www.sohu.com/a/477877442_121117480",
+   "https://www.sohu.com/a/969727739_681384"
+  ],
+  "remark": "2026-09-28 核实：2021-07-17 开业、一期约10万㎡；由 src/modules/mixc.js 精建（调研 research/refs/mixc/notes.md）"
  },
  {
   "name": "西咸万象城(华润)",

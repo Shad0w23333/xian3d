@@ -51,6 +51,7 @@ export default {
     const raw = await loadJSON('landmarks2026.json', { optional: true });
     this.sites = [];
     for (const s of raw?.sunken || []) {
+      if (ctx.exclusions.test(s.x, s.z, 'sunken')) continue; // 已由精建模块做了自己的下沉庭院（如 mixc 生命之树圆坑）
       // 与精建模块（W 酒店/万众国际等）重合时仍然做：下沉广场本身是它们没有的部分；只避开城墙/钟楼等古建本体
       const top = ctx.terrain.rawHeightAt(s.x, s.z);
       const F = frame(s, top);
