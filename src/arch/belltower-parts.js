@@ -20,8 +20,8 @@ export function crossPlatform(b, o = {}) {
       const x0 = sx > 0 ? c : -half, x1 = sx > 0 ? half : -c;
       const z0 = sz > 0 ? c : -half, z1 = sz > 0 ? half : -c;
       b.box('brick', x0, 0, z0, x1, hb, z1, BRICK, { skip: 'bottom' });
-      // 石土衬（墙脚）
-      b.box('stone', x0 - (sx < 0 ? 0.12 : 0), -0.05, z0 - (sz < 0 ? 0.12 : 0), x1 + (sx > 0 ? 0.12 : 0), 0.62, z1 + (sz > 0 ? 0.12 : 0), 0xb9b3a8, { skip: 'bottom' });
+      // 石土衬（墙脚）：四面都外凸 0.12（含券洞一侧；原先券洞侧与砖墩墙面齐平 → 共面闪烁）
+      b.box('stone', x0 - 0.12, -0.05, z0 - 0.12, x1 + 0.12, 0.62, z1 + 0.12, 0xb9b3a8, { skip: 'bottom' });
     }
   // 四个券洞臂（带券脸），中心十字交叉处平顶
   const L = half - c, zc = (half + c) / 2;

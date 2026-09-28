@@ -71,7 +71,9 @@ export function denseEavePagoda(b, o = {}) {
   const Wf = (i) => W0 * (1 - (1 - topK) * Math.pow(i / N, 1.55));
   // 二层以上层高线性递减，总和 = totalH - firstH
   const rest = totalH - firstH;
-  const hTop = (2 * rest) / (N - 1) / 1.45; // 顶层高
+  // 二~N 层层高自 1.45·hTop 线性递减到 hTop：总和 = (N-1)·(1.45+1)/2·hTop = rest → hTop = 2·rest / (2.45·(N-1))。
+  // （原先分母误写 1.45，二层以上总高多出 69%：小雁塔塔身 40.2 m 被做成 56 m，heritage26 各密檐塔同样偏高）
+  const hTop = (2 * rest) / (N - 1) / 2.45; // 顶层高
   const hSecond = hTop * 1.45;
   const Hf = (i) => (i === 0 ? firstH : hSecond + ((hTop - hSecond) * (i - 1)) / Math.max(1, N - 2));
   let y = y0 + PH;
