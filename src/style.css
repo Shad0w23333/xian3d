@@ -172,3 +172,125 @@ label.disp-row select { max-width: 60%; padding: 3px 6px; font-size: 11px; }
 .disp-range input[type=range] { margin: 2px 0 2px; }
 .disp-row.disabled { opacity: .42; }
 .disp-actions { margin-top: 6px; justify-content: flex-end; }
+
+/* —— 西安时讯卡片：时间 / 天气 / 网络广播（core/infocard.js） —— */
+.xcard { left: 16px; top: 190px; width: 300px; display: flex; flex-direction: column; overflow: hidden; font-size: 12px; }
+.xcard [hidden] { display: none !important; }
+.xc-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; cursor: grab; user-select: none; touch-action: none; flex: none; }
+.xcard.dragging { box-shadow: 0 14px 48px rgba(0,0,0,.5); }
+.xcard.dragging .xc-head { cursor: grabbing; }
+.xc-logo { color: var(--gold); font-size: 17px; line-height: 1; }
+.xc-title { min-width: 0; }
+.xc-title b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 2px; }
+.xc-title small { color: var(--ink-dim); font-size: 10px; }
+.xc-mini { display: none; margin-left: auto; gap: 8px; align-items: baseline; white-space: nowrap; }
+.xc-mini b { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.xc-mini-w { color: var(--ink-dim); font-size: 11.5px; }
+.xc-mini-r { color: var(--gold); font-size: 11px; }
+.xc-fold { margin-left: auto; width: 24px; height: 24px; padding: 0; border: none; background: none; color: var(--gold); font-size: 13px; flex: none; }
+.xcard.collapsed .xc-body, .xcard.collapsed .xc-title small { display: none; }
+.xcard.collapsed .xc-mini { display: flex; }
+.xcard.collapsed .xc-fold { margin-left: 0; }
+.xc-body { flex: 1 1 auto; min-height: 0; overflow: hidden auto; padding: 2px 12px 10px; border-top: 1px solid rgba(255,255,255,.06);
+  scrollbar-width: thin; scrollbar-color: rgba(232,181,74,.35) transparent; }
+
+/* 时间 */
+.xc-time { padding-top: 8px; }
+.xc-clock { display: flex; align-items: baseline; gap: 8px; }
+.xc-hms { font-size: 27px; font-weight: 600; letter-spacing: 1px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.xc-tz { color: var(--ink-dim); font-size: 10px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.xc-date { font-size: 13px; margin-top: 2px; }
+.xc-lunar { color: var(--ink-dim); font-size: 11px; line-height: 1.55; margin-top: 3px; }
+.xc-term, .xc-fest { color: var(--gold); font-weight: 600; }
+.xc-tacts { display: flex; align-items: center; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
+.xc-sync { font-size: 11px; padding: 4px 8px; }
+label.xc-chk { margin: 0; gap: 4px; font-size: 11px; color: var(--ink-dim); white-space: nowrap; }
+
+/* 标签页 */
+.xc-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 10px 0 8px; padding: 3px; background: rgba(0,0,0,.25); border-radius: 9px; }
+.xc-tabs button { border: none; background: none; padding: 5px 6px; font-size: 12px; color: var(--ink-dim); border-radius: 7px; }
+.xc-tabs button:hover { background: rgba(255,255,255,.05); }
+.xc-tabs button.on { background: var(--gold-soft); color: var(--gold); font-weight: 600; }
+.xc-live { display: none; width: 6px; height: 6px; margin-left: 5px; border-radius: 50%; background: #ff5a4f; vertical-align: middle; animation: xc-pulse 1.4s ease-in-out infinite; }
+.xcard.radio-on .xc-live { display: inline-block; }
+
+/* 播放条 */
+.xc-player { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 9px; background: rgba(232,181,74,.07); }
+.xc-pp { width: 30px; height: 30px; padding: 0; border-radius: 50%; flex: none; font-size: 11px; }
+.xc-np { flex: 1; min-width: 0; }
+.xc-np b { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xc-np-s { display: block; color: var(--ink-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xc-np-s.playing { color: #9fe09f; }
+.xc-np-s.loading { color: var(--gold); }
+.xc-np-s.error { color: #ff9a8a; }
+.xc-mute { flex: none; padding: 2px 3px; border: none; background: none; font-size: 13px; }
+.xc-player input.xc-vol { flex: none; width: 62px; margin: 0; }
+
+/* 天气 */
+.xc-wx-msg { color: var(--ink-dim); font-size: 11.5px; padding: 4px 0 8px; line-height: 1.5; }
+.xc-wx-msg.err { color: #ffb4a8; }
+.xc-wx-msg button { font-size: 11px; padding: 2px 8px; margin-left: 4px; }
+.xc-now { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 10px; }
+.xc-ico { font-size: 36px; line-height: 1; }
+.xc-temp b { display: block; font-size: 28px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.xc-temp small, .xc-cond small { color: var(--ink-dim); font-size: 11px; }
+.xc-cond { text-align: right; min-width: 0; }
+.xc-cond b { display: block; font-size: 15px; color: var(--gold); }
+.xc-wind { display: flex; align-items: center; gap: 9px; margin: 9px 0 8px; padding: 6px 8px; background: rgba(255,255,255,.045); border-radius: 8px; }
+.xc-arrow { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; transition: transform .6s ease; }
+.xc-arrow svg { width: 14px; height: 14px; fill: var(--gold); }
+.xc-wind > div { min-width: 0; }
+.xc-wind b { display: block; font-size: 12px; font-weight: 600; }
+.xc-wind small { display: block; color: var(--ink-dim); font-size: 10.5px; }
+.xc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 4px; margin: 0 0 8px; }
+.xc-grid div { display: flex; flex-direction: column; min-width: 0; }
+.xc-grid span { color: var(--ink-dim); font-size: 10px; }
+.xc-grid b { font-size: 11.5px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.xc-aqi { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); }
+.xc-aqi-badge { flex: none; display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 4px 6px; border-radius: 8px;
+  font-size: 13px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.xc-aqi-badge small { font-size: 10.5px; font-weight: 600; }
+.xc-aqi-r { min-width: 0; }
+.xc-aqi-r small { display: block; margin-top: 2px; color: var(--ink-dim); font-size: 10.5px; }
+.xc-pm { margin-right: 8px; white-space: nowrap; }
+.xc-pm i { display: inline-block; width: 7px; height: 7px; margin-right: 3px; border-radius: 50%; }
+.xc-pm b { font-variant-numeric: tabular-nums; }
+.xc-unit, .xc-dim { color: var(--ink-dim); font-size: 10px; }
+.xc-hours { margin-top: 7px; }
+.xc-h-cap { color: var(--ink-dim); font-size: 10px; }
+.xc-spark { display: block; width: 100%; height: 20px; }
+.xc-spark polyline { fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: .75; }
+.xc-h-row { display: grid; text-align: center; }
+.xc-h span { display: block; color: var(--ink-dim); font-size: 10px; }
+.xc-h i { display: block; font-style: normal; font-size: 14px; line-height: 1.45; }
+.xc-h b { font-size: 11px; font-weight: 500; }
+.xc-h em { display: block; min-height: 12px; color: #86c8ff; font-size: 9.5px; font-style: normal; }
+.xc-wx-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; color: var(--ink-dim); font-size: 11px; }
+.xc-upd em.err { color: #ffb4a8; font-style: normal; }
+.xc-refresh { font-size: 11px; padding: 2px 8px; }
+.xc-wx-foot label.xc-chk { margin-left: auto; }
+.xc-src { margin-top: 5px; color: rgba(243,236,224,.38); font-size: 9.5px; line-height: 1.4; }
+
+/* 广播列表 */
+.xc-stations { display: flex; flex-direction: column; gap: 2px; }
+.xc-grp { margin: 7px 0 2px; color: var(--gold); font-size: 10.5px; letter-spacing: 2px; opacity: .85; }
+.xc-grp:first-child { margin-top: 0; }
+.xc-st { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; text-align: left; background: rgba(255,255,255,.03); border-color: transparent; }
+.xc-st-f { flex: none; width: 56px; color: var(--gold); font: 600 11.5px/1.2 ui-monospace, Menlo, Consolas, monospace; }
+.xc-st-n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xc-st-n small { margin-left: 6px; color: var(--ink-dim); font-size: 10px; }
+.xc-st-n small.xc-unv { color: #ffb86b; }
+.xc-st.on { background: var(--gold-soft); border-color: var(--line); color: var(--ink); font-weight: 600; }
+.xc-st-s { flex: none; width: 13px; height: 12px; }
+.xc-st.loading .xc-st-s { width: 12px; height: 12px; border: 2px solid rgba(232,181,74,.28); border-top-color: var(--gold); border-radius: 50%; animation: xc-spin .8s linear infinite; }
+.xc-st.playing .xc-st-s { background-image: linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--gold), var(--gold));
+  background-repeat: no-repeat; background-position: 0 100%, 5px 100%, 10px 100%; background-size: 3px 40%, 3px 90%, 3px 60%; animation: xc-eq .8s ease-in-out infinite alternate; }
+.xc-st.err .xc-st-s::before { content: '!'; display: block; color: #ff8a7a; font-weight: 700; text-align: center; line-height: 12px; }
+.xc-note { margin-top: 8px; color: var(--ink-dim); font-size: 10px; line-height: 1.5; }
+@keyframes xc-spin { to { transform: rotate(360deg); } }
+@keyframes xc-eq { to { background-size: 3px 95%, 3px 35%, 3px 85%; } }
+@keyframes xc-pulse { 50% { opacity: .3; } }
+@media (max-width: 900px) {
+  .xcard { width: 270px; }
+  .xc-grid { grid-template-columns: repeat(2, 1fr); }
+}
