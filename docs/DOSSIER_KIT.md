@@ -195,6 +195,10 @@ night: {
 | `cnhip` | `style`（`'wudian'` 庑殿 / `'xieshan'` 歇山 / `'zanjian'` 攒尖；正方平面默认攒尖）、`h`（屋面矢高）、`ov`（出檐，默认 1.2）、`lift`（檐角起翘）、`fascia`（封檐板厚）、`xk`（歇山山花高度比，默认 0.45）、`mat`（默认深灰筒瓦 roofTile）、`eaveMat`、`gableMat`、`ridgeMat`、`chiwei:false`、`finialMat`；`size:[长,宽]`+`at`/`offset`+`rot`，或默认取体块顶面外接矩形（`along:'short'` 换向） | 中式大屋顶（直坡面 + 正脊/鸱吻或宝顶）；放在 tower 体块上时女儿墙自动压到 0.2 m |
 | `eave` | `ov`（外挑，默认 1.8）、`depth`（向内，默认 2.5）、`h`（坡高，默认 1.6）、`fascia`、`mat`、`eaveMat`、`y` | 沿体块轮廓一圈的斜坡披檐（重檐的下檐、仿古街区檐口、挑檐）；任意多边形可用 |
 | `slab` | `ov`（外扩，默认 1.5）、`h`（厚，默认 0.8）、`mat`、`glow`（檐口夜间发光带） | 挑檐平板：大出挑薄屋檐、亭式平顶、帽檐 |
+| `flyEave` | `out`（外挑）、`h`（檐厚）、`lift`（转角起翘）、`span`（起翘范围占边长比例，0.35）、`step`、`mat`、`under`（檐底）、`glow`（夜间檐口线灯） | 沿顶轮廓的挑檐板，四角上扬（丝路会议中心“上月牙”、长安书院上翘大屋檐） |
+| `wudian` | `h`（正脊高出檐口）、`out`（出檐）、`ridge`（正脊长/长边，默认 45° 戗脊，0≈攒尖）、`lift`（翼角起翘）、`curve`（举折指数 1.5）、`mat`、`ridgeMat`、`fascia`、`chiwei:false`；默认取顶轮廓外接矩形，或 `size`+`at`/`offset`+`rot` | 庑殿顶（四坡 + 正脊 + 鸱尾，举折曲面） |
+| `saddleRoof` | `y`（外缘离地）、`open:{size:[长,宽],rot,at/offset}`（椭圆开口）、`rim`（内缘平均离地）、`amp`/`axis`（马鞍起伏半幅/高点方位角）、`grow`（外缘相对体块外扩）、`h`、`power`、`n`、`rings`、`mat`、`under` | 体育场罩棚：外缘→开口的帐篷曲面，内缘马鞍形（西安国际足球中心） |
+| `luffCrane` | `at`/`offset`、`top`（塔身顶离地）、`jib`、`back`、`rot`（起重臂方位）、`luff`（动臂仰角，0 = 平头塔吊） | 塔吊（停工/在建超高层） |
 
 叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet / hip / slab` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
 `dome / arch / masts / spire / helipad / eave` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
@@ -220,6 +224,18 @@ night: {
 - **斜交网格 `kind:'lattice'`**：沿轮廓各边生成菱形斜杆 + 上下环梁 + 转角立柱；`lattice: { step 斜杆水平间距, rise 每格高, w 杆宽, open:[不做的边下标], rings }`，
   材质 `mat`。迈科中心连桥下的古铜色门洞：`{ kind:'lattice', pts: 四边形, base: 0, top: 96, lattice: { step: 7, rise: 9, w: 0.9, open: [0, 2] } }`。
 - **在建/停工**：立面 `pattern:'openFrame'`（裸露楼板与柱），塔冠 `{ type:'crane', offset, top, jib, rot }`；按现状高度建，不按设计全高。
+`flyEave / wudian / saddleRoof / luffCrane`（东西两翼扩展，名称带前缀以免与其他片区同名扩展冲突）都是**屋面类**（不抬高度游标，`stack:true` 可强制）。
+
+### 3.7 列柱 `columns`（spec 级数组，2026-09 新增）
+
+```js
+columns: [
+  { part: 'glass', out: 1.6, step: 4.3, r: 0.3, from: 10.5, to: 44, mat: '#f4f4f1' },          // 沿体块轮廓外 1.6 m、柱距 4.3 m 的细钢柱（丝路会议中心 180 根）
+  { part: 'west', at: [[5483, -13290], [5483, -13270]], r: 0.8, rTop: 3.2, from: 0, to: 19 },   // 直接给柱位；rTop > r 即郁金香/喇叭口柱
+]
+```
+- `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。
+- 柱子进 `solid`（投影），`from/to` 为离地米（默认体块 base/top）。
 
 ---
 
