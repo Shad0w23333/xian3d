@@ -52,7 +52,7 @@ class Mesher {
 }
 
 /** 站名贴图集：每个站名一格（站名 + 线路色块） */
-function nameAtlas(stations, lineColor) {
+function nameAtlas(stations, lineColor, badgeOf) {
   const CW = 512, CH = 96, COLS = 8;
   const rows = Math.ceil(stations.length / COLS);
   const cv = document.createElement('canvas');
@@ -70,10 +70,11 @@ function nameAtlas(stations, lineColor) {
       g.fillStyle = lineColor(l.num);
       g.fillRect(bx, y + 18, 60, 60);
       g.fillStyle = '#fff';
-      g.font = 'bold 40px sans-serif';
+      const bt = badgeOf(l.num);
+      g.font = `bold ${bt.length > 1 && !/^\d+$/.test(bt) ? 26 : 40}px sans-serif`;
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      g.fillText(String(l.num), bx + 30, y + 49);
+      g.fillText(bt, bx + 30, y + 49);
       bx += 68;
     }
     g.fillStyle = '#ffffff';
@@ -103,6 +104,9 @@ export default {
     if (!D || !D.lines?.length) return stub;
     const H = (x, z) => ctx.terrain.heightAt(x, z);
     const colorOf = new Map(D.lines.map((l) => [l.num, l.color]));
+    // 有线号的显示“N号线”，西户线/云巴等无线号线路（num ≥ 100）显示线名
+    const nameOf = new Map(D.lines.map((l) => [l.num, l.num < 100 ? `${l.num}号线` : l.name]));
+    const badgeOf = (n) => (n < 100 ? String(n) : (nameOf.get(n) || '').replace(/^西安/, '').slice(0, 2));
     const lineColor = (n) => colorOf.get(n) || '#9aa4b0';
 
     const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
@@ -257,7 +261,7 @@ export default {
     for (const [m, n] of [[st.build(mat, '地铁车站'), 0], [gl.build(glass, '屏蔽门'), 1], [pass.build(mat, '出入口通道'), 0]]) if (m) { m.renderOrder = n; root.add(m); }
 
     // —— 站名牌（站台侧墙每 24 m 一块、站厅两端） ——
-    const { tex, cells } = nameAtlas(D.stations, lineColor);
+    const { tex, cells } = nameAtlas(D.stations, lineColor, badgeOf);
     const sp = [], su = [];
     const signQuad = (a, b, c, d, r) => {
       sp.push(...a, ...b, ...c, ...a, ...c, ...d);
@@ -419,7 +423,7 @@ export default {
     }
     for (const s of D.stations) {
       ctx.labels.add(s.n, new THREE.Vector3(s.x, H(s.x, s.z) + 8, s.z), {
-        category: 'metrox', sub: s.lines.map((l) => `${l.num}号线`).join(' · '),
+        category: 'metrox', sub: s.lines.map((l) => nameOf.get(l.num)).join(' · '),
         priority: s.lines.length > 1 ? 1.6 : 1.0, minDist: 0, maxDist: 60000,
       });
     }
