@@ -40,13 +40,14 @@ function bellTower(b) {
     y0: plat.topY, style: 'ming',
     storeys: [
       // 首层：外圈回廊柱 + 内圈金柱（面阔三间），门窗在金柱线；白灰槛墙 + 正中隔扇门
-      { bays: [3.3, 4.4, 6.2, 4.4, 3.3], depthBays: [3.3, 4.4, 6.2, 4.4, 3.3], colH: 5.9, veranda: true, front: ['wall', 'geshan', 'wall'], back: ['wall', 'geshan', 'wall'], sides: ['wall', 'geshan', 'wall'] },
+      { bays: [3.3, 4.4, 6.2, 4.4, 3.3], depthBays: [3.3, 4.4, 6.2, 4.4, 3.3], colH: 5.4, veranda: true, front: ['wall', 'geshan', 'wall'], back: ['wall', 'geshan', 'wall'], sides: ['wall', 'geshan', 'wall'] },
       // 二层：四面隔扇（红棂窗），平座栏杆
-      { colH: 4.4, front: 'doors', back: 'doors', sides: 'doors' },
+      { colH: 4.1, front: 'doors', back: 'doors', sides: 'doors' },
     ],
     pal: { wall: 0xe4ded2 },
-    shrink: 0.3, balcony: 1.7, topEaves: 2, roof: 'zanjian', roofColor: 'green', platform: 'plain', platformH: 0.45, steps: 'none',
-    finial: { h: 5.0, gold: true }, rich: true,
+    shrink: 0.3, balcony: 1.7, topEaves: 2, roof: 'zanjian', pitch: 0.8, roofColor: 'green', platform: 'plain', platformH: 0.45, steps: 'none',
+    // 鎏金宝顶：金顶高 1.86 m、上粗 1.42 m，琉璃须弥座 + 金顶总高 4.53 m（2020 年钟楼宝顶重新贴金报道）
+    finial: { h: 4.53, seatH: 2.67, ballD: 1.42, rBase: 1.15, gold: true }, rich: true,
   });
   // 夜景：屋脊/檐口青白轮廓灯（照片中为冷白偏青的 LED 勾边）
   if (b.detail >= 1) eaveLights(b, info, { color: 0xc8f2e4, width: b.detail >= 2 ? 0.12 : 0.18 });
@@ -58,17 +59,25 @@ function bellTower(b) {
         const x = (side.pts[k][0] + side.pts[k + 1][0]) / 2, z = (side.pts[k][1] + side.pts[k + 1][1]) / 2;
         lantern(b, x + side.n[0] * 0.5, info.colTop - 0.25, z + side.n[1] * 0.5, { kind: 'round', size: 1.05 });
       }
+    // 二层四角：挂在角柱外侧的额枋下（原先外挑 2.2 m，悬在半空无挂点）
     const r1 = info.rings[info.rings.length - 1];
-    const e1 = r1.w / 2 + 2.2;
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) lantern(b, sx * e1, info.storeyTops[1] - 0.2, sz * e1, { kind: 'round', size: 1.1 });
+    const ex = r1.w / 2 + 0.45, ez = r1.d / 2 + 0.45;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) lantern(b, sx * ex, info.storeyTops[1] - 0.25, sz * ez, { kind: 'round', size: 1.1 });
   }
   // 景云钟复制品：基座西北角红漆钟架（1997）
   b.push(-14.3, plat.topY, -14.3, Math.PI / 4);
   bellFrame(b, 3.2, 4.4);
   bronzeBell(b, 0, 4.4 - 0.55, 0, 2.45, 1.65);
   b.pop();
-  // 首层殿内正中再悬一口钟（门内可见）
-  bronzeBell(b, 0, plat.topY + 5.2, 0, 2.2, 1.5);
+  // 首层殿内正中再悬一口钟（门内可见）：挂在金柱间的承重梁上（钟钮 → 铁吊杆 → 梁），不再凭空悬挂
+  const yBell = plat.topY + 5.2;
+  const r0 = info.rings[0];
+  const xs = r0.sides[0].pts.map((p) => p[0]);
+  const xi = Math.abs(xs[1]); // 内圈金柱（回廊内侧）X 位置
+  const yBeam = info.colTop - 0.55;
+  b.box('paint', -xi, yBeam, -0.22, xi, yBeam + 0.5, 0.22, 0x8a2a1e);
+  b.box('metal', -0.05, yBell - 0.02, -0.05, 0.05, yBeam + 0.02, 0.05, 0x3a3634);
+  bronzeBell(b, 0, yBell, 0, 2.2, 1.5);
   return { ...info, platTop: plat.topY };
 }
 
