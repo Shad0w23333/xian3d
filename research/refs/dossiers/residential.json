@@ -5,6 +5,10 @@
   "lon": 108.892968,
   "lat": 34.215805,
   "coord_source": "landuse_polygon_centroid(天地源·枫林绿洲; public/data/landuse.json)",
+  "world_xz": [
+   -4542.6,
+   5031.1
+  ],
   "area_ha": 37.1,
   "year": 2008,
   "buildings": {
@@ -132,6 +136,10 @@
   "lon": 108.866529,
   "lat": 34.177546,
   "coord_source": "landuse_polygon_centroid(紫薇田园都市A区-天山雪莲、紫薇田园都市B区-二泉映月、紫薇田园都市C区-黄山云海、紫薇田园都市D区-香格里拉、紫薇田园都市E区-东方明珠、紫薇田园都市F区-蓬莱仙境 等10块; public/data/landuse.json)",
+  "world_xz": [
+   -6975.1,
+   9286.8
+  ],
   "area_ha": 78.7,
   "year": 2005,
   "buildings": {
@@ -264,6 +272,10 @@
   "lon": 108.879644,
   "lat": 34.242937,
   "coord_source": "landuse_polygon_centroid(中华世纪城; public/data/landuse.json)",
+  "world_xz": [
+   -5768.4,
+   2011.9
+  ],
   "area_ha": 22.1,
   "year": 2010,
   "buildings": {
@@ -379,6 +391,10 @@
   "lon": 108.880187,
   "lat": 34.236436,
   "coord_source": "landuse_polygon_centroid(高新·枫叶新都市; public/data/landuse.json)",
+  "world_xz": [
+   -5718.5,
+   2735.4
+  ],
   "area_ha": 21.3,
   "year": 2003,
   "buildings": {
@@ -495,6 +511,10 @@
   "lon": 108.868516,
   "lat": 34.197875,
   "coord_source": "landuse_polygon_centroid(绿地世纪城新里仕嘉公寓-A区、绿地世纪城新里仕嘉公寓-B区; public/data/landuse.json)",
+  "world_xz": [
+   -6792.2,
+   7025.7
+  ],
   "area_ha": 21.7,
   "year": 2008,
   "buildings": {
@@ -617,6 +637,10 @@
   "lon": 108.860384,
   "lat": 34.219717,
   "coord_source": "landuse_polygon_centroid(鸿基新城; public/data/landuse.json)",
+  "world_xz": [
+   -7540.4,
+   4595.8
+  ],
   "area_ha": 21.0,
   "year": 2013,
   "buildings": {
@@ -742,6 +766,10 @@
   "lon": 108.862089,
   "lat": 34.215801,
   "coord_source": "landuse_polygon_centroid(西安保利天悦; public/data/landuse.json)",
+  "world_xz": [
+   -7383.5,
+   5031.5
+  ],
   "area_ha": 20.3,
   "year": 2023,
   "buildings": {
@@ -857,6 +885,10 @@
   "lon": 108.868877,
   "lat": 34.208897,
   "coord_source": "landuse_polygon_centroid(万科翡翠国宾; public/data/landuse.json)",
+  "world_xz": [
+   -6759.0,
+   5799.6
+  ],
   "area_ha": 22.7,
   "year": 2021,
   "buildings": {
@@ -988,6 +1020,10 @@
   "lon": 108.872248,
   "lat": 34.183559,
   "coord_source": "landuse_polygon_centroid(逸翠园i都会、逸翠园·西安4期御玺、逸翠园第一期; public/data/landuse.json)",
+  "world_xz": [
+   -6448.9,
+   8618.1
+  ],
   "area_ha": 29.0,
   "year": 2009,
   "buildings": {
@@ -1126,6 +1162,10 @@
   "lon": 108.861876,
   "lat": 34.204733,
   "coord_source": "landuse_polygon_centroid(中铁缤纷南郡; public/data/landuse.json)",
+  "world_xz": [
+   -7403.1,
+   6262.8
+  ],
   "area_ha": 14.3,
   "year": 2013,
   "buildings": {
@@ -1245,6 +1285,10 @@
   "lon": 108.884649,
   "lat": 34.182038,
   "coord_source": "landuse_polygon_centroid(万科高新华府; public/data/landuse.json)",
+  "world_xz": [
+   -5307.9,
+   8787.2
+  ],
   "area_ha": 14.4,
   "year": 2017,
   "buildings": {
@@ -1357,6 +1401,10 @@
   "lon": 108.873762,
   "lat": 34.211962,
   "coord_source": "landuse_polygon_centroid(天地源·枫林意树; public/data/landuse.json)",
+  "world_xz": [
+   -6309.6,
+   5458.6
+  ],
   "area_ha": 12.2,
   "year": 2012,
   "buildings": {
@@ -1476,6 +1524,10 @@
   "lon": 108.889129,
   "lat": 34.203981,
   "coord_source": "landuse_polygon_centroid(万达·天樾; public/data/landuse.json)",
+  "world_xz": [
+   -4895.8,
+   6346.5
+  ],
   "area_ha": 10.6,
   "year": 2018,
   "buildings": {
@@ -1575,6 +1627,10 @@
   "lon": 108.897515,
   "lat": 34.202428,
   "coord_source": "landuse_polygon_centroid(金泰·假日花城; public/data/landuse.json)",
+  "world_xz": [
+   -4124.2,
+   6519.3
+  ],
   "area_ha": 16.9,
   "year": 2012,
   "buildings": {
@@ -1693,6 +1749,10 @@
   "lon": 108.878942,
   "lat": 34.248094,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   -5833.0,
+   1437.9
+  ],
   "area_ha": null,
   "year": 2011,
   "buildings": {
@@ -1772,6 +1832,10 @@
   "lon": 108.904045,
   "lat": 34.203876,
   "coord_source": "landuse_polygon_centroid(融侨紫薇馨苑; public/data/landuse.json)",
+  "world_xz": [
+   -3523.4,
+   6358.2
+  ],
   "area_ha": 25.6,
   "year": 2008,
   "buildings": {
@@ -1897,6 +1961,10 @@
   "lon": 108.916221,
   "lat": 34.224309,
   "coord_source": "landuse_polygon_centroid(太白小区、太白小区-东区、太白小区-北区; public/data/landuse.json)",
+  "world_xz": [
+   -2403.2,
+   4084.9
+  ],
   "area_ha": 10.5,
   "year": 1998,
   "buildings": {
@@ -1995,6 +2063,10 @@
   "lon": 108.892952,
   "lat": 34.220332,
   "coord_source": "landuse_polygon_centroid(云顶园; public/data/landuse.json)",
+  "world_xz": [
+   -4544.0,
+   4527.4
+  ],
   "area_ha": 3.6,
   "year": 2010,
   "buildings": {
@@ -2094,6 +2166,10 @@
   "lon": 108.86592,
   "lat": 34.223275,
   "coord_source": "landuse_polygon_centroid(易道郡·玫瑰公馆; public/data/landuse.json)",
+  "world_xz": [
+   -7031.1,
+   4199.9
+  ],
   "area_ha": 11.8,
   "year": 2011,
   "buildings": {
@@ -2218,6 +2294,10 @@
   "lon": 108.961429,
   "lat": 34.192184,
   "coord_source": "landuse_polygon_centroid(未命名住宅地块，包含房天下坐标点)",
+  "world_xz": [
+   1756.1,
+   7658.8
+  ],
   "area_ha": 16.2,
   "year": 2012,
   "buildings": {
@@ -2334,6 +2414,10 @@
   "lon": 109.00362,
   "lat": 34.211267,
   "coord_source": "landuse_polygon_centroid(曲江龙邸; public/data/landuse.json)",
+  "world_xz": [
+   5637.8,
+   5535.9
+  ],
   "area_ha": 22.8,
   "year": 2016,
   "buildings": {
@@ -2452,6 +2536,10 @@
   "lon": 108.984837,
   "lat": 34.205154,
   "coord_source": "landuse_polygon_centroid(金地湖城大境 天字一号、金地湖城大境天锦; public/data/landuse.json)",
+  "world_xz": [
+   3909.7,
+   6216.0
+  ],
   "area_ha": 42.6,
   "year": 2014,
   "buildings": {
@@ -2617,6 +2705,10 @@
   "lon": 108.966662,
   "lat": 34.20794,
   "coord_source": "landuse_polygon_centroid(金地芙蓉世家; public/data/landuse.json)",
+  "world_xz": [
+   2237.5,
+   5906.1
+  ],
   "area_ha": 15.1,
   "year": 2008,
   "buildings": {
@@ -2705,6 +2797,10 @@
   "lon": 108.953815,
   "lat": 34.201365,
   "coord_source": "landuse_polygon_centroid(华侨城-天鹅堡; public/data/landuse.json)",
+  "world_xz": [
+   1055.6,
+   6637.5
+  ],
   "area_ha": 14.1,
   "year": 2014,
   "buildings": {
@@ -2824,6 +2920,10 @@
   "lon": 108.976407,
   "lat": 34.212944,
   "coord_source": "landuse_polygon_centroid(华侨城108坊; public/data/landuse.json)",
+  "world_xz": [
+   3134.1,
+   5349.4
+  ],
   "area_ha": 13.6,
   "year": 2011,
   "buildings": {
@@ -2932,6 +3032,10 @@
   "lon": 108.995036,
   "lat": 34.217215,
   "coord_source": "landuse_polygon_centroid(华著中城; public/data/landuse.json)",
+  "world_xz": [
+   4848.0,
+   4874.2
+  ],
   "area_ha": 18.1,
   "year": 2016,
   "buildings": {
@@ -3042,6 +3146,10 @@
   "lon": 108.972827,
   "lat": 34.219216,
   "coord_source": "landuse_polygon_centroid(中海铂宫; public/data/landuse.json)",
+  "world_xz": [
+   2804.7,
+   4651.5
+  ],
   "area_ha": 17.1,
   "year": 2012,
   "buildings": {
@@ -3157,6 +3265,10 @@
   "lon": 108.985776,
   "lat": 34.208057,
   "coord_source": "landuse_polygon_centroid(曲江公馆·和园; public/data/landuse.json)",
+  "world_xz": [
+   3996.1,
+   5893.1
+  ],
   "area_ha": 14.5,
   "year": 2014,
   "buildings": {
@@ -3281,6 +3393,10 @@
   "lon": 108.981103,
   "lat": 34.212232,
   "coord_source": "landuse_polygon_centroid(曲江紫汀苑; public/data/landuse.json)",
+  "world_xz": [
+   3566.2,
+   5428.6
+  ],
   "area_ha": 14.5,
   "year": 2016,
   "buildings": {
@@ -3413,6 +3529,10 @@
   "lon": 109.018683,
   "lat": 34.208745,
   "coord_source": "landuse_polygon_centroid(融创曲江印; public/data/landuse.json)",
+  "world_xz": [
+   7023.6,
+   5816.5
+  ],
   "area_ha": 13.7,
   "year": 2020,
   "buildings": {
@@ -3499,6 +3619,10 @@
   "lon": 108.985753,
   "lat": 34.21871,
   "coord_source": "landuse_polygon_centroid(未命名住宅地块，包含房天下坐标点)",
+  "world_xz": [
+   3994.0,
+   4707.8
+  ],
   "area_ha": 10.5,
   "year": 2011,
   "buildings": {
@@ -3615,6 +3739,10 @@
   "lon": 108.978034,
   "lat": 34.21732,
   "coord_source": "landuse_polygon_centroid(中海·熙岸; public/data/landuse.json)",
+  "world_xz": [
+   3283.8,
+   4862.5
+  ],
   "area_ha": 10.2,
   "year": 2009,
   "buildings": {
@@ -3731,6 +3859,10 @@
   "lon": 108.978582,
   "lat": 34.22165,
   "coord_source": "landuse_polygon_centroid(中海观园; public/data/landuse.json)",
+  "world_xz": [
+   3334.2,
+   4380.7
+  ],
   "area_ha": 8.9,
   "year": 2008,
   "buildings": {
@@ -3838,6 +3970,10 @@
   "lon": 108.996898,
   "lat": 34.214029,
   "coord_source": "landuse_polygon_centroid(中科铁建·万科翡翠国际三期、翡翠国际东区; public/data/landuse.json)",
+  "world_xz": [
+   5019.4,
+   5228.7
+  ],
   "area_ha": 26.8,
   "year": 2018,
   "buildings": {
@@ -3972,6 +4108,10 @@
   "lon": 108.973335,
   "lat": 34.175941,
   "coord_source": "landuse_polygon_centroid(碧桂园·云顶; public/data/landuse.json)",
+  "world_xz": [
+   2851.5,
+   9465.3
+  ],
   "area_ha": 15.7,
   "year": null,
   "buildings": {
@@ -4068,6 +4208,10 @@
   "lon": 108.87964,
   "lat": 34.169309,
   "coord_source": "landuse_polygon_centroid(融创西安宸院; public/data/landuse.json)",
+  "world_xz": [
+   -5768.8,
+   10202.8
+  ],
   "area_ha": 17.8,
   "year": 2019,
   "buildings": {
@@ -4177,6 +4321,10 @@
   "lon": 108.892856,
   "lat": 34.162692,
   "coord_source": "landuse_polygon_centroid(万科城、万科城如园、万科城燕园; public/data/landuse.json)",
+  "world_xz": [
+   -4552.9,
+   10938.5
+  ],
   "area_ha": 33.8,
   "year": 2017,
   "buildings": {
@@ -4316,6 +4464,10 @@
   "lon": 109.040347,
   "lat": 34.230257,
   "coord_source": "landuse_polygon_centroid(绿地国际生态城、绿地国际生态城三期、绿地国际生态城二期; public/data/landuse.json)",
+  "world_xz": [
+   9016.8,
+   3423.0
+  ],
   "area_ha": 28.8,
   "year": 2011,
   "buildings": {
@@ -4409,6 +4561,10 @@
   "lon": 109.036957,
   "lat": 34.211028,
   "coord_source": "landuse_polygon_centroid(恒大御龙湾一期、恒大御龙湾二期; public/data/landuse.json)",
+  "world_xz": [
+   8704.9,
+   5562.5
+  ],
   "area_ha": 17.6,
   "year": 2018,
   "buildings": {
@@ -4508,6 +4664,10 @@
   "lon": 109.034856,
   "lat": 34.220249,
   "coord_source": "landuse_polygon_centroid(融创天朗融公馆; public/data/landuse.json)",
+  "world_xz": [
+   8511.6,
+   4536.6
+  ],
   "area_ha": 10.2,
   "year": 2017,
   "buildings": {
@@ -4619,6 +4779,10 @@
   "lon": 108.983453,
   "lat": 34.175516,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   3782.4,
+   9512.5
+  ],
   "area_ha": null,
   "year": 2015,
   "buildings": {
@@ -4733,6 +4897,10 @@
   "lon": 109.011759,
   "lat": 34.21581,
   "coord_source": "landuse_polygon_centroid(万科·东方传奇; public/data/landuse.json)",
+  "world_xz": [
+   6386.6,
+   5030.5
+  ],
   "area_ha": 12.1,
   "year": 2017,
   "buildings": {
@@ -4845,6 +5013,10 @@
   "lon": 108.98283,
   "lat": 34.215184,
   "coord_source": "landuse_polygon_centroid(东郡; public/data/landuse.json)",
+  "world_xz": [
+   3725.0,
+   5100.1
+  ],
   "area_ha": 12.4,
   "year": 2012,
   "buildings": {
@@ -4964,6 +5136,10 @@
   "lon": 108.990412,
   "lat": 34.217496,
   "coord_source": "landuse_polygon_centroid(中冶一曲江山; public/data/landuse.json)",
+  "world_xz": [
+   4422.6,
+   4842.9
+  ],
   "area_ha": 8.2,
   "year": 2013,
   "buildings": {
@@ -5083,6 +5259,10 @@
   "lon": 109.013245,
   "lat": 34.204905,
   "coord_source": "landuse_polygon_centroid(华润置地·曲江九里、华润置地·曲江九里东区; public/data/landuse.json)",
+  "world_xz": [
+   6523.3,
+   6243.7
+  ],
   "area_ha": 11.3,
   "year": 2020,
   "buildings": {
@@ -5190,6 +5370,10 @@
   "lon": 108.873354,
   "lat": 34.169527,
   "coord_source": "landuse_polygon_centroid(盛世长安; public/data/landuse.json)",
+  "world_xz": [
+   -6347.1,
+   10178.5
+  ],
   "area_ha": 15.4,
   "year": 2012,
   "buildings": {
@@ -5296,6 +5480,10 @@
   "lon": 108.972707,
   "lat": 34.171228,
   "coord_source": "landuse_polygon_centroid(富力城; public/data/landuse.json)",
+  "world_xz": [
+   2793.7,
+   9989.4
+  ],
   "area_ha": 19.1,
   "year": 2014,
   "buildings": {
@@ -5406,6 +5594,10 @@
   "lon": 108.973235,
   "lat": 34.148366,
   "coord_source": "landuse_polygon_centroid(大华 锦绣前城; public/data/landuse.json)",
+  "world_xz": [
+   2842.3,
+   12531.3
+  ],
   "area_ha": 23.9,
   "year": 2021,
   "buildings": {
@@ -5524,6 +5716,10 @@
   "lon": 108.974604,
   "lat": 34.178498,
   "coord_source": "landuse_polygon_centroid(万科·城市之光南区; public/data/landuse.json)",
+  "world_xz": [
+   2968.2,
+   9180.9
+  ],
   "area_ha": 9.9,
   "year": 2017,
   "buildings": {
@@ -5656,6 +5852,10 @@
   "lon": 109.074883,
   "lat": 34.298492,
   "coord_source": "landuse_polygon_centroid(浅水湾; public/data/landuse.json)",
+  "world_xz": [
+   12194.2,
+   -4173.2
+  ],
   "area_ha": 20.3,
   "year": 2014,
   "buildings": {
@@ -5769,6 +5969,10 @@
   "lon": 109.025653,
   "lat": 34.294347,
   "coord_source": "landuse_polygon_centroid(浐灞天睦城; public/data/landuse.json)",
+  "world_xz": [
+   7664.9,
+   -3711.6
+  ],
   "area_ha": 17.8,
   "year": 2013,
   "buildings": {
@@ -5848,6 +6052,10 @@
   "lon": 109.000293,
   "lat": 34.325438,
   "coord_source": "landuse_polygon_centroid(保利心语花园; public/data/landuse.json)",
+  "world_xz": [
+   5331.7,
+   -7174.6
+  ],
   "area_ha": 13.0,
   "year": 2018,
   "buildings": {
@@ -5973,6 +6181,10 @@
   "lon": 109.05315,
   "lat": 34.250401,
   "coord_source": "landuse_polygon_centroid(中铁花语城小区; public/data/landuse.json)",
+  "world_xz": [
+   10194.7,
+   1181.1
+  ],
   "area_ha": 12.8,
   "year": 2020,
   "buildings": {
@@ -6091,6 +6303,10 @@
   "lon": 109.076867,
   "lat": 34.309722,
   "coord_source": "landuse_polygon_centroid(中铁琉森水岸、中铁琉森水岸天境; public/data/landuse.json)",
+  "world_xz": [
+   12376.8,
+   -5424.0
+  ],
   "area_ha": 19.7,
   "year": null,
   "buildings": {
@@ -6185,6 +6401,10 @@
   "lon": 109.001749,
   "lat": 34.305563,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   5465.7,
+   -4960.7
+  ],
   "area_ha": null,
   "year": 2015,
   "buildings": {
@@ -6277,6 +6497,10 @@
   "lon": 109.034223,
   "lat": 34.265979,
   "coord_source": "landuse_polygon_centroid(未命名住宅地块，包含房天下坐标点)",
+  "world_xz": [
+   8453.4,
+   -553.0
+  ],
   "area_ha": 12.7,
   "year": 2013,
   "buildings": {
@@ -6378,6 +6602,10 @@
   "lon": 109.002674,
   "lat": 34.320895,
   "coord_source": "landuse_polygon_centroid(龙湖源著; public/data/landuse.json)",
+  "world_xz": [
+   5550.8,
+   -6668.5
+  ],
   "area_ha": 10.0,
   "year": 2016,
   "buildings": {
@@ -6487,6 +6715,10 @@
   "lon": 109.046862,
   "lat": 34.228065,
   "coord_source": "landuse_polygon_centroid(高科麓湾一期、高科麓湾三期、高科麓湾二期、高科麓湾四期; public/data/landuse.json)",
+  "world_xz": [
+   9616.2,
+   3666.9
+  ],
   "area_ha": 32.0,
   "year": 2018,
   "buildings": {
@@ -6582,6 +6814,10 @@
   "lon": 109.060724,
   "lat": 34.270194,
   "coord_source": "landuse_polygon_centroid(三棉社区; public/data/landuse.json)",
+  "world_xz": [
+   10891.6,
+   -1022.2
+  ],
   "area_ha": 14.5,
   "year": 1990,
   "buildings": {
@@ -6670,6 +6906,10 @@
   "lon": 109.0629,
   "lat": 34.266197,
   "coord_source": "landuse_polygon_centroid(四棉厂住宅互助区、四棉厂住宅振兴区、四棉厂住宅自强区、四棉社区; public/data/landuse.json)",
+  "world_xz": [
+   11091.8,
+   -577.2
+  ],
   "area_ha": 26.8,
   "year": 2005,
   "buildings": {
@@ -6770,6 +7010,10 @@
   "lon": 109.062796,
   "lat": 34.277072,
   "coord_source": "landuse_polygon_centroid(纺星一区; public/data/landuse.json)",
+  "world_xz": [
+   11082.2,
+   -1788.0
+  ],
   "area_ha": 5.0,
   "year": 1990,
   "buildings": {
@@ -6859,6 +7103,10 @@
   "lon": 109.047663,
   "lat": 34.279876,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   9689.9,
+   -2100.2
+  ],
   "area_ha": null,
   "year": 2017,
   "buildings": {
@@ -6929,6 +7177,10 @@
   "lon": 108.936704,
   "lat": 34.358355,
   "coord_source": "landuse_polygon_centroid(首创国际城; public/data/landuse.json)",
+  "world_xz": [
+   -518.7,
+   -10842.5
+  ],
   "area_ha": 13.5,
   "year": 2015,
   "buildings": {
@@ -7036,6 +7288,10 @@
   "lon": 108.958898,
   "lat": 34.309376,
   "coord_source": "landuse_polygon_centroid(锦园新世纪小区; public/data/landuse.json)",
+  "world_xz": [
+   1523.2,
+   -5385.4
+  ],
   "area_ha": 22.4,
   "year": 2003,
   "buildings": {
@@ -7151,6 +7407,10 @@
   "lon": 108.92832,
   "lat": 34.346333,
   "coord_source": "landuse_polygon_centroid(白桦林居; public/data/landuse.json)",
+  "world_xz": [
+   -1290.1,
+   -9502.7
+  ],
   "area_ha": 32.0,
   "year": 2006,
   "buildings": {
@@ -7270,6 +7530,10 @@
   "lon": 108.922791,
   "lat": 34.345602,
   "coord_source": "landuse_polygon_centroid(白桦林间; public/data/landuse.json)",
+  "world_xz": [
+   -1798.8,
+   -9421.3
+  ],
   "area_ha": 26.2,
   "year": 2014,
   "buildings": {
@@ -7383,6 +7647,10 @@
   "lon": 108.921479,
   "lat": 34.351115,
   "coord_source": "landuse_polygon_centroid(文景小区; public/data/landuse.json)",
+  "world_xz": [
+   -1919.5,
+   -10035.6
+  ],
   "area_ha": 26.9,
   "year": 2011,
   "buildings": {
@@ -7494,6 +7762,10 @@
   "lon": 108.922536,
   "lat": 34.34095,
   "coord_source": "landuse_polygon_centroid(天朗御湖; public/data/landuse.json)",
+  "world_xz": [
+   -1822.2,
+   -8902.9
+  ],
   "area_ha": 15.3,
   "year": 2014,
   "buildings": {
@@ -7600,6 +7872,10 @@
   "lon": 108.927208,
   "lat": 34.315201,
   "coord_source": "landuse_polygon_centroid(海璟台北湾; public/data/landuse.json)",
+  "world_xz": [
+   -1392.4,
+   -6034.2
+  ],
   "area_ha": 13.8,
   "year": 2011,
   "buildings": {
@@ -7710,6 +7986,10 @@
   "lon": 108.935412,
   "lat": 34.340728,
   "coord_source": "landuse_polygon_centroid(风景御园; public/data/landuse.json)",
+  "world_xz": [
+   -637.6,
+   -8878.2
+  ],
   "area_ha": 13.1,
   "year": 2011,
   "buildings": {
@@ -7826,6 +8106,10 @@
   "lon": 108.952375,
   "lat": 34.341322,
   "coord_source": "landuse_polygon_centroid(荣华·EE康城; public/data/landuse.json)",
+  "world_xz": [
+   923.1,
+   -8944.4
+  ],
   "area_ha": 12.5,
   "year": 2011,
   "buildings": {
@@ -7939,6 +8223,10 @@
   "lon": 108.947169,
   "lat": 34.350988,
   "coord_source": "landuse_polygon_centroid(万科·金域华府; public/data/landuse.json)",
+  "world_xz": [
+   444.1,
+   -10021.5
+  ],
   "area_ha": 9.8,
   "year": 2016,
   "buildings": {
@@ -8077,6 +8365,10 @@
   "lon": 108.974267,
   "lat": 34.390999,
   "coord_source": "landuse_polygon_centroid(长庆未央湖花园; public/data/landuse.json)",
+  "world_xz": [
+   2937.2,
+   -14481.3
+  ],
   "area_ha": 19.8,
   "year": 2005,
   "buildings": {
@@ -8167,6 +8459,10 @@
   "lon": 108.944625,
   "lat": 34.316397,
   "coord_source": "landuse_polygon_centroid(雅荷花园; public/data/landuse.json)",
+  "world_xz": [
+   210.1,
+   -6167.5
+  ],
   "area_ha": 4.9,
   "year": 2009,
   "buildings": {
@@ -8258,6 +8554,10 @@
   "lon": 108.939016,
   "lat": 34.333372,
   "coord_source": "landuse_polygon_centroid(雅荷春天; public/data/landuse.json)",
+  "world_xz": [
+   -306.0,
+   -8058.6
+  ],
   "area_ha": 7.8,
   "year": 2011,
   "buildings": {
@@ -8369,6 +8669,10 @@
   "lon": 108.988511,
   "lat": 34.325681,
   "coord_source": "landuse_polygon_centroid(绿地香树花城; public/data/landuse.json)",
+  "world_xz": [
+   4247.7,
+   -7201.7
+  ],
   "area_ha": 14.5,
   "year": 2014,
   "buildings": {
@@ -8484,6 +8788,10 @@
   "lon": 108.977044,
   "lat": 34.301456,
   "coord_source": "landuse_polygon_centroid(华远君城; public/data/landuse.json)",
+  "world_xz": [
+   3192.7,
+   -4503.3
+  ],
   "area_ha": 13.6,
   "year": 2013,
   "buildings": {
@@ -8597,6 +8905,10 @@
   "lon": 108.95818,
   "lat": 34.329647,
   "coord_source": "landuse_polygon_centroid(兴盛园; public/data/landuse.json)",
+  "world_xz": [
+   1457.2,
+   -7643.5
+  ],
   "area_ha": 14.7,
   "year": 2012,
   "buildings": {
@@ -8699,6 +9011,10 @@
   "lon": 108.963864,
   "lat": 34.324512,
   "coord_source": "landuse_polygon_centroid(百花家园; public/data/landuse.json)",
+  "world_xz": [
+   1980.1,
+   -7071.5
+  ],
   "area_ha": 9.2,
   "year": 2009,
   "buildings": {
@@ -8793,6 +9109,10 @@
   "lon": 108.963819,
   "lat": 34.30872,
   "coord_source": "landuse_polygon_centroid(万科大明宫; public/data/landuse.json)",
+  "world_xz": [
+   1976.0,
+   -5312.3
+  ],
   "area_ha": 6.4,
   "year": 2015,
   "buildings": {
@@ -8908,6 +9228,10 @@
   "lon": 108.911893,
   "lat": 34.388938,
   "coord_source": "landuse_polygon_centroid(恒大国际城; public/data/landuse.json)",
+  "world_xz": [
+   -2801.4,
+   -14251.5
+  ],
   "area_ha": 11.4,
   "year": 2016,
   "buildings": {
@@ -9006,6 +9330,10 @@
   "lon": 108.987059,
   "lat": 34.376246,
   "coord_source": "landuse_polygon_centroid(碧桂园凤凰城、碧桂园凤凰城-天域; public/data/landuse.json)",
+  "world_xz": [
+   4114.1,
+   -12836.6
+  ],
   "area_ha": 33.2,
   "year": 2017,
   "buildings": {
@@ -9148,6 +9476,10 @@
   "lon": 108.94022,
   "lat": 34.352503,
   "coord_source": "landuse_polygon_centroid(紫薇苑·欧洲世家; public/data/landuse.json)",
+  "world_xz": [
+   -195.2,
+   -10190.3
+  ],
   "area_ha": 10.2,
   "year": 2005,
   "buildings": {
@@ -9251,6 +9583,10 @@
   "lon": 108.853406,
   "lat": 34.288719,
   "coord_source": "landuse_polygon_centroid(万科·金色悦郡; public/data/landuse.json)",
+  "world_xz": [
+   -8182.4,
+   -3084.8
+  ],
   "area_ha": 22.7,
   "year": 2015,
   "buildings": {
@@ -9393,6 +9729,10 @@
   "lon": 108.910809,
   "lat": 34.284575,
   "coord_source": "landuse_polygon_centroid(蔚蓝花城、蔚蓝花城七色镇; public/data/landuse.json)",
+  "world_xz": [
+   -2901.1,
+   -2623.4
+  ],
   "area_ha": 20.5,
   "year": 2012,
   "buildings": {
@@ -9526,6 +9866,10 @@
   "lon": 108.857345,
   "lat": 34.276913,
   "coord_source": "landuse_polygon_centroid(丰盛园; public/data/landuse.json)",
+  "world_xz": [
+   -7820.0,
+   -1770.3
+  ],
   "area_ha": 16.2,
   "year": 2003,
   "buildings": {
@@ -9634,6 +9978,10 @@
   "lon": 108.988005,
   "lat": 34.284073,
   "coord_source": "landuse_polygon_centroid(融创西安壹号院; public/data/landuse.json)",
+  "world_xz": [
+   4201.2,
+   -2567.5
+  ],
   "area_ha": 9.4,
   "year": 2019,
   "buildings": {
@@ -9741,6 +10089,10 @@
   "lon": 108.985984,
   "lat": 34.251223,
   "coord_source": "landuse_polygon_centroid(交大一村; public/data/landuse.json)",
+  "world_xz": [
+   4015.2,
+   1089.6
+  ],
   "area_ha": 10.5,
   "year": 2005,
   "buildings": {
@@ -9839,6 +10191,10 @@
   "lon": 108.898629,
   "lat": 34.255364,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   -4021.7,
+   628.7
+  ],
   "area_ha": null,
   "year": 2002,
   "buildings": {
@@ -9910,6 +10266,10 @@
   "lon": 109.000674,
   "lat": 34.245771,
   "coord_source": "fang_bd09→wgs84（房天下小区页百度坐标换算，点位为小区标注点，非几何中心）",
+  "world_xz": [
+   5366.8,
+   1696.5
+  ],
   "area_ha": null,
   "year": 2007,
   "buildings": {
@@ -9996,6 +10356,10 @@
   "lon": 109.007122,
   "lat": 34.25953,
   "coord_source": "landuse_polygon_centroid(未命名住宅地块，包含房天下坐标点)",
+  "world_xz": [
+   5960.0,
+   165.0
+  ],
   "area_ha": 5.2,
   "year": 2022,
   "buildings": {
@@ -10096,6 +10460,10 @@
   "lon": 108.993437,
   "lat": 34.281039,
   "coord_source": "landuse_polygon_centroid(恒基·碧翠锦华; public/data/landuse.json)",
+  "world_xz": [
+   4700.9,
+   -2229.7
+  ],
   "area_ha": 10.9,
   "year": 2012,
   "buildings": {
@@ -10214,6 +10582,10 @@
   "lon": 108.822696,
   "lat": 34.290798,
   "coord_source": "landuse_polygon_centroid(华宇凤凰城; public/data/landuse.json)",
+  "world_xz": [
+   -11007.8,
+   -3316.4
+  ],
   "area_ha": 10.1,
   "year": 2012,
   "buildings": {
