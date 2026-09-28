@@ -219,6 +219,8 @@ export const PATTERNS = {
   screen: { mode: 5, floorH: 1, colW: 0.9, spandrel: 0, mullW: 0.04, lit: 0 }, // LED 大屏
   retail: { mode: 6, floorH: 5.5, colW: 3.0, spandrel: 0.3, mullW: 0.18, lit: 0.9 }, // 商业裙房大玻璃
   crownGlass: { mode: 4, floorH: 4.2, colW: 2.6, spandrel: 0, mullW: 0.14, lit: 0 }, // 塔冠泛光玻璃
+  // 裸露结构（在建/停工楼：混凝土楼板 + 柱、黑洞洞的内部，夜间不亮灯；同 sky-special buildUnderConstruction）
+  openFrame: { mode: 7, floorH: 4.2, colW: 8.5, spandrel: 0.16, mullW: 0.9, lit: 0, tint: '#15181b', spd: '#9c988f' },
 };
 let seedN = 0;
 /** part.style → sky-facade 的参数对象（颜色保持十六进制，交给 buildTower/buildPodium 内部 mkStyle 转换） */
@@ -307,7 +309,15 @@ function partPolygon(spec, part, center) {
   if (part.grow) pts = G.inset(pts, -part.grow);
   if (part.roundCorners) pts = roundCorners(pts, part.roundCorners, part.roundSeg ?? 5);
   if (Array.isArray(part.holes)) holes = holes.concat(part.holes);
-  return { pts, holes };
+  // 放样（loft）：topPts 为体块顶面轮廓（世界坐标），与底面同点数、同起点同绕向；立面在两者之间直纹过渡（如逐层变大的切角）
+  let topPts = null;
+  if (part.topPts) {
+    if (part.roundCorners) throw new Error(`part ${part.name || ''}：topPts 不能与 roundCorners 同用`);
+    topPts = G.area(part.topPts) >= 0 ? part.topPts.slice() : G.ccw(part.topPts);
+    if (part.grow) topPts = G.inset(topPts, -part.grow);
+    if (topPts.length !== pts.length) throw new Error(`part ${part.name || ''}：topPts 点数 ${topPts.length / 2} ≠ 底面 ${pts.length / 2}`);
+  }
+  return { pts, holes, topPts };
 }
 function specCenter(spec) {
   if (spec.center) return { x: spec.center[0], z: spec.center[1] };
@@ -327,8 +337,8 @@ export function resolveSpec(spec) {
   if (!spec.id) throw new Error('spec 缺 id');
   const center = specCenter(spec);
   const parts = (spec.parts || []).map((part, i) => {
-    const { pts, holes } = partPolygon(spec, part, center);
-    return { part, i, name: part.name ?? String(i), pts, holes, base: part.base ?? 0, top: part.top };
+    const { pts, holes, topPts } = partPolygon(spec, part, center);
+    return { part, i, name: part.name ?? String(i), pts, holes, topPts, base: part.base ?? 0, top: part.top };
   });
   for (const p of parts) if (!(p.top > p.base)) throw new Error(`part ${p.name} 的 top 必须大于 base`);
   const polys = parts.filter((p) => p.base <= 0.5 || p.part.footprint).map((p) => p.pts);
@@ -382,6 +392,10 @@ function edgeByIndex(poly, i) {
 }
 /** 某高度处的体块轮廓（考虑收分 taper：以体块底为 0、顶为 1 线性缩放） */
 function polyAt(P, yRel) {
+  if (P.topPts) { // 放样体块：底面 → 顶面线性插值
+    const k = Math.min(1, Math.max(0, (yRel - P.base) / (P.top - P.base)));
+    return P.pts.map((v, i) => v + (P.topPts[i] - v) * k);
+  }
   const t = P.part.taper;
   if (!t || t === 1) return P.pts;
   const c = partCentroid(P), k = 1 - (1 - t) * Math.min(1, Math.max(0, (yRel - P.base) / (P.top - P.base)));
@@ -777,7 +791,7 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
       }
       case 'crane': { // 塔吊（在建）：塔身从 from（离地米，默认 0）到 top，吊臂朝 rot（地图角），长 jib，配重臂 counter
         const q = cr.at ? { x: cr.at[0], z: cr.at[1] } : offsetPt(c0, cr.offset);
-        const top = g0 + (cr.top ?? (yb - g0) + 30), bot = g0 + (cr.from ?? 0);
+        const top = g0 + (cr.top ?? (yb - g0) + (cr.h ?? 30)), bot = g0 + (cr.from ?? 0); // h：高出体块顶（高新 spec 用法）
         const [ux, uz] = dirOf(cr.rot ?? 0), jib = cr.jib ?? 55, cnt = cr.counter ?? 16;
         const ry = -(cr.rot ?? 0) * D;
         detail.add(G.box(q.x, (bot + top) / 2, q.z, 2.0, top - bot, 2.0), mats.yellow);
@@ -785,8 +799,10 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         detail.add(G.box(q.x - (ux * cnt) / 2, top + 1, q.z - (uz * cnt) / 2, cnt, 1.4, 2.2, ry), mats.yellow);
         detail.add(G.box(q.x - ux * (cnt - 3), top - 0.5, q.z - uz * (cnt - 3), 5, 3, 3, ry), mats.roof);
         detail.add(G.box(q.x, top + 5, q.z, 1.0, 9, 1.0), mats.yellow);
-        beacons.add(q.x, top + 10, q.z, 0, 4);
-        beacons.add(q.x + ux * (jib - 3), top + 2, q.z + uz * (jib - 3), 1, 2.5);
+        if (cr.beacon !== false) {
+          beacons.add(q.x, top + 10, q.z, 0, 4);
+          beacons.add(q.x + ux * (jib - 3), top + 2, q.z + uz * (jib - 3), 1, 2.5);
+        }
         break;
       }
       case 'cnhip': { // 中式大屋顶（庑殿/歇山/攒尖）：出檐 ov、矢高 h、檐角起翘 lift；默认取体块顶面外接矩形
@@ -862,7 +878,9 @@ function buildPart(env, R, P) {
   const crowns = normCrowns(part.crown);
   const handled = new Set();
   let yTop = base + H;
-  if (kind === 'tower') {
+  if (kind === 'tower' && P.topPts) {
+    yTop = buildLoft(env, R, P, crowns);
+  } else if (kind === 'tower') {
     const lantern = crowns.find((c) => c.type === 'lantern');
     const slope = crowns.find((c) => c.type === 'slope');
     // 停机坪直接落在塔楼屋面（前面没有圆筒/圆盘等体量塔冠）时交给 buildTower（带支柱与边灯），否则由本库叠在体量塔冠之上
@@ -901,11 +919,72 @@ function buildPart(env, R, P) {
     solid.add(G.wallGeometry(P.pts, P.pts, base - 2, base + H), mat, null, { worldUV: 1 });
     solid.add(G.capGeometry(P.pts, base + H), mat, null, { worldUV: 1 });
   } else if (kind === 'facade') {
-    // 只有立面、没有屋面处理的直筒（被上部体块盖住的中段等）
-    fb.prism(P.pts, base - 0.5, base + H, mkStyle(facadeStyle(part.style, part.seed)), { vBase: g0 });
-    solid.add(G.capGeometry(P.pts, base + H - 0.05), env.mats.roof);
+    // 只有立面、没有屋面处理的直筒（被上部体块盖住的中段等）；有 topPts 时为放样直纹面
+    fb.ring(P.pts, P.topPts || P.pts, base - 0.5, base + H, mkStyle(facadeStyle(part.style, part.seed)), { vBase: g0 });
+    solid.add(G.capGeometry(P.topPts || P.pts, base + H - 0.05), env.mats.roof);
+  } else if (kind === 'lattice') {
+    buildLattice(env, P, base, base + H);
   } else throw new Error('未知体块 kind ' + kind);
   buildCrowns(env, R, P, crowns, yTop, handled);
+}
+
+/**
+ * 放样塔楼（part.topPts）：底面 → 顶面直纹立面 + 女儿墙 + 屋面（+ 屋顶设备、四角障碍灯）。
+ * 用于逐层变大的切角（绿地中心）、收分不等比的塔身等；塔冠（lantern / parapet / frame …）接在顶面轮廓上。
+ */
+function buildLoft(env, R, P, crowns) {
+  const { fb, solid, detail, mats, beacons } = env;
+  const part = P.part, g0 = R.ground, y0 = g0 + P.base, y1 = g0 + P.top;
+  const bot = P.pts, top = P.topPts;
+  fb.ring(bot, top, P.base <= 0.5 ? y0 - 3 : y0, y1, mkStyle(facadeStyle(part.style, part.seed)), { vBase: g0 });
+  const par = part.roof?.parapet ?? 1.2, ti = G.inset(top, 0.35);
+  solid.add(G.wallGeometry(top, top, y1, y1 + par), mats.parapet);
+  solid.add(G.wallGeometry(ti, ti, y1 + par, y1 + 0.1), mats.parapet);
+  solid.add(G.annulus(top, ti, y1 + par), mats.parapet);
+  solid.add(G.capGeometry(ti, y1 + 0.1), mats.roof);
+  const c = G.centroid(top), bb = G.bbox(top), mw = Math.min(bb.x1 - bb.x0, bb.z1 - bb.z0) * 0.4;
+  if (part.roof?.mech ?? crowns.every((cr) => cr.type === 'flat')) detail.add(G.box(c.x, y1 + 2.6, c.z, mw, 5.2, mw * 0.8), mats.roof, null, { worldUV: 1 });
+  if (P.top > 60) {
+    // 顶面最远的几个角点（彼此分散）挂障碍灯
+    const cand = [];
+    for (let i = 0; i < top.length; i += 2) cand.push([top[i], top[i + 1]]);
+    cand.sort((a, b) => Math.hypot(b[0] - c.x, b[1] - c.z) - Math.hypot(a[0] - c.x, a[1] - c.z));
+    const pick = [];
+    for (const p of cand) if (pick.length < 4 && pick.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) > mw)) pick.push(p);
+    for (const [x, z] of pick) beacons.add(x, y1 + par + 0.6, z, 0, P.top > 150 ? 5 : 3.5);
+  }
+  return y1;
+}
+
+/**
+ * 斜交网格钢构（kind:'lattice'，如迈科中心连桥下的古铜色“门洞”桁架）：沿轮廓各边生成菱形斜杆 + 上下环梁 + 转角立柱。
+ * part.lattice：{ step 斜杆水平间距（默认 8 m）、rise 每格高度（默认 = step）、w 杆宽（0.6）、open:[边下标…] 不做的边、rings 每格加横杆 }
+ * 材质 part.mat（默认 metal）。
+ */
+function buildLattice(env, P, y0, y1) {
+  const L = P.part.lattice || {}, poly = P.pts, n = poly.length / 2;
+  const step = L.step ?? 8, rise = L.rise ?? step, w = L.w ?? 0.6, skip = new Set(L.open || []);
+  const mat = solidMat(env, P.part.mat || 'metal');
+  const rows = Math.max(1, Math.round((y1 - y0) / rise)), hh = (y1 - y0) / rows;
+  for (let i = 0; i < n; i++) {
+    if (skip.has(i)) continue;
+    const j = (i + 1) % n;
+    const ax = poly[i * 2], az = poly[i * 2 + 1], bx = poly[j * 2], bz = poly[j * 2 + 1], len = Math.hypot(bx - ax, bz - az);
+    if (len < 0.5) continue;
+    const k = Math.max(1, Math.round(len / step));
+    const X = (t) => ax + (bx - ax) * t, Z = (t) => az + (bz - az) * t;
+    for (let r = 0; r < rows; r++) {
+      const ya = y0 + r * hh, yb = ya + hh;
+      for (let s = 0; s < k; s++) {
+        const t0 = s / k, t1 = (s + 1) / k;
+        env.detail.add(beam(X(t0), ya, Z(t0), X(t1), yb, Z(t1), w), mat);
+        env.detail.add(beam(X(t1), ya, Z(t1), X(t0), yb, Z(t0), w), mat);
+      }
+      if (L.rings && r > 0) env.detail.add(beam(ax, ya, az, bx, ya, bz, w * 0.8), mat);
+    }
+    for (const yy of [y0 + w / 2, y1 - w / 2]) env.detail.add(beam(ax, yy, az, bx, yy, bz, w * 1.2), mat);
+    env.detail.add(G.box(ax, (y0 + y1) / 2, az, w * 1.6, y1 - y0, w * 1.6), mat);
+  }
 }
 
 // ═════════════════════════ 招牌 ═════════════════════════
@@ -1000,6 +1079,37 @@ function buildNight(env, R) {
     const P = findPart(R, f.part ?? 0);
     const y0 = R.ground + (f.from ?? P.base), y1 = R.ground + (f.to ?? P.top);
     env.detail.add(washShell(P.pts, y0, y1, f.offset ?? 0.6), washMat(env, f.color || '#ffd9a0', f.strength ?? 0.6));
+  }
+  for (const b of [].concat(N.beams || [])) {
+    // 竖向光束（楼顶上照灯）：at 世界坐标点列 [[x,z]…]，或 offsets 相对体块质心 [[东,北]…]，缺省取 from 高度处轮廓的角点（转角 > 25°）；
+    // from 光束起点离地（默认体块顶）、len 长度（默认 120 m）、w 宽（默认 2.5 m）、color、strength。两片交叉竖直面片，自下而上渐隐，仅夜间
+    const P = findPart(R, b.part ?? 0), yRel = b.from ?? P.top, poly = polyAt(P, yRel);
+    let spots = b.at;
+    if (!spots && b.offsets) { const c = partCentroid(P); spots = b.offsets.map((o) => { const q = offsetPt(c, o); return [q.x, q.z]; }); }
+    if (!spots) {
+      spots = [];
+      const n = poly.length / 2;
+      for (let i = 0; i < n; i++) {
+        const a = (i - 1 + n) % n, c = (i + 1) % n;
+        const d1 = [poly[i * 2] - poly[a * 2], poly[i * 2 + 1] - poly[a * 2 + 1]], d2 = [poly[c * 2] - poly[i * 2], poly[c * 2 + 1] - poly[i * 2 + 1]];
+        const cos = (d1[0] * d2[0] + d1[1] * d2[1]) / (Math.hypot(...d1) * Math.hypot(...d2) || 1);
+        if (cos < 0.9) spots.push([poly[i * 2], poly[i * 2 + 1]]);
+      }
+    }
+    const y0 = R.ground + yRel, y1 = y0 + (b.len ?? 120), hw = (b.w ?? 2.5) / 2, pos = [], uv = [];
+    for (const [x, z] of spots) {
+      for (const [ux, uz] of [[1, 0], [0, 1]]) {
+        const ax = x - ux * hw, az = z - uz * hw, bx = x + ux * hw, bz = z + uz * hw;
+        pos.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y0, az, bx, y1, bz, ax, y1, az);
+        uv.push(0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1);
+      }
+    }
+    if (!pos.length) continue;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.computeVertexNormals();
+    env.detail.add(g, washMat(env, b.color || '#dfe8ff', b.strength ?? 0.5));
   }
   for (const m of [].concat(N.media || [])) {
     // LED 媒体屏：挂在朝 face 的边上，from/to 离地米，width 米（默认边长 80%）
