@@ -145,6 +145,13 @@ export function columns(b, pts, o) {
  */
 const CAI_ROWS = 4;
 export function beam(b, p0, p1, y0, h, t, o = {}) {
+  // o.inset：截面四周内缩（米）。环形枋子在转角十字相交时，相邻两边一粗一细（奇数边内缩数毫米），
+  // 交叠段的顶/底/侧面不再共面闪烁（Z-fighting）。
+  if (o.inset) {
+    y0 += o.inset;
+    h -= 2 * o.inset;
+    t -= 2 * o.inset;
+  }
   const dx = p1[0] - p0[0], dz = p1[1] - p0[1];
   const L = Math.hypot(dx, dz) || 1;
   const ex = dx / L, ez = dz / L;
@@ -193,30 +200,33 @@ export function lintelRing(b, ring, colTop, o) {
   const tang = style === 'tang';
   const detail = b.detail;
   const plank = o.plank !== false;
-  for (const s of ring.sides) {
+  ring.sides.forEach((s, si) => {
+    const inset = (si % 2) * 0.008; // 转角相交：奇数边略细，避免与相邻边枋子共面
     for (let k = 0; k < s.pts.length - 1; k++) {
       const p0 = s.pts[k], p1 = s.pts[k + 1];
       if (detail === 0) {
-        beam(b, p0, p1, colTop - F.fangH, F.fangH, F.fangT, { mat: 'paint', color: tang ? pal.col : 0x2f5f78, top: false });
+        // 远景：额枋与平板枋并成一条（高度含平板枋，保证各级 LOD 的斗拱/屋面/宝顶高度一致，切换时不跳）
+        beam(b, p0, p1, colTop - F.fangH, F.fangH + (plank ? F.plankH : 0), F.fangT, { mat: 'paint', color: tang ? pal.col : 0x2f5f78, top: false, inset });
         continue;
       }
       if (tang) {
-        beam(b, p0, p1, colTop - F.fangH, F.fangH, F.fangT, { mat: 'caihua', row: 2, top: false });
+        beam(b, p0, p1, colTop - F.fangH, F.fangH, F.fangT, { mat: 'caihua', row: 2, top: false, inset });
       } else {
         const y1 = colTop - F.fangH;
-        beam(b, p0, p1, y1, F.fangH, F.fangT, { mat: 'caihua', row: o.rich ? 1 : 0, top: false });
-        beam(b, p0, p1, y1 - F.padH, F.padH, F.fangT * 0.7, { mat: 'paint', color: pal.panel, top: false, ends: false });
-        beam(b, p0, p1, y1 - F.padH - F.fang2H, F.fang2H, F.fangT * 0.9, { mat: 'caihua', row: 0, top: false });
+        beam(b, p0, p1, y1, F.fangH, F.fangT, { mat: 'caihua', row: o.rich ? 1 : 0, top: false, inset });
+        beam(b, p0, p1, y1 - F.padH, F.padH, F.fangT * 0.7, { mat: 'paint', color: pal.panel, top: false, ends: false, inset });
+        beam(b, p0, p1, y1 - F.padH - F.fang2H, F.fang2H, F.fangT * 0.9, { mat: 'caihua', row: 0, top: false, inset });
       }
     }
-  }
-  if (!plank || detail === 0) return colTop;
+  });
+  if (!plank) return colTop;
+  if (detail === 0) return colTop + F.plankH;
   // 平板枋 / 普拍枋：沿柱顶一周（角部出头）
   const n = ring.sides.length;
   for (let i = 0; i < n; i++) {
     const s = ring.sides[i];
     const p0 = s.pts[0], p1 = s.pts[s.pts.length - 1];
-    beam(b, p0, p1, colTop, F.plankH, F.plankW, { mat: tang ? 'paint' : 'caihua', row: 3, color: tang ? pal.gong : 0xffffff, ext: F.plankW * 0.6, uRepeat: Math.max(1, s.pts.length - 1) });
+    beam(b, p0, p1, colTop, F.plankH, F.plankW, { mat: tang ? 'paint' : 'caihua', row: 3, color: tang ? pal.gong : 0xffffff, ext: F.plankW * 0.6, uRepeat: Math.max(1, s.pts.length - 1), inset: (i % 2) * 0.008 });
   }
   return colTop + F.plankH;
 }
@@ -383,7 +393,7 @@ export function bracketRing(b, ring, o) {
     // 远景：整圈一条深色斗拱带
     const loop = offsetCorners(ring, proj * 0.5);
     const n = loop.length;
-    for (let i = 0; i < n; i++) beam(b, loop[i], loop[(i + 1) % n], y, H * 0.9, proj, { mat: 'paint', color: tang ? pal.gong : 0x2d5a5a, ends: false });
+    for (let i = 0; i < n; i++) beam(b, loop[i], loop[(i + 1) % n], y, H * 0.9, proj, { mat: 'paint', color: tang ? pal.gong : 0x2d5a5a, ends: false, inset: (i % 2) * 0.008 });
     return out;
   }
   const kinds = pz ? ['pingzuo', 'pingzuo'] : ['col', 'mid'];
@@ -431,12 +441,13 @@ export function bracketRing(b, ring, o) {
   for (let i = 0; i < nSides; i++) {
     const s = ring.sides[i];
     const p0 = s.pts[0], p1 = s.pts[s.pts.length - 1];
-    if (o.panel !== false) beam(b, p0, p1, y, H * (tang ? 0.52 : 0.6), H * 0.07, { mat: tang ? 'plaster' : 'paint', color: pal.panel, ends: false, top: false });
-    beam(b, p0, p1, y + H * (tang ? 0.52 : 0.6), H * (tang ? 0.44 : 0.36), H * 0.12, { mat: 'paint', color: tang ? pal.gong : pal.dou, ext: H * 0.06, ends: false });
+    const inset = (i % 2) * 0.008; // 转角十字相交处奇数边略细，防共面
+    if (o.panel !== false) beam(b, p0, p1, y, H * (tang ? 0.52 : 0.6), H * 0.07, { mat: tang ? 'plaster' : 'paint', color: pal.panel, ends: false, top: false, inset });
+    beam(b, p0, p1, y + H * (tang ? 0.52 : 0.6), H * (tang ? 0.44 : 0.36), H * 0.12, { mat: 'paint', color: tang ? pal.gong : pal.dou, ext: H * 0.06, ends: false, inset });
     // 挑檐枋 / 橑檐枋（外拽，角部相交）
     if (o.outer !== false) {
       const q0 = tipC[i], q1 = tipC[(i + 1) % nSides];
-      beam(b, q0, q1, y + H * (tang ? 0.8 : 0.76), H * (tang ? 0.16 : 0.18), H * 0.12, { mat: 'paint', color: pal.gong, ext: H * 0.08 });
+      beam(b, q0, q1, y + H * (tang ? 0.8 : 0.76), H * (tang ? 0.16 : 0.18), H * 0.12, { mat: 'paint', color: pal.gong, ext: H * 0.08, inset });
     }
   }
   out.count = cnt;

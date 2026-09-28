@@ -10,14 +10,14 @@ import { ArchBuilder, STYLES, palette, clamp, lerp, rng, lin, floodlit, makeLOD,
 import { roof, roofYFor } from './chinese-roof.js';
 import { frameDims, rectRing, polyRing, ringColumns, bayCoords, bayList, offsetCorners, columns, beam, lintelRing, bracketRing, queti } from './chinese-wood.js';
 import { bayFill, wallPanel, latticePanel, glowQuad, archWall, archOutline, cityPlatform, yardWall } from './chinese-wall.js';
-import { platform, steps, balustrade, lantern, lanternString, stoneLion, offsetPoly, rectPoly, ngonPoly } from './chinese-base.js';
+import { platform, steps, balustrade, lantern, lanternPost, lanternString, stoneLion, offsetPoly, rectPoly, ngonPoly } from './chinese-base.js';
 
 export {
   ArchBuilder, STYLES, palette, floodlit, makeLOD, stats, getKit, ROOF_COLORS, roofColors,
   roof, roofYFor,
   frameDims, rectRing, polyRing, ringColumns, bayCoords, bayList, offsetCorners, columns, beam, lintelRing, bracketRing, queti,
   bayFill, wallPanel, latticePanel, glowQuad, archWall, archOutline, cityPlatform, yardWall,
-  platform, steps, balustrade, lantern, lanternString, stoneLion, offsetPoly, rectPoly, ngonPoly,
+  platform, steps, balustrade, lantern, lanternPost, lanternString, stoneLion, offsetPoly, rectPoly, ngonPoly,
 };
 
 // ───────────── 构建工具 ─────────────
@@ -91,16 +91,17 @@ function schemeFor(o, side, style) {
 }
 function fillRing(b, ring, y0, y1, o) {
   const style = o.style;
-  for (const side of ring.sides) {
+  ring.sides.forEach((side, si) => {
     const nb = side.pts.length - 1;
     const kinds = sideKinds(schemeFor(o, side, style), nb, style);
     const { mid, local } = sideFrame(side);
-    b.push(mid[0], 0, mid[1], side.yaw);
+    // 相邻两面墙在转角柱处交叠：奇数边整体抬高 6 mm，槛墙顶/墙顶不再与相邻面共面闪烁
+    b.push(mid[0], (si % 2) * 0.006, mid[1], side.yaw);
     for (let k = 0; k < nb; k++) {
       bayFill(b, kinds[k] || 'wall', local[k], local[k + 1], y0, y1, { pal: o.pal, style, D: o.D, seed: (o.seed ?? 1) * 97 + k * 13 + side.name.length * 7, carve: o.carve, pattern: o.pattern, wallColor: o.wallColor, lit: o.lit });
     }
     b.pop();
-  }
+  });
 }
 function quetiRing(b, ring, yTop, o) {
   for (const side of ring.sides) {
@@ -250,7 +251,8 @@ export function hall(b, o = {}) {
       const xi = clamp(x, xs[1], xs[xs.length - 2]), zi = clamp(z, zs[1], zs[zs.length - 2]);
       beam(b, [x, z], [xi, zi], yT, F.fangH * 0.7, F.D * 0.5, { mat: 'paint', color: pal.gong });
     }
-    const lower = eaveRoof(b, { ring: outer, br: res.br, colH, type: 'band', style, pal, color: o.roofColor, top: ringW, underside: 'full', beasts: o.beasts });
+    // 下檐（副阶）坡顶止于金柱外皮：原先止于金柱中线，金柱与其上板壁从下檐瓦面顶带穿出
+    const lower = eaveRoof(b, { ring: outer, br: res.br, colH, type: 'band', style, pal, color: o.roofColor, top: ringW - F.D * 0.5 - 0.03, underside: 'full', beasts: o.beasts });
     info.roofs.push(lower);
     // 金柱（通柱）至上檐
     const F2 = frameDims(style, colH, { ...o, bracketH: (o.bracketH ?? F.bracketH) * (o.upperBracketK ?? 1) });
@@ -432,7 +434,8 @@ export function multiStoreyTower(b, o = {}) {
     const type = o.roof || (poly ? 'zanjian' : 'xieshan');
     if (topDouble) {
       const ringW = o.topRing ?? (poly ? Math.min(1.8, s.ring.w * 0.12) : Math.min((s.ring.sides[0].pts[1][0] - s.ring.sides[0].pts[0][0]) * 0.4, 1.8));
-      const band = eaveRoof(b, { ring: s.ring, br: res.br, colH: s.colH, type: 'band', style, pal, color: o.roofColor, top: ringW, underside: 'eave', sides: poly ? N : 4 });
+      // 重檐下檐坡顶止于上檐柱（檐柱缩进 ringW）外皮，不压进柱身
+      const band = eaveRoof(b, { ring: s.ring, br: res.br, colH: s.colH, type: 'band', style, pal, color: o.roofColor, top: ringW - F.D * 0.5 - 0.03, underside: 'eave', sides: poly ? N : 4 });
       info.roofs.push(band);
       const inner = poly ? polyRing(N, s.ring.w / 2 - ringW, 1) : expandRect(s.ring, -ringW);
       const F2 = frameDims(style, s.colH, { ...o, bracketH: F.bracketH * 0.95 });
@@ -569,6 +572,7 @@ export function arrowTower(b, o = {}) {
   b.box('brick', -w / 2, y0, -d / 2, w / 2, y0 + h, d / 2, brickC, { skip: 'bottom' });
   // 各层腰线（白灰砖带）+ 箭窗（红框、内黑，夜间微光）
   const winW = 0.9, winH = 1.1;
+  const hideFront = o.baosha !== false ? { x: w * 0.28 + 2.4, y: y0 + h * 0.72 + 0.6 + 5.5 * 0.55 } : null;
   const face = (L, n, z0, yaw) => {
     b.push(0, 0, 0, yaw);
     for (let r = 0; r < rows; r++) {
@@ -576,9 +580,11 @@ export function arrowTower(b, o = {}) {
       if (b.detail >= 1) b.box('plaster', -L / 2 - 0.02, yb - 0.55, z0 - 0.05, L / 2 + 0.02, yb - 0.35, z0 + 0.04, 0xd8d2c6);
       for (let k = 0; k < n; k++) {
         const x = (k - (n - 1) / 2) * (L / (n + 0.5));
+        // 正面被抱厦楼身与抱厦屋顶遮住的箭窗不做（原先窗框从抱厦屋面穿出）
+        if (hideFront && yaw === 0 && Math.abs(x) < hideFront.x && yb < hideFront.y) continue;
         if (b.detail >= 1) {
           b.box('paint', x - winW / 2 - 0.12, yb, z0 - 0.02, x + winW / 2 + 0.12, yb + winH + 0.24, z0 + 0.06, pal.frame, { skip: 'bottom' });
-          glowQuad(b, x - winW / 2, x + winW / 2, yb + 0.12, yb + 0.12 + winH, z0 + 0.065, (k + r) % 3 ? 0.08 : 0.5, 0x1e1a18);
+          glowQuad(b, x - winW / 2, x + winW / 2, yb + 0.12, yb + 0.12 + winH, z0 + 0.08, (k + r) % 3 ? 0.08 : 0.5, 0x1e1a18); // 窗框外皮 z0+0.06，窗纸前移 2 cm 防共面闪烁
         } else glowQuad(b, x - winW / 2, x + winW / 2, yb, yb + winH, z0 + 0.02, 0.1, 0x3a1a14);
       }
     }
@@ -606,7 +612,7 @@ export function arrowTower(b, o = {}) {
       for (let k = 0; k < 6; k++) {
         const x = (k - 2.5) * (bw / 6.5);
         if (b.detail >= 1) b.box('paint', x - winW / 2 - 0.12, yb, -0.02, x + winW / 2 + 0.12, yb + winH + 0.24, 0.06, pal.frame, { skip: 'bottom' });
-        glowQuad(b, x - winW / 2, x + winW / 2, yb + 0.12, yb + 0.12 + winH, 0.065, k % 2 ? 0.1 : 0.45, 0x1e1a18);
+        glowQuad(b, x - winW / 2, x + winW / 2, yb + 0.12, yb + 0.12 + winH, 0.08, k % 2 ? 0.1 : 0.45, 0x1e1a18);
       }
     }
     b.pop();
@@ -679,7 +685,8 @@ export function pavilion(b, o = {}) {
   const info = { roofs: [], columns: ringColumns(ring).map(([x, z]) => [x, z, yP, res.colTop, F.D]), rings: [ring], platformTop: yP, colTop: res.colTop, footprint: fp, style };
   if (eaves >= 2) {
     const ringW = size * 0.2;
-    const band = eaveRoof(b, { ring, br: res.br, colH, type: 'band', style, pal, color: o.roofColor, top: ringW, underside: 'full', sides: ring.rect ? 4 : N });
+    // 下檐坡顶止于内圈金柱外皮（金柱通高，原先下檐压到金柱中线，柱身从瓦面穿出）
+    const band = eaveRoof(b, { ring, br: res.br, colH, type: 'band', style, pal, color: o.roofColor, top: ringW - F.D * 0.45 - 0.03, underside: 'full', sides: ring.rect ? 4 : N });
     info.roofs.push(band);
     const inner = ring.rect ? expandRect(ring, -ringW) : polyRing(N === 0 ? 8 : N, size / 2 - ringW, 1);
     const F2 = frameDims(style, colH, { bracketH: F.bracketH, colD: F.D * 0.9 });
