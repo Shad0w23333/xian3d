@@ -160,12 +160,7 @@ export function towerSpecs() {
     pts: G.rect(157, -7665, 80, 36, 0, { chamfer: 2 }), h: 149.75, crown: { h: 8, color: '#e2ecff' },
     style: { tint: '#3d5a70', spd: '#56626c', floorH: 4.2, colW: 1.5, spandrel: 0.26, band: 12, lit: 0.36, mode: 2, seed: 18 },
   });
-  // ———————— 曲江：西安华润国际文化商业中心（电视塔东侧四栋约 150 m 写字楼 + 西安万象城） ————————
-  for (const [k, hh, sd] of [['crA', 147.6, 21], ['crB', 148.8, 22], ['crC', 151, 23], ['crD', 151, 24]]) L.push({
-    key: k, name: '华润国际文化商业中心' + k.slice(2) + '座', pts: FP[k], h: hh, crown: { h: 8, color: '#e8f0ff', colW: 2.4 },
-    tiers: [{ to: 0.93, inset: 0 }, { to: 1, inset: 1.2 }],
-    style: { tint: '#50687a', spd: '#7d8993', floorH: 4.2, colW: 1.5, spandrel: 0.24, band: 11, lit: 0.36, mode: 2, seed: sd },
-  });
+  // 曲江·西安华润国际文化商业中心四塔（crA–crD）与西安万象城裙楼已移到 src/modules/mixc.js 精建
   // ———————— 未央国际商圈（凤城八路—未央路，经开区） ————————
   L.push({
     key: 'wygj', name: '未央国际', pts: FP.wygjT, h: 99.6, crown: { h: 6, color: '#dfe9ff' },
@@ -191,7 +186,6 @@ export function mallSpecs() {
     //   旧 FP.dmgwd 只有北半部（7105 m²，质心偏北 88 m，交并比 0.19）
     { key: 'dmgwd', d: 'weiyang', pts: DMGWD, h: 26, signs: [{ text: '万达广场', h: 6.5, faces: 2, color: '#f1c24c' }] },
     { key: 'saige', d: 'south', pts: FP.saige, h: 56, led: true, signs: [{ text: '赛格国际购物中心', h: 5.5, faces: 1 }], style: { tint: '#34414b', spd: '#cfc9bd', floorH: 5.6 } },
-    { key: 'mixc', d: 'south', pts: FP.mixc, h: 24, signs: [{ text: '万象城', h: 6, faces: 2 }] },
     { key: 'kaiyuan', d: 'center', pts: FP.kaiyuan, h: 36, signs: [{ text: '开元商城', h: 5, faces: 2, color: '#e33a2c' }], style: { tint: '#3a4650', spd: '#d8d0c0' } },
   ];
 }
