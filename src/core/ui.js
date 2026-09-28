@@ -94,7 +94,7 @@ export class UI {
       </div>
       <div class="sec">
         <div class="sec-h">画质 <span class="fps">— fps</span></div>
-        <div class="row q-row">${QUALITY_LEVELS.map((q, i) => `<button class="q" data-q="${i}">${q.name}</button>`).join('')}</div>
+        <div class="row q-row">${QUALITY_LEVELS.map((q, i) => `<button class="q" data-q="${i}">${q.name}</button>`).join('')}<span class="q-custom" title="细项已修改，见下方“画质与显示”">自定义</span></div>
         <div class="stats"></div>
       </div>
       <div class="sec">
@@ -162,7 +162,7 @@ export class UI {
             <p><kbd>F</kbd> 全屏，<kbd>K</kbd> 截图保存 PNG</p>
             <p><kbd>H</kbd> 或 <kbd>?</kbd> 打开/关闭本帮助</p>
             <h3>画质</h3>
-            <p>右侧面板可选 低/中/高/超高。卡顿时先降一档；“在线高清卫星影像”需联网，离线时自动使用内置影像。</p>
+            <p>右侧面板可选 低/中/高/超高 预设；展开“画质与显示”可单独开关阴影、泛光、抗锯齿、雾，调节视距/建筑与树木距离/像素比，开关车辆、行人、航班。卡顿时先降一档；“在线高清卫星影像”需联网，离线时自动使用内置影像。</p>
           </div>
         </div>
         <p class="help-close">按 <kbd>H</kbd> 或点击任意处关闭</p>
@@ -193,8 +193,15 @@ export class UI {
     for (const el of [this.panel, this.info, this.mini]) el.addEventListener('mousedown', (e) => e.stopPropagation());
   }
 
-  setQualityActive(i) {
+  setQualityActive(i, custom = false) {
     this.panel.querySelectorAll('.q').forEach((b) => b.classList.toggle('on', parseInt(b.dataset.q) === i));
+    this.panel.querySelector('.q-custom')?.classList.toggle('on', !!custom);
+  }
+  /** 在“画质”区之后插入一个面板区块（画质与显示设置用，见 core/display-ui.js） */
+  addSectionAfterQuality(el) {
+    const q = this.panel.querySelector('.q-row')?.closest('.sec');
+    if (q) q.after(el);
+    else this.panel.insertBefore(el, this.panel.querySelector('.collapse'));
   }
   setPlaying(p) {
     this.panel.querySelector('.t-play').textContent = p ? '❚❚ 暂停' : '▶ 流逝';
