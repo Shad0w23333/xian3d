@@ -14,8 +14,11 @@ export class Imagery {
     this.provider = IMAGERY_PROVIDERS[DEFAULT_IMAGERY];
     this.providerId = DEFAULT_IMAGERY;
     this.raw = new Map(); // GCJ 原始瓦片缓存 key -> Promise<ImageBitmap>
+    // 是否允许联网影像（?online=0 / 面板“在线高清卫星影像”勾选框）；本地离线包不联网，不受它影响
+    this.netAllowed = true;
+    this.generation = 0;
     this.online = {
-      enabled: true,
+      enabled: true, // 当前影像源是否加载瓦片 = 本地包 || netAllowed（见 _syncEnabled）
       url: this.provider.url,
       maxZoom: this.provider.maxZoom,
       status: '等待', // 等待 / 在线 / 离线
@@ -43,19 +46,32 @@ export class Imagery {
     if (cfg.maxZoom) this.online.maxZoom = cfg.maxZoom;
   }
 
-  /** 切换在线影像源（'amap' | 'esri'），清空已加载的在线瓦片 */
+  /** 挂接本地离线瓦片包（TilePack） */
+  attachPack(pack) {
+    this.pack = pack;
+    if (pack.attribution) IMAGERY_PROVIDERS.local.attribution = pack.attribution;
+    IMAGERY_PROVIDERS.local.maxZoom = pack.maxZoom;
+  }
+
+  /** 切换影像源（'local' | 'amap' | 'esri'），清空已加载的瓦片 */
   setProvider(id) {
     const p = IMAGERY_PROVIDERS[id];
     if (!p || id === this.providerId) return false;
+    if (p.local && !this.pack) return false;
     this.provider = p;
     this.providerId = id;
     this.online.url = p.url;
     this.online.maxZoom = p.maxZoom;
+    this.maxInflight = p.local ? 16 : 12;
     this.pending.clear();
+    this.failed.clear();
+    // 中止旧源的在途请求，释放并发槽（否则网络不通时旧请求要等 15 s 超时才让出，其失败还会计入新源的退避）
+    for (const c of this.inflight.values()) c.abort();
+    this.inflight.clear();
     for (const [, e] of this.cache) if (e.refs === 0) { e.tex.dispose(); e.tex.image && e.tex.image.close && e.tex.image.close(); }
     this.cache = new Map([...this.cache].filter(([, e]) => e.refs > 0)); // 仍被地形引用的旧瓦片稍后自然回收
     this.generation = (this.generation || 0) + 1;
-    this.setOnlineEnabled(this.online.enabled);
+    this._syncEnabled();
     return true;
   }
 
@@ -122,6 +138,8 @@ export class Imagery {
     if (!this.online.enabled) return;
     const k = this.key(z, x, y);
     if (this.cache.has(k) || this.failed.has(k) || this.inflight.has(k)) return;
+    // 本地包：包里没有的瓦片直接记为失败（地形会退回祖先瓦片或内置底图）
+    if (this.provider.local && !this.pack.has(z, x, y)) { this.failed.add(k); return; }
     const bo = this.backoff.get(k);
     if (bo && performance.now() < bo) return;
     const p = this.pending.get(k);
@@ -227,10 +245,14 @@ export class Imagery {
     const ctrl = new AbortController();
     this.inflight.set(k, ctrl);
     const timer = setTimeout(() => ctrl.abort(), 15000);
+    const gen = this.generation || 0;
     try {
-      const gen = this.generation || 0;
       let bmp;
-      if (this.provider.gcj) {
+      if (this.provider.local) {
+        const blob = await this.pack.get(p.z, p.x, p.y, ctrl.signal);
+        if (!blob) throw new Error('placeholder');
+        bmp = await createImageBitmap(blob, { imageOrientation: 'flipY', colorSpaceConversion: 'none' });
+      } else if (this.provider.gcj) {
         bmp = await this._composeGcj(p.z, p.x, p.y, ctrl.signal);
       } else {
         const res = await fetch(this._url(p.z, p.x, p.y), { mode: 'cors', signal: ctrl.signal });
@@ -256,6 +278,8 @@ export class Imagery {
       this.online.status = '在线';
       for (const fn of this.listeners) fn(p.z, p.x, p.y, tex);
     } catch (e) {
+      // 期间切换了影像源（旧请求已被中止）：不计入失败/退避
+      if (gen !== (this.generation || 0)) return;
       // 占位图/404：永久失败；网络错误：退避重试，不永久关闭在线影像
       const permanent = e.message === 'placeholder' || /HTTP 4\d\d/.test(e.message);
       if (permanent) this.failed.add(k);
@@ -274,7 +298,8 @@ export class Imagery {
       }
     } finally {
       clearTimeout(timer);
-      this.inflight.delete(k);
+      // 切换源后同名 key 可能已被新请求占用，只删自己的
+      if (this.inflight.get(k) === ctrl) this.inflight.delete(k);
     }
   }
 
@@ -289,7 +314,15 @@ export class Imagery {
     }
   }
 
+  /** 允许/禁止联网影像（?online=0、面板勾选框）；本地离线包照常加载 */
   setOnlineEnabled(on) {
+    this.netAllowed = !!on;
+    this._syncEnabled();
+  }
+
+  /** 按当前影像源重算 online.enabled：本地包总是加载，联网源受 netAllowed 控制 */
+  _syncEnabled() {
+    const on = !!this.provider.local || this.netAllowed;
     this.online.enabled = on;
     this.online.status = on ? (this.online.ok ? '在线' : '等待') : '离线';
     if (on) {

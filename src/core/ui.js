@@ -100,7 +100,7 @@ export class UI {
       <div class="sec">
         <div class="sec-h">图层</div>
         <label><input type="checkbox" class="l-online" checked /> 在线高清卫星影像 <em class="online-status"></em></label>
-        <label>影像源 <select class="l-provider"><option value="amap">高德卫星（较新）</option><option value="esri">Esri 卫星</option></select></label>
+        <label>影像源 <select class="l-provider"><option value="local">本地离线高清</option><option value="amap">高德卫星（较新）</option><option value="esri">Esri 卫星</option></select></label>
         <label><input type="checkbox" class="l-traffic" checked /> 交通流与航班</label>
         <label><input type="checkbox" class="l-labels" checked /> 地名标注</label>
         <label><input type="checkbox" class="l-buildings" checked /> 城市建筑</label>
@@ -203,9 +203,12 @@ export class UI {
     const el = this.panel.querySelector('.l-' + name);
     if (el) el.checked = v;
   }
-  setProvider(id) {
+  setProvider(id, hasLocal = true) {
     const el = this.panel.querySelector('.l-provider');
-    if (el) el.value = id;
+    if (!el) return;
+    const opt = el.querySelector('option[value="local"]');
+    if (opt && !hasLocal) opt.remove();
+    el.value = id;
   }
   setAttribution(list) {
     this.attrib.textContent = list.join(' · ');

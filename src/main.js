@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { loadJSON, loadBinary, onProgress } from './core/data.js';
 import { Terrain } from './core/terrain.js';
 import { Imagery } from './core/imagery.js';
+import { TilePack } from './core/tilepack.js';
 import { SkySystem } from './core/sky.js';
 import { Controls } from './core/controls.js';
 import { Post } from './core/post.js';
@@ -110,12 +111,27 @@ async function main() {
   const terrain = new Terrain();
   const imagery = new Imagery(renderer, quality);
   imagery.setOnlineConfig(meta.online);
-  if (params.get('online') === '0') imagery.setOnlineEnabled(false);
+  // 本地离线高清影像包（public/tiles/，tools/imagery_pack.py 生成）：存在时默认使用，?pack=0 关闭
+  const pack = params.get('pack') === '0' ? null : await TilePack.load('tiles/');
+  if (pack) imagery.attachPack(pack);
   {
     let pid = params.get('imagery');
-    if (!pid) try { pid = localStorage.getItem('xian3d.imagery'); } catch {}
+    if (!pid) {
+      // 已保存的选择只在“当时已有本地包”或“现在仍没有本地包”时沿用；
+      // 旧版（无本地选项时）存的 amap/esri 不应压过新生成的本地包
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem('xian3d.imagery.v2') || 'null');
+        if (!saved) { const s = localStorage.getItem('xian3d.imagery'); if (s) saved = { id: s, hadLocal: s === 'local' }; }
+      } catch {}
+      if (saved && typeof saved.id === 'string' && (saved.hadLocal || !pack)) pid = saved.id;
+    }
+    if (pid === 'local' && !pack) pid = null;
+    if (!pid && pack) pid = 'local';
     if (pid && IMAGERY_PROVIDERS[pid]) imagery.setProvider(pid);
   }
+  // online=0 只关闭联网影像；本地瓦片包不受影响（Imagery 内区分，之后切换影像源也保持）
+  if (params.get('online') === '0') imagery.setOnlineEnabled(false);
   const [,] = await Promise.all([terrain.load(meta), imagery.loadMosaics(meta.imagery)]);
 
   const data = {};
@@ -179,8 +195,11 @@ async function main() {
     ui.setLoading(0.62 + (0.33 * i) / Math.max(1, loaded.length), `构建：${mod.name || mod.id}……`);
     await new Promise((r) => setTimeout(r, 0));
     const t0 = performance.now();
+    const nChildren = scene.children.length;
     try {
       const inst = (await mod.build(ctx)) || {};
+      // 记录归属模块（调试/诊断用）
+      for (let k = nChildren; k < scene.children.length; k++) scene.children[k].userData.module ??= mod.id;
       inst.id = mod.id;
       inst.name = mod.name;
       instances.push(inst);
@@ -192,6 +211,24 @@ async function main() {
     }
   }
   app.modules = instances;
+  // 兜底：零长度法线在 Metal 上 normalize → NaN，经泛光扩散成全屏黑。构建完成后统一修正为朝上
+  {
+    const t0 = performance.now();
+    let fixed = 0;
+    scene.traverse((o) => {
+      const N = o.geometry?.attributes?.normal;
+      if (!o.isMesh || !N || N.isInterleavedBufferAttribute || N.normalized || !(N.array instanceof Float32Array)) return;
+      if ([].concat(o.material).every((m) => m.flatShading)) return;
+      const a = N.array;
+      let n = 0;
+      for (let i = 0; i < a.length; i += 3) {
+        const x = a[i], y = a[i + 1], z = a[i + 2];
+        if (!(x * x + y * y + z * z > 1e-12)) { a[i] = 0; a[i + 1] = 1; a[i + 2] = 0; n++; }
+      }
+      if (n) { N.needsUpdate = true; fixed += n; }
+    });
+    if (fixed) console.warn(`[xian3d] 修正零长度/NaN 法线 ${fixed} 个（${(performance.now() - t0).toFixed(0)} ms）`);
+  }
 
   // —— 后期 & 控制 ——
   const post = new Post(renderer, scene, camera, quality, reversed);
@@ -247,7 +284,8 @@ async function main() {
       ...(meta.sources || []).filter((x) => !/Esri|OpenStreetMap/i.test(x)).map((x) => x.split('(')[0].split('（')[0].trim()).slice(0, 2),
     ]);
   updateAttribution();
-  ui.setProvider(imagery.providerId);
+  ui.setProvider(imagery.providerId, !!imagery.pack);
+  ui.setLayer('online', imagery.netAllowed);
   const miniSrc = imagery.mosaics.find((m) => /main/.test(m.file)) || imagery.mosaics[imagery.mosaics.length - 1];
   if (miniSrc) ui.setMinimapImage(miniSrc.texture.image, miniSrc.bounds);
   if (params.get('mini') === '0') ui.toggleMinimap(false);
@@ -287,10 +325,14 @@ async function main() {
   ui.on('speed', (s) => (sky.speed = s));
   ui.on('preset', goPreset);
   ui.on('quality', applyQuality);
-  ui.on('online', (v) => { imagery.setOnlineEnabled(v); ui.toast(v ? '已开启在线高清卫星影像' : '已切换到内置影像'); });
+  ui.on('online', (v) => {
+    imagery.setOnlineEnabled(v);
+    if (imagery.provider.local) ui.toast(v ? '已允许联网影像（当前为本地离线高清）' : '已禁止联网影像（本地离线高清照常使用）');
+    else ui.toast(v ? '已开启在线高清卫星影像' : '已切换到内置影像');
+  });
   ui.on('provider', (id) => {
     if (imagery.setProvider(id)) {
-      try { localStorage.setItem('xian3d.imagery', id); } catch {}
+      try { localStorage.setItem('xian3d.imagery.v2', JSON.stringify({ id, hadLocal: !!imagery.pack })); } catch {}
       updateAttribution();
       ui.toast(`影像源：${imagery.provider.name}`);
     }
@@ -352,6 +394,8 @@ async function main() {
   let speed = 0;
   app.frame = 0;
   const tick = () => {
+    // 自动截图：暂停渲染，避免软件渲染（SwiftShader）时帧循环阻塞截图
+    if (app.paused) { clock.getDelta(); requestAnimationFrame(tick); return; }
     const dt = Math.min(clock.getDelta(), 0.1);
     elapsed += dt;
     app.frame++;
@@ -401,7 +445,7 @@ async function main() {
       mode: controls.mode,
       locked: controls.locked,
       place: placeName(camera.position.x, camera.position.z),
-      online: imagery.online.enabled ? `${imagery.online.status} · 缓存 ${imagery.cache.size}` : '离线',
+      online: imagery.online.enabled ? `${imagery.provider.local ? '本地' : imagery.online.status} · 缓存 ${imagery.cache.size}` : '离线',
       stats: `绘制 ${info.calls} 次 · ${(info.triangles / 1e6).toFixed(2)}M 三角形 · 地形块 ${terrain.visibleCount}`,
     });
     app.fps = fps;

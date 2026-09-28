@@ -8,7 +8,13 @@ import * as G from '../arch/sky-geom.js';
 import { createFacadeMaterial } from '../arch/sky-facade.js';
 import { SignAtlas, Beacons, solidMats, buildTower, buildPodium, groundMin } from '../arch/sky-towers.js';
 import * as SP from '../arch/sky-special.js';
-import { DISTRICTS, towerSpecs, mallSpecs, SPECIAL } from '../arch/sky-data.js';
+import { DISTRICTS, towerSpecs as towerSpecs1, mallSpecs as mallSpecs1, SPECIAL } from '../arch/sky-data.js';
+import { SUPERSEDED, towerSpecs2, mallSpecs2, SPECIAL2, special2Footprints } from '../arch/sky-data2.js';
+import * as SP2 from '../arch/sky-special2.js';
+
+// 2026-09 地标更新（sky-data2.js）取代失真的旧定义（熙地港、大融城、未央国际）
+const towerSpecs = () => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2());
+const mallSpecs = () => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2());
 
 /** 有贴图的材质自动套“米制”UV（贴图自带 UV 的除外） */
 class SBatcher extends Batcher {
@@ -74,6 +80,7 @@ function allFootprints(ctx) {
   for (const c of S.conf) polys.push(G.rect(c.cx, c.cz, c.side + 4, c.side + 4, c.rot));
   for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
   for (const p of S.gov) polys.push(G.ccw(p));
+  polys.push(...special2Footprints());
   const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.slice() };
   for (const f of genericFeatures(ctx, curated)) polys.push(G.ccw(f.outer));
   return { polys, curated };
@@ -117,7 +124,7 @@ export default {
     // —— 塔楼 ——
     for (const s of towerSpecs()) safe(s.name, () => {
       const c = G.centroid(s.pts);
-      const E = env(districtOf(c.x, c.z));
+      const E = env(s.d || districtOf(c.x, c.z));
       const r = buildTower(E, s);
       if (s.pyramid) {
         // 陕西信息大厦：玻璃四棱锥塔冠 + 塔尖
@@ -175,6 +182,12 @@ export default {
       const main = Math.abs(G.area(p)) > 3500 && o.w / o.d > 2.4;
       SP.buildGovBlock(env('weiyang'), p, { h: main ? 42 : o.w * o.d > 2000 ? 22 : 16 });
     });
+    // —— 2026-09 新增：曲江 W 酒店·万众国际、浐灞凯悦 / 彩虹桥 / 蝴蝶桥 / 后海夜市 ——
+    safe('万众国际·W酒店', () => SP2.buildW(env('south'), SPECIAL2.w));
+    safe('浐灞凯悦', () => SP2.buildHyatt(env('chanba'), SPECIAL2.hyatt));
+    safe('彩虹桥', () => root.add(SP2.buildRainbowBridge(env('chanba'), SPECIAL2.rainbow)));
+    safe('蝴蝶桥', () => root.add(SP2.buildButterflyBridge(env('chanba'), SPECIAL2.butterfly)));
+    safe('后海夜市', () => root.add(SP2.buildHouhai(env('chanba'), SPECIAL2.houhai)));
     // —— 其余 OSM 实测高层 ——
     const gen = genericFeatures(ctx, curated);
     gen.forEach((f, i) => safe('generic', () => buildTower(env(districtOf(f.x, f.z)), genericSpec(f, i))));

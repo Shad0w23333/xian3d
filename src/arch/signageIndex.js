@@ -78,7 +78,7 @@ export class BuildingIndex {
     const p = this.p;
     s = 1;
     if (p.hDm[b] < 25) s = 2; // 低于 2.5 m 的棚子/围墙不挂招牌
-    else if (this.exclusions && this.exclusions.test(p.ax[b], p.az[b], 'buildings')) s = 2;
+    else if (this.exclusions && this.exclusions.test(p.ax[b], p.az[b], 'buildings', p.hDm[b] * 0.1)) s = 2;
     this.state[b] = s;
     return s === 1;
   }

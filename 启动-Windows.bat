@@ -7,4 +7,4 @@ if not exist dist\index.html (
   call npm run build || exit /b 1
 )
 start "" http://localhost:4173/
-where python >nul 2>nul && (python -m http.server 4173 --directory dist) || (npx --yes serve -l 4173 dist)
+where node >nul 2>nul && (node tools\serve.mjs dist 4173) || (python tools\serve.py dist 4173)
