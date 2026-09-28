@@ -459,8 +459,80 @@ function beam(ax, ay, az, bx, by, bz, w) {
   return g;
 }
 
+// ═════════════════════════ 中式坡屋顶（hip / eave / slab 塔冠用） ═════════════════════════
+/** 屋顶平面框：cr.size + at/offset + rot（地图角度），或默认取体块顶面最小外接矩形 → {cx, cz, w（长）, d（短）, rot（世界弧度）} */
+function roofFrame(cr, topPoly, c) {
+  if (cr.size) {
+    const [w, d = w] = cr.size;
+    return { cx: c.x, cz: c.z, w, d, rot: -(cr.rot || 0) * D };
+  }
+  const o = G.obb(topPoly);
+  if (cr.along === 'short') return { cx: o.cx, cz: o.cz, w: o.d, d: o.w, rot: o.rot + Math.PI / 2 };
+  return o;
+}
+/**
+ * 中式大屋顶几何（直坡面，檐角可起翘）：局部 u 沿长边（半长 A）、v 沿短边（半宽 B），檐口高 y0、屋脊高 y0+h。
+ * style：'wudian' 庑殿（四坡，戗脊 45°）| 'xieshan' 歇山（下部四坡、上部两坡 + 竖直山花）| 'zanjian' 攒尖（四坡交于一点）。
+ * 返回 {roof, gable, ridge:[u0,u1]}（非索引几何；gable 为山花三角，可能为 null）
+ */
+function hipGeometry(F, A, B, y0, h, style, lift, xk) {
+  const c = Math.cos(F.rot), s = Math.sin(F.rot);
+  const W = (u, v, y) => [F.cx + u * c - v * s, y, F.cz + u * s + v * c];
+  let Gu, hg; // 山花（或正脊端点）位置与高度
+  if (style === 'zanjian') { Gu = 0; hg = h; }
+  else if (style === 'xieshan') { hg = h * (xk ?? 0.45); Gu = Math.max(0.3, A - B * (hg / h)); }
+  else { Gu = Math.max(0, A - B); hg = h; }
+  const vg = B * (1 - hg / h);
+  const roof = [], gable = [];
+  const tri = (out, p, q, r, up) => {
+    // 三角形朝向：up=[nx,ny,nz] 期望的大致法线方向
+    const e1 = [q[0] - p[0], q[1] - p[1], q[2] - p[2]], e2 = [r[0] - p[0], r[1] - p[1], r[2] - p[2]];
+    const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    const L = Math.hypot(...n);
+    if (L < 1e-6) return;
+    if (n[0] * up[0] + n[1] * up[1] + n[2] * up[2] < 0) out.push(...p, ...r, ...q);
+    else out.push(...p, ...q, ...r);
+  };
+  // 一个坡面：檐口边从 (ua,va) 到 (ub,vb)（端点为檐角，起翘 lift），上缘为 T0→T1（可重合），外法线水平分量 dir
+  const slope = (ea, eb, T0, T1, dirU, dirV) => {
+    const up = [dirU * c - dirV * s, 1.2, dirU * s + dirV * c];
+    const P = [0, 0.2, 0.8, 1].map((t) => {
+      const u = ea[0] + (eb[0] - ea[0]) * t, v = ea[1] + (eb[1] - ea[1]) * t;
+      return W(u, v, y0 + (t === 0 || t === 1 ? lift : 0));
+    });
+    const t0 = W(T0[0], T0[1], y0 + T0[2]), t1 = W(T1[0], T1[1], y0 + T1[2]);
+    tri(roof, P[0], P[1], t0, up);
+    tri(roof, P[1], P[2], t0, up);
+    tri(roof, P[2], t1, t0, up);
+    tri(roof, P[2], P[3], t1, up);
+  };
+  // 两个长坡（±v）：檐口 → 戗脊/山花 → 正脊
+  for (const sv of [1, -1]) {
+    slope([-A, sv * B], [A, sv * B], [-Gu, sv * vg, hg], [Gu, sv * vg, hg], 0, sv);
+    if (hg < h - 1e-3) { // 歇山：上部两坡（山花斜边与正脊之间）
+      const a = W(-Gu, sv * vg, y0 + hg), b = W(Gu, sv * vg, y0 + hg), r1 = W(-Gu, 0, y0 + h), r2 = W(Gu, 0, y0 + h);
+      const upv = [-s * sv, 1.2, c * sv];
+      tri(roof, a, b, r2, upv);
+      tri(roof, a, r2, r1, upv);
+    }
+  }
+  // 两个端坡（±u）
+  for (const su of [1, -1]) {
+    slope([su * A, -B], [su * A, B], [su * Gu, -vg, hg], [su * Gu, vg, hg], su, 0);
+    if (hg < h - 1e-3) tri(gable, W(su * Gu, -vg, y0 + hg), W(su * Gu, vg, y0 + hg), W(su * Gu, 0, y0 + h), [su * c, 0, su * s]);
+  }
+  const mk = (pos) => {
+    if (!pos.length) return null;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.computeVertexNormals();
+    return g;
+  };
+  return { roof: mk(roof), gable: mk(gable), ridge: [-Gu, Gu], W };
+}
+
 // ═════════════════════════ 塔冠 ═════════════════════════
-const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid']);
+const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid', 'hip', 'slab']);
 function normCrowns(c) {
   if (!c) return [];
   return [].concat(c).map((x) => (typeof x === 'string' ? { type: x } : x));
@@ -605,6 +677,60 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         if (cr.stack) yNext = hy + 0.4;
         break;
       }
+      case 'hip': { // 中式大屋顶（庑殿/歇山/攒尖）：出檐 ov、矢高 h、檐角起翘 lift；默认取体块顶面外接矩形
+        const F = roofFrame(cr, topPoly, c);
+        const ov = cr.ov ?? 1.2, A = F.w / 2 + ov, B = F.d / 2 + ov;
+        const style = cr.style || (Math.abs(F.w - F.d) < 0.5 ? 'zanjian' : 'wudian');
+        const h = cr.h ?? Math.max(2, B * 0.55);
+        const lift = cr.lift ?? Math.min(1.2, h * 0.12);
+        const fh = cr.fascia ?? 0.6; // 檐口（封檐板）厚度
+        const y0 = yb + fh; // 坡面檐口
+        const R = hipGeometry(F, A, B, y0, h, style, lift, cr.xk);
+        const roofMat = cr.mat ? solidMat(env, cr.mat) : mats.roofTile;
+        solid.add(R.roof, roofMat);
+        if (R.gable) solid.add(R.gable, cr.gableMat ? solidMat(env, cr.gableMat) : roofMat);
+        // 檐口封檐板（檐角随起翘抬高）+ 檐下（朝下）
+        const eaveMat = solidMat(env, cr.eaveMat || '#3e3833');
+        const ring = [[-A, -B], [A, -B], [A, B], [-A, B]].flatMap(([u, v]) => { const p = R.W(u, v, 0); return [p[0], p[2]]; });
+        const er = G.ccw(ring);
+        const liftY = () => y0 + lift;
+        solid.add(G.wallGeometry(er, er, yb, liftY), eaveMat);
+        solid.add(G.capGeometry(er, yb, { down: true }), eaveMat);
+        // 正脊（攒尖为宝顶）
+        const ridgeMat = cr.ridgeMat ? solidMat(env, cr.ridgeMat) : mats.dark;
+        const [ua, ub] = R.ridge, rh = cr.ridgeH ?? Math.min(1.0, h * 0.12);
+        if (ub - ua > 0.5) {
+          const a = R.W(ua, 0, y0 + h), b = R.W(ub, 0, y0 + h);
+          detail.add(beam(a[0], a[1] + rh * 0.3, a[2], b[0], b[1] + rh * 0.3, b[2], rh), ridgeMat);
+          if (cr.chiwei !== false) for (const p of [a, b]) detail.add(G.box(p[0], p[1] + rh * 1.1, p[2], rh * 1.4, rh * 2.2, rh * 1.4, F.rot), ridgeMat); // 鸱吻（简化）
+        } else {
+          const a = R.W(0, 0, y0 + h);
+          detail.add(G.cyl(a[0], a[1] - 0.2, a[2], rh * 0.9, rh * 0.3, rh * 2.6, 8), cr.finialMat ? solidMat(env, cr.finialMat) : ridgeMat); // 宝顶
+        }
+        yNext = y0 + h;
+        break;
+      }
+      case 'eave': { // 腰檐 / 披檐（重檐的下檐、裙房檐口）：沿体块轮廓外挑 ov、向内 depth 的一圈斜坡屋面（可用 y 放在墙身任意高度）
+        const ov = cr.ov ?? 1.8, depth = cr.depth ?? 2.5, h = cr.h ?? 1.6, fh = cr.fascia ?? 0.5;
+        const out = G.inset(topPoly, -ov), inn = G.inset(topPoly, depth);
+        const roofMat = cr.mat ? solidMat(env, cr.mat) : mats.roofTile;
+        solid.add(G.wallGeometry(out, inn, yb + fh, yb + fh + h), roofMat);
+        const eaveMat = solidMat(env, cr.eaveMat || '#3e3833');
+        solid.add(G.wallGeometry(out, out, yb, yb + fh), eaveMat);
+        solid.add(G.capGeometry(out, yb, { down: true }), eaveMat);
+        if (cr.stack) yNext = yb + fh + h;
+        break;
+      }
+      case 'slab': { // 挑檐平板（大出挑薄屋檐、亭式平顶）：轮廓外扩 ov、厚 h
+        const p = G.inset(topPoly, -(cr.ov ?? 1.5)), h = cr.h ?? 0.8;
+        const m = cr.mat ? solidMat(env, cr.mat) : mats.stone;
+        solid.add(G.wallGeometry(p, p, yb, yb + h), m);
+        solid.add(G.capGeometry(p, yb + h), m);
+        solid.add(G.capGeometry(p, yb, { down: true }), m);
+        if (cr.glow) detail.add(G.wallGeometry(G.inset(p, -0.05), G.inset(p, -0.05), yb + h * 0.2, yb + h * 0.8), glowMat(env, cr.glow, { base: cr.glowBase || '#d9d4c8', night: cr.strength ?? 2.4 }));
+        yNext = yb + h;
+        break;
+      }
       case 'slope':
         break;
       default:
@@ -639,7 +765,8 @@ function buildPart(env, R, P) {
       slope: slope ? { dir: faceDir(slope.dir ?? 'N'), drop: slope.drop } : null,
       roof: {
         mech: part.roof?.mech ?? crowns.every((c) => handled.has(c) || c.type === 'flat'),
-        parapet: par ? par.h : part.roof?.parapet,
+        // 中式坡屋顶直接压在屋面上时，女儿墙压低到 0.2 m（否则会从檐口下戳出来）
+        parapet: par ? par.h : part.roof?.parapet ?? (crowns.some((c) => c.type === 'hip' && c.y == null) ? 0.2 : undefined),
         helipad: !!heli, helipadY: heli?.lift ?? 2.5,
       },
     };
@@ -675,6 +802,7 @@ function buildSigns(env, R) {
   for (const sg of R.spec.signs || []) {
     const P = findPart(R, sg.part ?? 0);
     const opts = { color: sg.color || '#ffffff', weight: sg.weight ?? 800, serif: !!sg.serif, glow: sg.glow || null, bg: sg.bg || null };
+    if (sg.vertical) opts.vertical = true; // 竖排字（h 为字列总高）
     const h = sg.h ?? 4;
     if (sg.face === 'roof') {
       const c = sg.at ? { x: sg.at[0], z: sg.at[1] } : offsetPt(partCentroid(P), sg.offset);

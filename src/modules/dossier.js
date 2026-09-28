@@ -64,7 +64,8 @@ export default {
     const fmat = createFacadeMaterial(ctx);
     const mats = solidMats(ctx);
     mats.heli.userData.ownUV = true;
-    const signs = new SignAtlas(ctx, 4096, 1024);
+    // 招牌图集：各片区 spec 招牌合计上百条，4096×1024（行高 150）只装得下约 36 条；改为 4096×2048、行高 110（约 140 条）
+    const signs = new SignAtlas(ctx, 4096, 2048, { rowH: 110 });
     const beacons = new Beacons(ctx);
     const envs = new Map();
     const env = (x, z) => {
