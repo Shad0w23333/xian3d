@@ -16,8 +16,19 @@ import * as SP2 from '../arch/sky-special2.js';
 // 2026-09 地标更新（sky-data2.js）取代失真的旧定义（熙地港、大融城、未央国际）
 // landmarks2026：全城地标批量精建（tools/build_landmarks2026.py 由联网调研清单生成）；prepare 时加载并去掉已精建/已被其他模块占用的
 let LM = null;
-const towerSpecs = () => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2(), LM?.towers || []);
-const mallSpecs = () => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2(), LM?.malls || []);
+const towerSpecs = (ctx) => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2(), LM?.towers || []).filter((t) => !isSuperseded(ctx, t));
+const mallSpecs = (ctx) => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2(), LM?.malls || []).filter((m) => !isSuperseded(ctx, m));
+
+/** 逐栋档案（src/modules/dossier.js，先于本模块 prepare）已替代的旧定义：key / 名称命中 ctx.superseded，或质心落在档案建筑轮廓内。
+ *  s 可以是塔楼/商场 spec（key、name、pts）、skyline.json 要素（n、x、z、outer）或只带 key 的特殊地标 */
+function isSuperseded(ctx, s) {
+  const S = ctx?.superseded;
+  if (!S || !s) return false;
+  if ((s.key && S.keys.has(s.key)) || S.names.has(s.name ?? s.n)) return true;
+  const pts = s.pts || s.outer;
+  const c = pts?.length >= 6 ? G.centroid(G.ccw(pts)) : s.x != null ? { x: s.x, z: s.z } : null;
+  return !!c && S.polys.some((p) => G.pointIn(c.x, c.z, p));
+}
 
 /** 批量地标过滤：与手工精建（sky-data / sky-data2 / 特殊地标）同名或质心落在其轮廓内、或落在其他模块排除区内的跳过；
  *  商场综合体里推算落位的塔楼（onPodium），若轮廓内已有 OSM 实测高层（skyline.json）也跳过，以实测为准 */
@@ -25,7 +36,7 @@ function filterLandmarks(ctx, raw) {
   const { curated } = allFootprints(ctx); // 此时 LM 为空：curated.polys 只有手工精建与特殊地标（不含通用高层）
   const hit = (s) => {
     const c = G.centroid(G.ccw(s.pts));
-    return curated.names.has(s.name) || curated.polys.some((p) => G.pointIn(c.x, c.z, p)) || ctx.exclusions.test(c.x, c.z, 'buildings', 1e4);
+    return isSuperseded(ctx, s) || curated.names.has(s.name) || curated.polys.some((p) => G.pointIn(c.x, c.z, p)) || ctx.exclusions.test(c.x, c.z, 'buildings', 1e4);
   };
   const malls = (raw.malls || []).filter((m) => m.pts?.length >= 6 && !hit(m));
   const mallKeys = new Set(malls.map((m) => m.key));
@@ -66,7 +77,7 @@ function genericFeatures(ctx, curated) {
   const feats = (ctx.data.skyline?.features || []).filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000);
   const out = [];
   for (const f of feats) {
-    if (curated.names.has(f.n)) continue;
+    if (curated.names.has(f.n) || isSuperseded(ctx, f)) continue;
     if (curated.polys.some((p) => G.pointIn(f.x, f.z, p))) continue;
     out.push({ ...f, h: HFIX[f.n] ?? f.h });
   }
@@ -93,11 +104,11 @@ function genericSpec(f, i) {
 /** 所有占地轮廓（prepare 排除区用） */
 function allFootprints(ctx) {
   const polys = [];
-  const towers = towerSpecs();
+  const towers = towerSpecs(ctx);
   for (const t of towers) { polys.push(G.ccw(t.pts)); if (t.podium) polys.push(G.ccw(t.podium.pts)); }
   // 批量地标的商场/场馆轮廓（常是整个综合体地块）不参与“通用高层去重”：地块内的 OSM 实测塔楼照常生成
   const soft = [];
-  for (const m of mallSpecs()) { polys.push(G.ccw(m.pts)); if (m.lm) soft.push(polys[polys.length - 1]); }
+  for (const m of mallSpecs(ctx)) { polys.push(G.ccw(m.pts)); if (m.lm) soft.push(polys[polys.length - 1]); }
   const S = SPECIAL;
   polys.push(G.ccw(S.tv.basePts), G.circle(S.tv.cx, S.tv.cz, 24, 16));
   polys.push(G.rect(S.changan.cx, S.changan.cz, 60, 60, S.changan.rot));
@@ -153,7 +164,7 @@ export default {
     };
 
     // —— 塔楼 ——
-    for (const s of towerSpecs()) safe(s.name, () => {
+    for (const s of towerSpecs(ctx)) safe(s.name, () => {
       const c = G.centroid(s.pts);
       const E = env(s.d || districtOf(c.x, c.z));
       const r = buildTower(E, s);
@@ -179,7 +190,7 @@ export default {
       }
     });
     // —— 商场/裙房 ——
-    for (const m of mallSpecs()) safe(m.key, () => {
+    for (const m of mallSpecs(ctx)) safe(m.key, () => {
       const E = env(m.d);
       const base = buildPodium(E, m);
       if (m.domes) SP.domes(E, m.domes, base + m.h + 0.2);
@@ -200,25 +211,26 @@ export default {
         }
       }
     });
-    // —— 特殊地标 ——
-    safe('电视塔', () => SP.buildTVTower(env('south'), SPECIAL.tv));
-    safe('环球贸易中心1号楼', () => SP.buildUnderConstruction(env('weiyang'), SPECIAL.igc1));
-    safe('长安塔', () => SP.buildChanganTower(env('chanba'), SPECIAL.changan));
-    safe('奥体中心', () => SP.buildAoti(env('chanba'), SPECIAL.aoti));
-    safe('西安北站', () => SP.buildNorthStation(env('north'), SPECIAL.north));
-    for (const c of SPECIAL.conf) safe('会议中心', () => SP.buildConference(env('chanba'), c));
-    SPECIAL.expo.forEach((p, i) => safe('展馆', () => SP.buildHall(env('chanba'), p, { h: 18, rise: 7 })));
-    for (const p of SPECIAL.gov) safe('行政中心', () => {
+    // —— 特殊地标（逐栋档案 supersede.keys 含其键名时跳过：tv/igc1/changan/aoti/north/conf/expo/gov/w/hyatt/rainbow/butterfly/houhai） ——
+    const sp = (key, name, fn) => (isSuperseded(ctx, { key }) ? null : safe(name, fn));
+    sp('tv', '电视塔', () => SP.buildTVTower(env('south'), SPECIAL.tv));
+    sp('igc1', '环球贸易中心1号楼', () => SP.buildUnderConstruction(env('weiyang'), SPECIAL.igc1));
+    sp('changan', '长安塔', () => SP.buildChanganTower(env('chanba'), SPECIAL.changan));
+    sp('aoti', '奥体中心', () => SP.buildAoti(env('chanba'), SPECIAL.aoti));
+    sp('north', '西安北站', () => SP.buildNorthStation(env('north'), SPECIAL.north));
+    for (const c of SPECIAL.conf) sp('conf', '会议中心', () => SP.buildConference(env('chanba'), c));
+    SPECIAL.expo.forEach((p, i) => sp('expo', '展馆', () => SP.buildHall(env('chanba'), p, { h: 18, rise: 7 })));
+    for (const p of SPECIAL.gov) sp('gov', '行政中心', () => {
       const o = G.obb(G.ccw(p));
       const main = Math.abs(G.area(p)) > 3500 && o.w / o.d > 2.4;
       SP.buildGovBlock(env('weiyang'), p, { h: main ? 42 : o.w * o.d > 2000 ? 22 : 16 });
     });
     // —— 2026-09 新增：曲江 W 酒店·万众国际、浐灞凯悦 / 彩虹桥 / 蝴蝶桥 / 后海夜市 ——
-    safe('万众国际·W酒店', () => SP2.buildW(env('south'), SPECIAL2.w));
-    safe('浐灞凯悦', () => SP2.buildHyatt(env('chanba'), SPECIAL2.hyatt));
-    safe('彩虹桥', () => root.add(SP2.buildRainbowBridge(env('chanba'), SPECIAL2.rainbow)));
-    safe('蝴蝶桥', () => root.add(SP2.buildButterflyBridge(env('chanba'), SPECIAL2.butterfly)));
-    safe('后海夜市', () => root.add(SP2.buildHouhai(env('chanba'), SPECIAL2.houhai)));
+    sp('w', '万众国际·W酒店', () => SP2.buildW(env('south'), SPECIAL2.w));
+    sp('hyatt', '浐灞凯悦', () => SP2.buildHyatt(env('chanba'), SPECIAL2.hyatt));
+    sp('rainbow', '彩虹桥', () => root.add(SP2.buildRainbowBridge(env('chanba'), SPECIAL2.rainbow)));
+    sp('butterfly', '蝴蝶桥', () => root.add(SP2.buildButterflyBridge(env('chanba'), SPECIAL2.butterfly)));
+    sp('houhai', '后海夜市', () => root.add(SP2.buildHouhai(env('chanba'), SPECIAL2.houhai)));
     // —— 其余 OSM 实测高层 ——
     const gen = genericFeatures(ctx, curated);
     gen.forEach((f, i) => safe('generic', () => buildTower(env(districtOf(f.x, f.z)), genericSpec(f, i))));
@@ -269,7 +281,7 @@ export default {
     ctx.labels.add('长安塔', new THREE.Vector3(ca.cx, ctx.terrain.heightAt(ca.cx, ca.cz) + 106, ca.cz), { category: 'landmark', priority: 2, minDist: 120 });
     ctx.labels.add('西安奥体中心', new THREE.Vector3(ao.cx, ctx.terrain.heightAt(ao.cx, ao.cz) + 70, ao.cz), { category: 'landmark', priority: 2, minDist: 200 });
 
-    const stats = { towers: towerSpecs().length, generic: gen.length, ms: Math.round(performance.now() - t0), errors };
+    const stats = { towers: towerSpecs(ctx).length, generic: gen.length, ms: Math.round(performance.now() - t0), errors };
     console.warn('[skyline] 构建完成 ' + JSON.stringify(stats));
     const tmpBox = new THREE.Box3();
     void tmpBox;
