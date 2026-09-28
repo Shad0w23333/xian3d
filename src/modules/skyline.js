@@ -200,7 +200,8 @@ function allFootprints(ctx) {
   polys.push(G.rect(S.north.cx, S.north.cz, S.north.w + 18 + 2 * 137, S.north.L + 18, S.north.rot));
   for (const c of S.conf) polys.push(G.rect(c.cx, c.cz, c.side + 4, c.side + 4, c.rot));
   for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
-  for (const p of S.gov) polys.push(G.ccw(p));
+  // 行政中心 SPECIAL.gov 被逐栋档案替代（north.js n-shiwei / n-tcm）时不再登记排除区：原 33 块轮廓里有凤城八路南侧住宅，交还通用建筑
+  if (!isSuperseded(ctx, { key: 'gov' })) for (const p of S.gov) polys.push(G.ccw(p));
   polys.push(...special2Footprints());
   const special = polys.slice(s0);
   const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.filter((p) => !soft.includes(p)) };
