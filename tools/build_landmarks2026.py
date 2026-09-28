@@ -1,0 +1,486 @@
+#!/usr/bin/env python3
+"""西安全城地标批量精建：调研清单 → 轮廓对位 → 渲染规格 public/data/landmarks2026.json
+
+输入：
+  research/refs/landmarks2026/{towers,malls,venues,heritage}.json   联网调研的地标清单（名称/坐标/高度/层数/造型/立面/塔冠/招牌/夜景）
+  data-src/amap/places.json（可选）  tools/amap_fetch.py place 用高德关键字搜索逐个定位的坐标（有精确同名结果时优先）
+  public/data/skyline.json            OSM 高层轮廓与实测高度
+  data-src/overture/building.parquet  Overture 2026-09 建筑轮廓（含 OSM 名称）
+输出（世界坐标，渲染端见 src/modules/skyline.js 与 src/modules/landmarks26.js）：
+  towers  —— buildTower 规格（高度/塔冠/立面/楼顶字/裙房）
+  malls   —— buildPodium 规格（商场、场馆、站房；体育场为带内场洞的环形看台）
+  heritage—— 古建院落（主体建筑按中轴排布，交给中式建筑套件）
+  labels  —— 公园/校园等只做标注的地标
+已精建（already_modeled）的条目跳过；渲染端还会跳过落在已有精建轮廓/排除区内的条目。
+
+用法：python tools/build_landmarks2026.py [--report]
+"""
+import argparse
+import json
+import math
+import re
+import sys
+import zlib
+from pathlib import Path
+
+import numpy as np
+import shapely
+from shapely.geometry import Point, Polygon
+from shapely.strtree import STRtree
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from geo import project  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+REF = ROOT / 'research' / 'refs' / 'landmarks2026'
+OUT = ROOT / 'public' / 'data' / 'landmarks2026.json'
+MAX_R = 47000  # 与 skyline 通用高层同样的范围限制
+
+
+def load_list(name):
+    f = REF / f'{name}.json'
+    if not f.exists():
+        return []
+    d = json.loads(f.read_text('utf-8'))
+    return d if isinstance(d, list) else d.get('items', [])
+
+
+def num(v, default=None):
+    if v is None:
+        return default
+    if isinstance(v, (int, float)):
+        return float(v)
+    m = re.search(r'-?\d+(\.\d+)?', str(v))
+    return float(m.group()) if m else default
+
+
+def rng(key, k):
+    return (zlib.crc32(f'{key}|{k}'.encode()) % 10000) / 10000
+
+
+def key_of(name):
+    return 'lm' + format(zlib.crc32(name.encode()), '08x')
+
+
+def norm(n):
+    return re.sub(r'[\s·・\-—()（）]', '', str(n or '')).lower()
+
+
+# ───────────────────────── 轮廓数据 ─────────────────────────
+class Footprints:
+    def __init__(self):
+        import pyarrow.parquet as pq
+        self.polys, self.names, self.src = [], [], []
+        sk = json.loads((ROOT / 'public/data/skyline.json').read_text('utf-8'))
+        for f in sk['features']:
+            o = f.get('outer') or []
+            if len(o) >= 6:
+                p = Polygon(np.array(o, float).reshape(-1, 2))
+                if p.is_valid and p.area > 50:
+                    self.polys.append(p)
+                    self.names.append(f.get('n') or '')
+                    self.src.append(('skyline', f.get('h')))
+        pf = ROOT / 'data-src/overture/building.parquet'
+        if pf.exists():
+            t = pq.read_table(pf, columns=['names', 'height', 'num_floors', 'geometry'])
+            geoms = shapely.from_wkb(t.column('geometry').to_pylist())
+            names = t.column('names').to_pylist()
+            hs = t.column('height').to_pylist()
+            for g, n, h in zip(geoms, names, hs):
+                if g is None or g.geom_type not in ('Polygon', 'MultiPolygon'):
+                    continue
+                if g.geom_type == 'MultiPolygon':
+                    g = max(g.geoms, key=lambda q: q.area)
+                xy = np.array(g.exterior.coords)
+                pts = np.array([project(lon, lat) for lon, lat in xy])
+                p = Polygon(pts)
+                if not p.is_valid:
+                    p = p.buffer(0)
+                    if p.geom_type != 'Polygon':
+                        continue
+                if p.area < 50:
+                    continue
+                self.polys.append(p)
+                self.names.append((n or {}).get('primary') or '')
+                self.src.append(('overture', h))
+        self.tree = STRtree(self.polys)
+        print(f'轮廓库：{len(self.polys)} 个（skyline + Overture）')
+
+    def near(self, x, z, r):
+        idx = self.tree.query(Point(x, z).buffer(r))
+        return [int(i) for i in idx]
+
+    def by_name(self, name, x, z, r=400):
+        k = norm(name)
+        if len(k) < 2:
+            return None
+        best = None
+        for i in self.near(x, z, r):
+            nk = norm(self.names[i])
+            if nk and (nk == k or (len(nk) >= 3 and (nk in k or k in nk))):
+                d = self.polys[i].distance(Point(x, z))
+                if best is None or d < best[0]:
+                    best = (d, i)
+        return best[1] if best else None
+
+
+def poly_out(p, tol=0.6):
+    p = p.simplify(tol, preserve_topology=True)
+    if p.geom_type != 'Polygon':
+        p = max(p.geoms, key=lambda q: q.area)
+    c = list(p.exterior.coords)[:-1]
+    # CCW（x 东 z 南 坐标系下 shoelace>0）
+    s = sum(c[i][0] * c[(i + 1) % len(c)][1] - c[(i + 1) % len(c)][0] * c[i][1] for i in range(len(c)))
+    if s < 0:
+        c = c[::-1]
+    return [round(v, 1) for xy in c for v in xy]
+
+
+def rect(cx, cz, w, d, rot=0.0):
+    c, s = math.cos(rot), math.sin(rot)
+    out = []
+    for ax, az in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        x, z = ax * w / 2, az * d / 2
+        out += [round(cx + x * c - z * s, 1), round(cz + x * s + z * c, 1)]
+    return ccw_flat(out)
+
+
+def ccw_flat(p):
+    n = len(p) // 2
+    s = sum(p[i * 2] * p[(i + 1) % n * 2 + 1] - p[(i + 1) % n * 2] * p[i * 2 + 1] for i in range(n))
+    return p if s > 0 else [v for i in range(n - 1, -1, -1) for v in (p[i * 2], p[i * 2 + 1])]
+
+
+def ellipse(cx, cz, a, b, rot=0.0, n=40):
+    c, s = math.cos(rot), math.sin(rot)
+    out = []
+    for k in range(n):
+        t = 2 * math.pi * k / n
+        x, z = a * math.cos(t), b * math.sin(t)
+        out += [round(cx + x * c - z * s, 1), round(cz + x * s + z * c, 1)]
+    return ccw_flat(out)
+
+
+def local_rot(fp, x, z):
+    """附近最大建筑的最小外接矩形方向（合成矩形轮廓时顺着街区走向）"""
+    best = None
+    for i in fp.near(x, z, 150):
+        p = fp.polys[i]
+        if best is None or p.area > best.area:
+            best = p
+    if best is None:
+        return 0.0
+    r = best.minimum_rotated_rectangle
+    c = list(r.exterior.coords)
+    return math.atan2(c[1][1] - c[0][1], c[1][0] - c[0][0])
+
+
+# ───────────────────────── 风格推断 ─────────────────────────
+COLORS = [
+    (r'金|香槟|铜', '#5a4a32', '#b8a37a'), (r'深蓝|宝蓝|蓝色|蓝绿|湖蓝', '#2f4a63', '#5b6b78'),
+    (r'绿', '#3a5a55', '#5f6e6a'), (r'银|灰', '#4a5560', '#8e959c'), (r'茶|棕|褐', '#3d3a36', '#7a6a58'),
+    (r'黑', '#23282d', '#3a3f45'), (r'白', '#46545f', '#e2e0da'),
+]
+STONE = r'石材|米黄|砖|干挂|花岗|陶板|面砖|实墙'
+
+
+def style_from(it, key, kind):
+    f = ' '.join(str(it.get(k) or '') for k in ('facade', 'form', 'colors', 'roof'))
+    night = str(it.get('night') or '')
+    tint, spd = '#3b5569', '#5b6670'
+    for pat, t, s in COLORS:
+        if re.search(pat, f):
+            tint, spd = t, s
+            break
+    st = {'tint': tint, 'spd': spd, 'seed': round(rng(key, 's') * 1000, 1)}
+    if re.search(STONE, f) and not re.search(r'全玻璃|玻璃幕墙为主', f):
+        st.update(mode=7, spd='#cdbda6' if not re.search(r'灰|白', f) else '#d6d2ca', floorH=3.6, colW=2.4, mullW=1.1, spandrel=0.4, lit=0.5)
+    else:
+        st.update(floorH=4.0 if kind == 'tower' else 5.4, colW=1.5 + rng(key, 'c') * 0.4, spandrel=0.24 + rng(key, 'p') * 0.1, lit=0.4)
+    if re.search(r'媒体|LED|立面屏|灯光秀|幻彩', night + f):
+        st['mode'] = 1 if kind == 'tower' else 5
+    elif re.search(r'楼层线|灯带|横向线条|轮廓灯', night) and st.get('mode') != 7:
+        st['mode'] = 2
+    if re.search(r'百叶|横向线条|水平线条', f) and st.get('mode') == 0:
+        st['mode'] = 3
+    if kind != 'tower' and 'mode' not in st:
+        st['mode'] = 6
+    h = num(it.get('height_m'), 0)
+    if kind == 'tower' and h > 120:
+        st['band'] = 12
+    return st
+
+
+def crown_from(it, key, h):
+    c = str(it.get('crown') or '')
+    if not c and h < 90:
+        return None, {}
+    roof = {}
+    if re.search(r'尖|桅|天线|避雷', c):
+        roof['spire'] = round(max(8, min(45, h * 0.08)), 1)
+    if re.search(r'停机坪', c):
+        roof['helipad'] = True
+    ch = 5 + min(14, h * 0.035)
+    if re.search(r'皇冠|镂空|桂冠|灯笼|钻石|塔冠', c):
+        ch *= 1.5
+    col = '#ffe2b8' if re.search(r'暖|金|黄', c + str(it.get('night') or '')) else '#dfe9ff'
+    return {'h': round(ch, 1), 'color': col}, roof
+
+
+SIGN_COLORS = {'红': '#ff3a2e', '金': '#ffd36a', '黄': '#ffd36a', '蓝': '#63c7ff', '绿': '#5dff9a', '白': '#ffffff'}
+
+
+def sign_color(it):
+    c = str(it.get('sign_color') or '')
+    if re.fullmatch(r'#[0-9a-fA-F]{6}', c.strip()):
+        return c.strip()
+    for k, v in SIGN_COLORS.items():
+        if k in c:
+            return v
+    return '#ffffff'
+
+
+def taper_from(it):
+    f = str(it.get('form') or '')
+    return 0.86 if re.search(r'收分|渐收|锥', f) else None
+
+
+# ───────────────────────── 主流程 ─────────────────────────
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--report', action='store_true')
+    a = ap.parse_args()
+    places = {}
+    pf = ROOT / 'data-src/amap/places.json'
+    if pf.exists():
+        from amap_fetch import gcj2wgs
+        for n, p in json.loads(pf.read_text('utf-8')).items():
+            if p and p.get('exact') and p.get('location'):
+                lon, lat = map(float, p['location'].split(','))
+                places[n] = project(*gcj2wgs(lon, lat))
+    fp = Footprints()
+    out = {'version': 1, 'towers': [], 'malls': [], 'heritage': [], 'labels': []}
+    report = []
+    seen = []
+
+    def pos(it):
+        n = it.get('name')
+        if n in places:
+            return places[n], 'amap'
+        lon, lat = num(it.get('lon')), num(it.get('lat'))
+        if lon is None or lat is None or not (108.3 < lon < 109.7 and 33.6 < lat < 34.9):
+            return None, None
+        return project(lon, lat), it.get('coord_source') or '?'
+
+    def dup(name, x, z):
+        k = norm(name)
+        for (k2, x2, z2) in seen:
+            if k2 == k or (math.hypot(x - x2, z - z2) < 25 and (k in k2 or k2 in k)):
+                return True
+        seen.append((k, x, z))
+        return False
+
+    def match(it, x, z, want_area, min_area, r):
+        """对位轮廓：同名 > 含点且面积合理 > 半径内最近且面积合理"""
+        i = fp.by_name(it.get('name'), x, z)
+        if i is None:
+            for al in it.get('aliases') or []:
+                i = fp.by_name(al, x, z)
+                if i is not None:
+                    break
+        ok = lambda p: p.area >= min_area and (want_area is None or 0.2 * want_area <= p.area <= 5 * want_area)
+        if i is not None and ok(fp.polys[i]):
+            return i, 'name'
+        P = Point(x, z)
+        cand = [j for j in fp.near(x, z, r) if ok(fp.polys[j])]
+        inside = [j for j in cand if fp.polys[j].contains(P)]
+        if inside:
+            return min(inside, key=lambda j: fp.polys[j].area), 'contains'
+        if cand:
+            j = min(cand, key=lambda j: fp.polys[j].distance(P))
+            if fp.polys[j].distance(P) < r:
+                return j, 'near'
+        return None, 'synth'
+
+    # —— 塔楼 ——
+    for it in load_list('towers'):
+        name = it.get('name')
+        if not name or it.get('already_modeled') or str(it.get('status', 'open')).startswith('under') and not re.search(r'封顶|topped', str(it.get('status'))):
+            continue
+        xz, cs = pos(it)
+        if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
+            continue
+        x, z = xz
+        h = num(it.get('height_m'))
+        fl = num(it.get('floors'))
+        if not h:
+            h = fl * 3.8 if fl else None
+        if not h or h < 30:
+            continue
+        sz = it.get('footprint_size_m')
+        want = (num(sz[0]) or 40) * (num(sz[1]) or 40) if isinstance(sz, list) and len(sz) == 2 else None
+        i, how = match(it, x, z, want, 250, 45)
+        key = key_of(name)
+        if i is not None:
+            pts = poly_out(fp.polys[i])
+        else:
+            w, d = (num(sz[0]) or 42, num(sz[1]) or 42) if isinstance(sz, list) and len(sz) == 2 else (42, 42)
+            pts = rect(x, z, min(w, 90), min(d, 90), local_rot(fp, x, z))
+        crown, roof = crown_from(it, key, h)
+        spec = {'key': key, 'name': name, 'pts': pts, 'h': round(h, 1), 'style': style_from(it, key, 'tower'), 'src': how}
+        if crown:
+            spec['crown'] = crown
+        if roof:
+            spec['roof'] = roof
+        tp = taper_from(it)
+        if tp:
+            spec['taper'] = tp
+        st = str(it.get('sign_text') or '').strip()
+        if st and st not in ('无', 'null', 'None') and len(st) <= 12:
+            spec['signs'] = [{'text': st, 'color': sign_color(it), 'h': round(max(3.5, min(9, h * 0.035)), 1), 'faces': 2}]
+        out['towers'].append(spec)
+        report.append(('塔楼', name, how, cs, h))
+
+    # —— 商场 ——
+    for it in load_list('malls'):
+        name = it.get('name')
+        if not name or it.get('already_modeled') or str(it.get('status', 'open')).startswith('under'):
+            continue
+        xz, cs = pos(it)
+        if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
+            continue
+        x, z = xz
+        key = key_of(name)
+        fl = num(it.get('floors_above'))
+        h = num(it.get('height_m')) or (fl * 5.2 + 3 if fl else 28)
+        h = max(12, min(h, 60))
+        sz = it.get('footprint_size_m')
+        want = (num(sz[0]) or 120) * (num(sz[1]) or 80) if isinstance(sz, list) and len(sz) == 2 else None
+        i, how = match(it, x, z, want, 1500, 70)
+        if i is not None:
+            pts = poly_out(fp.polys[i], 0.8)
+        else:
+            w, d = (num(sz[0]) or 140, num(sz[1]) or 90) if isinstance(sz, list) and len(sz) == 2 else (140, 90)
+            pts = rect(x, z, min(w, 320), min(d, 260), local_rot(fp, x, z))
+        sign = str(it.get('short_sign') or name).strip()
+        spec = {'key': key, 'name': name, 'pts': pts, 'h': round(h, 1), 'style': style_from(it, key, 'mall'), 'src': how,
+                'signs': [{'text': sign[:12], 'h': round(max(3.5, min(7, h * 0.18)), 1), 'faces': 2, 'color': sign_color(it)}]}
+        out['malls'].append(spec)
+        report.append(('商场', name, how, cs, h))
+        # 综合体里的塔楼：落在商场轮廓内沿长边排布
+        tws = [t for t in it.get('towers') or [] if num(t.get('height_m')) and num(t.get('height_m')) > h + 15]
+        if tws:
+            P = Polygon(np.array(pts, float).reshape(-1, 2))
+            r = P.minimum_rotated_rectangle
+            c = list(r.exterior.coords)
+            e0 = np.subtract(c[1], c[0])
+            e1 = np.subtract(c[2], c[1])
+            ax, L = (e0, np.hypot(*e0)) if np.hypot(*e0) >= np.hypot(*e1) else (e1, np.hypot(*e1))
+            u = ax / max(L, 1e-6)
+            rot = math.atan2(u[1], u[0])
+            cx, cz = P.centroid.x, P.centroid.y
+            for k, t in enumerate(tws[:4]):
+                off = (k - (len(tws[:4]) - 1) / 2) * min(70, L / max(1, len(tws[:4])))
+                tx, tz = cx + u[0] * off, cz + u[1] * off
+                th = num(t['height_m'])
+                tk = key_of(name + str(t.get('name') or k))
+                out['towers'].append({'key': tk, 'name': t.get('name') or f'{name}{k + 1}号楼', 'pts': rect(tx, tz, 34, 30, rot),
+                                      'h': round(th, 1), 'base': None, 'onPodium': key,
+                                      'style': style_from(it, tk, 'tower'), 'crown': {'h': 5, 'color': '#dfe9ff'} if th > 90 else None,
+                                      'src': 'synth'})
+
+    # —— 场馆 ——
+    for it in load_list('venues'):
+        name = it.get('name')
+        if not name or it.get('already_modeled') or str(it.get('status', 'open')).startswith('under'):
+            continue
+        xz, cs = pos(it)
+        if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
+            continue
+        x, z = xz
+        key = key_of(name)
+        cat = str(it.get('category') or 'other')
+        if cat in ('park', 'campus'):
+            out['labels'].append({'n': name, 'x': round(x, 1), 'z': round(z, 1), 'cat': cat})
+            report.append(('标注', name, cat, cs, 0))
+            continue
+        sz = it.get('footprint_size_m')
+        L, W = (num(sz[0]) or 0, num(sz[1]) or 0) if isinstance(sz, list) and len(sz) == 2 else (0, 0)
+        h = num(it.get('height_m')) or {'stadium': 45, 'arena': 32, 'station': 30, 'airport': 35, 'theater': 32,
+                                        'library': 28, 'museum': 26, 'expo': 26}.get(cat, 24)
+        h = max(10, min(h, 80))
+        spec = {'key': key, 'name': name, 'h': round(h, 1), 'style': style_from(it, key, 'venue'), 'cat': cat}
+        if cat == 'stadium':
+            a, b = (L or 260) / 2, (W or 220) / 2
+            i, how = match(it, x, z, None, 8000, 80)
+            if i is not None:
+                P = fp.polys[i]
+                x, z = P.centroid.x, P.centroid.y
+                r = P.minimum_rotated_rectangle
+                c = list(r.exterior.coords)
+                s0, s1 = np.hypot(*np.subtract(c[1], c[0])), np.hypot(*np.subtract(c[2], c[1]))
+                rot = math.atan2(c[1][1] - c[0][1], c[1][0] - c[0][0]) if s0 >= s1 else math.atan2(c[2][1] - c[1][1], c[2][0] - c[1][0])
+                a, b = max(s0, s1) / 2, min(s0, s1) / 2
+            else:
+                rot = local_rot(fp, x, z)
+            spec['pts'] = ellipse(x, z, a, b, rot)
+            spec['holes'] = [ellipse(x, z, a * 0.62, b * 0.55, rot)]
+            spec['src'] = how
+        else:
+            want = L * W if L and W else None
+            i, how = match(it, x, z, want, 1200, 80)
+            if i is not None:
+                spec['pts'] = poly_out(fp.polys[i], 0.8)
+            else:
+                spec['pts'] = rect(x, z, min(L or 110, 400), min(W or 80, 300), local_rot(fp, x, z))
+            spec['src'] = how
+        st = str(it.get('sign_text') or '').strip()
+        if st and st not in ('无', 'null') and len(st) <= 14:
+            spec['signs'] = [{'text': st, 'h': round(max(3, min(6, h * 0.14)), 1), 'faces': 1, 'color': sign_color(it)}]
+        out['malls'].append(spec)
+        report.append(('场馆', name, spec['src'], cs, h))
+
+    # —— 古建 ——
+    for it in load_list('heritage'):
+        name = it.get('name')
+        if not name or it.get('already_modeled'):
+            continue
+        xz, cs = pos(it)
+        if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
+            continue
+        x, z = xz
+        o = str(it.get('orientation') or '坐北朝南')
+        rot = {'东': math.pi / 2, '西': -math.pi / 2, '北': math.pi}.get(next((c for c in ('东', '西', '北') if f'朝{c}' in o), ''), 0.0)
+        cs_m = it.get('compound_size_m')
+        cw, cd = (num(cs_m[0]) or 80, num(cs_m[1]) or 120) if isinstance(cs_m, list) and len(cs_m) == 2 else (80, 120)
+        bl = []
+        for b in it.get('main_buildings') or []:
+            dims = b.get('dimensions') or b.get('dimensions_m') or []
+            if isinstance(dims, dict):
+                dims = [dims.get('w') or dims.get('width'), dims.get('d') or dims.get('depth'), dims.get('h') or dims.get('height')]
+            dims = [num(v) for v in (dims if isinstance(dims, list) else [])]
+            bl.append({
+                'n': b.get('name') or '', 'type': str(b.get('type') or 'hall'),
+                'w': dims[0] if len(dims) > 0 and dims[0] else None, 'd': dims[1] if len(dims) > 1 and dims[1] else None,
+                'h': dims[2] if len(dims) > 2 and dims[2] else num(b.get('height_m')),
+                'bays': int(num(b.get('bays'), 0) or 0), 'storeys': int(num(b.get('storeys'), 1) or 1),
+                'roof': str(b.get('roof') or ''), 'color': str(b.get('roof_color') or ''),
+                'pos': b.get('position'),
+            })
+        out['heritage'].append({'key': key_of(name), 'name': name, 'x': round(x, 1), 'z': round(z, 1), 'rot': round(rot, 4),
+                                'w': round(min(cw, 400), 1), 'd': round(min(cd, 500), 1), 'b': bl,
+                                'era': it.get('era') or it.get('dynasty') or '', 'kind': it.get('category') or it.get('type') or ''})
+        report.append(('古建', name, f'{len(bl)} 座', cs, 0))
+
+    OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')), 'utf-8')
+    from collections import Counter
+    print(f'写出 {OUT}：塔楼 {len(out["towers"])}、商场/场馆 {len(out["malls"])}、古建院落 {len(out["heritage"])}、仅标注 {len(out["labels"])}')
+    print('轮廓来源：', dict(Counter(r[2] for r in report if r[0] in ('塔楼', '商场', '场馆'))))
+    print('坐标来源：', dict(Counter(r[3] for r in report)))
+    if a.report:
+        for r in report:
+            print('  ', *r)
+
+
+if __name__ == '__main__':
+    main()

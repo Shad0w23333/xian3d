@@ -104,6 +104,7 @@ export class UI {
         <label><input type="checkbox" class="l-traffic" checked /> 交通流与航班</label>
         <label><input type="checkbox" class="l-labels" checked /> 地名标注</label>
         <label><input type="checkbox" class="l-buildings" checked /> 城市建筑</label>
+        <label><input type="checkbox" class="l-districts" /> 行政区界·商圈·地铁线（高德）</label>
       </div>
       <button class="collapse" title="收起/展开">⟩</button>`;
     root.appendChild(this.panel);
@@ -188,6 +189,7 @@ export class UI {
     $('.l-traffic').addEventListener('change', (e) => this.emit('traffic', e.target.checked));
     $('.l-labels').addEventListener('change', (e) => this.emit('labels', e.target.checked));
     $('.l-buildings').addEventListener('change', (e) => this.emit('buildings', e.target.checked));
+    $('.l-districts').addEventListener('change', (e) => this.emit('districts', e.target.checked));
     $('.collapse').addEventListener('click', () => this.togglePanel());
     // 面板内交互不触发画面锁定
     for (const el of [this.panel, this.info, this.mini]) el.addEventListener('mousedown', (e) => e.stopPropagation());

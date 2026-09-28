@@ -17,6 +17,7 @@ export const MODULES = [
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
+  { id: 'amapinfo', load: () => import('./amapinfo.js') },
   // 开发用（默认不加载，?modules=archtest 时加载）
   { id: 'archtest', load: () => import('./dev/archtest.js'), dev: true },
 ];
