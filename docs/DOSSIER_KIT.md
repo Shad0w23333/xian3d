@@ -74,6 +74,9 @@
   name: 'body',                     // 招牌/夜景按名字引用
   kind: 'tower',                    // 'tower'（默认，buildTower：幕墙+女儿墙+屋面设备+障碍灯）| 'podium'（buildPodium：裙房/商场，支持内院）
                                     // | 'solid'（实体挤出：石材端墙、环带、实墙体量）| 'facade'（只有立面的直筒，如首层橱窗罩面）
+                                    // | 'lattice'（斜交网格钢构：门洞桁架、外骨架，见 3.7）
+  topPts: [x, z, ...],              // 可选：放样顶面轮廓（世界坐标，与底面同点数、同起点同绕向）。tower/facade 在底面与顶面之间直纹过渡
+                                    // （逐层变大的切角、不等比收分），见 3.7；不能与 roundCorners 同用
   // —— 轮廓（三选一）——
   fp: '<overture_id 或 8 位前缀>',   // Overture 实测轮廓
   pts: [x, z, ...],                 // 世界坐标轮廓
@@ -127,6 +130,7 @@
 | `stoneWindows` | 7 | 石材墙 + 窗洞（老式高层、酒店、公建） |
 | `stoneLit` | 9 | 石材 + 夜间暖色基座泛光 |
 | `media` | 1 | LED 线条媒体幕墙（夜间彩色动画） |
+| `openFrame` | 7 | 裸露结构（在建/停工楼：混凝土楼板 + 柱、内部黑洞洞，夜间不亮） |
 | `screen` | 5 | LED 大屏 |
 | `retail` | 6 | 商业裙房大玻璃（夜间通亮），podium 默认 |
 | `crownGlass` | 4 | 塔冠泛光玻璃 |
@@ -156,9 +160,12 @@ night: {
   outline:    [{ part: 'towerN', color: '#ff9a3c', y: 81, w: 0.6, vertical: false }], // 轮廓灯：体块顶沿一圈（vertical 同时勾转角竖线）
   floodlight: [{ part: 'body', color: '#3f7dff', strength: 0.32, from: 26, to: 180 }],  // 泛光：立面外加色光幕，自下而上渐隐，仅夜间
   media:      [{ part: 'mall', face: 'W', from: 8, to: 24, width: 40, shift: 0, pattern: 'screen' }], // LED 屏
+  beams:      [{ part: 'body', from: 270, at: [[x, z], …], len: 160, w: 2.2, color: '#e6f0ff', strength: 0.55 }], // 楼顶竖向光束
 }
 ```
 - `bands`：沿体块轮廓的水平线条（白天是实体金属/铝板带，`glow` 给了就在夜间发光）；`wave` 让线条沿周长上下起伏（“波浪线条灯”）。
+- `beams`：楼顶上照灯形成的竖向光束（两片交叉竖直面片，自下而上渐隐，仅夜间）；`at` 世界坐标点列，或 `offsets` 相对体块质心 `[东,北]`，
+  都不写就取 `from` 高度处轮廓的各个转角；`len` 光束长（默认 120 m）。
 - 立面本身的夜景（亮窗、楼层线灯、LED 网格）由 `style.pattern` / `lit` 决定；`night` 只补额外灯光。
 
 ### 3.6 塔冠 `crown`（可组合成数组，按顺序叠放）
@@ -178,12 +185,27 @@ night: {
 | `pyramid` | `h`、`inset`、`spire`、`mat` | 玻璃棱锥 + 可选塔尖 |
 | `arch` | `h`（矢高）；`size:[长,跨]`+`at`/`offset`+`rot`，或默认取体块外接矩形（`along:'short'` 换向） | 筒拱：采光中庭、拱形屋面 |
 | `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring` | 穹顶 |
+| `crane` | `offset`、`top`（塔帽离地）或 `h`、`jib`、`counter`、`rot`（起重臂地图角度） | 塔吊（在建/停工楼，塔身从地面起） |
 
 叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
 `dome / arch / masts / spire / helipad` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
 需要挂招牌或有明确层数的顶部体量（如信息大厦的玻璃圆筒）建议写成一个 **part**（`base` = 下层 `top`），而不是塔冠。
 
 材质名：`stone`、`white`、`dark`、`metal`、`parapet`、`glassRoof`、`roof`、`granite`、`membrane`，或 `'#rrggbb'`，或 `{color, roughness, metalness, glow}`。
+
+### 3.7 放样、斜交网格、在建楼（高新区示例，`src/arch/dossier-specs/gaoxin.js`）
+
+- **放样 `topPts`**：`kind:'tower'` 且带 `topPts` 时不走 buildTower，而是 `buildLoft`：底面 → 顶面直纹幕墙 + 女儿墙 + 屋面（+ 设备盒、障碍灯），
+  塔冠（`lantern` / `parapet` / `frame` / `helipad` …）接在顶面轮廓上；`kind:'facade'` 也支持 `topPts`。招牌、灯带按插值后的轮廓贴。
+  注意：`fb.ring` 以底边长判断退化边（< 0.05 m 跳过），所以“从 0 开始长大的切角”底面切角写 0.2 m 而不是 0。
+  ```js
+  // 绿地中心 A 座：72 m 以上西南角切角由 0.2 m 线性长到屋面 12 m
+  { name: 'body', pts: cutRect(x0, x1, zN, zS, 'SW', 0.2), topPts: cutRect(x0, x1, zN, zS, 'SW', 12), base: 72, top: 261,
+    style: { pattern: 'media' }, crown: [{ type: 'lantern', h: 9 }] }
+  ```
+- **斜交网格 `kind:'lattice'`**：沿轮廓各边生成菱形斜杆 + 上下环梁 + 转角立柱；`lattice: { step 斜杆水平间距, rise 每格高, w 杆宽, open:[不做的边下标], rings }`，
+  材质 `mat`。迈科中心连桥下的古铜色门洞：`{ kind:'lattice', pts: 四边形, base: 0, top: 96, lattice: { step: 7, rise: 9, w: 0.9, open: [0, 2] } }`。
+- **在建/停工**：立面 `pattern:'openFrame'`（裸露楼板与柱），塔冠 `{ type:'crane', offset, top, jib, rot }`；按现状高度建，不按设计全高。
 
 ---
 
