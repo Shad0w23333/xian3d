@@ -14,6 +14,7 @@
 已精建（already_modeled）的条目跳过；渲染端还会跳过落在已有精建轮廓/排除区内的条目。
 
 用法：python tools/build_landmarks2026.py [--report]
+      python tools/build_landmarks2026.py --relayout-heritage   # 只重排已生成文件里的古建院落（防重叠）
 """
 import argparse
 import json
@@ -287,10 +288,102 @@ def taper_from(it):
 
 
 # ───────────────────────── 主流程 ─────────────────────────
+# ───────────────────────── 古建院落排布（防重叠） ─────────────────────────
+HER_GAP = 3.0  # 相邻建筑外廓（出檐）之间的最小净距（米）
+# 调研清单里核实为套错轮廓的古建条目：不生成（否则会把真实建筑排除掉、在其轮廓上建一座不存在的古建）
+HERITAGE_SKIP = {
+    '新城黄楼（陕西省人民政府·明秦王府）':
+        '“黄楼”轮廓（OSM w1465146336 / Overture f85d1586，名称“陕西省人民政府”）实为约 10–12 层对称办公楼'
+        '（research/refs/dossiers/public_notes.md）；1927 年黄楼真实位置与形制未查实，整条移除',
+}
+
+
+def built_extent(q):
+    """渲染端（src/modules/heritage26.js）实际建成的平面外廓（含出檐、台基、踏步），返回 (宽, 深)。
+    殿/门/楼/亭按数据 w×d 拟合（fitBuilding 保证不超出）；密檐塔 = 塔身 w 外加台基（每边 0.28w，0.8~3 m）
+    与南北踏步（台基高 0.16w、0.15 m 一级、踏面 0.32 m）；牌坊宽 5~24 m、深约 3.5 m；其余按数据尺寸。
+    （原先按数据 w×d 判重叠，而塔的台基+踏步比数据大 50% 以上，善导塔与法堂、玄奘塔与圆测塔因此相交）"""
+    t, w, d = q['type'], q['w'], q['d']
+    if t == 'pagoda':
+        bw = min(max(w * 0.9, 1.6), 14)
+        pod = bw + 2 * min(max(bw * 0.28, 0.8), 3.0)
+        run = round(min(max(bw * 0.16, 0.5), 1.6) / 0.15) * 0.32
+        return pod + 0.6, pod + 0.6 + 2 * run
+    if t == 'paifang':
+        return min(max(w, 5), 24) + 2, 3.5
+    if t in ('hall', 'gate', 'tower', 'pavilion'):
+        # 拟合目标 = 数据尺寸 + 每边 0.75 m 檐口余量；进深柱网不小于面阔柱网 × 0.22（出檐约 9 m）
+        return w + 1.5, max(d + 1.5, 0.22 * (w + 1.5 - 9) + 9 if w > 20 else 0)
+    return w, d
+
+
+def _box(q):
+    ew, ed = built_extent(q)
+    return q['x'] - ew / 2, q['z'] - ed / 2, q['x'] + ew / 2, q['z'] + ed / 2
+
+
+def _overlap(a, b, gap=HER_GAP):
+    A, B = _box(a), _box(b)
+    return A[0] < B[2] + gap and B[0] < A[2] + gap and A[1] < B[3] + gap and B[1] < A[3] + gap
+
+
+def resolve_overlaps(bl, gap=HER_GAP):
+    """按列表顺序逐个检查：与前面已定位的建筑（按建成外廓 + 净距）重叠时，挪动当前建筑。
+    候选方向：北/南/东/西，取能一次避开全部已定位建筑的最小位移；中轴上的建筑（x≈0）优先沿中轴挪（横向代价 ×1.5）。
+    封土/遗址台基（mound/platform）体量大、多为底座，不参与。返回挪动次数。"""
+    moved = 0
+    placed = []
+    for q in bl:
+        if q['type'] in ('mound', 'platform'):
+            continue
+        for _ in range(16):
+            hits = [p for p in placed if _overlap(q, p, gap)]
+            if not hits:
+                break
+            Q = _box(q)
+            cands = []
+            for p in hits:
+                P = _box(p)
+                cands += [('z', P[1] - gap - Q[3]), ('z', P[3] + gap - Q[1]), ('x', P[2] + gap - Q[0]), ('x', P[0] - gap - Q[2])]
+            best = None
+            for ax, dv in cands:
+                trial = dict(q)
+                trial[ax] = q[ax] + dv
+                clear = not any(_overlap(trial, p, gap) for p in placed)
+                cost = abs(dv) * (1.5 if ax == 'x' and abs(q['x']) < 0.5 else 1.0) + (0 if clear else 1000)
+                if best is None or cost < best[0]:
+                    best = (cost, ax, dv)
+            q[best[1]] = round(q[best[1]] + best[2] + (0.05 if best[2] > 0 else -0.05), 1)
+            moved += 1
+        placed.append(q)
+    return moved
+
+
+def relayout_heritage():
+    """只重排现有 landmarks2026.json 的古建院落（其余段落原样保留），排布逻辑修改后无需重跑全部轮廓对位。"""
+    raw = json.loads(OUT.read_text('utf-8'))
+    total = 0
+    drop = [s['name'] for s in raw.get('heritage', []) if s['name'] in HERITAGE_SKIP]
+    raw['heritage'] = [s for s in raw.get('heritage', []) if s['name'] not in HERITAGE_SKIP]
+    for n in drop:
+        print(f'  移除 {n}：{HERITAGE_SKIP[n]}')
+    for s in raw.get('heritage', []):
+        n = resolve_overlaps(s['b'])
+        if n:
+            print(f'  {s["name"]}：挪动 {n} 次')
+        total += n
+    OUT.write_text(json.dumps(raw, ensure_ascii=False, separators=(',', ':')), 'utf-8')
+    print(f'古建院落重排完成：共挪动 {total} 次 → {OUT}')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--report', action='store_true')
+    ap.add_argument('--relayout-heritage', action='store_true', help='只按新排布逻辑重排已生成文件中的古建院落')
     args = ap.parse_args()
+    if args.relayout_heritage:
+        relayout_heritage()
+        return
     places = {}
     pf = ROOT / 'data-src/amap/places.json'
     if pf.exists():
@@ -484,7 +577,7 @@ def main():
     # —— 古建 ——
     for it in load_list('heritage'):
         name = it.get('name')
-        if not name or it.get('already_modeled'):
+        if not name or it.get('already_modeled') or name in HERITAGE_SKIP:
             continue
         xz, cs = pos(it)
         if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
@@ -535,11 +628,6 @@ def main():
                 else:
                     lx, lz = 0.0, axis_z - bd / 2
                     axis_z -= bd + 14
-            # 与已放置的建筑重叠（顺序排布/东西配殿常见）：往北挪，直到不重叠
-            for _ in range(12):
-                if not any(abs(lx - q['x']) < (bw + q['w']) / 2 + 3 and abs(lz - q['z']) < (bd + q['d']) / 2 + 3 for q in bl):
-                    break
-                lz -= bd + 6
             bl.append({
                 'n': b.get('name') or '', 'type': typ,
                 'x': round(lx, 1), 'z': round(lz, 1), 'rot': round(brot, 3),
@@ -547,6 +635,7 @@ def main():
                 'bays': int(num(b.get('bays'), 0) or 0), 'storeys': int(num(b.get('storeys'), 1) or 1),
                 'roof': str(b.get('roof') or ''), 'color': str(b.get('roof_color') or ''),
             })
+        resolve_overlaps(bl)  # 按渲染端实际建成外廓（含出檐/台基/踏步）防重叠
         out['heritage'].append({'key': key_of(name), 'name': name, 'x': round(x, 1), 'z': round(z, 1), 'rot': round(rot, 4),
                                 'w': round(min(cw, 400), 1), 'd': round(min(cd, 500), 1), 'b': bl,
                                 'era': ' '.join(str(it.get(k) or '') for k in ('style', 'era', 'dynasty')).strip(), 'kind': it.get('category') or it.get('type') or ''})

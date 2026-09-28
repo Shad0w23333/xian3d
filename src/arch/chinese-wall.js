@@ -389,8 +389,9 @@ export function cityPlatform(b, o) {
   // 石基（土衬）
   const plinth = o.plinth ?? 0.6;
   if (plinth > 0) {
+    // 土衬石在券洞两侧也外凸 0.12（原先端面与券洞侧壁齐平，共面闪烁）
     const xs = [-w / 2 - 0.15];
-    for (const a of archs) xs.push(a.cx - a.w / 2, a.cx + a.w / 2);
+    for (const a of archs) xs.push(a.cx - a.w / 2 + 0.12, a.cx + a.w / 2 - 0.12);
     xs.push(w / 2 + 0.15);
     for (let i = 0; i < xs.length; i += 2) b.box('stone', xs[i], -0.05, -d / 2 - 0.15, xs[i + 1], plinth, d / 2 + 0.15, 0xb9b2a6, { skip: 'bottom' });
   }
@@ -414,28 +415,30 @@ export function cityPlatform(b, o) {
       const tP = 0.5;
       const nx = -ez, nz = ex; // 外法线
       const off = -tP / 2; // 墙外皮与台边齐
-      const segWall = (s0, s1, yh) => {
+      // yl..yh：墙段高度区间（相对台顶）。垛口只做矮墙以上部分，不再与矮墙重叠共面
+      const segWall = (s0, s1, yh, yl = 0) => {
         const ax = p0[0] + ex * s0 + nx * off, az = p0[1] + ez * s0 + nz * off;
         const bx = p0[0] + ex * s1 + nx * off, bz = p0[1] + ez * s1 + nz * off;
         const sx = nx * tP / 2, sz = nz * tP / 2;
         const A = [ax + sx, az + sz], B = [bx + sx, bz + sz], C = [bx - sx, bz - sz], Dd = [ax - sx, az - sz];
-        const y0 = h + 0.08, y1 = h + 0.08 + yh;
+        const y0 = h + 0.08 + yl, y1 = h + 0.08 + yh;
         b.quad(mk, [A[0], y0, A[1]], [B[0], y0, B[1]], [B[0], y1, B[1]], [A[0], y1, A[1]], col);
         b.quad(mk, [C[0], y0, C[1]], [Dd[0], y0, Dd[1]], [Dd[0], y1, Dd[1]], [C[0], y1, C[1]], col);
         b.quad(mk, [A[0], y1, A[1]], [B[0], y1, B[1]], [C[0], y1, C[1]], [Dd[0], y1, Dd[1]], col);
         b.quad(mk, [B[0], y0, B[1]], [C[0], y0, C[1]], [C[0], y1, C[1]], [B[0], y1, B[1]], col);
         b.quad(mk, [Dd[0], y0, Dd[1]], [A[0], y0, A[1]], [A[0], y1, A[1]], [Dd[0], y1, Dd[1]], col);
       };
+      // 转角：每边矮墙止于下一边墙内皮（L - tP），转角方块只由下一边占据，避免端面与相邻墙外皮共面
       if (inner) {
-        segWall(0, L, low);
+        segWall(0, L - tP, low);
         continue;
       }
-      segWall(0, L, low);
-      const n = Math.max(1, Math.floor((L + gap) / (cw + gap)));
+      segWall(0, L - tP, low);
+      const n = Math.max(1, Math.floor((L - tP + gap) / (cw + gap)));
       const used = n * cw + (n - 1) * gap;
-      let s = (L - used) / 2;
+      let s = (L - tP - used) / 2;
       for (let i = 0; i < n; i++) {
-        segWall(s, s + cw, ph);
+        segWall(s, s + cw, ph, low);
         s += cw + gap;
       }
     }
@@ -444,7 +447,11 @@ export function cityPlatform(b, o) {
 }
 
 /**
- * 院墙（沿折线）：pts=[[x,z]...]，h 墙高，t 厚，顶部两坡瓦帽（筒瓦面用 tileFlat）。o: {color, capColor, closed, skirt}
+ * 院墙（沿折线）：pts=[[x,z]...]，h 墙高，t 厚，顶部两坡瓦帽（筒瓦面用 tileFlat）。o: {color, capColor, closed, skirt, y0}
+ * 转角处理（防共面闪烁）：每段起点外伸 t/2 占住转角方块，终点缩回 t/2 抵到下一段内皮；
+ * 相邻段瓦帽/脊交叉处底面同高会共面，故逐段错开 1.5 cm。
+ * o.ext0 / o.ext1：覆盖首段起点、末段终点的外伸量（开口折线默认两端都外伸 t/2）。
+ * o.ys：每个折点的墙脚高度（可选，逐段取两端较低者，墙高随之补足，用于顺地形的院墙）。
  */
 export function yardWall(b, pts, o = {}) {
   const h = o.h ?? 3.2, t = o.t ?? 0.6;
@@ -453,21 +460,47 @@ export function yardWall(b, pts, o = {}) {
   const skirt = o.skirt ?? 0.8;
   const n = pts.length;
   const segs = o.closed ? n : n - 1;
+  // 顺地形分段时各段墙顶高（墙脚取两端较低者、墙高补足到较高端 + h）
+  const topOf = (i) => (o.ys ? Math.max(o.ys[i], o.ys[(i + 1) % n]) + h : h);
+  const dirOf = (i) => {
+    const a = pts[i], c = pts[(i + 1) % n];
+    return Math.atan2(c[1] - a[1], c[0] - a[0]);
+  };
   for (let i = 0; i < segs; i++) {
     const p0 = pts[i], p1 = pts[(i + 1) % n];
     const dx = p1[0] - p0[0], dz = p1[1] - p0[1];
     const L = Math.hypot(dx, dz);
     if (L < 0.05) continue;
     const yaw = Math.atan2(dz, dx);
-    b.push((p0[0] + p1[0]) / 2, o.y0 ?? 0, (p0[1] + p1[1]) / 2, -yaw);
-    const e = t * 0.5;
-    b.box('brick', -L / 2 - e, 0, -t / 2 - 0.03, L / 2 + e, skirt, t / 2 + 0.03, 0x9c9a94, { skip: 'bottom' });
-    b.box('plaster', -L / 2 - e, skirt, -t / 2, L / 2 + e, h, t / 2, col, { skip: 'bottom' });
+    // 起点外伸 t/2（占转角）；终点：闭合或非末段缩回 t/2，开口末段外伸
+    const e0 = i === 0 && !o.closed ? o.ext0 ?? t * 0.5 : t * 0.5;
+    const e1 = i === segs - 1 && !o.closed ? o.ext1 ?? t * 0.5 : -t * 0.5;
+    const s1 = e1 < 0 ? e1 - 0.03 : e1; // 墙脚比墙身宽 0.03，终点再缩 0.03 抵到下一段墙脚内皮
+    let y0 = o.y0 ?? 0, hh = h;
+    if (o.ys) {
+      const ya = o.ys[i], yb = o.ys[(i + 1) % n];
+      y0 = Math.min(ya, yb);
+      hh = h + Math.abs(ya - yb);
+    }
+    const dy = (i % 2) * 0.015 + (o.closed && segs % 2 && i === segs - 1 ? 0.015 : 0);
+    b.push((p0[0] + p1[0]) / 2, y0, (p0[1] + p1[1]) / 2, -yaw);
+    b.box('brick', -L / 2 - e0, 0, -t / 2 - 0.03, L / 2 + s1, skirt, t / 2 + 0.03, 0x9c9a94, { skip: 'bottom' });
+    b.box('plaster', -L / 2 - e0, skirt, -t / 2, L / 2 + e1, hh, t / 2, col, { skip: 'bottom' });
     // 瓦帽：两坡 + 脊
     const ov = 0.22, rh = 0.42;
     const cap = [[-t / 2 - ov, 0], [t / 2 + ov, 0], [0.06, rh], [-0.06, rh]];
-    b.prism(b.detail >= 1 ? 'tileFlat' : 'tileFlat', cap.map(([p, q]) => [p, h + q]), 'x', -L / 2 - e - 0.1, L / 2 + e + 0.1, capC);
-    b.box('ridge', -L / 2 - e - 0.1, h + rh - 0.04, -0.09, L / 2 + e + 0.1, h + rh + 0.12, 0.09, 0x55585c, {});
+    // 瓦帽终点：缩回到下一段墙内皮（再退 2 cm，不与更高的下一段墙身接触面重合）
+    const c1 = e1 < 0 ? e1 - 0.02 : e1 + 0.1;
+    // 瓦帽起点：前一段墙更高（地形台阶）时，瓦帽不能伸进前一段墙身——直线相接止于接缝，转角处让过转角方块
+    let c0 = -L / 2 - e0 - 0.1;
+    const prev = i > 0 ? i - 1 : o.closed ? segs - 1 : -1;
+    if (o.ys && prev >= 0 && topOf(prev) > topOf(i) + 0.01) {
+      let da = Math.abs(dirOf(i) - dirOf(prev)) % (2 * Math.PI);
+      if (da > Math.PI) da = 2 * Math.PI - da;
+      c0 = da > 0.2 ? -L / 2 - e0 + t + 0.02 : -L / 2 - e0 + 0.02;
+    }
+    b.prism(b.detail >= 1 ? 'tileFlat' : 'tileFlat', cap.map(([p, q]) => [p, hh + dy + q]), 'x', c0, L / 2 + c1, capC);
+    b.box('ridge', c0, hh + dy + rh - 0.04, -0.09, L / 2 + c1, hh + dy + rh + 0.12, 0.09, 0x55585c, {});
     b.pop();
   }
 }
