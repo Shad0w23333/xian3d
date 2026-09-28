@@ -1,0 +1,1973 @@
+{
+ "curated": [
+  {
+   "key": "ifc",
+   "name": "IFC国瑞·西安金融中心",
+   "h": 350,
+   "x": -5938.8,
+   "z": 7383.0,
+   "area": 2960,
+   "iou": 0.99,
+   "iou_rid": "w550214180@5",
+   "iou_name": "IFC国瑞·西安金融中心",
+   "match": "IFC国瑞·西安金融中心",
+   "mx": -5938.8,
+   "mz": 7383.0,
+   "marea": 2995,
+   "mrid": "w550214180@5",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "glA",
+   "name": "绿地中心-A座",
+   "h": 270,
+   "x": -6101.5,
+   "z": 7178.8,
+   "area": 2311,
+   "iou": 1.0,
+   "iou_rid": "w986974316@5",
+   "iou_name": "绿地中心-A座",
+   "match": "绿地中心-A座",
+   "mx": -6101.5,
+   "mz": 7178.7,
+   "marea": 2308,
+   "mrid": "w986974316@5",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "glB",
+   "name": "绿地中心-B座",
+   "h": 270,
+   "x": -6227,
+   "z": 7211,
+   "area": 2482,
+   "iou": 0.54,
+   "iou_rid": "w986974317@3",
+   "iou_name": "绿地中心-B座",
+   "match": "绿地中心-B座",
+   "mx": -6244.4,
+   "mz": 7212.8,
+   "marea": 4332,
+   "mrid": "w986974317@3",
+   "d": 17,
+   "inside": true
+  },
+  {
+   "key": "ztzx",
+   "name": "中铁西安中心",
+   "h": 230,
+   "x": -5806.3,
+   "z": 7381.1,
+   "area": 1624,
+   "iou": 0.99,
+   "iou_rid": "w550214178@6",
+   "iou_name": "中铁西安中心",
+   "match": "中铁西安中心",
+   "mx": -5806.3,
+   "mz": 7381.1,
+   "marea": 1634,
+   "mrid": "w550214178@6",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "mkT",
+   "name": "迈科中心",
+   "h": 216,
+   "x": -6066.8,
+   "z": 7407.8,
+   "area": 1889,
+   "iou": 0.99,
+   "iou_rid": "w1546339320@2",
+   "iou_name": "迈科中心",
+   "match": "迈科中心",
+   "mx": -6066.7,
+   "mz": 7407.8,
+   "marea": 1897,
+   "mrid": "w1546339320@2",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "hyatt",
+   "name": "西安君悦酒店",
+   "h": 161,
+   "x": -6107.6,
+   "z": 7447.3,
+   "area": 1624,
+   "iou": 1.0,
+   "iou_rid": "w985455592@4",
+   "iou_name": "君悦酒店(迈科中心店)"
+  },
+  {
+   "key": "yongli",
+   "name": "陕西永利国际金融中心",
+   "h": 212,
+   "x": -5788.5,
+   "z": 7622,
+   "area": 1980,
+   "iou": 0.65,
+   "iou_rid": "w772926964@3",
+   "iou_name": "陕西永利国际金融中心",
+   "match": "陕西永利国际金融中心",
+   "mx": -5801.3,
+   "mz": 7626.0,
+   "marea": 2937,
+   "mrid": "w772926964@3",
+   "d": 13,
+   "inside": true
+  },
+  {
+   "key": "yongwei",
+   "name": "永威·时代中心",
+   "h": 212,
+   "x": -6093.8,
+   "z": 7627.0,
+   "area": 4260,
+   "iou": 1.0,
+   "iou_rid": "w772926961@3",
+   "iou_name": "永威·时代中心",
+   "match": "永威·时代中心",
+   "mx": -6093.8,
+   "mz": 7627.0,
+   "marea": 4256,
+   "mrid": "w772926961@3",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "ty1",
+   "name": "陕西国际体育之窗1号楼",
+   "h": 262,
+   "x": -5134.0,
+   "z": 6212.0,
+   "area": 2935,
+   "iou": 0.19,
+   "iou_rid": "w985373774@1",
+   "iou_name": "陕西国际体育之窗-2号楼",
+   "match": "陕西国际体育之窗",
+   "mx": -5132.2,
+   "mz": 6255.5,
+   "marea": 21564,
+   "mrid": "w985094940@2",
+   "d": 44,
+   "inside": true
+  },
+  {
+   "key": "ty2",
+   "name": "陕西国际体育之窗2号楼",
+   "h": 188,
+   "x": -5133.0,
+   "z": 6296.0,
+   "area": 2342,
+   "iou": 0.11,
+   "iou_rid": "w985094940@2",
+   "iou_name": "陕西国际体育之窗",
+   "match": "陕西国际体育之窗",
+   "mx": -5132.2,
+   "mz": 6255.5,
+   "marea": 21564,
+   "mrid": "w985094940@2",
+   "d": 40,
+   "inside": true
+  },
+  {
+   "key": "yc",
+   "name": "延长石油科研中心",
+   "h": 217,
+   "x": -5152.4,
+   "z": 5971,
+   "area": 3860,
+   "iou": 0.29,
+   "iou_rid": "w969143238@5",
+   "iou_name": "延长石油科研中心",
+   "match": "延长石油科研中心",
+   "mx": -5078.5,
+   "mz": 5970.7,
+   "marea": 13466,
+   "mrid": "w969143238@5",
+   "d": 74,
+   "inside": true
+  },
+  {
+   "key": "hsA",
+   "name": "禾盛京广中心-A座",
+   "h": 200,
+   "x": -5208.9,
+   "z": 3248.7,
+   "area": 1607,
+   "iou": 1.0,
+   "iou_rid": "w988359467@2",
+   "iou_name": "禾盛京广中心-A座",
+   "match": "禾盛京广中心-A座",
+   "mx": -5208.9,
+   "mz": 3248.7,
+   "marea": 1608,
+   "mrid": "w988359467@2",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "hsB",
+   "name": "禾盛京广中心-B座",
+   "h": 200,
+   "x": -5201.3,
+   "z": 3323.8,
+   "area": 1647,
+   "iou": 1.0,
+   "iou_rid": "w988359468@2",
+   "iou_name": "禾盛京广中心-B座",
+   "match": "禾盛京广中心-B座",
+   "mx": -5201.2,
+   "mz": 3323.8,
+   "marea": 1647,
+   "mrid": "w988359468@2",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "dxgc",
+   "name": "陕西电信广场",
+   "h": 180,
+   "x": -4054.0,
+   "z": 3194.8,
+   "area": 6332,
+   "iou": 1.0,
+   "iou_rid": "w278233167@3",
+   "iou_name": "陕西电信广场",
+   "match": "陕西电信广场",
+   "mx": -4054.0,
+   "mz": 3194.8,
+   "marea": 6329,
+   "mrid": "w278233167@3",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "xinxi",
+   "name": "陕西信息大厦",
+   "h": 188,
+   "x": -654.6,
+   "z": 3174.4,
+   "area": 1452,
+   "iou": 0.99,
+   "iou_rid": "w1284311588@2",
+   "iou_name": "陕西信息大厦",
+   "match": "陕西信息大厦",
+   "mx": -654.5,
+   "mz": 3174.3,
+   "marea": 1461,
+   "mrid": "w1284311588@2",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "rongmin",
+   "name": "荣民金融中心",
+   "h": 270,
+   "x": 95,
+   "z": -4704,
+   "area": 2898,
+   "iou": 0.92,
+   "iou_rid": "w1370944673@2",
+   "iou_name": "荣民金融中心",
+   "match": "荣民金融中心",
+   "mx": 94.7,
+   "mz": -4703.7,
+   "marea": 2972,
+   "mrid": "w1370944673@2",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "igc2",
+   "name": "西安环球贸易中心2号楼",
+   "h": 149.75,
+   "x": 157,
+   "z": -7665,
+   "area": 2872,
+   "iou": 0.29,
+   "iou_rid": "w1372721559@1",
+   "iou_name": ""
+  },
+  {
+   "key": "crA",
+   "name": "华润国际文化商业中心A座",
+   "h": 147.6,
+   "x": 174.3,
+   "z": 6970.9,
+   "area": 2134,
+   "iou": 1.0,
+   "iou_rid": "w1344060603@2",
+   "iou_name": "A座"
+  },
+  {
+   "key": "crB",
+   "name": "华润国际文化商业中心B座",
+   "h": 148.8,
+   "x": 173.6,
+   "z": 7141.8,
+   "area": 2057,
+   "iou": 1.0,
+   "iou_rid": "w1344060011@2",
+   "iou_name": "B座"
+  },
+  {
+   "key": "crC",
+   "name": "华润国际文化商业中心C座",
+   "h": 151,
+   "x": 234.4,
+   "z": 7213.6,
+   "area": 1626,
+   "iou": 1.0,
+   "iou_rid": "w1344060344@2",
+   "iou_name": "C座"
+  },
+  {
+   "key": "crD",
+   "name": "华润国际文化商业中心D座",
+   "h": 151,
+   "x": 234.4,
+   "z": 6904.1,
+   "area": 1626,
+   "iou": 1.0,
+   "iou_rid": "w1344060508@2",
+   "iou_name": "D座"
+  },
+  {
+   "key": "wygjT",
+   "name": "未央国际",
+   "h": 99.6,
+   "x": -40,
+   "z": -8618,
+   "area": 1368,
+   "iou": 0.22,
+   "iou_rid": "r18903164@1",
+   "iou_name": "未央国际",
+   "match": "未央国际",
+   "mx": -74.8,
+   "mz": -8609.7,
+   "marea": 5198,
+   "mrid": "r18903164@1",
+   "d": 36,
+   "inside": true
+  },
+  {
+   "key": "ihg",
+   "name": "西安经开洲际酒店",
+   "h": 95,
+   "x": -178.5,
+   "z": -8925.2,
+   "area": 3970,
+   "iou": 0.99,
+   "iou_rid": "w1372139874@1",
+   "iou_name": "西安经开洲际酒店",
+   "match": "西安经开洲际酒店",
+   "mx": -178.5,
+   "mz": -8925.1,
+   "marea": 3966,
+   "mrid": "w1372139874@1",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "ehb",
+   "name": "EHB 企业总部大厦",
+   "h": 160,
+   "x": -144,
+   "z": -8979,
+   "area": 2196,
+   "iou": 0.68,
+   "iou_rid": "",
+   "iou_name": ""
+  },
+  {
+   "key": "xuhuiA",
+   "name": "旭辉中心A座",
+   "h": 88,
+   "x": -370.6,
+   "z": -8747.2,
+   "area": 4275,
+   "iou": 1.0,
+   "iou_rid": "w1372139892@1",
+   "iou_name": ""
+  },
+  {
+   "key": "xuhuiB",
+   "name": "旭辉中心B座",
+   "h": 86,
+   "x": -359.0,
+   "z": -8880.7,
+   "area": 6076,
+   "iou": 1.0,
+   "iou_rid": "w1372139886@1",
+   "iou_name": ""
+  },
+  {
+   "key": "zhixuan",
+   "name": "智选假日酒店（经开店）",
+   "h": 56,
+   "x": -226.6,
+   "z": -8731.4,
+   "area": 683,
+   "iou": 1.0,
+   "iou_rid": "w969670628@1",
+   "iou_name": "智选假日酒店(西安经开店)",
+   "match": "智选假日酒店(西安经开店)",
+   "mx": -226.6,
+   "mz": -8731.4,
+   "marea": 685,
+   "mrid": "w969670628@1",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "wygjzx",
+   "name": "未央国际中心",
+   "h": 68,
+   "x": 131.9,
+   "z": -8608.1,
+   "area": 1213,
+   "iou": 1.0,
+   "iou_rid": "w1373232106@1",
+   "iou_name": "",
+   "match": "未央国际",
+   "mx": -74.8,
+   "mz": -8609.7,
+   "marea": 5198,
+   "mrid": "r18903164@1",
+   "d": 207,
+   "inside": false
+  },
+  {
+   "key": "meridien",
+   "name": "西安浐灞艾美酒店",
+   "h": 147,
+   "x": 6269.1,
+   "z": -8898.7,
+   "area": 1375,
+   "iou": 1.0,
+   "iou_rid": "w822908171@1",
+   "iou_name": ""
+  },
+  {
+   "key": "icc",
+   "name": "欧亚国际 ICC",
+   "h": 98,
+   "x": 6363.0,
+   "z": -8089.5,
+   "area": 1490,
+   "iou": 1.0,
+   "iou_rid": "",
+   "iou_name": ""
+  },
+  {
+   "key": "dmgwd",
+   "name": "",
+   "h": 26,
+   "x": 2377.4,
+   "z": -6219.1,
+   "area": 36507,
+   "iou": 1.0,
+   "iou_rid": "w1409622148@1",
+   "iou_name": "大明宫万达广场",
+   "match": "大明宫万达广场",
+   "mx": 2377.4,
+   "mz": -6219.0,
+   "marea": 36502,
+   "mrid": "w1409622148@1",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "saige",
+   "name": "",
+   "h": 56,
+   "x": 153.9,
+   "z": 4023.4,
+   "area": 5574,
+   "iou": 0.26,
+   "iou_rid": "r19420522@3",
+   "iou_name": "赛格国际购物中心"
+  },
+  {
+   "key": "mixc",
+   "name": "",
+   "h": 24,
+   "x": 221.2,
+   "z": 7078.0,
+   "area": 12852,
+   "iou": 1.0,
+   "iou_rid": "w1344060035@5",
+   "iou_name": "西安万象城",
+   "match": "西安万象城",
+   "mx": 221.2,
+   "mz": 7078.0,
+   "marea": 12864,
+   "mrid": "w1344060035@5",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "kaiyuan",
+   "name": "",
+   "h": 36,
+   "x": 101.3,
+   "z": 84.0,
+   "area": 7264,
+   "iou": 0.58,
+   "iou_rid": "w1264364569@3",
+   "iou_name": "开元商城(钟楼店)",
+   "match": "开元商城(钟楼店)",
+   "mx": 111.0,
+   "mz": 91.9,
+   "marea": 10876,
+   "mrid": "w1264364569@3",
+   "d": 12,
+   "inside": true
+  },
+  {
+   "key": "xidigang",
+   "name": "",
+   "h": 34,
+   "x": -142.7,
+   "z": -8786.2,
+   "area": 24008,
+   "iou": 1.0,
+   "iou_rid": "w1372139894@1",
+   "iou_name": "CityOn熙地港（西安）购物中心",
+   "match": "CityOn熙地港（西安）购物中心",
+   "mx": -142.8,
+   "mz": -8786.2,
+   "marea": 24090,
+   "mrid": "w1372139894@1",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "darongcheng",
+   "name": "",
+   "h": 30,
+   "x": 180.8,
+   "z": -8811.0,
+   "area": 18479,
+   "iou": 1.0,
+   "iou_rid": "w1373232024@1",
+   "iou_name": "西安大融城IMIXPARK",
+   "match": "西安大融城IMIXPARK",
+   "mx": 180.8,
+   "mz": -8811.1,
+   "marea": 18490,
+   "mrid": "w1373232024@1",
+   "d": 0,
+   "inside": true
+  },
+  {
+   "key": "wy168a",
+   "name": "",
+   "h": 9,
+   "x": -74.3,
+   "z": -8609.8,
+   "area": 5940,
+   "iou": 0.87,
+   "iou_rid": "r18903164@1",
+   "iou_name": "未央国际"
+  },
+  {
+   "key": "wy168b",
+   "name": "",
+   "h": 17,
+   "x": -76.8,
+   "z": -8609.2,
+   "area": 2986,
+   "iou": 0.57,
+   "iou_rid": "r18903164@1",
+   "iou_name": "未央国际"
+  },
+  {
+   "key": "wy168c",
+   "name": "",
+   "h": 24,
+   "x": -100.8,
+   "z": -8613.1,
+   "area": 785,
+   "iou": 0.15,
+   "iou_rid": "r18903164@1",
+   "iou_name": "未央国际"
+  },
+  {
+   "key": "wy168d",
+   "name": "",
+   "h": 24,
+   "x": -42.6,
+   "z": -8601.2,
+   "area": 402,
+   "iou": 0.08,
+   "iou_rid": "r18903164@1",
+   "iou_name": "未央国际"
+  },
+  {
+   "key": "jinjiang",
+   "name": "",
+   "h": 24,
+   "x": 6468.8,
+   "z": -8625.1,
+   "area": 16606,
+   "iou": 1.0,
+   "iou_rid": "w272974619@2",
+   "iou_name": ""
+  },
+  {
+   "key": "wHotel",
+   "name": "西安W酒店",
+   "h": 91.7,
+   "x": 3874.0,
+   "z": 6972.0,
+   "area": 2882,
+   "iou": 0.08,
+   "iou_rid": "w1370071044@1",
+   "iou_name": ""
+  },
+  {
+   "key": "wOfficeA",
+   "name": "万众国际A座",
+   "h": 96,
+   "x": 3802.0,
+   "z": 7150.0,
+   "area": 3082,
+   "iou": 0.13,
+   "iou_rid": "w1370071044@1",
+   "iou_name": ""
+  },
+  {
+   "key": "wOfficeB",
+   "name": "万众国际B座",
+   "h": 96,
+   "x": 3884.0,
+   "z": 7128.0,
+   "area": 2982,
+   "iou": 0.11,
+   "iou_rid": "w1370071044@1",
+   "iou_name": ""
+  }
+ ],
+ "landmarks": [
+  {
+   "list": "towers",
+   "name": "秦商国际中心（天朗·秦商国际总部大厦）1号楼",
+   "cs": "estimated",
+   "src": "fix",
+   "x": -5930.4,
+   "z": 7497.5,
+   "cands": [],
+   "fix": {
+    "x": -5794,
+    "z": 7521,
+    "moved": 138,
+    "h": 217,
+    "skip": false,
+    "note": "CTBUH 217 m/50F；楼书：丈八一路与锦业一路十字西北角地块东侧、标准层 52.65×34.3 m；OSM w1387164542（87×31 m，被标成“永利 212 m”）正落在该地块，塔楼放在其东段（原推测点 (−5930,7497) 偏西约 130 m；research/refs/dossiers/gaoxin.json）"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "泰信大厦",
+   "cs": "estimated",
+   "src": "synth",
+   "x": -5915.1,
+   "z": 7629.2,
+   "cands": [],
+   "fix": {
+    "x": -5904,
+    "z": 7654,
+    "moved": 27,
+    "h": 214,
+    "skip": false,
+    "note": "CTBUH 坐标（锦业一路 6 号、永利西侧）214 m/37F（199.9 m 屋面 + 塔冠）；原推测点对上的是中投国际综合体（research/refs/dossiers/gaoxin.json）"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "西安ICC环贸中心 主塔",
+   "cs": "estimated",
+   "src": "synth",
+   "x": -6996.1,
+   "z": 7390.0,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "西安ICC环贸中心 万豪酒店楼",
+   "cs": "estimated",
+   "src": "near",
+   "x": -6913.3,
+   "z": 7434.5,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "西安安达仕酒店（迈科）",
+   "cs": "estimated",
+   "src": "near",
+   "x": -6655.7,
+   "z": 7657.0,
+   "cands": [],
+   "fix": {
+    "x": -6632,
+    "z": 7648,
+    "moved": 25,
+    "h": 85,
+    "skip": false,
+    "note": "设计 247.4 m/50F，但 2022-05 主体约 20 层后停滞（腾讯 2023；高楼迷 2024-04 仍记停工），按 20F×4.2 m 取 85 m 现状高度；位置取 CTBUH 坐标（宗地：锦业一路以南、丈八三路以西、锦业五街以东；research/refs/dossiers/gaoxin.json）"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "陕西国际体育之窗1号楼",
+   "cs": "estimated",
+   "src": null,
+   "x": -5134.0,
+   "z": 6212.0,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "陕西国际体育之窗-2号楼",
+     "x": -5098.3,
+     "z": 6202.5,
+     "area": 1837,
+     "rid": "w985373774@1",
+     "d": 37
+    },
+    {
+     "src": "overture_bld",
+     "name": "陕西国际体育之窗",
+     "x": -5132.2,
+     "z": 6255.5,
+     "area": 21564,
+     "rid": "w985094940@2",
+     "d": 44
+    },
+    {
+     "src": "poi",
+     "name": "陕西国际体育之窗",
+     "x": -5124.7,
+     "z": 6274.9,
+     "d": 64,
+     "in_bld": true
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "陕西国际体育之窗2号楼",
+   "cs": "estimated",
+   "src": null,
+   "x": -5133.0,
+   "z": 6296.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "陕西国际体育之窗",
+     "x": -5124.7,
+     "z": 6274.9,
+     "d": 23,
+     "in_bld": true
+    },
+    {
+     "src": "overture_bld",
+     "name": "陕西国际体育之窗",
+     "x": -5132.2,
+     "z": 6255.5,
+     "area": 21564,
+     "rid": "w985094940@2",
+     "d": 40
+    },
+    {
+     "src": "overture_bld",
+     "name": "陕西国际体育之窗-2号楼",
+     "x": -5098.3,
+     "z": 6202.5,
+     "area": 1837,
+     "rid": "w985373774@1",
+     "d": 100
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "延长石油科研中心",
+   "cs": "estimated",
+   "src": null,
+   "x": -5160.0,
+   "z": 5971.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "延长石油科研中心",
+     "x": -5084.4,
+     "z": 5972.0,
+     "d": 76,
+     "in_bld": true
+    },
+    {
+     "src": "overture_bld",
+     "name": "延长石油科研中心",
+     "x": -5078.5,
+     "z": 5970.7,
+     "area": 13466,
+     "rid": "w969143238@5",
+     "d": 82
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "禾盛京广中心A座",
+   "cs": "skyline",
+   "src": "synth",
+   "x": -5209.0,
+   "z": 3248.7,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-A座",
+     "x": -5208.9,
+     "z": 3248.7,
+     "area": 1608,
+     "rid": "w988359467@2",
+     "d": 0
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-B座",
+     "x": -5201.2,
+     "z": 3323.8,
+     "area": 1647,
+     "rid": "w988359468@2",
+     "d": 76
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-D座",
+     "x": -5129.0,
+     "z": 3242.6,
+     "area": 1481,
+     "rid": "w988359470@1",
+     "d": 80
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-C座",
+     "x": -5135.1,
+     "z": 3316.4,
+     "area": 1222,
+     "rid": "w988359469@1",
+     "d": 100
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-F座",
+     "x": -5061.8,
+     "z": 3248.9,
+     "area": 801,
+     "rid": "w988359472@1",
+     "d": 147
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-E座",
+     "x": -5074.6,
+     "z": 3315.8,
+     "area": 1297,
+     "rid": "w988359471@1",
+     "d": 150
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "禾盛京广中心B座",
+   "cs": "skyline",
+   "src": "synth",
+   "x": -5201.2,
+   "z": 3323.8,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-B座",
+     "x": -5201.2,
+     "z": 3323.8,
+     "area": 1647,
+     "rid": "w988359468@2",
+     "d": 0
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-C座",
+     "x": -5135.1,
+     "z": 3316.4,
+     "area": 1222,
+     "rid": "w988359469@1",
+     "d": 67
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-A座",
+     "x": -5208.9,
+     "z": 3248.7,
+     "area": 1608,
+     "rid": "w988359467@2",
+     "d": 76
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-D座",
+     "x": -5129.0,
+     "z": 3242.6,
+     "area": 1481,
+     "rid": "w988359470@1",
+     "d": 109
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-E座",
+     "x": -5074.6,
+     "z": 3315.8,
+     "area": 1297,
+     "rid": "w988359471@1",
+     "d": 127
+    },
+    {
+     "src": "overture_bld",
+     "name": "禾盛京广中心-F座",
+     "x": -5061.8,
+     "z": 3248.9,
+     "area": 801,
+     "rid": "w988359472@1",
+     "d": 158
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "西安香格里拉大酒店（高新）",
+   "cs": "osm_footprint",
+   "src": "synth",
+   "x": -4564.7,
+   "z": 2905.3,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "西安香格里拉大酒店",
+     "x": -4564.6,
+     "z": 2905.3,
+     "area": 8478,
+     "rid": "w28594595@6",
+     "d": 0
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "长安国际中心（南关正街）",
+   "cs": "overture_place",
+   "src": null,
+   "x": 189.8,
+   "z": 2124.5,
+   "cands": [
+    {
+     "src": "place",
+     "name": "长安国际中心",
+     "x": 189.8,
+     "z": 2124.5,
+     "ds": "Overture,meta",
+     "d": 0,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "长安银行(南关正街小微支行)",
+     "x": -91.0,
+     "z": 1748.5,
+     "d": 469,
+     "in_bld": true
+    }
+   ],
+   "fix": {
+    "x": null,
+    "z": null,
+    "moved": null,
+    "h": null,
+    "skip": true,
+    "note": "实际为永宁门外西南的 2×2 四塔组团（108.9413,34.2492，王府井百货永宁门店裙楼上），22 层；四座塔在 buildings.bin 中已有轮廓，由 tools/check_heights.py 的 POINT_FIX 按 22 层改高，这里不再在错误位置另立一栋"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "宏府大厦（北大街）",
+   "cs": "osm_footprint",
+   "src": "synth",
+   "x": -68.7,
+   "z": -888.4,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "宏府大厦",
+     "x": -68.7,
+     "z": -888.3,
+     "area": 6697,
+     "rid": "w461320500@3",
+     "d": 0
+    },
+    {
+     "src": "poi",
+     "name": "宏府大厦",
+     "x": -66.9,
+     "z": -886.4,
+     "d": 3,
+     "in_bld": true
+    },
+    {
+     "src": "poi",
+     "name": "汉庭优佳酒店(北大街店)",
+     "x": 43.2,
+     "z": -1011.8,
+     "d": 167,
+     "in_bld": true
+    },
+    {
+     "src": "poi",
+     "name": "北大街-B口",
+     "x": -24.0,
+     "z": -1101.7,
+     "d": 218,
+     "in_bld": true
+    },
+    {
+     "src": "poi",
+     "name": "北大街-C1口",
+     "x": 46.4,
+     "z": -1108.8,
+     "d": 249,
+     "in_bld": true
+    },
+    {
+     "src": "poi",
+     "name": "北大街-B1口",
+     "x": -18.4,
+     "z": -1141.6,
+     "d": 258,
+     "in_bld": false
+    },
+    {
+     "src": "overture_bld",
+     "name": "汉庭西安钟楼北大街地铁站酒店",
+     "x": -192.8,
+     "z": -1129.3,
+     "area": 1051,
+     "rid": "w445674892@4",
+     "d": 271
+    },
+    {
+     "src": "poi",
+     "name": "汉庭西安钟楼北大街地铁站酒店",
+     "x": -195.0,
+     "z": -1131.2,
+     "d": 274,
+     "in_bld": true
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "西安环球贸易中心2号楼（环贸晶樽）",
+   "cs": "estimated",
+   "src": null,
+   "x": 157.0,
+   "z": -7665.0,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "西安环球贸易中心1号楼（IGC）",
+   "cs": "estimated",
+   "src": null,
+   "x": 134.2,
+   "z": -7738.6,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "西北国金中心A座",
+   "cs": "estimated",
+   "src": "fix",
+   "x": -1022.5,
+   "z": -8973.4,
+   "cands": [],
+   "fix": {
+    "x": -915,
+    "z": -8719,
+    "moved": 276,
+    "h": 205,
+    "skip": false,
+    "note": "原坐标 (−1024,−8973) 取到的 OSM w1418071031 是住宅；卫星图带八角停机坪的塔顶在文景路×凤城七路西北角约 (−915,−8719)（research/refs/dossiers/north.json）；该处 Overture 无塔楼轮廓，按 50×48 m 合成；主塔 205 m（百科/官网）与 210 m/50F 两说，取 205"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "西安市人民政府（行政中心）主楼",
+   "cs": "estimated",
+   "src": null,
+   "x": 1086.7,
+   "z": -9247.5,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "行政中心-D6口",
+     "x": 282.8,
+     "z": -9107.8,
+     "d": 816,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-D5口",
+     "x": 283.2,
+     "z": -9052.9,
+     "d": 827,
+     "in_bld": true
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-D2口",
+     "x": 203.9,
+     "z": -9153.7,
+     "d": 888,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-D3口",
+     "x": 166.0,
+     "z": -9189.8,
+     "d": 922,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-D1口",
+     "x": 139.0,
+     "z": -9160.1,
+     "d": 952,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-C3口",
+     "x": 169.5,
+     "z": -8972.9,
+     "d": 957,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-C2口",
+     "x": 127.6,
+     "z": -8933.5,
+     "d": 1009,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "行政中心-D口",
+     "x": 64.1,
+     "z": -9157.3,
+     "d": 1027,
+     "in_bld": true
+    }
+   ],
+   "fix": {
+    "x": null,
+    "z": null,
+    "moved": null,
+    "h": null,
+    "skip": false,
+    "note": "清单坐标 108.954153,34.344043 实为西安市中医医院 POI；真正的市政府在未央路以西 (−669,−9258)（OSM r18903162，240×247 m 对称院落）；sky-data 的 FP.gov 是未央路以东的市委/人大/政协与中医医院楼群（north.json）。本条 already_modeled，不生成"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "西安W酒店",
+   "cs": "estimated",
+   "src": null,
+   "x": 3874.0,
+   "z": 6972.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安 W 酒店",
+     "x": 3817.1,
+     "z": 6956.6,
+     "d": 59,
+     "in_bld": true
+    },
+    {
+     "src": "place",
+     "name": "西安W酒店",
+     "x": 3802.7,
+     "z": 6958.6,
+     "ds": "Overture,meta",
+     "d": 73,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "万众国际A座",
+   "cs": "estimated",
+   "src": null,
+   "x": 3802.0,
+   "z": 7150.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "万众国际",
+     "x": 3834.4,
+     "z": 7057.2,
+     "d": 98,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "万众国际B座",
+   "cs": "estimated",
+   "src": null,
+   "x": 3884.0,
+   "z": 7128.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "万众国际",
+     "x": 3834.4,
+     "z": 7057.2,
+     "d": 86,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "曲江文创中心1#楼",
+   "cs": "estimated",
+   "src": "near",
+   "x": 6326.0,
+   "z": 6311.0,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "曲江文创中心2#楼",
+   "cs": "estimated",
+   "src": "near",
+   "x": 6307.6,
+   "z": 6222.0,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "曲江云松间9号楼（西安华尔道夫酒店）",
+   "cs": "estimated",
+   "src": null,
+   "x": 5304.7,
+   "z": 8457.8,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "西安浐灞凯悦酒店（欧亚国际三期商业4号楼）",
+   "cs": "overture_place",
+   "src": null,
+   "x": 6914.8,
+   "z": -7682.9,
+   "cands": [],
+   "fix": {
+    "x": 6458.5,
+    "z": -7833.3,
+    "moved": 480,
+    "h": null,
+    "skip": true,
+    "note": "place.parquet 原值 109.0175,34.33 为 GCJ-02（比纠偏值正好东 454 m、南 152 m）；纠偏后落在 sky-data2 SPECIAL2.hyatt（6458,−7833）“叠石”精建上，与 chanba/notes.md“欧亚大道×浐河西路西南角”一致；原先按错误坐标在浐河东岸重复生成了一栋"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "源创中心（欧亚国际三期）超高层1",
+   "cs": "estimated",
+   "src": "near",
+   "x": 6390.4,
+   "z": -7861.1,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "源创中心（欧亚国际三期）超高层2",
+   "cs": "estimated",
+   "src": "synth",
+   "x": 6353.6,
+   "z": -7749.7,
+   "cands": []
+  },
+  {
+   "list": "towers",
+   "name": "招商局丝路中心 北塔",
+   "cs": "estimated",
+   "src": "contains",
+   "x": 8432.9,
+   "z": -12530.5,
+   "cands": [],
+   "fix": {
+    "x": null,
+    "z": null,
+    "moved": null,
+    "h": null,
+    "skip": false,
+    "note": "144 m/31F 有设计方出处；位置未定：双寨站旁 OSM 两个候选方形轮廓 w1381177356/57 东西并列，与“南北对称”描述不符（research/refs/dossiers/east_west.json），保持调研推测坐标，待影像核对"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "招商局丝路中心 南塔",
+   "cs": "estimated",
+   "src": "synth",
+   "x": 8478.9,
+   "z": -12140.4,
+   "cands": [],
+   "fix": {
+    "x": null,
+    "z": null,
+    "moved": null,
+    "h": null,
+    "skip": false,
+    "note": "同北塔：坐标未定，保持推测；原先“就近”对上的 385 m² 小楼轮廓已由塔楼平面合理性检查排除，改为合成"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "中国国际丝路中心大厦（绿地）",
+   "cs": "estimated",
+   "src": "synth",
+   "x": -15994.1,
+   "z": 279.6,
+   "cands": [],
+   "fix": {
+    "x": -16020.8,
+    "z": 269.5,
+    "moved": 29,
+    "h": null,
+    "skip": false,
+    "note": "现状核心筒约 300 m/61 层（2024-03 官方回复）；位置取 buildings.bin 该处 71 m 局部块（沣东大道×复兴大道东南角），原推测点偏开约 30 m 导致旧块与新塔并存"
+   }
+  },
+  {
+   "list": "towers",
+   "name": "秦汉文创大厦",
+   "cs": "osm_footprint",
+   "src": "synth",
+   "x": -8867.2,
+   "z": -14793.0,
+   "cands": [
+    {
+     "src": "overture_bld",
+     "name": "秦汉文创大厦",
+     "x": -8867.2,
+     "z": -14793.0,
+     "area": 12099,
+     "rid": "w1263230196@1",
+     "d": 0
+    }
+   ]
+  },
+  {
+   "list": "towers",
+   "name": "陕铁大厦",
+   "cs": "estimated",
+   "src": "contains",
+   "x": 4384.7,
+   "z": 12683.2,
+   "cands": [],
+   "fix": {
+    "x": 2401.0,
+    "z": 11519.4,
+    "moved": 2300,
+    "h": 99.8,
+    "skip": false,
+    "note": "99.8 m/23F（商策网招商稿，二手）；位于东长安街×神舟四路十字西北角（路口 108.9697,34.1561），取路口西北侧 54×45 m 候选轮廓（Overture 5e076029，未证实）；原推测坐标 108.99,34.147 相差约 2 km（research/refs/dossiers/east_west.json）"
+   }
+  },
+  {
+   "list": "malls",
+   "name": "太奥广场",
+   "cs": "poi",
+   "src": "synth",
+   "x": -4701.9,
+   "z": -2515.5,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "太奥广场",
+     "x": -4701.9,
+     "z": -2515.5,
+     "d": 0,
+     "in_bld": false
+    },
+    {
+     "src": "place",
+     "name": "太奥广场",
+     "x": -4486.3,
+     "z": -2413.5,
+     "ds": "Overture,meta",
+     "d": 239,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "malls",
+   "name": "静安荟奥莱公园(泾河)",
+   "cs": "poi",
+   "src": "synth",
+   "x": -26.1,
+   "z": -26835.4,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "静安荟奥莱公园",
+     "x": -26.1,
+     "z": -26835.4,
+     "d": 0,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "malls",
+   "name": "龙湖西安未央天街",
+   "cs": "estimated",
+   "src": "synth",
+   "x": 3519.9,
+   "z": -9510.2,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "西安首创奥特莱斯",
+   "cs": "poi",
+   "src": "synth",
+   "x": -17232.7,
+   "z": 12227.2,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安首创奥特莱斯",
+     "x": -17232.7,
+     "z": 12227.2,
+     "d": 0,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "malls",
+   "name": "王府井奥莱·西咸小镇(机场)",
+   "cs": "poi",
+   "src": "synth",
+   "x": -19902.0,
+   "z": -15245.1,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "王府井奥莱·临潼小镇",
+   "cs": "poi",
+   "src": "synth",
+   "x": 21042.8,
+   "z": -11695.2,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "西安环贸中心(ICC环贸天地)",
+   "cs": "estimated",
+   "src": "synth",
+   "x": -7023.7,
+   "z": 7434.5,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "明德·盛荟",
+   "cs": "estimated",
+   "src": "contains",
+   "x": -565.1,
+   "z": 5899.4,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "航天城·星璇广场",
+   "cs": "estimated",
+   "src": "synth",
+   "x": 2590.6,
+   "z": 12516.4,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "西安高新GT Mall",
+   "cs": "estimated",
+   "src": "near",
+   "x": -6076.1,
+   "z": 3084.4,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "源创Oya街区",
+   "cs": "estimated",
+   "src": "near",
+   "x": 6316.8,
+   "z": -7905.7,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "高新新天地生活奥莱",
+   "cs": "estimated",
+   "src": "contains",
+   "x": -5919.7,
+   "z": 4230.5,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "真珠港购物中心(航天城壹街区)",
+   "cs": "estimated",
+   "src": "synth",
+   "x": 2544.6,
+   "z": 9625.5,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "月澜嘉奥特莱斯(火车站北广场)",
+   "cs": "estimated",
+   "src": null,
+   "x": 1854.6,
+   "z": -2392.3,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "百联奥莱(幸福林带地下商业街)",
+   "cs": "estimated",
+   "src": null,
+   "x": 5764.8,
+   "z": 335.3,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "幸福林带",
+     "x": 6244.9,
+     "z": 1590.6,
+     "d": 1344,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "malls",
+   "name": "中粮·大悦广场",
+   "cs": "estimated",
+   "src": null,
+   "x": 6960.8,
+   "z": -14035.5,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "王府井国际港丝路购物中心",
+   "cs": "estimated",
+   "src": null,
+   "x": 8984.9,
+   "z": -13255.1,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "银池国际",
+   "cs": "estimated",
+   "src": null,
+   "x": 152.6,
+   "z": -9019.9,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "Insula·绿洲(沣东)",
+   "cs": "estimated",
+   "src": null,
+   "x": -11163.9,
+   "z": -110.0,
+   "cands": []
+  },
+  {
+   "list": "malls",
+   "name": "西安太古里",
+   "cs": "estimated",
+   "src": null,
+   "x": -399.5,
+   "z": 2372.1,
+   "cands": []
+  },
+  {
+   "list": "venues",
+   "name": "新西安南站（规划站址）",
+   "cs": "poi",
+   "src": "synth",
+   "x": -12058.4,
+   "z": 15376.4,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安南站",
+     "x": -12058.4,
+     "z": 15376.4,
+     "d": 0,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "西北民航大厦（西稍门机场巴士站）",
+   "cs": "estimated",
+   "src": "near",
+   "x": -2653.6,
+   "z": 112.6,
+   "cands": []
+  },
+  {
+   "list": "venues",
+   "name": "西安国际港站",
+   "cs": "poi",
+   "src": "synth",
+   "x": 10860.1,
+   "z": -16920.2,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安国际港站",
+     "x": 10860.1,
+     "z": -16920.2,
+     "d": 0,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "西安国际足球中心",
+   "cs": "poi",
+   "src": "synth",
+   "x": -15881.2,
+   "z": -2470.9,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安国际足球中心体育场",
+     "x": -15881.2,
+     "z": -2470.8,
+     "d": 0,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "西安国际足球中心-D口",
+     "x": -16202.9,
+     "z": -2329.2,
+     "d": 352,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "西安国际足球中心站",
+     "x": -16240.0,
+     "z": -2250.2,
+     "d": 421,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "西安国际足球中心-C口",
+     "x": -16192.5,
+     "z": -2150.0,
+     "d": 447,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "西安大剧院（高新·未来之瞳）",
+   "cs": "poi",
+   "src": "synth",
+   "x": -11007.5,
+   "z": 13561.4,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安大剧院",
+     "x": -11006.7,
+     "z": 13563.5,
+     "d": 2,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "西安城市规划馆（长安云北馆）",
+   "cs": "estimated",
+   "src": "name",
+   "x": 6464.0,
+   "z": -13879.4,
+   "cands": []
+  },
+  {
+   "list": "venues",
+   "name": "西安临空会展中心",
+   "cs": "osm_footprint",
+   "src": "synth",
+   "x": -13938.4,
+   "z": -19281.9,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西安临空会展中心",
+     "x": -14029.6,
+     "z": -19263.5,
+     "d": 93,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "陕西省广播电视中心编播大楼（陕西广电大厦）",
+   "cs": "estimated",
+   "src": "near",
+   "x": -77.5,
+   "z": 5231.9,
+   "cands": []
+  },
+  {
+   "list": "venues",
+   "name": "西北工业大学长安校区图书馆（水上图书馆）",
+   "cs": "estimated",
+   "src": null,
+   "x": -16794.5,
+   "z": 25680.9,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西北工业大学(长安校区)",
+     "x": -16781.5,
+     "z": 25227.2,
+     "d": 454,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "西北大学长安校区",
+   "cs": "estimated",
+   "src": null,
+   "x": -6665.5,
+   "z": 12723.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "西北大学长安校区",
+     "x": -6662.5,
+     "z": 12896.3,
+     "d": 173,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "venues",
+   "name": "环城公园（城墙-护城河环带）",
+   "cs": "estimated",
+   "src": null,
+   "x": 336.6,
+   "z": 1.3,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": 1252.4,
+     "z": 864.8,
+     "d": 1259,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": -1013.1,
+     "z": 906.1,
+     "d": 1625,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": 2251.8,
+     "z": -306.2,
+     "d": 1940,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": 2251.5,
+     "z": 493.3,
+     "d": 1977,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": 2245.9,
+     "z": -809.9,
+     "d": 2075,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": -2076.8,
+     "z": 491.4,
+     "d": 2463,
+     "in_bld": false
+    },
+    {
+     "src": "poi",
+     "name": "环城公园",
+     "x": 2253.9,
+     "z": -1564.7,
+     "d": 2476,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "heritage",
+   "name": "高家大院",
+   "cs": "estimated",
+   "src": null,
+   "x": -332.0,
+   "z": -400.0,
+   "cands": [
+    {
+     "src": "place",
+     "name": "西安高家大院",
+     "x": -331.7,
+     "z": -399.2,
+     "ds": "Overture,meta",
+     "d": 1,
+     "in_bld": true
+    }
+   ]
+  },
+  {
+   "list": "heritage",
+   "name": "北院门·回坊历史街区",
+   "cs": "estimated",
+   "src": null,
+   "x": -500.0,
+   "z": -450.0,
+   "cands": []
+  },
+  {
+   "list": "heritage",
+   "name": "三学街",
+   "cs": "estimated",
+   "src": null,
+   "x": 502.2,
+   "z": 724.9,
+   "cands": []
+  },
+  {
+   "list": "heritage",
+   "name": "汉长安城未央宫遗址（前殿）",
+   "cs": "estimated",
+   "src": null,
+   "x": -7805.8,
+   "z": -5065.1,
+   "cands": []
+  },
+  {
+   "list": "sunken",
+   "name": "南门榴园（永宁门外西翼下沉广场）",
+   "cs": "estimated — 南门外护城河南岸映像公园西侧，按\"南门外两翼下沉广场\"描述与护城河位置推定",
+   "src": null,
+   "x": -200.0,
+   "z": 1110.0,
+   "cands": [
+    {
+     "src": "poi",
+     "name": "下沉广场",
+     "x": 1717.8,
+     "z": 2108.0,
+     "d": 2162,
+     "in_bld": false
+    }
+   ]
+  },
+  {
+   "list": "sunken",
+   "name": "西安太古里（建设中）",
+   "cs": "estimated — 友谊路以南/长安路以西/体育场北路以北/朱雀大街以东 地块中心",
+   "src": null,
+   "x": -320.0,
+   "z": 2400.0,
+   "cands": []
+  },
+  {
+   "list": "universities",
+   "name": "长安大学·校本部南院",
+   "cs": "estimated:overture_building_cluster(长安大学本部南院*)",
+   "src": null,
+   "x": 450.0,
+   "z": 3450.0,
+   "cands": [
+    {
+     "src": "place",
+     "name": "长安大学",
+     "x": 1334.0,
+     "z": 3353.4,
+     "ds": "Overture,meta",
+     "d": 889,
+     "in_bld": false
+    }
+   ]
+  }
+ ]
+}
