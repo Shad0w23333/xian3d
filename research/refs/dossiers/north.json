@@ -1,0 +1,4338 @@
+[
+ {
+  "id": "xa_station_north",
+  "name": "西安站北站房",
+  "aliases": [
+   "西安火车站北站房",
+   "西安站（北广场/丹凤门广场侧站房）"
+  ],
+  "category": "transport_hub",
+  "lon": 108.958039,
+  "lat": 34.281114,
+  "world_xz": [
+   1444.2,
+   -2238.0
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1046109814@6）",
+  "overture_id": "a40ded9b-50ec-4979-8efd-7d7aad21c135",
+  "footprint_size_m": [
+   221.3,
+   61.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    221.3,
+    61.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.5,
+   "bbox_EW_NS_m": [
+    221.8,
+    62.8
+   ],
+   "area_m2": 13139
+  },
+  "height_m": 24,
+  "floors": 2,
+  "height_source": "华商网 2021-05-30：建筑高度24米，地下三层、地上两层；zh.wikipedia「西安站」同口径",
+  "year": 2021,
+  "massing": [
+   {
+    "part": "站房主体（屋面）",
+    "shape": "rect",
+    "size_m": [
+     221.3,
+     61.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0.5,
+    "base_m": 0,
+    "top_m": 24,
+    "setbacks": [],
+    "taper": null,
+    "notes": "size/rotation 取 OSM 外包（见 footprint_size_m）。内部标高（华商网）：0 m 站台层、5 m 设备夹层、10 m 高架层、14 m 办公夹层、18 m 商业层；地下三层为停车场+设备。"
+   },
+   {
+    "part": "高架候车室（跨线，连接南站房）",
+    "shape": "rect",
+    "size_m": [
+     125,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 10,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "zh.wikipedia：总面积12000㎡、东西宽125米、2021-04-26 启用；南北进深与屋面标高未查到"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "照片：单檐大出檐缓坡屋顶（近平的庑殿式轮廓），檐口很薄，檐下成排三角形斗拱式桁架；屋面钢网架重1045吨（华商网）。未见重檐——现有参考 venues.json 写的“重檐庑殿”与照片不符"
+  },
+  "facade": {
+   "primary": "米色方形石材列柱 + 柱间深色镂空格栅（方格窗棂纹） + 中央开间通高玻璃幕墙",
+   "glass_color_hex": "#2c3e50",
+   "frame_color_hex": "#3a3f45",
+   "wall_color_hex": "#d8ccb4",
+   "pattern": "正立面约12开间列柱，中央一间为玻璃门厅；格栅在夜间内透成白色方格点阵",
+   "floor_height_m": null,
+   "notes": "颜色为照片取色近似值（阴雨天/夜景，偏差较大）"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安站",
+    "color_hex": "#e32b2b",
+    "position": "中央玻璃开间上部，正对北广场",
+    "approx_height_m": null
+   },
+   {
+    "text": "XI'AN RAILWAY STATION",
+    "color_hex": "#e32b2b",
+    "position": "“西安站”下方一行小字",
+    "approx_height_m": null
+   }
+  ],
+  "night": "2025-09-11 夜景：檐口外沿两道暖金色线形灯，檐下桁架被照亮；两侧格栅内透白光；红色站名发光；中央玻璃厅内透暖白",
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/New_Building_of_Xi_an_Railway_Station_April_22_2023.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:New_Building_of_Xi'an_Railway_Station,_April_22_2023.jpg",
+    "date": "2023-04-22",
+    "what": "北广场正面日景（阴雨）"
+   },
+   {
+    "file": "scratchpad/dossier_north/photos/20250911_Xi_an_Railway_Station_-_North_side.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:20250911_Xi'an_Railway_Station_-_North_side.jpg",
+    "date": "2025-09-11",
+    "what": "北侧夜景"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/xa_station_north.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：北站房与北广场"
+   }
+  ],
+  "sources": [
+   "https://news.hsw.cn/system/2021/0530/1329533.shtml",
+   "https://zh.wikipedia.org/wiki/西安站",
+   "https://commons.wikimedia.org/wiki/File:New_Building_of_Xi'an_Railway_Station,_April_22_2023.jpg",
+   "https://commons.wikimedia.org/wiki/File:20250911_Xi'an_Railway_Station_-_North_side.jpg"
+  ],
+  "confidence": "high",
+  "notes": "2021-05-31 18时启用；总建筑面积4.86万㎡；以“大唐盛世 古韵长安”为主题，与丹凤门遗址隔广场相对（华商网）。候车厅10 m 檐口有近140 m 长壁画（室内）。"
+ },
+ {
+  "id": "xa_station_south",
+  "name": "西安站南站房（1985 年站房）",
+  "aliases": [
+   "西安火车站",
+   "西安站老站房"
+  ],
+  "category": "transport_hub",
+  "lon": 108.95807,
+  "lat": 34.2787,
+  "world_xz": [
+   1447.0,
+   -1969.2
+  ],
+  "coord_source": "OSM w1465142920「西安站南站房」质心（Overture 名称检索）",
+  "overture_id": null,
+  "footprint_size_m": [
+   142.8,
+   52
+  ],
+  "footprint_detail": null,
+  "height_m": 27.7,
+  "floors": 2,
+  "height_source": "zh.wikipedia「西安站」：站房檐高18米，顶高27.7米，长142.8米，南北进深52米，共两层",
+  "year": 1985,
+  "massing": [
+   {
+    "part": "南站房主楼",
+    "shape": "rect",
+    "size_m": [
+     142.8,
+     52
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 27.7,
+    "setbacks": [
+     {
+      "at_m": 18,
+      "inset_m": null
+     }
+    ],
+    "taper": null,
+    "notes": "檐高18 m、屋顶最高27.7 m（维基）；中厅空高20余米"
+   },
+   {
+    "part": "东配楼",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "建筑面积10146㎡（售票厅、旅客招待所），尺寸/高度未查到"
+   },
+   {
+    "part": "西配楼",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "建筑面积13100㎡（行包房、旅社、餐厅），尺寸/高度未查到"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": 9.7,
+   "description": "照片（2023-10-09）：浅黄色墙身、绿色琉璃瓦坡屋顶的仿古站房，中部屋顶升起；9.7 m 为顶高27.7−檐高18 的差值"
+  },
+  "facade": {
+   "primary": "浅黄色（米黄）墙面 + 竖向长窗 + 绿色琉璃瓦檐",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#e8d9a8",
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "颜色为远景照片取色近似"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安",
+    "color_hex": "#d42a2a",
+    "position": "中部屋檐上方（照片可见红色站名）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/2023-10-09_Xi_an_Railway_Station_01.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:2023-10-09_Xi'an_Railway_Station_西安站_01.jpg",
+    "date": "2023-10-09",
+    "what": "南广场远景（前景为城墙/连廊）"
+   }
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安站",
+   "https://commons.wikimedia.org/wiki/File:2023-10-09_Xi'an_Railway_Station_西安站_01.jpg"
+  ],
+  "confidence": "medium",
+  "notes": "1984-06 动工、1985-12-15 竣工（维基引《郑州铁路局志》）；2021 年起南站房改造、新建南高架候车室对接北站房。本条在城墙北侧、站场南侧，属“火车站”枢纽整体。"
+ },
+ {
+  "id": "sanfuwan",
+  "name": "三府湾客运站",
+  "aliases": [
+   "西安三府湾长途汽车站"
+  ],
+  "category": "transport_hub",
+  "lon": 108.971287,
+  "lat": 34.279457,
+  "world_xz": [
+   2663.1,
+   -2053.5
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1213239207@1）",
+  "overture_id": "fed6d868-4621-462c-9e3e-97eeb252e89a",
+  "footprint_size_m": [
+   121.4,
+   47.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    121.4,
+    47.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 1.7,
+   "bbox_EW_NS_m": [
+    121.5,
+    49.6
+   ],
+   "area_m2": 4188
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "rect",
+    "size_m": [
+     121.4,
+     47.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 1.7,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM 外包 121×48 m 的东西向长条站房；另有一个 121×32 m 的重叠轮廓 w1265034055（可能是同一站房的旧版）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，屋面有设备；北侧为大片停车场（大巴）"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "无街景照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/sanfuwan.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：条形站房与北侧停车场"
+   }
+  ],
+  "sources": [
+   "public/data/pois.json（三府湾客运站 POI）",
+   "data-src/overture/building.parquet（OSM w1213239207）"
+  ],
+  "confidence": "low",
+  "notes": "本次未检索到站房层数、年份；位于西安站东侧，属火车站北枢纽群。"
+ },
+ {
+  "id": "sheraton",
+  "name": "西安赛瑞喜来登大酒店",
+  "aliases": [
+   "Sheraton Xi'an North City Hotel",
+   "西安赛瑞喜来登大酒店（城北）"
+  ],
+  "category": "hotel",
+  "lon": 108.941915,
+  "lat": 34.292349,
+  "world_xz": [
+   -39.3,
+   -3489.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1267005415@1）",
+  "overture_id": "ec89f2e6-5bfb-48d8-a395-be42c97cca1a",
+  "footprint_size_m": [
+   38.3,
+   37.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    38.3,
+    37.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -0.2,
+   "bbox_EW_NS_m": [
+    38.4,
+    37.5
+   ],
+   "area_m2": 813
+  },
+  "height_m": null,
+  "floors": 31,
+  "height_source": "层数：百度百科/酒店资料“主楼高31层，客房491间（套）”（WebSearch 摘要）；米数未查到",
+  "year": 2011,
+  "massing": [
+   {
+    "part": "主楼",
+    "shape": "rect",
+    "size_m": [
+     38.3,
+     37.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "暂取 OSM w1267005415（38×37 m 近方形）为塔楼轮廓；OSM 命名轮廓 w337115081 只有 13.5×11 m 且标 26 层，与 31 层口径冲突，疑为局部。卫星影像中该处多栋高层阴影交叠，未能独立确认塔楼边界"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "无可用照片"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未找到可用外观照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": "地址未央路32号，地铁2号线龙首原站B口旁（携程）"
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/sheraton.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：龙首原站西北，多栋高层阴影交叠"
+   }
+  ],
+  "sources": [
+   "https://baike.baidu.com/item/西安赛瑞喜来登酒店/3463148",
+   "https://m.ctrip.com/html5/hotel/hoteldetail/396430.html",
+   "https://www.marriott.com.cn/hotels/xiync-sheraton-xian-north-city-hotel/events/"
+  ],
+  "confidence": "low",
+  "notes": "试业 2011-11-08（WebSearch 摘要）；携程标“2012年开业”。万豪官网：活动空间约1583–1700㎡，麟德大宴会厅 121.4×52.2×23.6 英尺（626㎡）。现有 landmarks2026 按 26 层 / 90 m 建模，层数与本条 31 层冲突。"
+ },
+ {
+  "id": "jinganhui",
+  "name": "静安荟生活奥特莱斯（北关）",
+  "aliases": [
+   "静安荟·北关"
+  ],
+  "category": "mall",
+  "lon": 108.941528,
+  "lat": 34.286884,
+  "world_xz": [
+   -74.9,
+   -2880.5
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1264673479@1）",
+  "overture_id": "d2fb9ac0-9967-42de-aaa1-87f5dbae694a",
+  "footprint_size_m": [
+   180.2,
+   137.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    180.2,
+    137.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -89.8,
+   "bbox_EW_NS_m": [
+    138.1,
+    180.0
+   ],
+   "area_m2": 9784
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2022,
+  "massing": [
+   {
+    "part": "商业主体",
+    "shape": "custom",
+    "size_m": [
+     180.2,
+     137.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.8,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM 未命名轮廓 w1264673479（40 顶点，外包约138×180 m）；OSM 命名为“静安荟生活奥特莱斯”的只是一个 46×18 m 小轮廓 w971656131"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，东侧有高层"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "无外观照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/jinganhui.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：北关正街东侧街区"
+   }
+  ],
+  "sources": [
+   "https://36kr.com/p/3866566227203076",
+   "data-src/overture/building.parquet（OSM w1264673479 / w971656131）"
+  ],
+  "confidence": "low",
+  "notes": "开业年份沿用 landmarks2026/malls.json 所引 36kr 报道（本次未重新打开核对）。"
+ },
+ {
+  "id": "yxc_longshou",
+  "name": "龙首印象城",
+  "aliases": [
+   "印象城（龙首店）",
+   "西安龙首印象城"
+  ],
+  "category": "mall",
+  "lon": 108.943582,
+  "lat": 34.295804,
+  "world_xz": [
+   114.1,
+   -3873.8
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1370944996@1）",
+  "overture_id": "4598ad5b-acaa-4f09-b3eb-1bfd5e1534d1",
+  "footprint_size_m": [
+   223.5,
+   95.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    223.5,
+    95.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -90.0,
+   "bbox_EW_NS_m": [
+    95.4,
+    223.5
+   ],
+   "area_m2": 20611
+  },
+  "height_m": null,
+  "floors": 5,
+  "height_source": "层数：赢商网 B1–L5（WebSearch 摘要）；高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "购物中心",
+    "shape": "custom",
+    "size_m": [
+     223.5,
+     95.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -90.0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1370944996，南北长约224 m、东西约95 m；转角为大圆弧（照片）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面"
+  },
+  "facade": {
+   "primary": "银色冲孔铝板（圆点穿孔纹）包覆的圆弧转角体量，顶部一圈弧形大 LED 屏，首层深色横带+雨篷",
+   "glass_color_hex": "#3b4a55",
+   "frame_color_hex": null,
+   "wall_color_hex": "#b9bec2",
+   "pattern": "冲孔铝板按大块竖向分格，转角连续弧形",
+   "floor_height_m": null,
+   "notes": "照片取色近似；另一出口（C口）为玻璃店面+石材，挂星巴克、好利来招牌"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "（大型 LED 屏，内容滚动）",
+    "color_hex": null,
+    "position": "圆弧转角顶部通长弧形屏",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/Exit_D_of_LONGSHOUYUAN_Station_Xi_an_Metro_Oct_6_2023_.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Exit_D_of_LONGSHOUYUAN_Station,_Xi'an_Metro_(Oct_6,_2023).jpg",
+    "date": "2023-10-06",
+    "what": "圆弧转角、冲孔铝板、LED 屏，地铁 D 口嵌入商场首层"
+   },
+   {
+    "file": "scratchpad/dossier_north/photos/Exit_C_of_LONGSHOUYUAN_Station_Xi_an_Metro_Oct_6_2023_.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Exit_C_of_LONGSHOUYUAN_Station,_Xi'an_Metro_(Oct_6,_2023).jpg",
+    "date": "2023-10-06",
+    "what": "C 口：玻璃店面+石材"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/yxc_longshou.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：南北长条商场"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/xm52512.html",
+   "https://m.xa.bendibao.com/wangdian/dian/5866085.shtm",
+   "https://commons.wikimedia.org/wiki/File:Exit_D_of_LONGSHOUYUAN_Station,_Xi'an_Metro_(Oct_6,_2023).jpg"
+  ],
+  "confidence": "medium",
+  "notes": "未央路33号，未央路与龙首北路十字东北角；总建筑面积125,540㎡；1373个车位（赢商网摘要）。同一综合体内有西安印力诺富特酒店（Overture POI 108.94314,34.29586），未单独立条。开业年份本次未查到。"
+ },
+ {
+  "id": "rongmin",
+  "name": "荣民金融中心",
+  "aliases": [
+   "荣民中心",
+   "荣民国际金融中心"
+  ],
+  "category": "office",
+  "lon": 108.943371,
+  "lat": 34.303255,
+  "world_xz": [
+   94.7,
+   -4703.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1370944673@2）",
+  "overture_id": "1d086781-d439-4ebc-a876-1cd679f5fc2d",
+  "footprint_size_m": [
+   56.9,
+   56.1
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    56.9,
+    56.1
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -89.8,
+   "bbox_EW_NS_m": [
+    56.1,
+    56.9
+   ],
+   "area_m2": 2972
+  },
+  "height_m": 270,
+  "floors": 58,
+  "height_source": "西部网 2024-05-16、网易 2026-04 及 WebSearch 摘要：270 m，地上58层、地下3层；OSM w1370944673 height=270",
+  "year": 2026,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "chamfer",
+    "size_m": [
+     56.9,
+     56.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.8,
+    "base_m": 0,
+    "top_m": 270,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM 轮廓约57×56 m 近方形（21 顶点，有切角）"
+   }
+  ],
+  "crown": {
+   "type": "helipad",
+   "height_m": null,
+   "description": "landmarks2026 引网易 2026-04 称“顶部停机坪”；Esri 卫星图该塔屋顶可见白色圆形（疑停机坪，影像日期未知）。2024-04 照片塔顶为施工平台+塔吊，完工后塔冠形式无照片"
+  },
+  "facade": {
+   "primary": "双银 Low-E 玻璃幕墙（文字来源，landmarks2026 引网易）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "现有照片均为施工期：2024-04 为裸混凝土框架、未装幕墙；平面近方形，外观无明显收分。Commons 2023-08 大明宫西站C口照片中前景的浅蓝玻璃塔不是荣民（荣民是其右后方带红色施工电梯的混凝土塔），勿据此取色"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/igc_13.jpg",
+    "url": "https://news.qq.com/rain/a/20240514A018SB00",
+    "date": "2024-04（图注）",
+    "what": "腾讯新闻配图（小红书转载）“2024年4月施工进展”，前景为盛龙广场立牌"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/igc_12.jpg",
+    "url": "https://news.qq.com/rain/a/20240514A018SB00",
+    "date": "2023-08（图注）",
+    "what": "腾讯新闻配图“2023年8月施工进展”"
+   },
+   {
+    "file": "scratchpad/dossier_north/photos/Exit_C_of_DAMINGGONGXI_Station_Xi_an_Metro_Aug_25_2023_.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Exit_C_of_DAMINGGONGXI_Station,_Xi'an_Metro_(Aug_25,_2023).jpg",
+    "date": "2023-08-25",
+    "what": "大明宫西站C口：右后方为施工中的荣民塔（前景玻璃塔为另一栋）"
+   }
+  ],
+  "sources": [
+   "http://m.cnwest.com/zwyw/a/2024/05/16/22606577.html",
+   "https://xa.house.163.com/26/0413/10/KQD0RDBL021598CD.html",
+   "https://news.qq.com/rain/a/20240514A018SB00",
+   "https://commons.wikimedia.org/wiki/File:Exit_C_of_DAMINGGONGXI_Station,_Xi'an_Metro_(Aug_25,_2023).jpg"
+  ],
+  "confidence": "high",
+  "notes": "未央路与凤城南路十字东南角、地铁大明宫西站上盖；2024-05 封顶，2026 年中交付（网易 2026-04，据 landmarks2026）。year 取交付年。"
+ },
+ {
+  "id": "lijun",
+  "name": "利君V时代",
+  "aliases": [
+   "利君V时代广场"
+  ],
+  "category": "office",
+  "lon": 108.943231,
+  "lat": 34.314743,
+  "world_xz": [
+   81.8,
+   -5983.2
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18889791@1）",
+  "overture_id": "1b4aaaac-63cf-4263-8f62-534f6d726215",
+  "footprint_size_m": [
+   80.1,
+   29.6
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    80.1,
+    29.6
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -90.0,
+   "bbox_EW_NS_m": [
+    29.6,
+    80.1
+   ],
+   "area_m2": 2367
+  },
+  "height_m": 140,
+  "floors": null,
+  "height_source": "OSM r18889791 height=140（未见官方出处）；搜狐 2025-07 软文称“近百米高度”“A/B两栋百米高层”，两者矛盾",
+  "year": null,
+  "massing": [
+   {
+    "part": "主楼（板式）",
+    "shape": "rect",
+    "size_m": [
+     80.1,
+     29.6
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -90.0,
+    "base_m": 0,
+    "top_m": 140,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM 80×30 m，南北向长板；卫星上北侧有很长的投影。top_m 暂用 OSM 值"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "无照片"
+  },
+  "facade": {
+   "primary": "LOW-E 中空玻璃幕墙 + 流线型铝板（搜狐软文）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": 3.9,
+   "notes": "3.9 m 层高、约12 m 挑高大堂、12部电梯均出自搜狐软文（该文把项目写成“高新区核心”“紧邻6号线”，可信度低）"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": "凤城一路6号（WebSearch 摘要）"
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/lijun.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：南北向板楼，北侧长投影"
+   }
+  ],
+  "sources": [
+   "https://www.sohu.com/a/910559718_121484367",
+   "https://www.sohu.com/a/898031775_121484367",
+   "https://baike.baidu.com/item/利君V时代/4839771"
+  ],
+  "confidence": "low",
+  "notes": "总建筑面积约12万㎡（软文）。"
+ },
+ {
+  "id": "chengbei_bus",
+  "name": "西安城北客运站",
+  "aliases": [
+   "城北汽车站"
+  ],
+  "category": "transport_hub",
+  "lon": 108.936743,
+  "lat": 34.312334,
+  "world_xz": [
+   -515.1,
+   -5714.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1371869014@1）",
+  "overture_id": "457d93c1-d12c-4ce4-ab81-b782980fcb27",
+  "footprint_size_m": [
+   138.0,
+   66.1
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    138.0,
+    66.1
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.7,
+   "bbox_EW_NS_m": [
+    137.5,
+    66.4
+   ],
+   "area_m2": 5964
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "L",
+    "size_m": [
+     138.0,
+     66.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0.7,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1371869014（19 顶点，外包138×66 m，距 POI 39 m）；卫星：站房沿南侧呈 L 形，北侧为大巴停车场"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/chengbei_bus.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：站房与停车场"
+   }
+  ],
+  "sources": [
+   "https://m.xa.bendibao.com/traffic/122170.shtm",
+   "http://m.cnwest.com/bwyc/a/2026/07/24/23399855.html"
+  ],
+  "confidence": "low",
+  "notes": "地址：未央区北二环路西段9号（未央立交西北）。西部网 2026-07-24：8月1日起城北客运站凤城十路补客点迁往西安北站北广场（与站房本体无关）。"
+ },
+ {
+  "id": "xa_library",
+  "name": "西安图书馆（凤城二路老馆）",
+  "aliases": [
+   "西安市图书馆"
+  ],
+  "category": "venue",
+  "lon": 108.94182,
+  "lat": 34.32295,
+  "world_xz": [
+   -48.0,
+   -6897.5
+  ],
+  "coord_source": "推测：Overture place「西安市图书馆」点(108.94229,34.32303)旁两块相邻 OSM 轮廓 w1372140338(48×36)+w1372140314(50×40) 的合并中心；未经照片确认",
+  "overture_id": "f62cd3fd-3570-46da-beb2-cec7e4f94983 / d9dc722a-6637-4f78-a536-348be2d5d485",
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": null,
+  "floors": 5,
+  "height_source": "“总体五层局部六层”（WebSearch 摘要，出处百度百科/腾讯新闻）；米数未查到",
+  "year": 2000,
+  "massing": [
+   {
+    "part": "馆舍",
+    "shape": "custom",
+    "size_m": null,
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "5层局部6层；一期总建面15,751㎡。两块候选轮廓合计约2,970㎡，与5–6层×15,751㎡量级相符，但仍属推测"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "无照片"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://news.qq.com/rain/a/20240322A0BAB600",
+   "https://baike.baidu.com/item/西安图书馆/134229"
+  ],
+  "confidence": "low",
+  "notes": "1996 年立项，1997-06-16 奠基，2000-10-26 开放；位于未央路与凤城二路路口一带，地铁2号线“市图书馆站”因此得名。新馆（长安书院）在浐灞，不在本区。landmarks2026 用 GCJ 纠偏得到的 108.937644,34.324601 在未央路以西约400 m，与“路口”描述不符，本条改用上面的推测位置，仍需核对。"
+ },
+ {
+  "id": "tiandi",
+  "name": "天地时代广场",
+  "aliases": [
+   "天地时代广场A/B/C座"
+  ],
+  "category": "office",
+  "lon": 108.943472,
+  "lat": 34.320609,
+  "world_xz": [
+   104.0,
+   -6636.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372722173@1）",
+  "overture_id": "7743f793-d323-44b6-a226-a142fe99a349",
+  "footprint_size_m": [
+   56.0,
+   51.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    56.0,
+    51.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.2,
+   "bbox_EW_NS_m": [
+    56.1,
+    51.2
+   ],
+   "area_m2": 1943
+  },
+  "height_m": null,
+  "floors": 28,
+  "height_source": "tdsdgc.cn（第三方写字楼信息站）：楼层28层；米数未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "B座",
+    "shape": "custom",
+    "size_m": [
+     56.0,
+     51.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372722173（56×51 m）"
+   },
+   {
+    "part": "A座",
+    "shape": "rect",
+    "size_m": [
+     32.9,
+     58.9
+    ],
+    "offset_m": [
+     -17.7,
+     -57.9
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372721281（东西33×南北59 m），在 B 座南偏西约58 m"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "无近照"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/tiandi.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：未央路东、凤城二路北"
+   }
+  ],
+  "sources": [
+   "https://www.tdsdgc.cn/",
+   "https://www.sych100.com/nd.jsp?id=1869&groupId=-1"
+  ],
+  "confidence": "low",
+  "notes": "未央大道与凤城二路十字东北角；总建面142,722㎡，3栋（办公+居住+商业），标准层1580㎡；开发商西安千禧国际置业（tdsdgc.cn / WebSearch 摘要）。地址两种写法：凤城二路7号 / 10号。"
+ },
+ {
+  "id": "telecom",
+  "name": "中国电信大厦（未央路）",
+  "aliases": [
+   "电信大厦"
+  ],
+  "category": "office",
+  "lon": 108.941679,
+  "lat": 34.327276,
+  "world_xz": [
+   -61.0,
+   -7379.4
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372140211@1）",
+  "overture_id": "1680b939-d0a8-4ff2-9014-b85ecc99a5b6",
+  "footprint_size_m": [
+   97.4,
+   79.3
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    97.4,
+    79.3
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 81.4,
+   "bbox_EW_NS_m": [
+    84.0,
+    93.5
+   ],
+   "area_m2": 4504
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到（检索只找到其他城市的“电信大厦”）",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔楼+裙房",
+    "shape": "custom",
+    "size_m": [
+     97.4,
+     79.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 81.4,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372140211（17 顶点，最小外接矩形 97×79 m，转角约81°）；卫星：切角/五边形平面的高层，北侧长投影，东侧有方框状屋顶构架"
+   }
+  ],
+  "crown": {
+   "type": "frame",
+   "height_m": null,
+   "description": "卫星上屋顶东端有一个方框状构架（仅俯视判断）"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/telecom.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：切角平面高层"
+   }
+  ],
+  "sources": [
+   "data-src/overture/building.parquet（OSM w1372140211 name=中国电信大厦）"
+  ],
+  "confidence": "low",
+  "notes": "landmarks2026 按 80 m 估算建模，无出处。"
+ },
+ {
+  "id": "zhongdeng",
+  "name": "中登大厦",
+  "aliases": [
+   "中登大厦A座/B座",
+   "中登广场（北侧街区）"
+  ],
+  "category": "office",
+  "lon": 108.941917,
+  "lat": 34.325746,
+  "world_xz": [
+   -39.1,
+   -7208.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372140237@1）",
+  "overture_id": "6df57bbf-8c51-415a-8be3-15b4b7af3d7f",
+  "footprint_size_m": [
+   71.4,
+   35.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    71.4,
+    35.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 89.9,
+   "bbox_EW_NS_m": [
+    35.2,
+    71.4
+   ],
+   "area_m2": 2033
+  },
+  "height_m": null,
+  "floors": 30,
+  "height_source": "仅有 city8 地址条目“未央区凤城四路中登大厦30层”间接说明≥30层；中登集团官网地址为“中登大厦A座24层”",
+  "year": null,
+  "massing": [
+   {
+    "part": "A座",
+    "shape": "custom",
+    "size_m": [
+     71.4,
+     35.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 89.9,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372140237（南北71×东西35 m）"
+   },
+   {
+    "part": "B座",
+    "shape": "custom",
+    "size_m": [
+     39.2,
+     39.8
+    ],
+    "offset_m": [
+     -44.3,
+     16.8
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372140234（34 顶点，约39×40 m）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "无照片"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/zhongdeng.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：未央路西侧两栋高层"
+   }
+  ],
+  "sources": [
+   "https://m.city8.com/xa/cater/80kf8v7c72zwb54334_address",
+   "http://www.zhongdeng.com/home/About/index?nid=2",
+   "https://www.xazddasha.cn/"
+  ],
+  "confidence": "low",
+  "notes": "位于未央路凤城四路十字西南角；WebSearch 摘要称“投资两亿八千万，建筑面积七万多平方米”。南侧大体量“中登广场”（OSM w1372140224，约167×149 m）是另一栋，未单列。另有同集团“中登文景大厦”（凤城九路，26层，2014-06竣工，zdwjdasha.cn）未找到轮廓，未立条。"
+ },
+ {
+  "id": "changqing",
+  "name": "长庆油田公司机关大楼（OSM：长庆大厦）",
+  "aliases": [
+   "长庆大厦",
+   "长庆油田大厦"
+  ],
+  "category": "office",
+  "lon": 108.943803,
+  "lat": 34.326021,
+  "world_xz": [
+   134.4,
+   -7239.6
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372721748@1）",
+  "overture_id": "601ce4ef-b776-4155-8b8c-78e7b5daefbb",
+  "footprint_size_m": [
+   118.3,
+   58.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    118.3,
+    58.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.2,
+   "bbox_EW_NS_m": [
+    118.2,
+    58.9
+   ],
+   "area_m2": 5067
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "弧形主楼",
+    "shape": "custom",
+    "size_m": [
+     118.3,
+     58.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372721748（77 顶点，外包118×59 m），卫星：平面为向北凸的弧形板楼，北侧投影长，属高层"
+   },
+   {
+    "part": "东侧椭圆屋顶体量",
+    "shape": "ellipse",
+    "size_m": null,
+    "offset_m": [
+     45,
+     -15
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "卫星：主楼东南有一块白色平屋面，中间嵌椭圆形屋顶，功能未知；offset 为读图粗估"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/changqing.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：弧形板楼+椭圆屋顶"
+   }
+  ],
+  "sources": [
+   "https://m.map.360.cn/m/search/detail/pid=0f05e0f4e7648075",
+   "https://m.city8.com/xa/enterprise/80khb77c757rb92b80"
+  ],
+  "confidence": "low",
+  "notes": "长庆油田公司在未央路与凤城四路十字东北一带（检索摘要）；长庆油田展览馆在“综合科研楼F区”（OSM w1372721618，未单列）。"
+ },
+ {
+  "id": "suligs",
+  "name": "长庆苏里格大厦",
+  "aliases": [],
+  "category": "office",
+  "lon": 108.931801,
+  "lat": 34.328826,
+  "world_xz": [
+   -969.8,
+   -7552.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1418071545@1）",
+  "overture_id": "c64db65c-ae27-4682-b160-79e4eee17635",
+  "footprint_size_m": [
+   97.0,
+   35.8
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    97.0,
+    35.8
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.2,
+   "bbox_EW_NS_m": [
+    97.1,
+    35.9
+   ],
+   "area_m2": 2210
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "主楼",
+    "shape": "custom",
+    "size_m": [
+     97.0,
+     35.8
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1418071545（24 顶点，东西97×南北36 m）；卫星：东西向板楼+东侧方形带内院体量，北侧有投影"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/suligs.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：板楼"
+   }
+  ],
+  "sources": [
+   "https://m.map.360.cn/m/search/detail/pid=ed32e7783c752018"
+  ],
+  "confidence": "low",
+  "notes": "地址：凤城四路73号（360地图）。landmarks2026 按 90 m 估算，无出处。"
+ },
+ {
+  "id": "igc1",
+  "name": "西安环球贸易中心1号楼（IGC，在建）",
+  "aliases": [
+   "IGC",
+   "环球贸易中心主塔"
+  ],
+  "category": "office",
+  "lon": 108.9438,
+  "lat": 34.3305,
+  "world_xz": [
+   134.2,
+   -7738.6
+  ],
+  "coord_source": "estimated（landmarks2026/towers.json 推测坐标；Overture 仅有 ML 识别轮廓 f0735fff…(56×32 m) 在其南约21 m）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": 299.75,
+  "floors": 62,
+  "height_source": "规划值：腾讯新闻 2024-05-14 / 2026-06-27 等“1号楼62层、299.75米，甲级写字楼+五星酒店”",
+  "year": null,
+  "status": "under_construction",
+  "massing": [
+   {
+    "part": "主塔（在建）",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "2024 照片：核心筒已出地面约二十余层，外框未完成；当前实际高度未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "效果图（腾讯新闻配图）为蓝色玻璃塔、顶部收分斜切；未建成，仅供参考"
+  },
+  "facade": {
+   "primary": "（效果图）蓝色玻璃幕墙",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未建成"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/igc_08.jpg",
+    "url": "https://news.qq.com/rain/a/20240514A018SB00",
+    "date": "约2024（文章日期）",
+    "what": "凤五十字工地：左为已封顶玻璃塔（推测为2号楼），中为主塔核心筒+塔吊，右为裸框架楼"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/igc_11.jpg",
+    "url": "https://news.qq.com/rain/a/20240514A018SB00",
+    "date": null,
+    "what": "效果图"
+   }
+  ],
+  "sources": [
+   "https://news.qq.com/rain/a/20240514A018SB00",
+   "https://news.qq.com/rain/a/20260627A03BYT00",
+   "https://baike.baidu.com/item/西安环球贸易中心/4755413"
+  ],
+  "confidence": "medium",
+  "notes": "凤城五路与未央路十字东南角；总建面266,900㎡。2012 年开工，多次停工；2025-08 中建四局进场；2026-06 经开区回复“已复工建设”（腾讯新闻 2026-06-27）。截至 2026-09 未见封顶报道。"
+ },
+ {
+  "id": "igc2",
+  "name": "西安环球贸易中心2号楼（环贸晶樽）",
+  "aliases": [
+   "IGC 2号楼"
+  ],
+  "category": "office",
+  "lon": 108.944048,
+  "lat": 34.32984,
+  "world_xz": [
+   157.0,
+   -7665.0
+  ],
+  "coord_source": "estimated（沿用 landmarks2026 / sky-data.js 模型位置；OSM 只有 49×29 m 的 w1372721559 在其东约30 m，未确认）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": 149.75,
+  "floors": 29,
+  "height_source": "landmarks2026 引腾讯新闻 2024-12-16：149.75 m；层数 29 层（腾讯新闻 2024-05/2026-06 等）",
+  "year": 2019,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": 149.75,
+    "setbacks": [],
+    "taper": null,
+    "notes": "尺寸未能从轮廓数据确认；现有模型为 80×36 m"
+   }
+  ],
+  "crown": {
+   "type": "frame",
+   "height_m": null,
+   "description": "2024 工地照：塔顶有一圈高出屋面的构架（照片远景判断）"
+  },
+  "facade": {
+   "primary": "深色玻璃幕墙，横向层间带明显",
+   "glass_color_hex": "#4a5866",
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "横向分层",
+   "floor_height_m": null,
+   "notes": "照片中“左侧已封顶玻璃塔”按位置推断为2号楼，未见标识，属推断"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/igc_08.jpg",
+    "url": "https://news.qq.com/rain/a/20240514A018SB00",
+    "date": "约2024",
+    "what": "左侧玻璃塔"
+   }
+  ],
+  "sources": [
+   "https://news.qq.com/rain/a/20241216A05JFU00",
+   "https://news.qq.com/rain/a/20240514A018SB00"
+  ],
+  "confidence": "medium",
+  "notes": "MASA 精装办公及公寓；2019 年底封顶（landmarks2026 引文）。是否已交付未查到。"
+ },
+ {
+  "id": "jinhua_nb",
+  "name": "世纪金花 New Block（赛高店）",
+  "aliases": [
+   "世纪金花赛高购物中心",
+   "世纪金花New Block"
+  ],
+  "category": "mall",
+  "lon": 108.941312,
+  "lat": 34.33067,
+  "world_xz": [
+   -94.8,
+   -7757.5
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372140129@1）",
+  "overture_id": "ab5385f3-76d1-4165-8de4-5e31eb83490d",
+  "footprint_size_m": [
+   205.8,
+   86.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    205.8,
+    86.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -1.7,
+   "bbox_EW_NS_m": [
+    203.4,
+    87.7
+   ],
+   "area_m2": 12033
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2023,
+  "massing": [
+   {
+    "part": "A馆+B馆（含峡谷街区）",
+    "shape": "custom",
+    "size_m": [
+     205.8,
+     86.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -1.7,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372140129（63 顶点，东西约206×南北86 m）；报道称两栋主楼之间为“峡谷街区”。其南侧 OSM w1372140154（101×101 m）是否属 B 馆未确认"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，屋面设备多"
+  },
+  "facade": {
+   "primary": "峡谷街区立面：香槟金/古铜色金属曲线挑板（层层外挑的弧形露台）+ 玻璃栏板，白色树状异形柱",
+   "glass_color_hex": null,
+   "frame_color_hex": "#a8876a",
+   "wall_color_hex": "#c9b59c",
+   "pattern": "水平曲线挑板",
+   "floor_height_m": null,
+   "notes": "照片来自中国日报网 2023-05；露台上有熊形绿雕"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "New Block",
+    "color_hex": "#d9b36a",
+    "position": "峡谷街区入口上方古铜色饰面",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/jinhua_15.jpg",
+    "url": "https://cn.chinadaily.com.cn/a/202305/16/WS64631562a31053798937455e.html",
+    "date": "2023-05",
+    "what": "峡谷街区入口"
+   }
+  ],
+  "sources": [
+   "https://cn.chinadaily.com.cn/a/202305/16/WS64631562a31053798937455e.html",
+   "http://m.cnwest.com/sxxw/a/2023/05/13/21496298.html",
+   "http://sx.sina.cn/news/2023-01-17/detail-imyanfvs5849313.d.html",
+   "https://news.qq.com/rain/a/20260627A03BYT00"
+  ],
+  "confidence": "medium",
+  "notes": "凤城五路十字西南角（腾讯新闻 2026-06-27）；升级一年多后 2023-01-15 焕新开业；200 余个品牌。year 为焕新开业年。"
+ },
+ {
+  "id": "tianlang",
+  "name": "天朗·经开中心",
+  "aliases": [
+   "天朗经开中心"
+  ],
+  "category": "office",
+  "lon": 108.925788,
+  "lat": 34.332054,
+  "world_xz": [
+   -1523.0,
+   -7911.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1418071423@1）",
+  "overture_id": "655d9f55-a351-44ad-afd0-c9dca27580a7",
+  "footprint_size_m": [
+   84.8,
+   61.8
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    84.8,
+    61.8
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -90.0,
+   "bbox_EW_NS_m": [
+    61.8,
+    84.8
+   ],
+   "area_m2": 4218
+  },
+  "height_m": null,
+  "floors": 29,
+  "height_source": "tljkzx.cn（第三方写字楼信息站）：楼层29层；米数未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "主楼",
+    "shape": "custom",
+    "size_m": [
+     84.8,
+     61.8
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -90.0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1418071423（32 顶点，东西62×南北85 m）；卫星：北部为高层，南部为低层裙房"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/tianlang.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：明光路东侧"
+   }
+  ],
+  "sources": [
+   "https://www.tljkzx.cn/"
+  ],
+  "confidence": "low",
+  "notes": "明光路55号；甲级；总建面62,500㎡；开发商西安天瑞投资（tljkzx.cn）。landmarks2026 按 100 m 估算。"
+ },
+ {
+  "id": "wygj",
+  "name": "未央国际（写字楼 + WE YOUNG 168 商业街区）",
+  "aliases": [
+   "We Young 168",
+   "未央国际168"
+  ],
+  "category": "mixed",
+  "lon": 108.941529,
+  "lat": 34.338319,
+  "world_xz": [
+   -74.8,
+   -8609.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18903164@1）",
+  "overture_id": "8561b37d-f490-4050-b1b1-cb33c1cee082",
+  "footprint_size_m": [
+   108.0,
+   60.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    108.0,
+    60.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.0,
+   "bbox_EW_NS_m": [
+    108.0,
+    60.4
+   ],
+   "area_m2": 5928
+  },
+  "height_m": 99.6,
+  "floors": 25,
+  "height_source": "陕西建筑业协会（sxjzy.org）：地上25层、地下3层、99.6 m",
+  "year": 2020,
+  "massing": [
+   {
+    "part": "写字楼（直角三角形塔）",
+    "shape": "triangle",
+    "size_m": [
+     57,
+     57
+    ],
+    "offset_m": [
+     25,
+     8
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 99.6,
+    "setbacks": [],
+    "taper": null,
+    "notes": "ArchDaily 标准层平面为直角三角形，直角在东北、斜边朝西南；直角边长为按 OSM 地块推算（weiyang/notes.md），offset 为相对地块中心的粗估"
+   },
+   {
+    "part": "WE YOUNG 168 退台商业",
+    "shape": "custom",
+    "size_m": [
+     60,
+     60
+    ],
+    "offset_m": [
+     -25,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "ArchDaily 照片：4–5 层玻璃商业，外挑白色曲线栏板层层退台，屋顶花园；北立面图裙房约为塔楼高度的 1/4（读图）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "照片：平顶，玻璃幕墙直接收边，无明显塔冠"
+  },
+  "facade": {
+   "primary": "浅蓝镜面玻璃幕墙（报道称“镜面灰”）",
+   "glass_color_hex": "#9fb7cc",
+   "frame_color_hex": "#c6ced6",
+   "wall_color_hex": null,
+   "pattern": "北立面东段成列深色凹槽（每两层一个通高共享空间/阳台，逐层错位）",
+   "floor_height_m": 3.9,
+   "notes": "floor_height 3.9 m 为 weiyang/notes.md 推算值（非出处）；颜色为 ArchDaily 照片取色"
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": "带内院的地块西半部 + 东北45°切口入口",
+   "facade": "玻璃+白色曲线栏板，红色霓虹“CUB GROCERY”",
+   "entrance": "东北角 45° 斜口朝未央路×凤城七路路口"
+  },
+  "signage": [
+   {
+    "text": "未央国际",
+    "color_hex": "#ffffff",
+    "position": "塔楼北立面顶部靠东",
+    "approx_height_m": null
+   },
+   {
+    "text": "CUB GROCERY",
+    "color_hex": "#e8453c",
+    "position": "裙房北立面",
+    "approx_height_m": null
+   }
+  ],
+  "night": "ArchDaily 黄昏照：塔楼内透暖白，裙房各层暖光+红色霓虹",
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/wygj/wygj_0.jpg",
+    "url": "https://www.archdaily.cn/cn/992137/xi-an-wei-yang-guo-ji-dujian-zhu",
+    "date": null,
+    "what": "东北向黄昏全景"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/wygj/wygj_2.jpg",
+    "url": "https://www.archdaily.cn/cn/992137/xi-an-wei-yang-guo-ji-dujian-zhu",
+    "date": null,
+    "what": "鸟瞰：三角塔+退台庭院"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/wygj/wygj_7.jpg",
+    "url": "https://www.archdaily.cn/cn/992137/xi-an-wei-yang-guo-ji-dujian-zhu",
+    "date": null,
+    "what": "塔楼标准层平面（三角形）"
+   }
+  ],
+  "sources": [
+   "https://www.archdaily.cn/cn/992137/xi-an-wei-yang-guo-ji-dujian-zhu",
+   "https://www.sxjzy.org/h-nd-29884.html",
+   "research/refs/weiyang/notes.md"
+  ],
+  "confidence": "high",
+  "notes": "DU 建筑设计；总建面74,972㎡；2016-05 开工，2020-07 写字楼投用、2020-11 竣工；168 街区 2022-05-20 开街（weiyang/notes.md 所列出处）。凤城七路×未央路西南角。"
+ },
+ {
+  "id": "wygjzx",
+  "name": "未央国际中心",
+  "aliases": [],
+  "category": "office",
+  "lon": 108.943776,
+  "lat": 34.338304,
+  "world_xz": [
+   131.9,
+   -8608.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1373232106@1）",
+  "overture_id": "44be2520-4443-483c-b288-86c4274eb64f",
+  "footprint_size_m": [
+   55.9,
+   21.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    55.9,
+    21.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -89.8,
+   "bbox_EW_NS_m": [
+    21.9,
+    55.9
+   ],
+   "area_m2": 1213
+  },
+  "height_m": null,
+  "floors": 16,
+  "height_source": "百度百科（weiyang/notes.md 引）：地上16层、地下2层；米数未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "裙房 1–5 层商业 + 6–16 层办公",
+    "shape": "rect",
+    "size_m": [
+     55.9,
+     21.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.8,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM 仅有 w1373232106（南北56×东西22 m）一块，notes.md 认为轮廓不全"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/wygjzx.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：凤城七路×未央路东南角"
+   }
+  ],
+  "sources": [
+   "https://baike.baidu.com/item/未央国际中心/10157595",
+   "research/refs/weiyang/notes.md"
+  ],
+  "confidence": "medium",
+  "notes": "总建面37,146㎡，占地6,181㎡；上海翰联建筑设计西安分公司设计（notes.md）。与“未央国际”是两个项目。"
+ },
+ {
+  "id": "xidigang",
+  "name": "CityOn 熙地港（西安）购物中心",
+  "aliases": [
+   "熙地港"
+  ],
+  "category": "mall",
+  "lon": 108.94079,
+  "lat": 34.339903,
+  "world_xz": [
+   -142.8,
+   -8786.2
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139894@1）",
+  "overture_id": "f11bb986-ac67-47e1-9876-1dc376213c25",
+  "footprint_size_m": [
+   196.1,
+   166.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    196.1,
+    166.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 2.5,
+   "bbox_EW_NS_m": [
+    195.0,
+    171.3
+   ],
+   "area_m2": 24090
+  },
+  "height_m": null,
+  "floors": 7,
+  "height_source": "层数：塔博曼新闻稿“seven-level”，6F 为影院（weiyang/notes.md）；高度未查到",
+  "year": 2016,
+  "massing": [
+   {
+    "part": "商场主体",
+    "shape": "custom",
+    "size_m": [
+     196.1,
+     166.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 2.5,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372139894（84 顶点，外包195×171 m）；东南角大斜切、西北角大圆角（notes.md）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：屋面散布 8–9 个白色椭圆采光顶，中部一个较大的椭圆穹顶；东南部有一块浅色矩形高出体量（疑影院盒子）"
+  },
+  "facade": {
+   "primary": "“全钢式商业建筑”，LOW-E 玻璃（商策网）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "本次未找到外立面照片，颜色留空"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "CityOn 熙地港",
+    "color_hex": null,
+    "position": "未找到照片确认位置",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/xidigang.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：椭圆采光顶群"
+   }
+  ],
+  "sources": [
+   "https://www.businesswire.com/news/home/20160428006710/en/Taubman-Asia-Wangfujing-Celebrate-CityOn.Xi%E2%80%99an-Shopping-Center",
+   "https://www.sych100.com/nd.jsp?id=81",
+   "http://xa.winshang.com/news-574717.html",
+   "https://www.cityoncenter.com/html/XiAn/xiangmu/"
+  ],
+  "confidence": "medium",
+  "notes": "未央路170号，凤城七路×未央路西北角；2016-04-28 开业；可租面积约90,600㎡，总建面18万㎡（含3层停车）。塔博曼、王府井、陕西赛高合作。"
+ },
+ {
+  "id": "darongcheng",
+  "name": "西安大融城 IMIX PARK",
+  "aliases": [
+   "大融城"
+  ],
+  "category": "mall",
+  "lon": 108.944307,
+  "lat": 34.340126,
+  "world_xz": [
+   180.8,
+   -8811.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1373232024@1）",
+  "overture_id": "2d48acd6-3e3e-4ed2-b47e-e034983cbb72",
+  "footprint_size_m": [
+   256.1,
+   122.8
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    256.1,
+    122.8
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 80.8,
+   "bbox_EW_NS_m": [
+    136.2,
+    244.0
+   ],
+   "area_m2": 18490
+  },
+  "height_m": null,
+  "floors": 5,
+  "height_source": "赢商网（notes.md 引）：B1–5F；高度未查到",
+  "year": 2018,
+  "massing": [
+   {
+    "part": "商场主体",
+    "shape": "custom",
+    "size_m": [
+     256.1,
+     122.8
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 80.8,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1373232024（56 顶点，外包东西136×南北244 m），西北角为外凸大圆弧（notes.md）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：一条浅色弧形屋面带从北端沿西北圆弧延伸下来，其余为平屋面+设备"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未找到外立面照片"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "大融城 IMIX PARK",
+    "color_hex": null,
+    "position": "未确认",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/darongcheng.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：弧形屋面带"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/xm60684.html",
+   "https://m.city8.com/xa/shopping/80kh6q7c7dr6b1f0f3_address",
+   "research/refs/weiyang/notes.md"
+  ],
+  "confidence": "medium",
+  "notes": "凤城七路51号，凤城七路×未央路东北角；约10万㎡；2018-12 开业；光大安石运营。"
+ },
+ {
+  "id": "ihg",
+  "name": "西安经开洲际酒店",
+  "aliases": [
+   "InterContinental Xi'an North"
+  ],
+  "category": "hotel",
+  "lon": 108.940402,
+  "lat": 34.341149,
+  "world_xz": [
+   -178.5,
+   -8925.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139874@1）",
+  "overture_id": "d9307621-56bc-484d-a6ed-a1e86046a834",
+  "footprint_size_m": [
+   68.6,
+   67.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    68.6,
+    67.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -3.9,
+   "bbox_EW_NS_m": [
+    69.0,
+    68.4
+   ],
+   "area_m2": 3966
+  },
+  "height_m": null,
+  "floors": 22,
+  "height_source": "中国经济网 2019-12-19 等：地上22层、地下3层；米数未查到",
+  "year": 2019,
+  "massing": [
+   {
+    "part": "主楼（板式）",
+    "shape": "custom",
+    "size_m": [
+     68.6,
+     67.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -3.9,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372139874（28 顶点，外包69×68 m，含低层部分）"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "照片：中部通高玻璃竖带略高出两翼屋面，顶部有金色 IHG 圆形标"
+  },
+  "facade": {
+   "primary": "中部通高蓝色玻璃幕墙竖带 + 两翼错缝方窗（浅灰窗框，窗位逐层错开）",
+   "glass_color_hex": "#5b86b5",
+   "frame_color_hex": "#c4c9cf",
+   "wall_color_hex": "#9fb2c6",
+   "pattern": "两翼窗洞错位排列（类似砌砖错缝）；约第4–5层处一条深色横向转换带",
+   "floor_height_m": null,
+   "notes": "照片取色近似"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "低矮门廊",
+   "facade": "深色金属+石材",
+   "entrance": "门廊上方金属字 INTERCONTINENTAL"
+  },
+  "signage": [
+   {
+    "text": "IHG 洲际标志（圆形）",
+    "color_hex": "#c8a45a",
+    "position": "玻璃竖带顶端",
+    "approx_height_m": null
+   },
+   {
+    "text": "INTERCONTINENTAL",
+    "color_hex": "#c8a45a",
+    "position": "首层门廊檐口",
+    "approx_height_m": 6
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/ihg_00.jpg",
+    "url": "https://www.aliseochina.com/project/西安经开洲际酒店",
+    "date": null,
+    "what": "主立面"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/ihg_01.jpg",
+    "url": "https://www.aliseochina.com/project/西安经开洲际酒店",
+    "date": null,
+    "what": "入口门廊"
+   }
+  ],
+  "sources": [
+   "http://cen.ce.cn/more/201912/19/t20191219_33934184.shtml",
+   "https://www.aliseochina.com/project/西安经开洲际酒店",
+   "http://xiannorth.ihghotels.cn/"
+  ],
+  "confidence": "medium",
+  "notes": "凤城八路120号；总建面6.2万㎡；329间客房；1100㎡无柱宴会厅；2019-12 开业。"
+ },
+ {
+  "id": "ehb",
+  "name": "EHB 企业总部大厦",
+  "aliases": [
+   "赛高·企业总部大厦",
+   "赛高城市广场2号楼"
+  ],
+  "category": "office",
+  "lon": 108.940777,
+  "lat": 34.341633,
+  "world_xz": [
+   -144.0,
+   -8979.0
+  ],
+  "coord_source": "Overture 轮廓质心（doi:10.5281/zenodo.8174931:None）",
+  "overture_id": "3b75c2fe-c814-4ea0-ab43-9ce140248ead",
+  "footprint_size_m": [
+   49.5,
+   36.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    49.5,
+    36.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -0.4,
+   "bbox_EW_NS_m": [
+    49.8,
+    36.3
+   ],
+   "area_m2": 1591
+  },
+  "height_m": 160,
+  "floors": 35,
+  "height_source": "sgehb.com 等（weiyang/notes.md 引）：160 m，地上35层、地下3层",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "rect",
+    "size_m": [
+     49.5,
+     36.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -0.4,
+    "base_m": 0,
+    "top_m": 160,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 只有 ML 识别轮廓（约50×36 m）；标准层 2400–2500㎡ 推算约50×50 m（notes.md），两者不一致"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "照片：顶部玻璃女儿墙/幕墙高出屋面一截，呈通透框"
+  },
+  "facade": {
+   "primary": "全玻璃 Low-E 中空幕墙，竖向线条",
+   "glass_color_hex": "#6f93b0",
+   "frame_color_hex": "#9aa7b3",
+   "wall_color_hex": null,
+   "pattern": "竖向分格；立面上可见粉/蓝竖条色带（疑为 LED 或反射）",
+   "floor_height_m": null,
+   "notes": "照片为远景，颜色近似"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "EHB 企业总部大厦",
+    "color_hex": "#ffffff",
+    "position": "塔楼顶部立面（照片自行政中心站 D 口方向）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/Exit_D_of_XINGZHENGZHONGXIN_Station_Xi_an_Metro_Apr_25_2023_.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Exit_D_of_XINGZHENGZHONGXIN_Station,_Xi'an_Metro_(Apr_25,_2023).jpg",
+    "date": "2023-04-25",
+    "what": "背景塔楼顶部字样“EHB 企业总部大厦”"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/ehb.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：洲际北侧塔楼"
+   }
+  ],
+  "sources": [
+   "http://www.sgehb.com/about/",
+   "https://www.ehbqiyezhongbu.cn/",
+   "https://commons.wikimedia.org/wiki/File:Exit_D_of_XINGZHENGZHONGXIN_Station,_Xi'an_Metro_(Apr_25,_2023).jpg"
+  ],
+  "confidence": "medium",
+  "notes": "未央路170号，赛高城市广场内，张家堡环岛西南。"
+ },
+ {
+  "id": "xuhuiA",
+  "name": "旭辉中心A座（推测）",
+  "aliases": [
+   "旭辉中心"
+  ],
+  "category": "office",
+  "lon": 108.938314,
+  "lat": 34.339552,
+  "world_xz": [
+   -370.6,
+   -8747.1
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139892@1）",
+  "overture_id": "b959f171-e029-4469-857d-e491728a3432",
+  "footprint_size_m": [
+   79.2,
+   54.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    79.2,
+    54.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -0.1,
+   "bbox_EW_NS_m": [
+    79.3,
+    54.5
+   ],
+   "area_m2": 4277
+  },
+  "height_m": null,
+  "floors": 23,
+  "height_source": "xuhuizhongxin.cn（第三方写字楼信息站，声明非官方）：23层；weiyang/notes.md 引房产网站为“约20层”，口径冲突",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "custom",
+    "size_m": [
+     79.2,
+     54.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -0.1,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "哪块 OSM 轮廓对应 A/B 座是 notes.md 的推测"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，屋顶有网格状设备架"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/xuhuiA.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：凤城七路北侧板楼"
+   }
+  ],
+  "sources": [
+   "https://www.xuhuizhongxin.cn/",
+   "https://www.cifi.com.cn/content/details_284_1278.html",
+   "research/refs/weiyang/notes.md"
+  ],
+  "confidence": "low",
+  "notes": "2 栋甲级写字楼；总建面127,770㎡（办公79,600㎡、商业7,850㎡）；标准层约2100㎡；凤城七路北200米（xuhuizhongxin.cn）。"
+ },
+ {
+  "id": "xuhuiB",
+  "name": "旭辉中心B座（推测）",
+  "aliases": [
+   "旭辉中心"
+  ],
+  "category": "office",
+  "lon": 108.93844,
+  "lat": 34.340751,
+  "world_xz": [
+   -359.0,
+   -8880.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139886@1）",
+  "overture_id": "6d1ae36e-adc7-439b-9eef-5b5fa9f5d70f",
+  "footprint_size_m": [
+   129.3,
+   81.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    129.3,
+    81.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -90.0,
+   "bbox_EW_NS_m": [
+    81.7,
+    129.3
+   ],
+   "area_m2": 6081
+  },
+  "height_m": null,
+  "floors": 23,
+  "height_source": "xuhuizhongxin.cn（第三方写字楼信息站，声明非官方）：23层；weiyang/notes.md 引房产网站为“约20层”，口径冲突",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "custom",
+    "size_m": [
+     129.3,
+     81.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -90.0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "哪块 OSM 轮廓对应 A/B 座是 notes.md 的推测"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，屋顶有网格状设备架"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/xuhuiB.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：凤城七路北侧板楼"
+   }
+  ],
+  "sources": [
+   "https://www.xuhuizhongxin.cn/",
+   "https://www.cifi.com.cn/content/details_284_1278.html",
+   "research/refs/weiyang/notes.md"
+  ],
+  "confidence": "low",
+  "notes": "2 栋甲级写字楼；总建面127,770㎡（办公79,600㎡、商业7,850㎡）；标准层约2100㎡；凤城七路北200米（xuhuizhongxin.cn）。"
+ },
+ {
+  "id": "zhixuan",
+  "name": "智选假日酒店（西安经开店）",
+  "aliases": [
+   "Holiday Inn Express Xi'an North"
+  ],
+  "category": "hotel",
+  "lon": 108.939879,
+  "lat": 34.339411,
+  "world_xz": [
+   -226.6,
+   -8731.4
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w969670628@1）",
+  "overture_id": "b65b4041-08cd-452b-9e36-682d19f85998",
+  "footprint_size_m": [
+   35.0,
+   19.6
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    35.0,
+    19.6
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 89.9,
+   "bbox_EW_NS_m": [
+    19.6,
+    35.0
+   ],
+   "area_m2": 685
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔楼",
+    "shape": "rect",
+    "size_m": [
+     35.0,
+     19.6
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 89.9,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w969670628（南北35×东西20 m），压在熙地港西南角"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/zhixuan.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：熙地港西南角"
+   }
+  ],
+  "sources": [
+   "https://m.ctrip.com/html5/hotel/hoteldetail/6529248.html",
+   "https://www.iinhotel.com/434186"
+  ],
+  "confidence": "low",
+  "notes": "256 间客房（另一来源240间）；与地铁行政中心站无缝连接（WebSearch 摘要）。"
+ },
+ {
+  "id": "nifc",
+  "name": "西北国金中心主塔（含西安海荣 JW 万豪酒店）",
+  "aliases": [
+   "NIFC",
+   "海荣西北国金中心"
+  ],
+  "category": "mixed",
+  "lon": 108.9324,
+  "lat": 34.3393,
+  "world_xz": [
+   -914.7,
+   -8719.1
+  ],
+  "coord_source": "estimated：Esri 卫星图上带八角形停机坪的塔顶位置（文景路×凤城七路西北角附近，未做倾斜改正，塔基可能偏西北数十米）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": 210,
+  "floors": 50,
+  "height_source": "WebSearch 摘要（出处 justxa 等）：三期 210 m / 50 层；landmarks2026 引百科/官网为 205 m；justxa 帖题“210米进度贴”。两口径冲突，取 210",
+  "year": null,
+  "massing": [
+   {
+    "part": "主塔",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": 210,
+    "setbacks": [],
+    "taper": null,
+    "notes": "塔基轮廓未能从 OSM 分离（汉神 w1418071114 大轮廓内）；JW 万豪客房在 25–37 层，38 层空中大堂"
+   },
+   {
+    "part": "北侧办公板楼群（一期/二期）",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "摘要：一期约90 m/25层，二期约110 m/35层；xaxbgjzx.cn：某栋27层、2012-05竣工、标准层2070㎡。与 OSM w1418071069（183×87 m）对应关系未确认"
+   }
+  ],
+  "crown": {
+   "type": "helipad",
+   "height_m": null,
+   "description": "卫星：八角形屋顶平台，中央 H 形停机坪；效果图主塔顶部为双弧“角”形收顶（是否按效果图建成未见照片确认）"
+  },
+  "facade": {
+   "primary": "（效果图）银蓝色玻璃幕墙+横向分层；办公板楼为蓝玻璃+白色竖鳍",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "办公楼实景来自设计院网站照片；主塔无实景照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "与汉神购物广场连为一体",
+   "facade": "白/浅灰石材+竖向窄窗（文景路站 NIFC 出入口旁实景）",
+   "entrance": "4号线文景路站有“西北国金中心入口”专用出入口"
+  },
+  "signage": [
+   {
+    "text": "NIFC 西北国金中心",
+    "color_hex": "#c0c6cc",
+    "position": "办公板楼顶部 / 裙房银色字",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/nifc_565c06a5e1ca2.jpg",
+    "url": "http://xianbld.com/index.php?m=Product&a=show&id=48",
+    "date": null,
+    "what": "效果图：主塔+商场+板楼"
+   },
+   {
+    "file": "scratchpad/dossier_north/photos/Outer_view_of_NIFC_Exit_to_WENJINGLU_Station_Xi_an_Metro_Feb_27_2022_.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Outer_view_of_NIFC_Exit_to_WENJINGLU_Station,_Xi'an_Metro_(Feb_27,_2022).jpg",
+    "date": "2022-02-27",
+    "what": "文景路站 NIFC 出入口与裙房"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/nifc_zoom.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星：八角形停机坪塔顶"
+   }
+  ],
+  "sources": [
+   "http://xianbld.com/index.php?m=Product&a=show&id=48",
+   "https://www.justxa.com/thread-90-1-1.html",
+   "https://www.xaxbgjzx.cn/",
+   "https://m.ctrip.com/html5/hotel/hoteldetail/106557017.html",
+   "https://baike.baidu.com/item/西北国金中心/23012153"
+  ],
+  "confidence": "low",
+  "notes": "文景路以西、凤城七路至凤城八路，与市政府一路之隔；总建面50万㎡，设计 2009–2015（北京保利达设计西安分公司）。landmarks2026 的坐标 108.931228,34.341583（OSM w1418071031）落在住宅小区里，判为错误。"
+ },
+ {
+  "id": "hanshen",
+  "name": "汉神购物广场（文景店）",
+  "aliases": [
+   "漢神購物廣場",
+   "汉神百货"
+  ],
+  "category": "mall",
+  "lon": 108.931954,
+  "lat": 34.339936,
+  "world_xz": [
+   -955.7,
+   -8789.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1418071114@1）",
+  "overture_id": "53291cb1-7b2e-49c3-946a-8d12f2d09251",
+  "footprint_size_m": [
+   137.4,
+   123.1
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    137.4,
+    123.1
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -89.9,
+   "bbox_EW_NS_m": [
+    123.0,
+    137.6
+   ],
+   "area_m2": 13270
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2014,
+  "massing": [
+   {
+    "part": "商场",
+    "shape": "custom",
+    "size_m": [
+     137.4,
+     123.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.9,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1418071114（23 顶点，东西123×南北137 m）；西北国金中心主塔可能位于同一轮廓内（见 nifc 条）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：大面积灰色平屋面"
+  },
+  "facade": {
+   "primary": "白/银色铝板方盒 + 水平红色细线（夜间红色发光）",
+   "glass_color_hex": "#5d7a94",
+   "frame_color_hex": null,
+   "wall_color_hex": "#dfe2e4",
+   "pattern": "水平线条；入口处一条红色竖向 logo 带和橙红色格纹面板",
+   "floor_height_m": null,
+   "notes": "设计院网站照片取色近似"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "汉神购物广场（红色枫叶形 logo）",
+    "color_hex": "#c8161d",
+    "position": "入口竖向红色饰带上",
+    "approx_height_m": null
+   }
+  ],
+  "night": "设计院夜景照：立面横向红色线灯+红色竖向饰带发光，底层店面暖光",
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/nifc_565c06b144915.jpg",
+    "url": "http://xianbld.com/index.php?m=Product&a=show&id=48",
+    "date": null,
+    "what": "汉神外观（日景）"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/nifc_565c0708c771b.jpg",
+    "url": "http://xianbld.com/index.php?m=Product&a=show&id=48",
+    "date": null,
+    "what": "夜景红色线灯"
+   }
+  ],
+  "sources": [
+   "http://sn.ifeng.com/xianyang/economy/detail_2014_12/18/3307137_1.shtml",
+   "http://m.winshang.com/xm23002.html",
+   "http://xianbld.com/index.php?m=Product&a=show&id=48"
+  ],
+  "confidence": "medium",
+  "notes": "凤城八路168号；2014-12 开业（凤凰网 2014-12-18 试开业）；12万㎡卖场，2000车位。"
+ },
+ {
+  "id": "gov",
+  "name": "西安市人民政府（行政中心办公楼群）",
+  "aliases": [
+   "西安市政府",
+   "市行政中心"
+  ],
+  "category": "government",
+  "lon": 108.935072,
+  "lat": 34.344134,
+  "world_xz": [
+   -668.9,
+   -9257.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18903162@1）",
+  "overture_id": "7613d3a2-60de-46ee-b1e4-eaf1384bccf2",
+  "footprint_size_m": [
+   246.7,
+   240.0
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    246.7,
+    240.0
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -90.0,
+   "bbox_EW_NS_m": [
+    240.0,
+    246.7
+   ],
+   "area_m2": 39177
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到公开高度/层数；照片数层见 massing",
+  "year": 2011,
+  "massing": [
+   {
+    "part": "中部两座高楼（南、北各一，U 形）",
+    "shape": "U",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片数得约11层窗+顶层深色玻璃带；卫星：两座 U 形楼南北相对，中央为圆形院落（圆亭/鼓形构筑物）"
+   },
+   {
+    "part": "四角 L 形翼楼 ×4",
+    "shape": "L",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片约4层（含顶层深色窗带）"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "照片：所有楼均为灰色金属缓坡四坡顶+很深的出檐，檐下一圈深色玻璃带（顶层）；中式简化“大屋顶”"
+  },
+  "facade": {
+   "primary": "浅灰白石材墙面+规整方窗",
+   "glass_color_hex": "#3a4a5a",
+   "frame_color_hex": null,
+   "wall_color_hex": "#dcdcd6",
+   "pattern": "方窗网格，塔楼中部各有一块竖向玻璃窗组",
+   "floor_height_m": null,
+   "notes": "照片取色近似"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/20201209_The_Building_of_Xi_an_Municipal_People_s_Government.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:20201209_The_Building_of_Xi'an_Municipal_People's_Government.jpg",
+    "date": "2020-12-09",
+    "what": "凤城八路南侧看市政府"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/gov_west.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星：对称院落布局"
+   }
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安市人民政府",
+   "https://www.shx.chinanews.com.cn/news/2023/0627/92591.html",
+   "https://commons.wikimedia.org/wiki/File:20201209_The_Building_of_Xi'an_Municipal_People's_Government.jpg"
+  ],
+  "confidence": "medium",
+  "notes": "凤城八路109号（维基）；2011-03 市委、市政府由城内迁至经开区凤城八路（中新网 2023-06-27）。OSM r18903162 外包约240×247 m（含多个内院）。"
+ },
+ {
+  "id": "shiwei",
+  "name": "中共西安市委 / 市人大 / 市政协办公楼群（未央路东）",
+  "aliases": [
+   "西安市委",
+   "西安市人大",
+   "西安市政协"
+  ],
+  "category": "government",
+  "lon": 108.950011,
+  "lat": 34.343391,
+  "world_xz": [
+   705.6,
+   -9174.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1373231773@1）",
+  "overture_id": "06058843-b822-413c-a4f8-89e9aef8388d",
+  "footprint_size_m": [
+   125.9,
+   41.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    125.9,
+    41.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.0,
+   "bbox_EW_NS_m": [
+    125.9,
+    41.9
+   ],
+   "area_m2": 3923
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2011,
+  "massing": [
+   {
+    "part": "市人大（H 形院落楼）",
+    "shape": "custom",
+    "size_m": [
+     125.9,
+     41.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1373231773（126×42 m）；政协 w1373231774 与之镜像对称在东侧约150 m；市委 w1373231759（147×37 m）在西侧约240 m"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "卫星：人大、政协两组院落均为灰色四坡顶的 H 形/工字形楼，四角有突出的方形坡顶体量"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "无街景照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/gov_east.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星：人大/政协对称院落"
+   }
+  ],
+  "sources": [
+   "data-src/overture/building.parquet（OSM w1373231759/1773/1774 名称）",
+   "https://www.shx.chinanews.com.cn/news/2023/0627/92591.html"
+  ],
+  "confidence": "low",
+  "notes": "现有模型 skyline“行政中心”(FP.gov) 实际覆盖的是这一组（及东侧中医医院），而非未央路以西的市政府本体，见冲突说明。"
+ },
+ {
+  "id": "metro_bldg",
+  "name": "西安地铁大厦（地铁控制大厦）",
+  "aliases": [
+   "地铁控制大厦"
+  ],
+  "category": "office",
+  "lon": 108.93945,
+  "lat": 34.341665,
+  "world_xz": [
+   -266.1,
+   -8982.6
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139871@1）",
+  "overture_id": "409c07dd-d500-48ff-a123-8307f85ac6bc",
+  "footprint_size_m": [
+   84.9,
+   73.2
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    84.9,
+    73.2
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.1,
+   "bbox_EW_NS_m": [
+    85.0,
+    73.4
+   ],
+   "area_m2": 6218
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "方形院落楼",
+    "shape": "rect",
+    "size_m": [
+     84.9,
+     73.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372139871（85×73 m）；卫星：回字形，中庭上盖浅蓝色玻璃采光顶"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "卫星：外圈深灰色屋面四边内倾（类四坡顶），中央方形浅蓝玻璃天窗"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/metro_bldg.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：回字形+玻璃中庭"
+   }
+  ],
+  "sources": [
+   "https://m.city8.com/xa/80kdcq7c7fm0b3ca35_address",
+   "https://zh.wikipedia.org/wiki/行政中心站"
+  ],
+  "confidence": "low",
+  "notes": "地址：凤城八路126号地铁控制大厦（city8）。"
+ },
+ {
+  "id": "baoyi",
+  "name": "保亿隆基中心",
+  "aliases": [
+   "OSM：西安市住房保障和房屋管理局城北房产交易大厅"
+  ],
+  "category": "office",
+  "lon": 108.938321,
+  "lat": 34.341765,
+  "world_xz": [
+   -369.9,
+   -8993.7
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18903163@1）",
+  "overture_id": "3a056439-307e-4621-a6b0-4f49a7dea515",
+  "footprint_size_m": [
+   85.6,
+   52.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    85.6,
+    52.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -0.3,
+   "bbox_EW_NS_m": [
+    85.9,
+    53.2
+   ],
+   "area_m2": 4475
+  },
+  "height_m": null,
+  "floors": 13,
+  "height_source": "百度百科（weiyang/notes.md 引）：地上13层（1–2商业、3–12办公、13设备层）、地下3层",
+  "year": null,
+  "massing": [
+   {
+    "part": "带内院的方楼",
+    "shape": "custom",
+    "size_m": [
+     85.6,
+     52.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM r18903163（外包86×53 m，含内院）；卫星：回字形，中间为深色内院"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面，四周有设备"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 2,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/baoyi.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：回字形楼"
+   }
+  ],
+  "sources": [
+   "https://baike.baidu.com/item/保亿隆基中心/23015098",
+   "https://xa.jiwu.com/loupan/259867.html"
+  ],
+  "confidence": "medium",
+  "notes": "凤城八路136号，“市政府对面”；占地9,338㎡，建面67,571㎡。OSM 名称为房产交易大厅（疑为租户）。"
+ },
+ {
+  "id": "gym",
+  "name": "西安市体育馆（城市运动公园体育馆）",
+  "aliases": [
+   "西安城市运动公园体育馆"
+  ],
+  "category": "venue",
+  "lon": 108.939951,
+  "lat": 34.34765,
+  "world_xz": [
+   -220.0,
+   -9649.5
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1372139804@1）",
+  "overture_id": "83b7b97c-8e62-41ce-9b70-fc1441ede306",
+  "footprint_size_m": [
+   102.3,
+   102.0
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    102.3,
+    102.0
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -45.4,
+   "bbox_EW_NS_m": [
+    105.8,
+    106.4
+   ],
+   "area_m2": 8931
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到（landmarks2026 写的 34 m 未见出处）",
+  "year": 1999,
+  "massing": [
+   {
+    "part": "比赛馆",
+    "shape": "custom",
+    "size_m": [
+     102.3,
+     102.0
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 45,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1372139804：切角正方形（八边形，约102×102 m，边与正南北成45°）"
+   }
+  ],
+  "crown": {
+   "type": "pyramid",
+   "height_m": null,
+   "description": "卫星：浅蓝白色四坡锥形屋面，外围一圈外露的白色空间桁架（屋架在屋面之上可见）"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": "#f0f0f0",
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "只有卫星俯视"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/gym.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：八边形平面、锥形屋面与外露桁架"
+   }
+  ],
+  "sources": [
+   "https://baike.baidu.com/item/西安城市运动公园体育馆/64077672"
+  ],
+  "confidence": "medium",
+  "notes": "1999 年建成，按法国波城体育馆图纸建造，7597 座，2020 年改造（均为 landmarks2026 引百度百科，本次未重新核对）。"
+ },
+ {
+  "id": "tcm",
+  "name": "西安市中医医院（凤城八路院区）",
+  "aliases": [],
+  "category": "hospital",
+  "lon": 108.954009,
+  "lat": 34.344351,
+  "world_xz": [
+   1073.4,
+   -9281.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18917339@1）",
+  "overture_id": "63a197bc-5182-45fb-b15a-844ed5ff5c3b",
+  "footprint_size_m": [
+   181.4,
+   133.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    181.4,
+    133.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.2,
+   "bbox_EW_NS_m": [
+    181.4,
+    134.0
+   ],
+   "area_m2": 11905
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "医院主体（多栋连廊组团）",
+    "shape": "custom",
+    "size_m": [
+     181.4,
+     133.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM r18917339（63 顶点，外包181×134 m）；卫星：北楼顶有两个灰色四坡顶亭式体量，中部一条南北向长玻璃采光屋面串起两侧低层院落"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "卫星：北侧主楼为灰色坡屋顶（中式），其余为平屋面+内院"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "中国医院建筑杂志文章题为“中医文化＋地域特色的园林建筑”（页面已 404，未读到正文）"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/tcm.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：中式坡顶+南北玻璃廊"
+   }
+  ],
+  "sources": [
+   "http://www.cnhae.com/magazineinfo.aspx?id=4013",
+   "https://baike.baidu.com/item/西安市中医医院/8987699",
+   "https://zh.wikipedia.org/wiki/市中医医院站"
+  ],
+  "confidence": "low",
+  "notes": "凤城八路69号，占地100亩，建筑面积9.8万㎡（WebSearch 摘要）。2026-05 另有南院区（长安区）试运营，不在本区。"
+ },
+ {
+  "id": "third_hosp",
+  "name": "西安市第三医院（西北大学附属医院）",
+  "aliases": [
+   "西北大学附属医院"
+  ],
+  "category": "hospital",
+  "lon": 108.959203,
+  "lat": 34.322819,
+  "world_xz": [
+   1551.3,
+   -6882.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:r18911053@1）",
+  "overture_id": "37c17aee-7f29-4681-9dfc-a7a618dc1ffd",
+  "footprint_size_m": [
+   146.4,
+   138.4
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    146.4,
+    138.4
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 0.0,
+   "bbox_EW_NS_m": [
+    146.4,
+    138.4
+   ],
+   "area_m2": 15297
+  },
+  "height_m": null,
+  "floors": 13,
+  "height_source": "WebSearch 摘要（西安市卫健委等）：东院门诊医技楼 5 层、西院住院楼 13 层；米数未查到",
+  "year": 2016,
+  "massing": [
+   {
+    "part": "门诊医技楼（东院，5层）",
+    "shape": "custom",
+    "size_m": [
+     146.4,
+     138.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "暂以 OSM r18911053（146×138 m）为东院；卫星：南侧扇形玻璃采光屋面，北部网格状屋面/内院"
+   },
+   {
+    "part": "住院楼（西院，13层）",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": [
+     -110,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "卫星上门诊楼西侧有一栋北侧投影很长的高层，与西院住院楼对应（推测）；两者之间有架空连廊，连廊上有圆环形构筑物；offset 为读图粗估"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：门诊楼南侧大扇形玻璃屋面"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/third_hosp.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：扇形玻璃屋面+连廊圆环"
+   }
+  ],
+  "sources": [
+   "https://xawjw.xa.gov.cn/xxgk/zzjg/zsjg/6124679df8fd1c0bdc4a1a1c.html",
+   "https://www.haodf.com/hospital/5031828601.html",
+   "https://www.xa3yuan.com/"
+  ],
+  "confidence": "medium",
+  "notes": "凤城三路10号；东院门诊医技楼61,310㎡、西院住院楼52,272.91㎡、后勤楼4,717.09㎡；2016-12-15 试运营，2018-11-03 正式开诊（摘要）。地铁8号线“市第三医院站”。"
+ },
+ {
+  "id": "xiyueli",
+  "name": "首创禧悦里",
+  "aliases": [],
+  "category": "mall",
+  "lon": 108.935227,
+  "lat": 34.360581,
+  "world_xz": [
+   -654.6,
+   -11090.6
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w969740652@2）",
+  "overture_id": "5ee2f30b-fac7-43c8-8482-9e749288a912",
+  "footprint_size_m": [
+   157.4,
+   128.7
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    157.4,
+    128.7
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -1.0,
+   "bbox_EW_NS_m": [
+    157.4,
+    130.9
+   ],
+   "area_m2": 17701
+  },
+  "height_m": null,
+  "floors": 4,
+  "height_source": "赢商网（WebSearch 摘要）：地上4层、地下1层商业，地下2层车库；米数未查到",
+  "year": 2018,
+  "massing": [
+   {
+    "part": "购物街区",
+    "shape": "custom",
+    "size_m": [
+     157.4,
+     128.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w969740652（外包157×131 m）；卫星：西南角有弧形退台广场，东北侧紧邻高层"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：平屋面+局部弧形退台"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/xiyueli.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：北客站南"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/xm54383.html",
+   "http://m.winshang.com/news644893.html"
+  ],
+  "confidence": "medium",
+  "notes": "文景路与凤城十二路十字东北角；商业约3.2万㎡；约1000个车位；2018-08-18 开业。"
+ },
+ {
+  "id": "fulton",
+  "name": "富尔顿国际财富中心",
+  "aliases": [
+   "富尔顿财富中心"
+  ],
+  "category": "office",
+  "lon": 108.933446,
+  "lat": 34.361168,
+  "world_xz": [
+   -818.5,
+   -11156.0
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1418364406@1）",
+  "overture_id": "abf6c9fd-6ace-4e00-8401-875c6a5630a6",
+  "footprint_size_m": [
+   203.8,
+   44.1
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    203.8,
+    44.1
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 89.2,
+   "bbox_EW_NS_m": [
+    47.0,
+    204.4
+   ],
+   "area_m2": 8995
+  },
+  "height_m": null,
+  "floors": 25,
+  "height_source": "fedgjzx.cn（第三方写字楼信息站）：25层、2015-05 竣工；米数未查到",
+  "year": 2015,
+  "massing": [
+   {
+    "part": "1–5 层商业裙房（南北长条）",
+    "shape": "rect",
+    "size_m": [
+     203.8,
+     44.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 89.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1418364406（南北204×东西44 m）"
+   },
+   {
+    "part": "A/B/C 三栋塔楼",
+    "shape": "rect",
+    "size_m": [
+     31,
+     30
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM A座 w969755622(108.93344,34.36039)、B座 w969755623(108.93338,34.36124)、C座 w969755624(108.93340,34.36193)，各约30×31 m"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：方形塔顶，屋顶中部有小方形机房"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": 3.6,
+   "notes": "3.6 m 为摘要所称标准层高"
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": "南北长条",
+   "facade": null,
+   "entrance": "文景路188号"
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/fulton.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：长条裙房上三座方塔"
+   }
+  ],
+  "sources": [
+   "https://www.fedgjzx.cn/",
+   "https://db.house.qq.com/xian_121048/info.shtml",
+   "https://m.anjuke.com/xa/xieziloudq/lp102279129/"
+  ],
+  "confidence": "medium",
+  "notes": "文景路与凤城十二路路口；总建面116,000㎡；标准层1000㎡；开发商西安三合置业。"
+ },
+ {
+  "id": "jkq_gwh",
+  "name": "西安经济技术开发区管委会（OSM 标注楼）",
+  "aliases": [
+   "经开区管委会"
+  ],
+  "category": "government",
+  "lon": 108.923938,
+  "lat": 34.362562,
+  "world_xz": [
+   -1693.2,
+   -11311.3
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1418364353@1）",
+  "overture_id": "17227471-f21f-4f09-b6a5-98d3af62443d",
+  "footprint_size_m": [
+   88.3,
+   36.0
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    88.3,
+    36.0
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -89.5,
+   "bbox_EW_NS_m": [
+    36.3,
+    88.3
+   ],
+   "area_m2": 2529
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "板楼",
+    "shape": "rect",
+    "size_m": [
+     88.3,
+     36.0
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.5,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1418364353（南北88×东西36 m）；卫星：南北向高层板楼，东侧投影长"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/jkq_gwh.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：南北向板楼"
+   }
+  ],
+  "sources": [
+   "https://baike.baidu.com/item/西安经济技术开发区管理委员会/60200057",
+   "http://xetdz.xa.gov.cn/zwgk/zzjg/1.html"
+  ],
+  "confidence": "low",
+  "notes": "注册地址凤城九路66号，办公地址明光路166号凯瑞大厦F座（weiyang/notes.md 所引）。OSM 标注楼是否即办公楼未核实。"
+ },
+ {
+  "id": "beizhan",
+  "name": "西安北站",
+  "aliases": [
+   "西安北客站"
+  ],
+  "category": "transport_hub",
+  "lon": 108.933927,
+  "lat": 34.377738,
+  "world_xz": [
+   -774.2,
+   -13002.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w250712078@14）",
+  "overture_id": "df3634a5-b5f6-46c6-a145-38b0aa793554",
+  "footprint_size_m": [
+   530.5,
+   453.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    530.5,
+    453.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -72.8,
+   "bbox_EW_NS_m": [
+    553.5,
+    566.3
+   ],
+   "area_m2": 209137
+  },
+  "height_m": null,
+  "floors": 2,
+  "height_source": "高度未查到；站房为线上高架候车结构（zh.wikipedia）",
+  "year": 2011,
+  "massing": [
+   {
+    "part": "主站房大屋顶（跨线）",
+    "shape": "custom",
+    "size_m": [
+     530.5,
+     453.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -72.8,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w250712078（最小外接矩形531×454 m，长轴方位约-72.8°，即沿站场走向）；卫星：主屋顶屋脊上一列约11个菱形（梭形）采光天窗，两侧为成排的站台雨棚"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "照片：深灰金属大四坡顶，白色宽大挑檐；屋脊一列菱形天窗（卫星）"
+  },
+  "facade": {
+   "primary": "白色树状（Y形分叉）钢柱托大挑檐 + 玻璃幕墙 + 米色石材基座",
+   "glass_color_hex": "#6e8596",
+   "frame_color_hex": "#e8e8e8",
+   "wall_color_hex": "#d9c9a6",
+   "pattern": "檐下均布树状柱；基座为横向石材分缝+小窗",
+   "floor_height_m": null,
+   "notes": "照片取色近似"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "站房下部石材基座",
+   "facade": "米色石材",
+   "entrance": "南/北两站房+高架站房，两侧站前高架落客平台（维基）"
+  },
+  "signage": [
+   {
+    "text": "西安北站",
+    "color_hex": "#d8322f",
+    "position": "北站房檐口上方屋面（照片）；南侧同样在檐口",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/photos/cn_0fe664bd.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:未央_秋日之西安北站_03.jpg",
+    "date": "2019-09-28",
+    "what": "北广场一侧"
+   },
+   {
+    "file": "scratchpad/dossier_north/photos/Xi_an_North_Railway_Station.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Xi'an_North_Railway_Station.jpg",
+    "date": null,
+    "what": "站房正立面"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/beizhan.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：菱形天窗屋脊与雨棚"
+   }
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安北站",
+   "https://commons.wikimedia.org/wiki/File:未央_秋日之西安北站_03.jpg",
+   "https://commons.wikimedia.org/wiki/File:Xi'an_North_Railway_Station.jpg"
+  ],
+  "confidence": "high",
+  "notes": "站房建筑面积171,000㎡；18台34线；2011 年启用；建设总投资约60亿元（维基）。现有模型 SPECIAL.north 为 192×533 m 主站房、旋转 -16.8°。"
+ },
+ {
+  "id": "wanda",
+  "name": "大明宫万达广场",
+  "aliases": [
+   "西安大明宫万达广场"
+  ],
+  "category": "mall",
+  "lon": 108.968182,
+  "lat": 34.316859,
+  "world_xz": [
+   2377.4,
+   -6218.9
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1409622148@1）",
+  "overture_id": "09a279fb-3883-46b6-ac27-24d0be531d19",
+  "footprint_size_m": [
+   294.2,
+   133.9
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    294.2,
+    133.9
+   ],
+   "mrr_long_axis_deg_from_east_ccw": 89.3,
+   "bbox_EW_NS_m": [
+    134.4,
+    293.8
+   ],
+   "area_m2": 36502
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "商场层数/高度未查到（WebSearch 摘要里的“地上24层”指写字楼）",
+  "year": 2013,
+  "massing": [
+   {
+    "part": "购物中心（南北长条）",
+    "shape": "custom",
+    "size_m": [
+     294.2,
+     133.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 89.3,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1409622148（南北294×东西134 m）；卫星：屋面中轴一条玻璃采光带，两端各一个圆形玻璃穹顶，屋面上立有4栋塔楼（写字楼/公寓）"
+   },
+   {
+    "part": "屋面上塔楼 ×4",
+    "shape": "rect",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "效果图与卫星均显示4栋；层数未查到"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：玻璃采光中轴+两端圆穹"
+  },
+  "facade": {
+   "primary": "白/银色横向波浪形铝板带（流线立面）+ 玻璃",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#e6e8ea",
+   "pattern": "水平波浪条带",
+   "floor_height_m": null,
+   "notes": "来自设计单位（J2厚华）作品页效果图与夜景照"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "万达广场 WANDA PLAZA",
+    "color_hex": "#e02a26",
+    "position": "裙房转角高位（夜景照）",
+    "approx_height_m": null
+   }
+  ],
+  "night": "夜景照：裙房波浪带与塔楼立面 LED 网格满铺，彩色变化",
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/wanda_08.jpg",
+    "url": "https://www.vsszan.com/t-356508.html",
+    "date": null,
+    "what": "鸟瞰效果图"
+   },
+   {
+    "file": "scratchpad/dossier_north/art/wanda_01.jpg",
+    "url": "https://www.vsszan.com/t-356508.html",
+    "date": null,
+    "what": "夜景"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/wanda.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：长条商场与屋面塔楼"
+   }
+  ],
+  "sources": [
+   "http://m.linkshop.com/article/news/272503",
+   "https://www.vsszan.com/t-356508.html",
+   "https://baike.baidu.com/item/西安大明宫万达广场/6733751"
+  ],
+  "confidence": "medium",
+  "notes": "太华北路；2013-10 试营业、11 月开业；总建面约65万㎡（含写字楼、公寓、住宅）；J2厚华国际设计集团；室内“S”形流线、椭圆中庭+玻璃穹顶。"
+ },
+ {
+  "id": "dahua1935",
+  "name": "大华·1935",
+  "aliases": [
+   "大华1935",
+   "长安大华纺织厂旧址"
+  ],
+  "category": "mall",
+  "lon": 108.968978,
+  "lat": 34.285949,
+  "world_xz": [
+   2450.6,
+   -2776.4
+  ],
+  "coord_source": "Overture 轮廓质心（OpenStreetMap:w1265034389@1）",
+  "overture_id": "7f1137d1-ed71-410a-8668-264329138277",
+  "footprint_size_m": [
+   126.8,
+   72.6
+  ],
+  "footprint_detail": {
+   "mrr_long_short_m": [
+    126.8,
+    72.6
+   ],
+   "mrr_long_axis_deg_from_east_ccw": -10.0,
+   "bbox_EW_NS_m": [
+    137.2,
+    93.6
+   ],
+   "area_m2": 9197
+  },
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到（旧厂房改造，多为1–2层大跨）",
+  "year": 2011,
+  "massing": [
+   {
+    "part": "锯齿屋顶厂房群（最大一栋）",
+    "shape": "rect",
+    "size_m": [
+     126.8,
+     72.6
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -10.0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "OSM w1265034389（127×73 m，旋转约-10°）；周边还有 w1265034588（75×62 m）、w1265034747（48×46 m）等多栋"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "卫星+资料：成排锯齿形采光窗屋顶（灰蓝色屋面板），部分为红褐色坡屋面"
+  },
+  "facade": {
+   "primary": "红砖/清水砖墙老厂房 + 钢三角屋架（资料“钢三角结构厂房”）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "锯齿天窗",
+   "floor_height_m": null,
+   "notes": "砖墙颜色本次无照片确认"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/sat/dahua1935.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：锯齿屋顶厂房群"
+   }
+  ],
+  "sources": [
+   "http://www.archina.com/index.php?g=works&m=index&a=show&id=5009",
+   "https://m.leju.com/sx/topic/6902902458943858161.html",
+   "https://m.163.com/dy/article/JRSVSK1D04198EVR.html"
+  ],
+  "confidence": "medium",
+  "notes": "太华南路；建面8.4万㎡；原长安大华纺织厂（1935）；2011 年一期更新（曲江大明宫投资），2017-07 复星蜂巢二次更新；华东院 ECADI 设计。year 为一期改造年。"
+ },
+ {
+  "id": "tianjie",
+  "name": "龙湖西安未央天街",
+  "aliases": [
+   "未央天街"
+  ],
+  "category": "mall",
+  "lon": 108.9809,
+  "lat": 34.34637,
+  "world_xz": [
+   3547.5,
+   -9506.8
+  ],
+  "coord_source": "Esri 卫星图读图：切角大体量屋面中心（该处 OSM/Overture 无对应轮廓）",
+  "overture_id": null,
+  "footprint_size_m": [
+   106,
+   214
+  ],
+  "footprint_detail": null,
+  "height_m": null,
+  "floors": 6,
+  "height_source": "腾讯新闻/央广网 2024-12-27：单体1栋，地上6层局部7层，地下2层；米数未查到",
+  "year": 2024,
+  "massing": [
+   {
+    "part": "商场（单体）",
+    "shape": "chamfer",
+    "size_m": [
+     106,
+     214
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "尺寸由卫星屋面白色女儿墙轮廓量得（±5 m），西北、西南角大斜切"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "卫星：屋面设备密集，南部一个六边形玻璃天窗，中部一条窄长采光带"
+  },
+  "facade": {
+   "primary": "灰银色铝板层叠横向百叶带（斜向层叠）+ 玻璃幕墙",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#a9adb1",
+   "pattern": "层叠横向铝板",
+   "floor_height_m": null,
+   "notes": "开业仪式照片局部；“秦岭七十二峪”山谷概念、“月光星河”夜晚立面（报道）"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "天街（立柱式导视牌）",
+    "color_hex": null,
+    "position": "入口广场",
+    "approx_height_m": null
+   }
+  ],
+  "night": "报道：月光、建筑流线与灯光艺术构成“月光星河”夜晚立面（点状灯光）",
+  "photos": [
+   {
+    "file": "scratchpad/dossier_north/art/tianjie_01.jpg",
+    "url": "https://news.qq.com/rain/a/20241227A0A9B800",
+    "date": "2024-12",
+    "what": "开业仪式，背景立面"
+   },
+   {
+    "file": "scratchpad/dossier_north/sat/tianjie.jpg",
+    "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+    "date": null,
+    "what": "卫星俯视：切角大体量"
+   }
+  ],
+  "sources": [
+   "https://news.qq.com/rain/a/20241227A0A9B800",
+   "https://www.cnr.cn/sxpd/c/yl/20241227/t20241227_527023471.shtml",
+   "https://m.winshang.com/news730319.html"
+  ],
+  "confidence": "medium",
+  "notes": "徐家湾板块；占地49.37亩；总建面15.8万㎡；2024-12-31 开业。坐标沿用 landmarks2026 的地块推测点附近，读图中心偏东约30 m。"
+ },
+ {
+  "id": "yuelanjia",
+  "name": "月澜嘉奥特莱斯（火车站北广场，在建/改造）",
+  "aliases": [],
+  "category": "mall",
+  "lon": 108.9625,
+  "lat": 34.2825,
+  "world_xz": [
+   1854.6,
+   -2392.3
+  ],
+  "coord_source": "estimated（landmarks2026 推测点：火车站北广场东侧）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "status": "under_construction",
+  "massing": [
+   {
+    "part": "4栋既有新楼改造",
+    "shape": "custom",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "报道称利用火车站北广场东侧4栋已建成新楼，只调整内部格局；具体是哪4栋未核实（OSM 在北站房东有“东配楼”w949265022，未确认关系）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://news.qq.com/rain/a/20251118A03ME900",
+   "https://news.qq.com/rain/a/20260722A0BFUN00"
+  ],
+  "confidence": "low",
+  "notes": "建筑面积5.9万㎡；2025-12 进场施工，计划 2026 国庆开业（腾讯新闻 2025-11-18）；截至本次未确认是否已开业。"
+ },
+ {
+  "id": "yinchi",
+  "name": "银池国际（在建商业）",
+  "aliases": [],
+  "category": "mall",
+  "lon": 108.944,
+  "lat": 34.342,
+  "world_xz": [
+   152.6,
+   -9019.9
+  ],
+  "coord_source": "estimated（landmarks2026 推测点）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "footprint_detail": null,
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "status": "under_construction",
+  "massing": [],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://news.qq.com/rain/a/20260203A0709500",
+   "https://www.sohu.com/a/983194028_121443915"
+  ],
+  "confidence": "low",
+  "notes": "landmarks2026 记为约2万㎡精致商业体、2026 在建；本次未重新检索，位置未核实，只保留条目供后续核对。"
+ }
+]
