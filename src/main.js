@@ -16,6 +16,7 @@ import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA, START_VIEW, defaultQualityLevel
 import { project, unproject } from './core/geo.js';
 import { MODULES } from './modules/index.js';
 import { installHeightFog } from './core/fog.js';
+import { setupThematic } from './core/thematic.js';
 
 installHeightFog();
 
@@ -342,6 +343,57 @@ async function main() {
   ui.on('buildings', (v) => setLayer('buildings', v));
   sky.speed = 0.1666667;
 
+  // —— 专题图层：路名 / 小区 / 建筑分类高亮（见 core/thematic.js） ——
+  const thematic = setupThematic({ app, ctx, ui, root, params });
+
+  // —— 一键俯视（通用）：app.topDown(on) 平滑转到当前视点正上方俯视；app.topDown(false) 回到原视角 ——
+  //    俯视中心：视线与地面交点（1.5 km 内），否则取相机正下方；保持原航向（屏幕上方 = 原前进方向）
+  {
+    let saved = null;
+    const dir = new THREE.Vector3();
+    const flyNoArc = (p, t) => {
+      controls.flyTo(p, t, { duration: 1.6 });
+      if (controls.tween) controls.tween.arc = 0;
+    };
+    app.topDown = (on = !saved) => {
+      if (on && !saved) {
+        if (controls.mode !== 'fly') controls.setMode('fly');
+        camera.getWorldDirection(dir);
+        const cp = camera.position;
+        const agl = Math.max(1, cp.y - terrain.heightAt(cp.x, cp.z));
+        let cx = cp.x, cz = cp.z;
+        if (dir.y < -0.05) {
+          const t = agl / -dir.y;
+          if (Math.hypot(dir.x * t, dir.z * t) < 1500) (cx += dir.x * t), (cz += dir.z * t);
+        }
+        const H = THREE.MathUtils.clamp(Math.max(agl * 1.4, 700), 700, 9000);
+        const g = terrain.heightAt(cx, cz);
+        let fx = dir.x, fz = dir.z;
+        const fl = Math.hypot(fx, fz);
+        if (fl < 1e-3) (fx = 0), (fz = -1);
+        else (fx /= fl), (fz /= fl);
+        saved = { p: cp.clone(), t: cp.clone().addScaledVector(dir, 100), mode: controls.mode };
+        flyNoArc(new THREE.Vector3(cx, g + H, cz), new THREE.Vector3(cx + fx * H * 0.022, g, cz + fz * H * 0.022));
+      } else if (!on && saved) {
+        flyNoArc(saved.p, saved.t);
+        saved = null;
+      }
+      ui.setTopDown(!!saved);
+      return !!saved;
+    };
+    app.isTopDown = () => !!saved;
+    ui.on('topdown', () => app.topDown());
+    window.addEventListener('keydown', (e) => {
+      if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.code === 'KeyV') ui.toast(app.topDown() ? '俯视（再按 V 回到原视角）' : '回到原视角');
+    });
+    if (params.get('topdown') === '1') {
+      // 自动化：直接定位到俯视（不做动画）
+      app.topDown(true);
+      if (controls.tween) controls.tween.t = controls.tween.dur;
+    }
+  }
+
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     const c = e.code;
@@ -426,6 +478,7 @@ async function main() {
     renderer.info.reset();
     post.render(dt);
     labels.update(camera, window.innerWidth, window.innerHeight);
+    thematic.update(camera, window.innerWidth, window.innerHeight);
 
     speed = speed * 0.9 + (camera.position.distanceTo(prevPos) / Math.max(dt, 1e-3)) * 0.1;
     prevPos.copy(camera.position);
