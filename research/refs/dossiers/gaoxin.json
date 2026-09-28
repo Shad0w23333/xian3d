@@ -1,0 +1,4713 @@
+[
+ {
+  "name": "国瑞·西安金融中心",
+  "aliases": [
+   "国瑞西安国际金融中心",
+   "Glory·Xi'an International Financial Center",
+   "西安 IFC",
+   "拉链楼（建设期俗称）"
+  ],
+  "category": "tower",
+  "lon": 108.877793,
+  "lat": 34.194663,
+  "coord_source": "overture_osm_footprint(w550214180) 质心",
+  "overture_id": "24e453f7-7d61-4081-8318-c79a57167614",
+  "footprint_size_m": [
+   55.4,
+   54.1
+  ],
+  "height_m": 350,
+  "floors": 75,
+  "height_source": "CTBUH Skyscraper Center：建筑高度 350 m、顶端 350 m、最高使用层 334 m、地上 75 层/地下 4 层；zh.wikipedia 同为 350 m/75 层",
+  "year": 2022,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "chamfer",
+    "size_m": [
+     55,
+     54
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 334,
+    "setbacks": [],
+    "taper": null,
+    "notes": "近方形平面，Overture 轮廓 55×54 m；照片（commons 2023-09、CTBUH 2020）可见四角为内凹/切角处理；照片透视下略有收分，幅度无数据，不填 taper。334 m 为 CTBUH 最高使用层高度"
+   },
+   {
+    "part": "塔冠（凹槽+外挑冠盒）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 334,
+    "top_m": 350,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片（commons《CBD of Xi'An High-tech zone in the morning》、20230925 Xi'an Financial Center）：顶部先有一圈内收的深色凹槽，其上冠盒略大于凹槽、向外出挑，呈“帽檐”状；外挑尺寸未查到"
+   }
+  ],
+  "crown": {
+   "type": "helipad",
+   "height_m": 16,
+   "description": "顶部外挑玻璃冠盒（下方为内收凹槽），屋面有直升机停机坪（Esri 卫星影像可见圆形 H 标）。冠高 16 m 由 CTBUH 350−334 推得（含最高使用层以上全部）"
+  },
+  "facade": {
+   "primary": "深蓝灰色玻璃幕墙，细密竖向竖梃网格",
+   "glass_color_hex": "#3e4f63",
+   "frame_color_hex": "#2b3440",
+   "wall_color_hex": null,
+   "pattern": "竖向细竖梃；约每 12–15 层一道深色水平设备/避难层带（照片可数 5–6 道）",
+   "floor_height_m": 4.45,
+   "notes": "玻璃色为照片观察（阴天采样 #8694a3 受天空反射偏亮，晴天照片为深蓝灰）；层高 4.45 m 由 334 m/75 层推算，非公开数据"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": "commons 雾夜照片（Xi’An High-Tech District CBD）中本楼顶部没入雾中，未能观察；未查到泛光/灯光秀资料",
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ifc_commons_1.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:20230925_Xi'an_Financial_Center.jpg",
+    "desc": "2023-09 仰拍，冠盒与水平设备层带清晰，右侧可见迈科中心“Maike”标识"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_24.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:CBD_of_Xi'An_High-tech_zone_in_the_morning.jpg",
+    "desc": "晨雾剪影，冠盒外挑轮廓最清楚"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_ifc_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/Glory-Xi-an-International-Financial-Center-Hao-Li-1603325662031.jpg",
+    "desc": "CTBUH/Hao Li，2020 年建设期（左）与中铁西安中心（右）"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/gloryxian-international-financial-center/18932",
+   "https://zh.wikipedia.org/wiki/国瑞西安金融中心",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "confidence": "high",
+  "notes": "2015-09 开工，2017-11-29 结构封顶，幕墙南侧长期未完工被称“拉链楼”，2022 年完工。塔楼招牌：照片未见楼顶文字招牌，写 []。夜景资料未查到。 世界坐标≈(-5939, 7383)。"
+ },
+ {
+  "name": "西安绿地中心A座",
+  "aliases": [
+   "绿地中心A座",
+   "Greenland Center Tower 1",
+   "绿地双子塔（东塔）"
+  ],
+  "category": "tower",
+  "lon": 108.876023,
+  "lat": 34.196499,
+  "coord_source": "overture_osm_footprint(w986974316) 质心",
+  "overture_id": "46fde5d1-9bd0-41f2-9f51-64ebd557eb41",
+  "footprint_size_m": [
+   55.8,
+   42.8
+  ],
+  "height_m": 270,
+  "floors": 57,
+  "height_source": "中玻网/中国幕墙网 2016（270 m，地下 3 层/地上 57 层）；CTBUH 57 层",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "chamfer",
+    "size_m": [
+     56,
+     43
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 270,
+    "setbacks": [],
+    "taper": null,
+    "notes": "幕墙网：平面由简单方正起步，“塔楼平面西南角从 16 层开始形成切角，随高度增加切角逐步变大”，一直延伸到带切面斜角的皇冠顶部。Overture 轮廓 56×43 m 已含切角。双塔“几乎对称”，B 座切角方向未查到"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "“带有切面斜角的皇冠顶部”（中玻网）；航拍照片（上海电梯 SMEC 案例图）可见顶部为斜切玻璃围屏+平屋面设备层；冠高未查到"
+  },
+  "facade": {
+   "primary": "银灰色 Low-E 中空玻璃单元式幕墙（隔热断桥）",
+   "glass_color_hex": "#4f7282",
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "单元板块错动形成“龙鳞/钻石切面”肌理，随角度变化“步移景异”；可见若干道深色水平带",
+   "floor_height_m": null,
+   "notes": "航拍照片采样呈青绿蓝（#204c58，受阴影影响偏暗），CTBUH 迈科照片中呈浅蓝灰；统一给中间值"
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": "rect",
+   "facade": "大分隔无框玻璃幕墙+钢结构玻璃顶棚，低铁玻璃+白色中空玻璃，彩釉玻璃顶棚（中玻网）",
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "绿地 Greenland 标识",
+    "color_hex": "#f2c14e",
+    "position": "塔冠一角（照片可见黄色标识）",
+    "approx_height_m": null
+   },
+   {
+    "text": "绿地中心",
+    "color_hex": "#c8161d",
+    "position": "塔顶（2017 夜景 LED 照片可见红色标识）",
+    "approx_height_m": null
+   }
+  ],
+  "night": "三角形侧边设 LED 点杯灯向上照射，形成一条条竖向光束（中玻网）；整幅立面为 LED 媒体幕墙，可显示文字（2017 年节日照片“2017 绿地中心 新年快乐”）；commons 雾夜照片中双塔仅见室内灯与屋顶角部红色航空障碍灯（当晚未开媒体立面，塔楼辨认为推断）",
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/gl_9.jpg",
+    "url": "https://smec-portal-oss.smec-cn.com/upload/case/202106/27132446.jpg",
+    "desc": "上海三菱电梯案例航拍，双塔切角与屋顶"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/gl_7.jpg",
+    "url": "https://exc-led.com/uploadfiles/2017/03/201703101353565356.jpg",
+    "desc": "LED 媒体立面夜景"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-10_5d8e916e96e10.jpg",
+    "desc": "CTBUH/Marcus Oleniuk，右侧带黄色标识者为绿地中心"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_23.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Xi’An_High-Tech_District_CBD.jpg",
+    "desc": "雾夜，屋顶红色障碍灯"
+   }
+  ],
+  "sources": [
+   "https://m.glass.com.cn/glassnews/newsinfo_173426.html",
+   "https://www.smec-cn.com/case/detail/1050",
+   "https://www.skyscrapercenter.com/building/greenland-center-tower-1/13781",
+   "https://exc-led.com/smart/info.aspx?itemid=702&lcid=24",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "confidence": "high",
+  "notes": "设计：英国 UA 国际建筑设计。地下 1 层–地上 4 层为购物中心（绿地缤纷荟，Overture w550214182 90×70 m），5–57 层写字楼，31 层空中大堂。2011-06 开工，2017-06 建成投用（网易 2020）；CTBUH 记 2016 完工。位于锦业路与丈八二路东北角。 世界坐标≈(-6102, 7179)。"
+ },
+ {
+  "name": "西安绿地中心B座（天安人寿中心）",
+  "aliases": [
+   "绿地中心B座",
+   "天安人寿中心",
+   "Greenland Center Tower 2",
+   "绿地双子塔（西塔）"
+  ],
+  "category": "tower",
+  "lon": 108.874471,
+  "lat": 34.196194,
+  "coord_source": "overture_osm_footprint(w986974317) 质心（轮廓含裙房）",
+  "overture_id": "06490310-6a78-4c90-9bbb-2d7456a63251",
+  "footprint_size_m": [
+   85.3,
+   54.9
+  ],
+  "height_m": 270,
+  "floors": 57,
+  "height_source": "CTBUH 270 m/57 层；腾讯新闻 2022（2 栋 270 m）",
+  "year": 2018,
+  "massing": [
+   {
+    "part": "塔身+裙房",
+    "shape": "custom",
+    "size_m": [
+     85,
+     55
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 270,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓 85×55 m 含裙房，塔身净尺寸未查到；造型与 A 座同一设计（“几乎对称”），切角方向未查到"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "同 A 座：切面斜角皇冠顶"
+  },
+  "facade": {
+   "primary": "银灰色 Low-E 单元式玻璃幕墙（同 A 座）",
+   "glass_color_hex": "#4f7282",
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "同 A 座",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": "同 A 座设计（LED 上照光束），B 座单独夜景资料未查到",
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/gl_9.jpg",
+    "url": "https://smec-portal-oss.smec-cn.com/upload/case/202106/27132446.jpg",
+    "desc": "航拍双塔"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/greenland-center-tower-2/13782",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html",
+   "https://m.glass.com.cn/glassnews/newsinfo_173426.html"
+  ],
+  "confidence": "medium",
+  "notes": "位于锦业路与丈八二路西北角；2015-09 开工；整售给天安人寿，改名天安人寿中心（腾讯 2022）。B 座楼顶招牌文字未查到。 世界坐标≈(-6244, 7213)。"
+ },
+ {
+  "name": "中铁西安中心",
+  "aliases": [
+   "中铁·西安中心",
+   "Xi'an Center"
+  ],
+  "category": "tower",
+  "lon": 108.879232,
+  "lat": 34.19468,
+  "coord_source": "overture_osm_footprint(w550214178) 质心",
+  "overture_id": "a4ab7eb6-1663-4e27-b435-bee8488a272c",
+  "footprint_size_m": [
+   40.7,
+   40.1
+  ],
+  "height_m": 230,
+  "floors": 51,
+  "height_source": "开发/百科口径 230 m、地上 51 层地下 3 层（腾讯 2022、kbgok、bang.cn）；CTBUH 记 238 m/54 层（口径差异，未核实差值来源）",
+  "year": 2016,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "chamfer",
+    "size_m": [
+     41,
+     40
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 230,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓 41×40 m；照片（CTBUH/Hao Li 2020）可见四角内凹切角；1–4 层商业，5–51 层办公"
+   }
+  ],
+  "crown": {
+   "type": "frame",
+   "height_m": null,
+   "description": "屋顶以上为高低错落的竖向玻璃肋/格栅围屏（照片可见四角较高）；西北首个“高架直升机临时起降点”商务楼（百科摘要）"
+  },
+  "facade": {
+   "primary": "Low-E 双层中空玻璃幕墙",
+   "glass_color_hex": "#8c9da9",
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "竖向细分格为主，局部可见开启扇形成的短横线",
+   "floor_height_m": 4.2,
+   "notes": "单层高 4.2 m、大堂挑高 12 m（bang.cn）；玻璃色为照片采样"
+  },
+  "podium": {
+   "floors": 4,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": "地铁 6 号线丈八一路站出入口与项目相连"
+  },
+  "signage": [
+   {
+    "text": "新华保险",
+    "color_hex": "#ffffff",
+    "position": "塔冠格栅一个立面（CTBUH 2020 照片放大可辨，约为西/南立面）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/crop_zt_top.jpg",
+    "url": "https://images.skyscrapercenter.com/building/Glory-Xi-an-International-Financial-Center-Hao-Li-1603325662031.jpg",
+    "desc": "从 CTBUH 照片裁切的塔冠，“新华保险”字样"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_ifc_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/Glory-Xi-an-International-Financial-Center-Hao-Li-1603325662031.jpg",
+    "desc": "右侧完工塔楼即中铁西安中心"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_01.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:雁塔_在锦业路上看高新商务区_01.jpg",
+    "desc": "锦业路东望西，前景带格栅冠者为本楼（推断）"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/xian-center/22846",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://xian.kbgok.com/news/4507",
+   "https://www.bang.cn/top10/8874.html",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html",
+   "https://baike.baidu.com/item/中铁西安中心/223352（经搜索摘要）"
+  ],
+  "confidence": "high",
+  "notes": "锦业路与丈八一路西南角。2012-12-02 开工，2016-08 交付；新华保险购置 21 层（腾讯 2022）。**与模型冲突**：sky-data.js 招牌写“中国中铁”，照片为“新华保险”。 世界坐标≈(-5806, 7381)。"
+ },
+ {
+  "name": "迈科中心（写字楼塔）",
+  "aliases": [
+   "迈科商业中心",
+   "Maike Centre Office Tower",
+   "Maike Center"
+  ],
+  "category": "tower",
+  "lon": 108.876402,
+  "lat": 34.19444,
+  "coord_source": "overture_osm_footprint(w1546339320) 质心；整体综合体轮廓 w1221942315（220×106 m）",
+  "overture_id": "cf5736dc-c180-4a92-b20b-2aecf95cd8f1",
+  "footprint_size_m": [
+   54.5,
+   50.0
+  ],
+  "height_m": 216,
+  "floors": 45,
+  "height_source": "腾讯 2022、kbgok：写字楼 216 m；OSM 216/45F；CTBUH 215 m/45 层",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "写字楼塔身",
+    "shape": "round",
+    "size_m": [
+     54.5,
+     50
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 216,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓 54.5×50 m；照片为大圆角矩形平面，外轮廓有一条连续银色金属装饰带沿塔身边缘由顶部下折至连桥"
+   },
+   {
+    "part": "空中连桥（与君悦酒店塔相连）",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 100,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "“在高度 100 米位置由两层空中连桥连接”（腾讯 2022），西北首座全钢结构连体建筑；连桥下方为古铜/橙色斜交网格钢桁架“门洞”（照片），尺寸未查到"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平顶，顶部略高出一段；楼顶立面有“Maike”标识"
+  },
+  "facade": {
+   "primary": "浅灰蓝玻璃幕墙+竖向细肋",
+   "glass_color_hex": "#728083",
+   "frame_color_hex": "#c9ccce",
+   "wall_color_hex": null,
+   "pattern": "竖向细竖梃，边缘连续银色金属带",
+   "floor_height_m": null,
+   "notes": "颜色为 CTBUH 照片采样"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "custom",
+   "facade": "曲面玻璃+金属挑檐（commons 照片），内有茑屋书店、星巴克臻选（原言几又旗舰店）",
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "Maike",
+    "color_hex": "#e0a030",
+    "position": "写字楼塔顶部立面（照片为金/橙色）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-10_5d8e916e96e10.jpg",
+    "desc": "CTBUH/Marcus Oleniuk：两塔+连桥+古铜桁架"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_2.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-16_5d8e917477ec0.jpg",
+    "desc": "街景：银色边带、古铜斜交桁架"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_3.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-30_5d8e91822e630.jpg",
+    "desc": "连桥屋顶花园，酒店塔立面细部"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/maike-centre-office-tower/18353",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://xian.kbgok.com/news/4507",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html"
+  ],
+  "confidence": "high",
+  "notes": "锦业路与丈八二路东南角。自持物业。 世界坐标≈(-6067, 7408)。"
+ },
+ {
+  "name": "西安君悦酒店（迈科中心酒店塔）",
+  "aliases": [
+   "Grand Hyatt Xi'an",
+   "Maike Centre Hotel Tower",
+   "君悦酒店(迈科中心店)"
+  ],
+  "category": "hotel",
+  "lon": 108.875958,
+  "lat": 34.194085,
+  "coord_source": "overture_osm_footprint(w985455592) 质心",
+  "overture_id": "ecd24bf8-8cd7-4f26-99d4-73fd41536ee6",
+  "footprint_size_m": [
+   67.4,
+   37.4
+  ],
+  "height_m": 165,
+  "floors": 34,
+  "height_source": "腾讯 2022“酒店高 165 米”；OSM 155.35 m/34F；CTBUH 161 m/34 层——三种口径，取开发商口径 165",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "酒店塔身",
+    "shape": "round",
+    "size_m": [
+     67.4,
+     37.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 90,
+    "base_m": 0,
+    "top_m": 165,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓 67×37 m（长轴南北）；照片为圆角板式塔楼，约 100 m 处经两层连桥连接写字楼"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平顶；顶部有“GRAND HYATT”字样，夜间顶部紫色灯光（CTBUH 照片）"
+  },
+  "facade": {
+   "primary": "象牙白铝板/石材横竖格构 + 玻璃窗",
+   "glass_color_hex": null,
+   "frame_color_hex": "#e6e2d6",
+   "wall_color_hex": "#b4b19f",
+   "pattern": "逐层水平白色窗槛带+竖向分格，窗墙比中等",
+   "floor_height_m": null,
+   "notes": "照片采样（阴天）"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "GRAND HYATT",
+    "color_hex": "#ffffff",
+    "position": "塔顶立面",
+    "approx_height_m": null
+   }
+  ],
+  "night": "塔顶紫色泛光（CTBUH 黄昏照片）",
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-10_5d8e916e96e10.jpg",
+    "desc": "左侧较矮塔楼"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_2.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-16_5d8e917477ec0.jpg",
+    "desc": "右上紫色灯光塔顶"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_maike_3.jpg",
+    "url": "https://images.skyscrapercenter.com/building/2019-09-27-22-47-30_5d8e91822e630.jpg",
+    "desc": "立面细部"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/maike-centre-hotel-tower/30225",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "confidence": "medium",
+  "notes": "西北首家君悦酒店。**高度冲突**：模型 155 m（OSM 值），开发商口径 165 m，CTBUH 161 m。 世界坐标≈(-6108, 7447)。"
+ },
+ {
+  "name": "陕西永利国际金融中心",
+  "aliases": [
+   "永利国际金融中心",
+   "Wynn International Financial Center（CTBUH 英文名）"
+  ],
+  "category": "tower",
+  "lon": 108.879059,
+  "lat": 34.19228,
+  "coord_source": "CTBUH 坐标；与 Overture w772926964（75.5×65.3 m，含 8 层辅楼）重合；地址“锦业一路与丈八一路交汇处西南角，紧邻南三环”",
+  "overture_id": "86a66021-eeaa-401f-91e5-38884d55bb9c",
+  "footprint_size_m": [
+   75.5,
+   65.3
+  ],
+  "height_m": 212,
+  "floors": 46,
+  "height_source": "开发/鲁班奖口径 212 m、地上 46 层地下 4 层（搜狐 2020、sxjzy）；CTBUH 211 m/47 层；腾讯 2022 写 199.8 m（可能为结构屋面，未核实）",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "主塔+8 层辅楼",
+    "shape": "custom",
+    "size_m": [
+     75.5,
+     65.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 212,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓含辅楼；主塔净尺寸与辅楼位置未查到。辅楼 8 层（搜狐/sxjzy）"
+   }
+  ],
+  "crown": {
+   "type": "frame",
+   "height_m": null,
+   "description": "Esri 卫星影像屋顶可见格栅框架（冠高未查到）"
+  },
+  "facade": {
+   "primary": "三银 Low-E 玻璃单元式封闭幕墙",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "“线条感强、简洁流畅”（租赁网站描述，非照片）",
+   "floor_height_m": null,
+   "notes": "未找到可确认为本楼的清晰照片，颜色不填"
+  },
+  "podium": {
+   "floors": 8,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sohu.com/a/419877009_99919102",
+   "https://www.sxjzy.org/h-nd-16500.html",
+   "https://www.skyscrapercenter.com/building/wynn-international-financial-center/26964",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "confidence": "medium",
+  "notes": "2017-06 交付，陕西首个超高层鲁班奖，LEED 金级。**位置冲突**：模型 sky-data.js 的“陕西永利国际金融中心”(−5812,7521) 与 OSM w1387164542 都在锦业一路以北的中间地块，那是秦商国际中心 1 号楼的位置；按地址/CTBUH/秦商楼书区位图，永利在锦业一路以南（世界坐标约 −5822,7648），向南约 125 m。 世界坐标≈(-5822, 7648)。"
+ },
+ {
+  "name": "永威·时代中心",
+  "aliases": [
+   "永威时代中心",
+   "Yongwei Times Square"
+  ],
+  "category": "tower",
+  "lon": 108.876107,
+  "lat": 34.19247,
+  "coord_source": "overture_osm_footprint(w772926961) 质心（轮廓 67×64 m，含裙房）",
+  "overture_id": "3f0dc32d-6c26-49be-9980-93d158c51d6a",
+  "footprint_size_m": [
+   66.6,
+   64.4
+  ],
+  "height_m": 212,
+  "floors": 47,
+  "height_source": "腾讯 2022、搜狐 2017：212 m/47 层；CTBUH 212 m/43 层",
+  "year": 2020,
+  "massing": [
+   {
+    "part": "塔身（三段错位）",
+    "shape": "custom",
+    "size_m": [
+     67,
+     64
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 212,
+    "setbacks": [],
+    "taper": null,
+    "notes": "SOM 设计，“外立面采用三节错开的立体效果”（搜索摘要，源自搜狐/知乎房产文），错位尺寸与分段高度未查到；Overture 轮廓含 5 层裙房"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "照片可见平顶，顶部略有收口，细节未查到"
+  },
+  "facade": {
+   "primary": "全玻璃幕墙，竖向折面玻璃",
+   "glass_color_hex": "#586977",
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "竖向分格，塔身分三段错位",
+   "floor_height_m": null,
+   "notes": "照片采样（阴天）"
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": "rect",
+   "facade": "玻璃+金属，裙房女儿墙上方有橙色大字",
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "永威时代中心",
+    "color_hex": "#e8741e",
+    "position": "裙房屋顶沿口（commons 照片）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_06.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:雁塔_西安高新区迈克商业中心附近_4.jpg",
+    "desc": "裙房橙色“永威时代中心”大字与塔身"
+   }
+  ],
+  "sources": [
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://www.sohu.com/a/212625953_351305",
+   "https://www.skyscrapercenter.com/building/yongwei-times-square/26563",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html"
+  ],
+  "confidence": "medium",
+  "notes": "锦业一路与丈八二路东南角，紧邻南三环；地上 1–5 层商业，6–47 层办公；2020-09 交付。 世界坐标≈(-6094, 7627)。"
+ },
+ {
+  "name": "天朗·秦商国际中心 1号楼",
+  "aliases": [
+   "秦商国际中心",
+   "Qinshang International Centre",
+   "秦商总会永久会址"
+  ],
+  "category": "tower",
+  "lon": 108.87927,
+  "lat": 34.19387,
+  "coord_source": "CTBUH 坐标；楼书区位图显示位于中铁西安中心以南、丈八一路以西的地块东侧（1 号楼在东、2 号楼“锦里”在西）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 217,
+  "floors": 50,
+  "height_source": "CTBUH 217 m/50 层；高楼迷 216.6 m/50F；项目公示/楼书口径 220 m（楼书另写“1 号楼总高 48 层”）",
+  "year": 2025,
+  "massing": [
+   {
+    "part": "1 号楼塔身（低区 8 层标准层）",
+    "shape": "rect",
+    "size_m": [
+     52.65,
+     34.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "楼书低区标准层平面：东西向 15.55+21.6+15.55 m，南北 17.15×2 m，北向朝上"
+   },
+   {
+    "part": "1 号楼塔身（高区 26–48 层）",
+    "shape": "rect",
+    "size_m": [
+     52.0,
+     33.0
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": 217,
+    "setbacks": [
+     {
+      "at_m": null,
+      "inset_m": 0.3
+     }
+    ],
+    "taper": null,
+    "notes": "楼书高区平面：15.2+21.6+15.2 m × 10.8+11.4+10.8 m，比低区每侧约内收 0.3–0.65 m，内收层位未查到"
+   }
+  ],
+  "crown": {
+   "type": "frame",
+   "height_m": null,
+   "description": "效果图：竖向白色幕墙肋延伸出屋面形成开敞格栅冠；2024-04 论坛称“塔冠施工好像没看到动”，完工照片未取得"
+  },
+  "facade": {
+   "primary": "全景玻璃幕墙（楼书），效果图为蓝色玻璃+白色竖向肋",
+   "glass_color_hex": null,
+   "frame_color_hex": "#e8ecef",
+   "wall_color_hex": null,
+   "pattern": "竖向肋等距，局部有横向亮带",
+   "floor_height_m": 4.0,
+   "notes": "层高 4 m（楼书）；颜色仅有效果图，不给玻璃色"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": "楼书称“丈八一路地铁口南 50 米”"
+  },
+  "signage": [
+   {
+    "text": "秦商总会（金色会徽+字）",
+    "color_hex": "#c9a24a",
+    "position": "塔顶立面（效果图）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qs_5.jpg",
+    "url": "https://m.focus.cn/baoji/zixun/c36ab875c0856525.html",
+    "desc": "楼书效果图（1 号楼+2 号楼锦里）"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qs_7.jpg",
+    "url": "https://m.focus.cn/baoji/zixun/c36ab875c0856525.html",
+    "desc": "低区标准层平面（尺寸）"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qs_1.jpg",
+    "url": "https://m.focus.cn/baoji/zixun/c36ab875c0856525.html",
+    "desc": "高区标准层平面（尺寸）"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_08.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "2023-08 施工照片"
+   }
+  ],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/qinshang-international-centre/42878",
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3232799",
+   "https://m.focus.cn/baoji/zixun/c36ab875c0856525.html",
+   "https://www.sohu.com/a/867720338_121966444",
+   "https://news.qq.com/rain/a/20230902A08B6400",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "confidence": "medium",
+  "notes": "高楼迷首帖：位于“丈八一路与锦业一路十字西北角”，用地 1.15 万㎡，办公楼 50 层 220 m + 公寓 31 层 100 m（2 号楼“锦里”，2 梯 1 户），框架-核心筒。2020-03 开工，2023 基本封顶，2024-04 幕墙施工，2025 建成（CTBUH/高楼迷）。2 号楼坐标未查到，未单列。**位置冲突**：landmarks2026 把秦商放在 (−5930,7497)，比 CTBUH 点偏西约 130 m；OSM w1387164542（标“永利”，87×31 m）落在本地块，疑为本项目轮廓被错标。 世界坐标≈(-5803, 7471)。"
+ },
+ {
+  "name": "泰信大厦",
+  "aliases": [
+   "Taixin Building"
+  ],
+  "category": "tower",
+  "lon": 108.878166,
+  "lat": 34.192223,
+  "coord_source": "CTBUH 坐标；腾讯“位于永利国际金融中心的西侧”；地址锦业一路 6 号",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 214,
+  "floors": 37,
+  "height_source": "网易 2023“214 米！泰信大厦喜封金顶”、CTBUH 214 m/37 层；规划口径 199.9 m（腾讯 2022/2023）、另见 199.7 m/36 层（搜索摘要），推断 199.9 为屋面、214 含塔冠（未证实）",
+  "year": 2024,
+  "massing": [
+   {
+    "part": "塔身（分段）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 214,
+    "setbacks": [],
+    "taper": null,
+    "notes": "2023-08 施工照片：约在塔高一半处有一圈外挑水平檐口，上下两段；CTBUH 效果图为三段错位叠加。平面尺寸无数据（Overture 无轮廓）"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "效果图：顶部约两层通高玻璃围合（屋顶花园/观景），无尖顶"
+  },
+  "facade": {
+   "primary": "深蓝玻璃+浅色竖向线条",
+   "glass_color_hex": "#1f3950",
+   "frame_color_hex": "#d8dde0",
+   "wall_color_hex": null,
+   "pattern": "下段浅色竖向线条密集，中段外挑檐口；效果图为成组白色竖线框",
+   "floor_height_m": null,
+   "notes": "2023 施工照片采样"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": "效果图为白色竖向线条灯，实景未查到",
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_09.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "2023-08 幕墙施工至约 150 m"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_taixin_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/Taixin-Building_Rendering-1_(c)Shaanxi__Shenghua__Real__Estate210908-050935.jpeg",
+    "desc": "开发商效果图（背景非西安，仅看体量）"
+   }
+  ],
+  "sources": [
+   "https://www.163.com/dy/article/HR1GI5FO0535HX8T.html",
+   "https://www.skyscrapercenter.com/building/taixin-building/41675",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://news.qq.com/rain/a/20230902A08B6400"
+  ],
+  "confidence": "medium",
+  "notes": "2012-09 拿地，2020 初实质施工，2023-01 封顶。**位置冲突**：landmarks2026 “泰信大厦” 多边形中心 (−5991,7633) 实为中投国际位置；CTBUH 点世界坐标约 (−5904,7654)。 世界坐标≈(-5904, 7654)。"
+ },
+ {
+  "name": "中投国际（A座/B座）",
+  "aliases": [
+   "中投国际"
+  ],
+  "category": "tower",
+  "lon": 108.877224,
+  "lat": 34.192414,
+  "coord_source": "overture_osm_footprint(w986974308 综合体；A 座 w772926963，B 座 w772926962)",
+  "overture_id": "d016a9a7-f051-4030-9b3b-f36384b5c040",
+  "footprint_size_m": [
+   113.8,
+   67.7
+  ],
+  "height_m": null,
+  "floors": 27,
+  "height_source": "层数：A 座 24 层、B 座 27 层（搜索摘要，源自房产站/百度百科）；高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "A 座",
+    "shape": "rect",
+    "size_m": [
+     57.0,
+     32.3
+    ],
+    "offset_m": [
+     1.2,
+     29.7
+    ],
+    "rotation_deg": -0.3,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture w772926963；24 层；Overture a7fcc24b-786b-4f88-84a7-deec7d70652e"
+   },
+   {
+    "part": "B 座",
+    "shape": "rect",
+    "size_m": [
+     56.9,
+     26.5
+    ],
+    "offset_m": [
+     1.4,
+     -22.0
+    ],
+    "rotation_deg": -0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture w772926962；27 层；Overture fb56c456-2338-404a-902f-47a47a52a179"
+   },
+   {
+    "part": "1–4 层商业裙楼",
+    "shape": "rect",
+    "size_m": [
+     113.8,
+     67.7
+    ],
+    "offset_m": [
+     0.0,
+     -0.0
+    ],
+    "rotation_deg": -89.9,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 综合体轮廓；Overture d016a9a7-f051-4030-9b3b-f36384b5c040"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未找到可确认的照片"
+  },
+  "podium": {
+   "floors": 4,
+   "height_m": null,
+   "shape": "rect",
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sohu.com/a/963602448_121484367",
+   "https://house.leju.com/sx/102390/xinxi/",
+   "https://zhuanlan.zhihu.com/p/614316312"
+  ],
+  "confidence": "low",
+  "notes": "锦业一路 10 号，A 座（24 层）、B 座（27 层）+1–4 层商业裙楼（搜索摘要）。landmarks2026 写 110 m/26F，来源未查到。offset 为两座相对综合体质心的南北偏移（由 Overture 质心算得）。 世界坐标≈(-5991, 7633)。"
+ },
+ {
+  "name": "西安安达仕酒店（迈科·在建停工）",
+  "aliases": [
+   "Andaz Xi'an",
+   "安仕达酒店"
+  ],
+  "category": "hotel",
+  "lon": 108.870262,
+  "lat": 34.192284,
+  "coord_source": "CTBUH 坐标；宗地“锦业一路以南、丈八三路以西、锦业五街以东、南三环北辅道以北”（高楼迷首帖引土地公告）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 247.4,
+  "floors": 50,
+  "height_source": "高楼迷首帖（项目介绍）：建筑高度 224.7 m、结构高度 223.2 m、幕墙塔冠顶 247.4 m、地上 50 层地下 4 层；CTBUH 247 m/50 层；腾讯 2022 写 260 m",
+  "year": null,
+  "massing": [
+   {
+    "part": "设计塔身",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 247.4,
+    "setbacks": [],
+    "taper": null,
+    "notes": "**未建成**：2022-05 主体约 20 层后停滞（腾讯 2023），2024-04 高楼迷仍记停工；现存钢结构高度未查到。全钢框架-中心支撑结构；1–12 层裙楼为五星级酒店（185 间），15–49 层品牌公寓，50 层顶级公寓"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": 22.7,
+   "description": "设计：幕墙塔冠顶 247.4 m，比建筑高度 224.7 m 高 22.7 m；外观未查到"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 12,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3137852",
+   "https://www.skyscrapercenter.com/building/andaz-xian/38905",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://news.qq.com/rain/a/20230902A08B6400"
+  ],
+  "confidence": "medium",
+  "notes": "**与模型冲突**：landmarks2026 以 247.4 m 全高建模，但截至 2024-04 仍停工在约 20 层（2026 年状态未查到）。建议建为约 20 层钢框架+塔吊，或暂不建。 世界坐标≈(-6632, 7648)。"
+ },
+ {
+  "name": "锦业时代C区·D5大道 C1#超高层（停工）",
+  "aliases": [
+   "D5大道",
+   "Jinye Times C District Tower D5-1"
+  ],
+  "category": "tower",
+  "lon": 108.874458,
+  "lat": 34.194748,
+  "coord_source": "CTBUH 坐标；地址锦业路与丈八二路十字西南角",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 240.1,
+  "floors": 49,
+  "height_source": "高楼迷首帖（施工方资料）：C1# 49 层 240.1 m；CTBUH 240 m/49 层",
+  "year": null,
+  "massing": [
+   {
+    "part": "设计塔身",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 240.1,
+    "setbacks": [],
+    "taper": null,
+    "notes": "**未建成**：2022-05 与 2023-08 照片对比，核心筒钢结构仅到地上 6–7 层且锈蚀（腾讯 2023）；论坛转述工地公告：因合同纠纷项目被查封至 2029-01。钢管砼框架-钢梁-混凝土核心筒"
+   }
+  ],
+  "crown": {
+   "type": "spire",
+   "height_m": null,
+   "description": "效果图：Art Deco 式层层退台、顶部尖塔（仅设计）"
+  },
+  "facade": {
+   "primary": "效果图为米色石材竖线条（设计）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "南湾地产（工地围挡）",
+    "color_hex": null,
+    "position": "工地围挡（2022/2023 照片）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_01.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "效果图"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_05.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "2023-08 停工现场"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_06.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "2022-05 施工现场"
+   }
+  ],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3212660",
+   "https://www.skyscrapercenter.com/building/jinye-times-c-district-tower-d5-1/42640",
+   "https://news.qq.com/rain/a/20230902A08B6400"
+  ],
+  "confidence": "medium",
+  "notes": "模型当前未建此楼（不冲突）。天际线上只应出现低矮核心筒+塔吊。 世界坐标≈(-6246, 7374)。"
+ },
+ {
+  "name": "锦业时代C区·D5大道 C2# LOFT 公寓",
+  "aliases": [
+   "Jinye Times C District Tower D5-2"
+  ],
+  "category": "tower",
+  "lon": 108.874786,
+  "lat": 34.19405,
+  "coord_source": "CTBUH 坐标",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 112.2,
+  "floors": 18,
+  "height_source": "高楼迷首帖：C2# LOFT 公寓 18 层 112.2 m（LOFT 层高大）；CTBUH 112 m/32 层（层数口径冲突）",
+  "year": 2024,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 112.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "2023 年论坛称“百米高的副塔已经完工”；平面尺寸未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "施工照片中为浅色外墙，但分辨率不足以描述"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_05.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "左侧为已封顶的公寓楼（2023-08）"
+   }
+  ],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3212660",
+   "https://www.skyscrapercenter.com/building/jinye-times-c-district-tower-d5-2/48966"
+  ],
+  "confidence": "low",
+  "notes": "世界坐标≈(-6215, 7451)。"
+ },
+ {
+  "name": "西安环贸中心（ICC）写字楼",
+  "aliases": [
+   "西安ICC环贸中心",
+   "西港城市航空服务园区",
+   "越秀·西安环贸中心"
+  ],
+  "category": "tower",
+  "lon": 108.8663,
+  "lat": 34.1946,
+  "coord_source": "沿用 landmarks2026 的 synth 坐标（未核实）；地址：丈八四路与锦业路十字东南角，地块“锦业六街以西、锦业路以南、丈八四路以东、锦业一路以北”",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 163.1,
+  "floors": null,
+  "height_source": "澎湃 2024：写字楼 163.1 m；赢商 2024-06：163 m 超高层写字楼主体封顶；规划口径 149.9 m、最高点 163.1 m（腾讯 2022 工地公示）",
+  "year": 2025,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 163.1,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片为方正板式塔楼；平面尺寸无数据"
+   }
+  ],
+  "crown": {
+   "type": "helipad",
+   "height_m": 13.2,
+   "description": "“写字楼顶层还专设停机坪”（赢商/澎湃）；13.2 m = 163.1−149.9（最高点−规划高度）推算"
+  },
+  "facade": {
+   "primary": "蓝色玻璃幕墙+白色竖向细肋",
+   "glass_color_hex": "#4d7396",
+   "frame_color_hex": "#e6eaee",
+   "wall_color_hex": null,
+   "pattern": "通高竖向细肋，顶部无分段",
+   "floor_height_m": null,
+   "notes": "观点网 2025-09 开业照片采样"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": "B1 接地铁 6 号线丈八四路站；3 层与高新云巴丈八四路站连通；1 层城市候机楼"
+  },
+  "signage": [
+   {
+    "text": "越秀/ICC 标识",
+    "color_hex": "#f08a24",
+    "position": "塔顶立面（照片为橙色标识）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/icc_6.jpg",
+    "url": "https://www.guandian.cn/uploadfile9/2025/0930/20250930050743967.png",
+    "desc": "2025-09 开业宣传照：左为万豪酒店楼，右为写字楼"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/icc_4.jpg",
+    "url": "https://www.guandian.cn/uploadfile9/2025/0930/20250930050732374.png",
+    "desc": "施工期航拍"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/news724834.html",
+   "https://www.thepaper.cn/newsDetail_forward_28876818",
+   "https://www.guandian.cn/article/20250930/515095.html",
+   "https://news.qq.com/rain/a/20220508A09RD400"
+  ],
+  "confidence": "medium",
+  "notes": "越秀地产×西部机场集团，占地约 46 亩，总建面 16.74 万㎡；2025-09-28 开业。**模型冲突**：landmarks2026 同时有“西安ICC环贸中心 主塔”(−6996,7390) 与“ICC环贸中心写字楼”(−7023,7400) 两个 163 m 塔，重复建模，应删一个。精确塔位需影像核对。 世界坐标≈(-6996, 7390)。"
+ },
+ {
+  "name": "西安高新区万豪酒店（ICC 酒店楼）",
+  "aliases": [
+   "Xi'an Marriott Hotel Hi-Tech Zone（名称按报道直译）",
+   "ICC环贸中心酒店"
+  ],
+  "category": "hotel",
+  "lon": 108.8672,
+  "lat": 34.1942,
+  "coord_source": "沿用 landmarks2026 坐标（未核实）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 86,
+  "floors": null,
+  "height_source": "赢商 2024-06：一栋 86 米酒店",
+  "year": 2025,
+  "massing": [
+   {
+    "part": "酒店板楼",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 86,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片为宽板式楼，约 20 余层（目测，不作数）"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平顶"
+  },
+  "facade": {
+   "primary": "玻璃+竖向浅色肋，设计概念“城墙花开”：提炼城墙砖石肌理与花瓣图形",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "设计理念见澎湃 2024，照片分辨率不足以取色"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "万豪（红色标识）",
+    "color_hex": "#c8102e",
+    "position": "楼顶一角（照片）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/icc_6.jpg",
+    "url": "https://www.guandian.cn/uploadfile9/2025/0930/20250930050743967.png",
+    "desc": "左侧宽板楼"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/news724834.html",
+   "https://www.thepaper.cn/newsDetail_forward_28876818"
+  ],
+  "confidence": "low",
+  "notes": "landmarks2026 也存在重复（−6912,7454 与 −7024,7470 两处）。 世界坐标≈(-6913, 7435)。"
+ },
+ {
+  "name": "夏中心（大夏中心，在建）",
+  "aliases": [
+   "Daxia Tower",
+   "大夏中心"
+  ],
+  "category": "tower",
+  "lon": 108.860001,
+  "lat": 34.194626,
+  "coord_source": "CTBUH 坐标；地址锦业路与丈八五路十字东南角（宗地 GX3-2-55-3）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 213,
+  "floors": 40,
+  "height_source": "高楼迷首帖（规划公示）：1 号楼办公地上 40 层、建筑高度 213 m；2 号楼商业 3 层 21.65 m；早期报道 210 m",
+  "year": null,
+  "massing": [
+   {
+    "part": "设计塔身",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 213,
+    "setbacks": [],
+    "taper": null,
+    "notes": "**在建**：2026-07/09 论坛称外框立柱吊装、“又长高了”，现高度未查到。扎哈·哈迪德事务所设计，水滴形、层叠弧形玻璃+通高中庭（设计）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "设计为圆润收顶的水滴形"
+  },
+  "facade": {
+   "primary": "层叠圆弧 Low-E 玻璃幕墙（设计）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "层叠弧形玻璃带",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 3,
+   "height_m": 21.65,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_02.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "扎哈效果图"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_12.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "鸟瞰效果图"
+   }
+  ],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3317702",
+   "https://news.qq.com/rain/a/20230808A088ZC00",
+   "https://view.inews.qq.com/a/20251110A05VW500",
+   "https://www.skyscrapercenter.com/building/daxia-tower/47481"
+  ],
+  "confidence": "medium",
+  "notes": "2025-11 完成 B4 区筏板。模型未建（不冲突）。 世界坐标≈(-7576, 7387)。"
+ },
+ {
+  "name": "陕西有色金属研发大厦（停工）",
+  "aliases": [
+   "陕西有色研发大厦",
+   "Youser Group Tower A/B"
+  ],
+  "category": "tower",
+  "lon": 108.86174,
+  "lat": 34.194511,
+  "coord_source": "CTBUH A 塔坐标；地块“北临锦业路、南靠锦业一路、西临丈八五路、东临丈八四路”",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 198.8,
+  "floors": 39,
+  "height_source": "高楼迷首帖（公示）：A 塔 198.8 m、B 塔 160.3 m、C 塔 49.6 m，30–39 层；CTBUH A 198 m/39F、B 161 m/30F",
+  "year": null,
+  "massing": [
+   {
+    "part": "A 塔（设计）",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 198.8,
+    "setbacks": [],
+    "taper": null,
+    "notes": "停工"
+   },
+   {
+    "part": "B 塔（设计）",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     162.2,
+     -17.4
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 160.3,
+    "setbacks": [],
+    "taper": null,
+    "notes": "offset 由 CTBUH 两点坐标换算"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "设计“以曲线向上”（首帖），外观未查到"
+  },
+  "podium": {
+   "floors": 8,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/qq0902_11.jpg",
+    "url": "https://news.qq.com/rain/a/20230902A08B6400",
+    "desc": "2023 年工地大门（基坑阶段）"
+   }
+  ],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3265201",
+   "https://news.qq.com/rain/a/20220508A09RD400",
+   "https://news.qq.com/rain/a/20230902A08B6400"
+  ],
+  "confidence": "medium",
+  "notes": "2020-11-23 开工；2025-08 论坛称塔吊停转，2025-12 “塔吊已撤”。已建部分高度未查到（2023 年仍为基坑）。模型未建。 世界坐标≈(-7416, 7400)。"
+ },
+ {
+  "name": "益田假日里购物中心",
+  "aliases": [
+   "西安益田假日天地",
+   "原绿地·正大缤纷城",
+   "In Time Holiday Village"
+  ],
+  "category": "mall",
+  "lon": 108.877523,
+  "lat": 34.196418,
+  "coord_source": "overture_osm_footprint(w550214181) 质心",
+  "overture_id": "1d5901f2-a735-4f29-996d-381d47e3bf32",
+  "footprint_size_m": [
+   153.8,
+   122.7
+  ],
+  "height_m": null,
+  "floors": 4,
+  "height_source": "地上 4 层、地下 2 层（搜索摘要，源自商策网/赢商）；高度未查到",
+  "year": 2019,
+  "massing": [
+   {
+    "part": "盒子式购物中心+外街",
+    "shape": "custom",
+    "size_m": [
+     153.8,
+     122.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "益田假日里 In Time Holiday Village（蝴蝶标）",
+    "color_hex": "#ffffff",
+    "position": "路口古铜色立柱导视牌（commons 照片）",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ifc_commons_1.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:20230925_Xi'an_Financial_Center.jpg",
+    "desc": "底部古铜色导视立柱"
+   }
+  ],
+  "sources": [
+   "http://m.sych100.com/nd.jsp?id=732",
+   "https://www.nbd.com.cn/articles/2025-05-14/3875127.html",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html"
+  ],
+  "confidence": "medium",
+  "notes": "总建面 8.4 万㎡；2019 年底开业；原绿地·正大缤纷城建成多年未开业（网易 2020）；2025-05 被拍卖（每经）。 世界坐标≈(-5964, 7188)。"
+ },
+ {
+  "name": "西安绿地笔克国际会展中心",
+  "aliases": [
+   "笔克会展中心"
+  ],
+  "category": "culture",
+  "lon": 108.881897,
+  "lat": 34.193856,
+  "coord_source": "overture_osm_footprint(w1370699649) 质心",
+  "overture_id": "5f82b1d2-ba8d-4655-b243-824fda2f3051",
+  "footprint_size_m": [
+   324.2,
+   93.4
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "长条展厅",
+    "shape": "rect",
+    "size_m": [
+     324.2,
+     93.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -3.1,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sohu.com/a/918262143_348945",
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html"
+  ],
+  "confidence": "low",
+  "notes": "地址唐延南路 4 号。计划拆除改建“高新·绿地之樽”（380 m+180 m×2+80 m）；搜狐 2025 称改造“可能加速推进”，截至 2025 仍在；2026 状态未查到。 世界坐标≈(-5561, 7473)。"
+ },
+ {
+  "name": "都市之门（西安高新区管委会）",
+  "aliases": [
+   "绿地·都市之门",
+   "都市之门写字楼A–D座",
+   "Xi'an Hi-Tech Zone Governors' Office Building"
+  ],
+  "category": "government",
+  "lon": 108.883634,
+  "lat": 34.19774,
+  "coord_source": "overture_osm_footprint：A 座 w1370699186（给出者），B w1370699187、C w1370699031、D w1370699032；lon/lat 取四座质心平均",
+  "overture_id": "656a894d-d7cd-45b3-a250-e9f86be983a9",
+  "footprint_size_m": [
+   105.8,
+   49.6
+  ],
+  "height_m": 64.2,
+  "floors": 20,
+  "height_source": "层数 20 为 OSM 标签；64.2 m 为本地 skyline.json 值（由层数推得，非公开资料）",
+  "year": null,
+  "massing": [
+   {
+    "part": "A 座（东南）",
+    "shape": "rect",
+    "size_m": [
+     105.8,
+     49.6
+    ],
+    "offset_m": [
+     80.6,
+     -66.1
+    ],
+    "rotation_deg": -28.0,
+    "base_m": 0,
+    "top_m": 64.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "四座布局以组团中心计 offset；Overture 656a894d-d7cd-45b3-a250-e9f86be983a9"
+   },
+   {
+    "part": "B 座（西南）",
+    "shape": "rect",
+    "size_m": [
+     109.4,
+     48.6
+    ],
+    "offset_m": [
+     -80.4,
+     -67.4
+    ],
+    "rotation_deg": 29.1,
+    "base_m": 0,
+    "top_m": 64.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture db1a54c8-f48d-4dbb-a870-064151450200"
+   },
+   {
+    "part": "C 座（西北）",
+    "shape": "rect",
+    "size_m": [
+     107.5,
+     48.0
+    ],
+    "offset_m": [
+     -80.4,
+     67.6
+    ],
+    "rotation_deg": -25.5,
+    "base_m": 0,
+    "top_m": 64.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 7e80bfe8-4aa1-4a40-8e3e-c9d3b5526225"
+   },
+   {
+    "part": "D 座（东北）",
+    "shape": "rect",
+    "size_m": [
+     105.2,
+     51.2
+    ],
+    "offset_m": [
+     80.2,
+     65.9
+    ],
+    "rotation_deg": 29.1,
+    "base_m": 0,
+    "top_m": 64.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture bc7c1566-8847-406e-b1eb-930eb02b686a"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平顶，端部浅色石材墙体略高出（照片）"
+  },
+  "facade": {
+   "primary": "浅米色石材实墙端头+大面积浅蓝灰玻璃幕墙；端墙为弧面",
+   "glass_color_hex": "#96a2a1",
+   "frame_color_hex": null,
+   "wall_color_hex": "#a39f92",
+   "pattern": "玻璃面竖向分格；石材端头为实墙",
+   "floor_height_m": null,
+   "notes": "commons 2023-11 照片采样"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "西安高新（红色标+黑字）",
+    "color_hex": "#c8161d",
+    "position": "一座塔楼顶部石材端墙（commons 照片）",
+    "approx_height_m": null
+   },
+   {
+    "text": "A/B/C/D 字母",
+    "color_hex": "#c9a24a",
+    "position": "各座楼顶端墙",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_21.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Xi'an_Hi-Tech_Zone_Governors'_Office_Building,_Nov_14_2023.jpg",
+    "desc": "管委会所在楼群"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_12.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:雁塔_锦业路唐延南路十字.jpg",
+    "desc": "锦业路唐延南路口，“B”字端墙"
+   }
+  ],
+  "sources": [
+   "https://www.163.com/dy/article/FT487TD20515DC4C.html",
+   "https://commons.wikimedia.org/wiki/File:Xi'an_Hi-Tech_Zone_Governors'_Office_Building,_Nov_14_2023.jpg",
+   "https://m.focus.cn/baoji/zixun/c36ab875c0856525.html"
+  ],
+  "confidence": "medium",
+  "notes": "2009 年高新区管委会从科技路创业广场迁至锦业路与唐延路交汇处的都市之门（网易 2020）；秦商楼书区位图亦标“高新管委会”在都市之门。坐标给 A 座质心。 世界坐标≈(-5401, 7041)。 四座的 rotation_deg 取自 Overture 最小外接矩形，呈约 ±28° 对称斜置，可能是弧形端墙导致的外接矩形偏转，需影像核对。"
+ },
+ {
+  "name": "陕西国际体育之窗 1号楼",
+  "aliases": [
+   "体育之窗",
+   "金旅城·体育之窗",
+   "Window of Shaanxi International Sports",
+   "全运会赛事指挥和广播电视中心"
+  ],
+  "category": "tower",
+  "lon": 108.88607,
+  "lat": 34.20499,
+  "coord_source": "CTBUH 坐标；项目整体轮廓 Overture w985094940（171×161 m）；地址唐延路与科技八路十字东南角",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 262,
+  "floors": 54,
+  "height_source": "陕旅集团/bang.cn：1 号楼 262 m，唐延路第一高楼；CTBUH 262 m/54 层",
+  "year": 2023,
+  "massing": [
+   {
+    "part": "1 号楼塔身",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 262,
+    "setbacks": [],
+    "taper": null,
+    "notes": "平面尺寸未查到"
+   },
+   {
+    "part": "2 号楼",
+    "shape": "rect",
+    "size_m": [
+     59.0,
+     31.8
+    ],
+    "offset_m": [
+     78.8,
+     31.8
+    ],
+    "rotation_deg": 0.0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture w985373774 标“2号楼”，高度未查到（landmarks2026 的 188 m 无出处）；Overture dba3f8ee-e71d-43c8-a432-57ae248d9fa7"
+   },
+   {
+    "part": "3 号楼",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "高度未查到"
+   },
+   {
+    "part": "四层围合式裙房",
+    "shape": "custom",
+    "size_m": [
+     171.1,
+     161.0
+    ],
+    "offset_m": [
+     45.0,
+     -21.2
+    ],
+    "rotation_deg": -0.1,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture w985094940 整体轮廓；Overture 2eecb7da-0cb1-4c7e-8c32-a88bf9c7a49a"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": "未查到"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "2023-05 幕墙完工（高楼迷）；未取得可用照片"
+  },
+  "podium": {
+   "floors": 4,
+   "height_m": null,
+   "shape": "围合式",
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.bang.cn/top10/8874.html",
+   "https://df.youth.cn/dfzl/202203/t20220325_13558410.htm",
+   "https://www.skyscrapercenter.com/building/window-of-shaanxi-international-sports/41652",
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3315346",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "confidence": "medium",
+  "notes": "占地 65 亩，总建面约 37.15 万㎡，三栋塔楼+四层围合式裙房+三层地下室；五星级酒店、超甲写字楼、精品公寓与商业。2022-03-18 三栋主体全部封顶，2023-05 幕墙完工。 世界坐标≈(-5177, 6234)。 位置：CTBUH 点在模型 ty1（−5134,6212）西北约 49 m；Overture“2号楼”轮廓在 (−5098,6202)，与模型 ty1 更近。三塔各自的精确位置需影像核对。"
+ },
+ {
+  "name": "DT51（陕西国际体育之窗商业）",
+  "aliases": [
+   "DT51 大师店",
+   "体育之窗裙房商业"
+  ],
+  "category": "mall",
+  "lon": 108.886559,
+  "lat": 34.204799,
+  "coord_source": "overture_osm_footprint(w985094940) 质心（整个体育之窗项目轮廓）",
+  "overture_id": "2eecb7da-0cb1-4c7e-8c32-a88bf9c7a49a",
+  "footprint_size_m": [
+   171.1,
+   161.0
+  ],
+  "height_m": null,
+  "floors": 4,
+  "height_source": "四层围合式裙房（bang.cn 项目介绍）",
+  "year": null,
+  "massing": [
+   {
+    "part": "围合式裙房",
+    "shape": "custom",
+    "size_m": [
+     171.1,
+     161.0
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": null
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.bang.cn/top10/8874.html",
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3315346"
+  ],
+  "confidence": "low",
+  "notes": "商业建面约 7.37 万㎡（bang.cn）。开业时间：2023-05 论坛称“年底开业”，未见正式报道。 世界坐标≈(-5132, 6256)。"
+ },
+ {
+  "name": "延长石油科研中心",
+  "aliases": [
+   "陕西延长石油科研中心",
+   "延长石油总部",
+   "Shaanxi Yanchang Petroleum Headquarters"
+  ],
+  "category": "tower",
+  "lon": 108.887143,
+  "lat": 34.207359,
+  "coord_source": "overture_osm_footprint(w969143238) 质心（轮廓 236×62 m，含裙楼/附楼）",
+  "overture_id": "b230b132-de8f-4c8f-b59a-e5b05d5d0eaf",
+  "footprint_size_m": [
+   236.2,
+   62.1
+  ],
+  "height_m": 217.6,
+  "floors": 46,
+  "height_source": "澎湃号（中建西北院）：主楼地上 46 层，建筑高度 195.45 m，塔冠总高 217.60 m；kbgok 写 217.30 m；CTBUH 217 m/46 层",
+  "year": 2018,
+  "massing": [
+   {
+    "part": "主楼",
+    "shape": "ellipse",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": 195.45,
+    "setbacks": [],
+    "taper": null,
+    "notes": "“标准层平面布置呈椭圆形”（澎湃/中建西北院）；NBBJ 效果图为长圆形塔身直上。Overture 轮廓 236×62 m 含裙楼，主楼净尺寸与位置未查到"
+   },
+   {
+    "part": "东侧瀑布式幕墙+三组立体玻璃中庭",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": 180,
+    "setbacks": [],
+    "taper": null,
+    "notes": "“东侧近 180 米高的瀑布式幕墙与塔楼围合成上中下三组立体玻璃中庭”"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": 22.15,
+   "description": "塔冠总高 217.60 m，比建筑高度 195.45 m 高 22.15 m；“塔楼造型借鉴了山峰厚重挺拔的形态”；NBBJ 效果图顶部为一侧高一侧低的弧形斜冠"
+  },
+  "facade": {
+   "primary": "玻璃幕墙+竖向肋，东侧通高“瀑布幕墙”",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "通高竖向肋，瀑布幕墙“飞流直下”",
+   "floor_height_m": null,
+   "notes": "仅有效果图，不取色"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": "内庭花园+水体",
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/ssc_yc_1.jpg",
+    "url": "https://images.skyscrapercenter.com/building/yanchangpetroleumheadquarters_dwg-render-full1_(c)nbbj.jpg",
+    "desc": "NBBJ 效果图"
+   },
+   {
+    "file": "/home/user/xian3d/research/refs/skyline/yanchang.jpg",
+    "url": null,
+    "desc": "仓库既有参考图（原始出处未记录）：椭圆塔身、白色逐层波浪横带、波浪形顶边、塔顶红色“秦农银行”招牌；与“椭圆平面+山峰顶”描述一致，但是否为本楼未核实"
+   }
+  ],
+  "sources": [
+   "https://www.thepaper.cn/newsDetail_forward_5437062",
+   "https://xian.kbgok.com/news/4507",
+   "https://www.sxjzy.org/h-nd-22023.html",
+   "https://www.skyscrapercenter.com/building/shaanxi-yanchang-petroleum-headquarters/18218"
+  ],
+  "confidence": "medium",
+  "notes": "若仓库参考图 yanchang.jpg 确为本楼，则立面为玻璃+白色铝板逐层波浪横带、顶边呈波浪弧线，楼顶招牌为“秦农银行”（红色），与 sky-data.js 的“延长石油”招牌冲突，需核实。唐延路与科技八路十字东北角；用地 31570㎡，总建面 217640㎡，地下 3 层；钢管混凝土柱钢框架-核心筒+伸臂桁架；鲁班奖 2020–2021。模型 sky-data.js 有“延长石油”招牌，未找到照片证实。 世界坐标≈(-5078, 5971)。 坐标为整体轮廓（236 m 长）质心；模型 sky-data.js 把塔放在轮廓西段 (−5156,5971)，塔在轮廓中的真实位置未核实。"
+ },
+ {
+  "name": "中国人寿陕西省分公司综合楼",
+  "aliases": [],
+  "category": "tower",
+  "lon": 108.885789,
+  "lat": 34.208363,
+  "coord_source": "overture_osm_footprint(w768807502) 质心",
+  "overture_id": "fc1e4e4f-96e0-4948-9a55-ac5b44667053",
+  "footprint_size_m": [
+   102.3,
+   45.1
+  ],
+  "height_m": 100,
+  "floors": 20,
+  "height_source": "仅 OSM 标签 height=100、levels=20（未找到网络报道）",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     102.3,
+     45.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -89.8,
+    "base_m": 0,
+    "top_m": 100,
+    "setbacks": [],
+    "taper": null,
+    "notes": "尺寸见 footprint_size_m"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w768807502（经 data-src/overture/building.parquet）"
+  ],
+  "confidence": "low",
+  "notes": "100 m/20 层意味着平均层高 5 m，存疑。 世界坐标≈(-5203, 5859)。"
+ },
+ {
+  "name": "西安高新万达广场",
+  "aliases": [
+   "万达广场(高新店)",
+   "万达西安ONE 购物中心"
+  ],
+  "category": "mall",
+  "lon": 108.88713,
+  "lat": 34.210043,
+  "coord_source": "overture_osm_footprint(w969143239) 质心",
+  "overture_id": "722384aa-015d-4a85-9cad-1d683de5802f",
+  "footprint_size_m": [
+   280.9,
+   153.8
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "购物中心",
+    "shape": "custom",
+    "size_m": [
+     281,
+     154
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "万达广场",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://m.xa.bendibao.com/wangdian/dian/5893654.shtm",
+   "http://www.winshangdata.com/html/xm/489/93.htm"
+  ],
+  "confidence": "low",
+  "notes": "唐延路 49 号（科技六路与唐延路口），2017-09-29 开业，国内首个 ONE 系列购物中心，15 万㎡（搜索摘要）。同地块超高层“万达西安ONE”另列。 世界坐标≈(-5080, 5672)。"
+ },
+ {
+  "name": "万达西安ONE 超高层（停工/基坑）",
+  "aliases": [
+   "Wanda One",
+   "万达ONE"
+  ],
+  "category": "tower",
+  "lon": 108.88599,
+  "lat": 34.21277,
+  "coord_source": "CTBUH 坐标（唐延路与科技六路）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 360,
+  "floors": 86,
+  "height_source": "CTBUH 360 m/86 层 On Hold（预计 2028）；高楼迷标题 371 m/77F 基坑（2025-02）；搜狐 2022 称 370 m",
+  "year": null,
+  "massing": [
+   {
+    "part": "设计塔身",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 360,
+    "setbacks": [],
+    "taper": null,
+    "notes": "**未出地面**（2025-02 基坑）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/wanda-one/40980",
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=2906371",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "confidence": "medium",
+  "notes": "收录目的：提醒模型不要建。原规划 519 m（CTBUH 已取消条目）。 世界坐标≈(-5185, 5369)。"
+ },
+ {
+  "name": "陕西奥体中心体育馆（唐延路·原陕西省体育馆址）",
+  "aliases": [
+   "陕西奥体中心体育馆"
+  ],
+  "category": "culture",
+  "lon": 108.883012,
+  "lat": 34.20487,
+  "coord_source": "overture_osm_footprint(r19396757) 质心",
+  "overture_id": "b24cc210-cee2-46eb-9246-5e4527b5e6ad",
+  "footprint_size_m": [
+   249.9,
+   129.4
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2021,
+  "massing": [
+   {
+    "part": "比赛馆+训练馆",
+    "shape": "custom",
+    "size_m": [
+     249.9,
+     129.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -10.6,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": "arch",
+   "height_m": null,
+   "description": "银色金属曲面屋顶（沿用 landmarks2026/venues.json 调研，源 sxjzy）"
+  },
+  "facade": {
+   "primary": "黄色砂岩立面+型钢+玻璃幕墙（前次调研，源 sxjzy）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "曲线平台+双层柱廊",
+   "floor_height_m": null,
+   "notes": "本次未取得照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "陕西奥体中心体育馆",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sxjzy.org/h-nd-29961.html",
+   "research/refs/landmarks2026/venues.json"
+  ],
+  "confidence": "low",
+  "notes": "座席 7048（前次调研）。 世界坐标≈(-5459, 6248)。"
+ },
+ {
+  "name": "禾盛京广中心 A座",
+  "aliases": [
+   "中国人寿金融中心（CTBUH 名称，对应哪一座未核实）"
+  ],
+  "category": "tower",
+  "lon": 108.885725,
+  "lat": 34.231823,
+  "coord_source": "overture_osm_footprint(w988359467) 质心",
+  "overture_id": "abb05683-2a73-42b1-b9ec-00a0011062f2",
+  "footprint_size_m": [
+   44.5,
+   36.4
+  ],
+  "height_m": 200,
+  "floors": 41,
+  "height_source": "OSM 200 m/41F；CTBUH“China Life Financial Center”200 m/41 层（唐延路 11 号，2017）",
+  "year": 2017,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     44.5,
+     36.4
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 90,
+    "base_m": 0,
+    "top_m": 200,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未取得照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://m.sohu.com/a/793304355_121484367",
+   "https://www.skyscrapercenter.com/building/china-life-financial-center/43122"
+  ],
+  "confidence": "medium",
+  "notes": "唐延路 11 号；项目由 2 栋 5A 塔楼（单层约 1600㎡）+4 栋甲级楼+约 4 万㎡商业组成（搜狐）。**模型冲突**：sky-data.js hsA(−5209,3249) 与 landmarks2026“禾盛京广中心A座”(−5107,3282, synth) 重复建模且位置不同，后者应删。 世界坐标≈(-5209, 3249)。"
+ },
+ {
+  "name": "禾盛京广中心 B座",
+  "aliases": [
+   "Kwong Wo Mukden Center 1（CTBUH，疑为本项目另一座）"
+  ],
+  "category": "tower",
+  "lon": 108.885809,
+  "lat": 34.231148,
+  "coord_source": "overture_osm_footprint(w988359468) 质心",
+  "overture_id": "658c1eb3-1aed-45fd-978b-4eb6f9e56f0a",
+  "footprint_size_m": [
+   53.2,
+   31.1
+  ],
+  "height_m": 200,
+  "floors": 41,
+  "height_source": "OSM 200 m/41F；CTBUH 另有“Kwong Wo Mukden Center 1”200 m/45 层（唐延路，无坐标）",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     53.2,
+     31.1
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 200,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未取得照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://m.sohu.com/a/793304355_121484367"
+  ],
+  "confidence": "medium",
+  "notes": "同 A 座：landmarks2026 另有 synth 重复条目 (−5177,3282)。 世界坐标≈(-5201, 3324)。"
+ },
+ {
+  "name": "禾盛京广 T11 购物中心",
+  "aliases": [
+   "T11"
+  ],
+  "category": "mall",
+  "lon": 108.886455,
+  "lat": 34.231524,
+  "coord_source": "overture_osm_footprint(w988359466) 质心",
+  "overture_id": "0b974a7e-8018-4108-815b-9ccb119b0e74",
+  "footprint_size_m": [
+   198.0,
+   119.3
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "商业裙楼",
+    "shape": "custom",
+    "size_m": [
+     198,
+     119.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓，与 A/B 座轮廓重叠"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "T11",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://m.sohu.com/a/793304355_121484367"
+  ],
+  "confidence": "low",
+  "notes": "禾盛京广中心约 4 万㎡综合商业（搜狐）。 世界坐标≈(-5142, 3282)。"
+ },
+ {
+  "name": "盛大时代广场（盛大国际广场，拆改中）",
+  "aliases": [
+   "原卜蜂莲花",
+   "盛大国际广场"
+  ],
+  "category": "mall",
+  "lon": 108.88638,
+  "lat": 34.236752,
+  "coord_source": "overture_osm_footprint(w973559148) 质心",
+  "overture_id": "b03fae7b-c4f3-42bd-9a28-73af1f5a8995",
+  "footprint_size_m": [
+   155.9,
+   132.5
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "商场",
+    "shape": "rect",
+    "size_m": [
+     155.9,
+     132.5
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓（可能已拆）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3333316"
+  ],
+  "confidence": "low",
+  "notes": "高楼迷 2025-04“唐延路盛大国际广场（原卜蜂莲花）即将改造”，2025-05-15 更新拆除进度。2026 状态未查到；**模型若仍按商场建，需核实是否已拆**。 世界坐标≈(-5149, 2700)。"
+ },
+ {
+  "name": "高新大都荟（都荟茂）",
+  "aliases": [
+   "大都荟 Glorious Plaza",
+   "都荟茂",
+   "西安大都荟套房假日酒店所在综合体"
+  ],
+  "category": "mall",
+  "lon": 108.889687,
+  "lat": 34.238971,
+  "coord_source": "overture_osm_footprint(w973493159 都荟茂) 质心；1–7 号楼另有轮廓",
+  "overture_id": "42951ec9-6f9f-4e31-b226-b186b5d3c5d1",
+  "footprint_size_m": [
+   155.6,
+   100.7
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "都荟茂商场",
+    "shape": "rect",
+    "size_m": [
+     155.6,
+     100.7
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   },
+   {
+    "part": "大都荟 1–7 号楼",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture w973493162–w973493168，高度未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "都荟茂",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w973493159（经 building.parquet）",
+   "Overture place：大都荟 (Glorious Plaza)、西安大都荟套房假日酒店 Holiday Inn & Suites"
+  ],
+  "confidence": "low",
+  "notes": "只有位置与轮廓，无网络资料。 世界坐标≈(-4844, 2453)。"
+ },
+ {
+  "name": "陕西电信广场（陕西省电信网管大厦）",
+  "aliases": [
+   "Shaanxi Telecom & Network Tower",
+   "电信广场金融商务中心"
+  ],
+  "category": "tower",
+  "lon": 108.898278,
+  "lat": 34.232308,
+  "coord_source": "overture_osm_footprint(w278233167) 质心（轮廓 109×62 m 含裙房，长轴约北偏东 29°）",
+  "overture_id": "ecbaa19e-db93-48f7-9f95-0e7e84336799",
+  "footprint_size_m": [
+   108.7,
+   61.9
+  ],
+  "height_m": 180,
+  "floors": 36,
+  "height_source": "CTBUH 180 m/36 层（2004 完工）；OSM 160 m——冲突未解决",
+  "year": 2004,
+  "massing": [
+   {
+    "part": "塔楼+裙房",
+    "shape": "custom",
+    "size_m": [
+     108.7,
+     61.9
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 61.1,
+    "base_m": 0,
+    "top_m": 180,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓；塔身净尺寸未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未取得可确认照片"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/shaanxi-telecom-network-tower/2338",
+   "https://m.map.360.cn/m/search/detail/pid=0ad37f30256945fd",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "confidence": "low",
+  "notes": "科技路与高新路十字西南角（360 地图）。搜狐 2022 将“陕西省电信网管大厦”列为高新区最早的超高层之一。**高度冲突**：模型 160 m（OSM），CTBUH 180 m。模型招牌“中国电信”未见照片证实。 世界坐标≈(-4054, 3195)。"
+ },
+ {
+  "name": "西港国际大厦（招商银行大厦）",
+  "aliases": [
+   "招商银行大厦",
+   "Westport International Mansion"
+  ],
+  "category": "tower",
+  "lon": 108.90017,
+  "lat": 34.241543,
+  "coord_source": "overture_osm_footprint(w991636994) 质心",
+  "overture_id": "ae28aa6a-3b08-4ebe-b55d-464ed6f5aae8",
+  "footprint_size_m": [
+   44.9,
+   34.6
+  ],
+  "height_m": 218,
+  "floors": 48,
+  "height_source": "豆瓣转华春监理/kbgok/bang.cn：总高 218 m，地上 48 层、地下 2 层；CTBUH 218 m/45 层；OSM 220/46",
+  "year": 2008,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "chamfer",
+    "size_m": [
+     44.9,
+     34.6
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 60.8,
+    "base_m": 0,
+    "top_m": 218,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓 45×35 m（长轴北偏东约 29°，与南二环/高新二路路网平行）；照片：四角为多级内凹切角，塔身微收分，底部 4–5 层石材基座"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "顶部为高出屋面的实墙女儿墙/冠，立面上有红色招商银行标识"
+  },
+  "facade": {
+   "primary": "银灰色铝板/石材竖向框 + 蓝色玻璃窗格（每面中部为玻璃区）",
+   "glass_color_hex": "#445169",
+   "frame_color_hex": "#a1aeb2",
+   "wall_color_hex": "#a1aeb2",
+   "pattern": "中部方格玻璃窗墙，两侧转角为浅色竖向实体条带；约 1/2 高处一道深色设备层带",
+   "floor_height_m": null,
+   "notes": "commons panoramio 照片采样"
+  },
+  "podium": {
+   "floors": 5,
+   "height_m": null,
+   "shape": null,
+   "facade": "石材+竖向长窗",
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "招商银行（红色标）",
+    "color_hex": "#c8161d",
+    "position": "塔冠立面",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_17.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:西港国际，xi'an，china_-_panoramio.jpg",
+    "desc": "仰拍全貌与塔冠红色标识"
+   }
+  ],
+  "sources": [
+   "https://m.douban.com/group/topic/83815939/",
+   "https://xian.kbgok.com/news/4507",
+   "https://www.bang.cn/top10/8874.html",
+   "https://www.skyscrapercenter.com/building/westport-international-mansion/1300"
+  ],
+  "confidence": "high",
+  "notes": "南二环与高新二路交汇口东南角；筒中筒结构，单层约 1600㎡，12 部电梯。 世界坐标≈(-3880, 2167)。"
+ },
+ {
+  "name": "高新国际商务中心",
+  "aliases": [
+   "高新国际",
+   "数码大厦（CTBUH 另列，关系未核实）"
+  ],
+  "category": "tower",
+  "lon": 108.899381,
+  "lat": 34.233675,
+  "coord_source": "overture_osm_footprint(“高新国际”) 质心（54×54 m）",
+  "overture_id": "e9371a88-9cc2-4579-aef9-de594ab8f98a",
+  "footprint_size_m": [
+   54.4,
+   54.2
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "口径冲突，未采用：搜狐租赁文 A 称 155 m/40 层；搜狐租赁文 B 称主楼 220 m/46 层、总建面约 28 万㎡；CTBUH 有 155 m/40F、150 m/36F（Office Tower，2002）、197 m/40F（Digital Building，2003）三条",
+  "year": 2003,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     54.4,
+     54.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -29.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓；同一综合体可能含写字楼+数码大厦两塔，对应关系未核实"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://m.sohu.com/a/970135810_121484367",
+   "https://www.sohu.com/a/999027444_121484367",
+   "https://www.skyscrapercenter.com/building/xi-an-hi-tech-international-business-centre-office-tower/4040",
+   "https://www.skyscrapercenter.com/building/hi-tech-international-business-centre-digital-building/1779",
+   "https://www.sohu.com/a/582274929_216726"
+  ],
+  "confidence": "low",
+  "notes": "高新路与科技路十字西北角，科技路 33 号；写字楼+公寓+商场综合体，约 2003 建成（搜狐 2022）。 世界坐标≈(-3953, 3043)。"
+ },
+ {
+  "name": "世纪金花购物中心（科技路店）",
+  "aliases": [
+   "世纪金花(高新店)"
+  ],
+  "category": "mall",
+  "lon": 108.89881,
+  "lat": 34.234043,
+  "coord_source": "overture_osm_footprint(w969219720) 质心",
+  "overture_id": "7e7bfa2d-4df2-443a-b12a-d912e258d988",
+  "footprint_size_m": [
+   167.1,
+   104.5
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "商场",
+    "shape": "rect",
+    "size_m": [
+     167.1,
+     104.5
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": -26.7,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "世纪金花",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w969219720（经 building.parquet）"
+  ],
+  "confidence": "low",
+  "notes": "无网络资料。 世界坐标≈(-4005, 3002)。"
+ },
+ {
+  "name": "金鹰国际购物中心（高新店）/海星城市广场",
+  "aliases": [
+   "高新世纪金鹰",
+   "海星城市广场",
+   "Golden Eagle"
+  ],
+  "category": "mall",
+  "lon": 108.897156,
+  "lat": 34.234813,
+  "coord_source": "overture_osm_footprint(w973574008) 质心",
+  "overture_id": "a1e223ab-9e44-4689-a641-c339174058ec",
+  "footprint_size_m": [
+   135.7,
+   79.9
+  ],
+  "height_m": null,
+  "floors": 4,
+  "height_source": "购物中心为海星城市广场裙楼 1–4 层（搜索摘要，源自赢商/本地宝）；塔楼高度未查到",
+  "year": 2006,
+  "massing": [
+   {
+    "part": "裙楼商场",
+    "shape": "rect",
+    "size_m": [
+     136,
+     80
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "裙楼转角为圆柱形体，上有“GOLDEN EAGLE 金鹰”金色标识；塔楼为米色石材+蓝色玻璃竖带（2010 年前后 panoramio 照片）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "照片中塔楼与金鹰的对应关系为推断"
+  },
+  "podium": {
+   "floors": 4,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "GOLDEN EAGLE 金鹰",
+    "color_hex": "#c9a24a",
+    "position": "裙楼圆柱转角顶部",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_29.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Ke_Ji_Road,xi'an,CHINA_-_panoramio.jpg",
+    "desc": "科技路街景，左下圆柱体为金鹰"
+   }
+  ],
+  "sources": [
+   "http://m.winshang.com/xm27691.html",
+   "http://m.wn.bendibao.com/gouwu/60.shtm"
+  ],
+  "confidence": "low",
+  "notes": "科技路 37 号；2006-12-28 开业；约 3 万㎡。 世界坐标≈(-4157, 2916)。"
+ },
+ {
+  "name": "西安香格里拉大酒店",
+  "aliases": [
+   "Shangri-La Xi'an"
+  ],
+  "category": "hotel",
+  "lon": 108.892728,
+  "lat": 34.234909,
+  "coord_source": "overture_osm_footprint(w28594595) 质心",
+  "overture_id": "e4efbe4b-7fbf-4883-a0cc-d395cde8e347",
+  "footprint_size_m": [
+   124.3,
+   113.2
+  ],
+  "height_m": null,
+  "floors": 20,
+  "height_source": "阪急交通社酒店资料（搜索摘要）：20 层、393 间客房、2007 年开业；高度未查到",
+  "year": 2007,
+  "massing": [
+   {
+    "part": "酒店",
+    "shape": "custom",
+    "size_m": [
+     124,
+     113
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓（含裙房）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.hankyu-travel.com/kaigai/hotel/detail/htl1617.php",
+   "https://www.shangri-la.com/cn/xian/shangrila/about/"
+  ],
+  "confidence": "low",
+  "notes": "科技路 38 号乙。 世界坐标≈(-4565, 2905)。"
+ },
+ {
+  "name": "中大国际商业中心（高新）",
+  "aliases": [
+   "中大国际 THE CITY"
+  ],
+  "category": "mall",
+  "lon": 108.892899,
+  "lat": 34.223743,
+  "coord_source": "overture_osm_footprint(w929222955) 质心",
+  "overture_id": "92f0f927-0b73-4a56-b609-dbc932f6136e",
+  "footprint_size_m": [
+   238.7,
+   49.7
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "商业",
+    "shape": "rect",
+    "size_m": [
+     239,
+     50
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "中大国际",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "http://www.zdzfxkg.com/?page_id=4279",
+   "https://cn.chinadaily.com.cn/a/202010/29/WS5f9a72cba3101e7ce972c1ae.html"
+  ],
+  "confidence": "low",
+  "notes": "高新路 72 号；与丽思卡尔顿组成“中大国际 THE CITY”。 世界坐标≈(-4549, 4148)。"
+ },
+ {
+  "name": "西安丽思卡尔顿酒店",
+  "aliases": [
+   "The Ritz-Carlton, Xi'an"
+  ],
+  "category": "hotel",
+  "lon": 108.893188,
+  "lat": 34.225172,
+  "coord_source": "overture_osm_footprint(w929222953) 质心",
+  "overture_id": "d4301028-afd3-421f-be28-831ae31e4628",
+  "footprint_size_m": [
+   153.9,
+   59.3
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "层数/高度未查到；客房从 18 层起（体验文章），总层数≥18",
+  "year": 2019,
+  "massing": [
+   {
+    "part": "酒店主楼",
+    "shape": "custom",
+    "size_m": [
+     154,
+     59
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓；体验文章称“酒店主楼左边凸出的一截辨识度很高”"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.uscreditcardguide.com/the-ritz-carlton-xian-review/",
+   "https://cn.chinadaily.com.cn/a/202010/29/WS5f9a72cba3101e7ce972c1ae.html"
+  ],
+  "confidence": "low",
+  "notes": "2019 开业，283 间客房；地址科技二路 50 号（中国日报）。 世界坐标≈(-4522, 3989)。"
+ },
+ {
+  "name": "西安高新希尔顿酒店",
+  "aliases": [
+   "Hilton Xi'an High-tech Zone"
+  ],
+  "category": "hotel",
+  "lon": 108.882725,
+  "lat": 34.222577,
+  "coord_source": "overture_osm_footprint(w1417902909) 质心",
+  "overture_id": "72eea9e9-006e-43be-8dc3-ba5695a8c89d",
+  "footprint_size_m": [
+   76.5,
+   53.3
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "酒店",
+    "shape": "rect",
+    "size_m": [
+     76,
+     53
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1417902909（经 building.parquet）"
+  ],
+  "confidence": "low",
+  "notes": "仅有轮廓；landmarks2026 写 90 m 无出处。 世界坐标≈(-5485, 4278)。"
+ },
+ {
+  "name": "西安中晶华邑酒店",
+  "aliases": [
+   "Hualuxe Xi'an"
+  ],
+  "category": "hotel",
+  "lon": 108.878823,
+  "lat": 34.232503,
+  "coord_source": "overture_osm_footprint(w1415051685) 质心",
+  "overture_id": "9f9198d4-b143-46fc-a65b-865b07a0ce86",
+  "footprint_size_m": [
+   137.1,
+   56.7
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "酒店",
+    "shape": "rect",
+    "size_m": [
+     137,
+     57
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "Overture place: Xi'an Hualuxi Hotel 西安中晶华邑酒店"
+  ],
+  "confidence": "low",
+  "notes": "旁为中晶科技广场 A/B 座（OSM 23 层）。 世界坐标≈(-5844, 3173)。"
+ },
+ {
+  "name": "立丰城 LE CITY",
+  "aliases": [
+   "立丰城LECITY",
+   "立丰城市生活广场"
+  ],
+  "category": "mall",
+  "lon": 108.899093,
+  "lat": 34.198522,
+  "coord_source": "overture_osm_footprint(w1370699089) 质心",
+  "overture_id": "eafbdaae-a9de-41dd-8620-5f983803afd1",
+  "footprint_size_m": [
+   204.4,
+   107.2
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "商场高度未查到；配套塔楼：140 m 超高层 LOFT + 100 m 写字楼（开业宣传鸟瞰图标注）",
+  "year": 2020,
+  "massing": [
+   {
+    "part": "购物中心",
+    "shape": "rect",
+    "size_m": [
+     204.4,
+     107.2
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 90,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture；B1–7 层分主题（搜狐 2020）"
+   },
+   {
+    "part": "LOFT 塔楼",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 140,
+    "setbacks": [],
+    "taper": null,
+    "notes": "宣传图标注“140 米超高层 LOFT”，位置未量测"
+   },
+   {
+    "part": "写字楼",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 100,
+    "setbacks": [],
+    "taper": null,
+    "notes": "宣传图标注“100 米写字楼”"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "裙楼为米灰色石材/金属板+玻璃盒体，立面嵌大型 LED 屏；塔楼为蓝色玻璃幕墙（开业照片）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "rect",
+   "facade": null,
+   "entrance": "双下沉广场；B1 层高 6 m 设“交通岛”供大巴/出租驶入；地铁 7、8 号线接驳 B2（规划）"
+  },
+  "signage": [
+   {
+    "text": "立丰城 LE CITY",
+    "color_hex": null,
+    "position": "裙楼立面",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/lfc_1.jpg",
+    "url": "https://www.sohu.com/a/433242466_210938",
+    "desc": "开业外观"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/lfc_3.jpg",
+    "url": "https://www.sohu.com/a/433242466_210938",
+    "desc": "外观（裙楼 LED 屏）"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/lfc_8.jpg",
+    "url": "https://www.sohu.com/a/433242466_210938",
+    "desc": "宣传鸟瞰图（标注塔楼高度）"
+   }
+  ],
+  "sources": [
+   "https://www.sohu.com/a/433242466_210938",
+   "https://www.sohu.com/a/433405130_340068"
+  ],
+  "confidence": "medium",
+  "notes": "丈八东路与子午大道交汇处；2020-11-20 开业；30 万㎡全业态。 世界坐标≈(-3979, 6954)。"
+ },
+ {
+  "name": "兵器工业五二一医院（门诊楼）",
+  "aliases": [
+   "521医院"
+  ],
+  "category": "hospital",
+  "lon": 108.918785,
+  "lat": 34.199204,
+  "coord_source": "overture_osm_footprint(w1370698897) 质心",
+  "overture_id": "1b2a73dd-d6af-42c6-918b-8b2a361b9854",
+  "footprint_size_m": [
+   83.5,
+   57.3
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "门诊楼",
+    "shape": "rect",
+    "size_m": [
+     83.5,
+     57.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture；另有科研实验楼 w1370699038"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1370698897（经 building.parquet）"
+  ],
+  "confidence": "low",
+  "notes": "电子城片区；无网络资料。 世界坐标≈(-2167, 6878)。"
+ },
+ {
+  "name": "西安高新医院",
+  "aliases": [],
+  "category": "hospital",
+  "lon": 108.875183,
+  "lat": 34.231556,
+  "coord_source": "overture_osm_footprint(住院部 w1415051763) 质心；医疗综合楼 w1415051756",
+  "overture_id": "65a31c2b-fd66-42e3-bfdd-5c3ae71fc782",
+  "footprint_size_m": [
+   134.0,
+   111.5
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "住院部",
+    "shape": "custom",
+    "size_m": [
+     134.0,
+     111.5
+    ],
+    "offset_m": [
+     0.0,
+     -0.0
+    ],
+    "rotation_deg": -89.7,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture；Overture 65a31c2b-fd66-42e3-bfdd-5c3ae71fc782"
+   },
+   {
+    "part": "医疗综合楼",
+    "shape": "rect",
+    "size_m": [
+     75.6,
+     71.4
+    ],
+    "offset_m": [
+     -156.1,
+     -5.0
+    ],
+    "rotation_deg": -0.2,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture；offset 由两质心换算；Overture de9878f4-feb2-45a7-ae5c-b61dbc15111a"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1415051763 / w1415051756（经 building.parquet）"
+  ],
+  "confidence": "low",
+  "notes": "无网络资料。 世界坐标≈(-6179, 3278)。"
+ },
+ {
+  "name": "陕西省图书馆高新馆（新馆）",
+  "aliases": [
+   "陕西省图书馆新馆",
+   "Shaanxi Library New Building"
+  ],
+  "category": "culture",
+  "lon": 108.829437,
+  "lat": 34.21463,
+  "coord_source": "overture_osm_footprint(r17832823) 质心",
+  "overture_id": "56529b11-5727-4779-8a38-2f9623753323",
+  "footprint_size_m": [
+   237.2,
+   109.0
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2022,
+  "massing": [
+   {
+    "part": "馆体（高台+大屋顶）",
+    "shape": "rect",
+    "size_m": [
+     237.2,
+     109.0
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓。照片：宽阔石阶抬起的高台上，中央为深凹入口开间，两侧米黄石材实体，再外侧为竖向石柱廊翼楼"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "极缓坡的唐风四坡（庑殿式）大屋顶，深灰金属直立锁边屋面，出檐深远，檐下为红褐色枋/斗栱意象的横带（commons 照片）"
+  },
+  "facade": {
+   "primary": "米黄色石材实墙 + 中央红褐色竖向格栅（木色）玻璃幕墙",
+   "glass_color_hex": null,
+   "frame_color_hex": "#8a4a30",
+   "wall_color_hex": "#d8c8a8",
+   "pattern": "中央入口 5 开间红褐色密竖格栅，正中方形金色徽标；两翼竖向细石柱廊",
+   "floor_height_m": null,
+   "notes": "颜色为照片目测（非采样）"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "高台",
+   "facade": "石材台基+大台阶",
+   "entrance": "南立面中央大台阶（照片朝向推断）；台前卧石刻“陕西省图书馆”"
+  },
+  "signage": [
+   {
+    "text": "陕西省图书馆（卧石刻字）",
+    "color_hex": null,
+    "position": "入口广场卧石",
+    "approx_height_m": 1.5
+   },
+   {
+    "text": "方形金色徽标",
+    "color_hex": "#c9a24a",
+    "position": "入口格栅正中",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/cm_26.jpg",
+    "url": "https://commons.wikimedia.org/wiki/File:Shaanxi_Library_New_Building.jpg",
+    "desc": "正立面全景"
+   }
+  ],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3301581",
+   "https://commons.wikimedia.org/wiki/File:Shaanxi_Library_New_Building.jpg",
+   "research/refs/landmarks2026/venues.json"
+  ],
+  "confidence": "medium",
+  "notes": "位于软件新城；2022-04-24 建成，阅览区开放；总建面 81890㎡，馆藏容量 800 万册，4000 座（高楼迷转发报道）。commons 文件名为“Shaanxi Library New Building”，与高新馆对应为推断（省图另有长安北路老馆，风格不同）。 世界坐标≈(-10388, 5162)。"
+ },
+ {
+  "name": "西安高新国际会议中心",
+  "aliases": [],
+  "category": "culture",
+  "lon": 108.829591,
+  "lat": 34.217198,
+  "coord_source": "overture_osm_footprint(w996109766) 质心",
+  "overture_id": "0c722ea0-9caf-47f9-9da2-38939857ca75",
+  "footprint_size_m": [
+   121.7,
+   114.3
+  ],
+  "height_m": 23.79,
+  "floors": null,
+  "height_source": "前次调研（venues.json，源 sxjzy h-nd-20609）：23.79 m",
+  "year": 2019,
+  "massing": [
+   {
+    "part": "会议中心",
+    "shape": "rect",
+    "size_m": [
+     121.7,
+     114.3
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 23.79,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture；前次调研记“长 114.8×宽 92.3 m”，与 Overture 不一致"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "前次调研：方正体量覆盖南北向上升的悬挑大屋面"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "西安高新国际会议中心",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sxjzy.org/h-nd-20609.html",
+   "http://www.xasoftpark.com/info/1131/7997.htm"
+  ],
+  "confidence": "low",
+  "notes": "软件新城天谷八路；主会厅 3600 人。 世界坐标≈(-10373, 4876)。"
+ },
+ {
+  "name": "高新国际会议中心二期 T1（在建，未核实）",
+  "aliases": [
+   "High Tech International Conference Centre Tower 1"
+  ],
+  "category": "tower",
+  "lon": 108.83165,
+  "lat": 34.21632,
+  "coord_source": "CTBUH 坐标（未核实）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 288,
+  "floors": 60,
+  "height_source": "CTBUH：T1 288 m/60 层、T2 199 m/46 层，Under Construction，预计 2026；未找到中文报道核实",
+  "year": null,
+  "massing": [
+   {
+    "part": "T1 设计",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 288,
+    "setbacks": [],
+    "taper": null,
+    "notes": "现状未知"
+   },
+   {
+    "part": "T2 设计",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     -166.5,
+     74.5
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 199,
+    "setbacks": [],
+    "taper": null,
+    "notes": "CTBUH T2 坐标（108.82984,34.21699）落在现有会议中心上，可疑"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/high-tech-international-conference-centre-tower-1/44351",
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3146768"
+  ],
+  "confidence": "low",
+  "notes": "高楼迷：二期含高星级酒店、超高层公寓、商业、办公，总建面约 34.8 万㎡。建设进度未查到，模型暂勿建。 世界坐标≈(-10184, 4974)。"
+ },
+ {
+  "name": "西安大剧院（未来之瞳）",
+  "aliases": [
+   "未来之瞳·瞳系列",
+   "Xi'an Grand Theatre"
+  ],
+  "category": "culture",
+  "lon": 108.8227,
+  "lat": 34.1391,
+  "coord_source": "沿用 venues.json 的 pois.json 坐标（OSM 无轮廓）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2025,
+  "massing": [
+   {
+    "part": "连绵山形体量群",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：多组高低起伏的坡屋面体量（山体意象），临大型圆形湖面（未来之瞳湖）布置；实墙为主，少量方窗"
+   }
+  ],
+  "crown": {
+   "type": "slope",
+   "height_m": null,
+   "description": "起伏坡屋面，如连绵山体（照片/效果图）"
+  },
+  "facade": {
+   "primary": "彩色琉璃砖与灰色石材横向混砌",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#659281",
+   "pattern": "青绿、湖蓝、翠绿、虹彩琉璃砖与灰石条横向错缝，色块随机渐变；底部灰色石材/混凝土基座",
+   "floor_height_m": null,
+   "notes": "琉璃砖色调取自唐代大青绿山水、参以唐三彩配色（新闻）；墙面主色为照片采样中值"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [
+   {
+    "text": "西安大剧院",
+    "color_hex": null,
+    "position": null,
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/djy_00.jpg",
+    "url": "https://news.qq.com/rain/a/20241226A0A2QL00",
+    "desc": "湖面倒影全景"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/djy_02.jpg",
+    "url": "https://news.qq.com/rain/a/20241226A0A2QL00",
+    "desc": "琉璃砖坡墙"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/djy_05.jpg",
+    "url": "https://news.qq.com/rain/a/20241226A0A2QL00",
+    "desc": "圆形湖鸟瞰"
+   },
+   {
+    "file": "/tmp/claude-0/-home-user/cdda9a62-d609-5ebd-a0b7-50a268f8e058/scratchpad/dossier_gaoxin/photos/djy_08.jpg",
+    "url": "https://news.qq.com/rain/a/20241226A0A2QL00",
+    "desc": "琉璃砖细部"
+   }
+  ],
+  "sources": [
+   "https://news.qq.com/rain/a/20241226A0A2QL00",
+   "http://m.cnwest.com/sxxw/a/2024/12/27/22926065.html",
+   "https://www.sxdaily.com.cn/2025-09/28/content_11349742.html"
+  ],
+  "confidence": "medium",
+  "notes": "王澍设计；位于高新区丝路科学城核心区；占地约 140 亩，总建面 19.4 万㎡（地上 6.2 万）；约 1600 座歌剧厅、1200 座音乐厅、1000 座实验剧场、300 座排演厅；2025-09-27 正式向公众开放（陕西日报）。 世界坐标≈(-11007, 13561)。"
+ },
+ {
+  "name": "比亚迪西安研发中心",
+  "aliases": [
+   "BYD Xi'an R&D Center"
+  ],
+  "category": "tower",
+  "lon": 108.84043,
+  "lat": 34.18185,
+  "coord_source": "CTBUH 坐标（亚迪路 2 号）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 200,
+  "floors": 43,
+  "height_source": "CTBUH 200 m/43 层（2025 完工）；新浪 2025 称“近 200 米高的研发办公楼”",
+  "year": 2025,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 200,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 在该点有一无名轮廓 93.6×90 m（fbccc3ea…），可能为裙房，未核实"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.skyscrapercenter.com/building/byd-xian-rd-center/50318",
+   "https://finance.sina.com.cn/roll/2025-04-08/doc-inesmray5051554.shtml"
+  ],
+  "confidence": "low",
+  "notes": "同期配建 10 栋 27 层住宅（CTBUH），总投资约 18 亿元（新浪）。 世界坐标≈(-9376, 8808)。"
+ },
+ {
+  "name": "荣民科创园 1#（超高层公寓）",
+  "aliases": [
+   "Rongmin Science & Technology Park Tower 1"
+  ],
+  "category": "tower",
+  "lon": 108.898794,
+  "lat": 34.241222,
+  "coord_source": "CTBUH 坐标处的 Overture 无名轮廓（51×35 m）；地址高新二路与光泰路十字西北角",
+  "overture_id": "e8d1f379-be7e-4c61-93c8-f0e364fff329",
+  "footprint_size_m": [
+   51.2,
+   34.5
+  ],
+  "height_m": 215.05,
+  "floors": 55,
+  "height_source": "高楼迷标题 215.05 m/55F；CTBUH 215 m/55 层 On Hold（预计 2026）",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     51.2,
+     34.5
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 62.5,
+    "base_m": 0,
+    "top_m": 215.05,
+    "setbacks": [],
+    "taper": null,
+    "notes": "轮廓对应关系未核实"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 3,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3232805",
+   "https://www.skyscrapercenter.com/building/rongmin-science-technology-park-tower-1/43641"
+  ],
+  "confidence": "low",
+  "notes": "2020-12-02 1# 主体结构封顶（高楼迷转中铁二十局消息）；CTBUH 状态 On Hold，完工与否未查到。另有 150 m 办公楼。 世界坐标≈(-4007, 2203)。"
+ },
+ {
+  "name": "环球西安中心（蓝城·环球中心）",
+  "aliases": [
+   "Global Xi'an Centre",
+   "Blue City Global Xi'an Center",
+   "第址 THE ADDRESS"
+  ],
+  "category": "tower",
+  "lon": 108.89408,
+  "lat": 34.23606,
+  "coord_source": "CTBUH 坐标（未核实；地址高新二路 16 号，原金花制药厂址）",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 180.25,
+  "floors": 46,
+  "height_source": "高楼迷标题 180.25 m×2 + 165 m、46F+30F、封顶（2023-07）；CTBUH 185 m/46 层 UC",
+  "year": null,
+  "massing": [
+   {
+    "part": "公寓塔 ×2 + 写字楼",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 180.25,
+    "setbacks": [],
+    "taper": null,
+    "notes": "各塔位置未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": "近 7 万㎡购物中心（高楼迷首帖）",
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=2765977",
+   "https://www.sohu.com/a/481451610_216726",
+   "https://www.skyscrapercenter.com/building/blue-city-global-xian-center-tower-1/43571"
+  ],
+  "confidence": "low",
+  "notes": "原址 118 m 金花制药厂办公楼 2015-11-15 爆破拆除（搜索摘要）。2023 封顶，交付未查到。 世界坐标≈(-4440, 2777)。"
+ },
+ {
+  "name": "秦煤1号·智富中心（在建）",
+  "aliases": [
+   "原高新赛格广场",
+   "Qinmei No.1 Zhifu Center"
+  ],
+  "category": "tower",
+  "lon": 108.87166,
+  "lat": 34.22669,
+  "coord_source": "CTBUH A 塔坐标；地址科技二路与高新六路十字西南角",
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 269.6,
+  "floors": null,
+  "height_source": "高楼迷首帖：A 栋 249.6 m（含塔冠 269.6 m）、B 栋 179.4 m（含冠 199.4 m）、C 栋 98.5 m（含冠 119.5 m）；CTBUH 270/199/120 m UC 2027",
+  "year": null,
+  "massing": [
+   {
+    "part": "A 栋（设计）",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 269.6,
+    "setbacks": [],
+    "taper": null,
+    "notes": "进度：高楼迷 2024-04 标“预备”"
+   },
+   {
+    "part": "B 栋（设计）",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     46.9,
+     -64.5
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 199.4,
+    "setbacks": [],
+    "taper": null,
+    "notes": "offset 由 CTBUH 坐标换算"
+   },
+   {
+    "part": "C 栋（设计）",
+    "shape": null,
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0.9,
+     -114.6
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": 119.5,
+    "setbacks": [],
+    "taper": null,
+    "notes": null
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": 20,
+   "description": "设计塔冠高 20 m（269.6−249.6）"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": 4,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://gaoloumi.cc/forum.php?mod=viewthread&tid=2690178",
+   "https://www.skyscrapercenter.com/building/qinmei-no-1-zhifu-center-tower-a/48888"
+  ],
+  "confidence": "low",
+  "notes": "2026 进度未查到，模型暂勿建。 世界坐标≈(-6503, 3820)。"
+ },
+ {
+  "name": "万科汇智中心",
+  "aliases": [],
+  "category": "tower",
+  "lon": 108.881104,
+  "lat": 34.181989,
+  "coord_source": "overture_osm_footprint(w985151958) 质心",
+  "overture_id": "03b3c487-9f75-4983-9d7a-5f56f4837258",
+  "footprint_size_m": [
+   105.0,
+   37.9
+  ],
+  "height_m": 86.2,
+  "floors": 27,
+  "height_source": "OSM levels=27；86.2 m 为本地 skyline.json 推算值（非公开资料）",
+  "year": null,
+  "massing": [
+   {
+    "part": "塔身",
+    "shape": "rect",
+    "size_m": [
+     105,
+     38
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": null,
+    "base_m": 0,
+    "top_m": 86.2,
+    "setbacks": [],
+    "taper": null,
+    "notes": "Overture 轮廓（可能含裙房）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w985151958（经 building.parquet）",
+   "research/refs/landmarks2026/towers_notes.md"
+  ],
+  "confidence": "low",
+  "notes": "锦业二路/唐延南路一带；无网络资料。 世界坐标≈(-5634, 8793)。"
+ },
+ {
+  "name": "华为西安研究所（园区）",
+  "aliases": [
+   "Huawei Xi'an R&D Centre"
+  ],
+  "category": "tower",
+  "lon": 108.835375,
+  "lat": 34.196385,
+  "coord_source": "overture_osm_footprint(V1 w727385837) 质心；V1–V10 共 8 个轮廓（二期 V8–V10）",
+  "overture_id": "1ccd57c2-ad7a-4ef8-b07a-87e0d9f7de0c",
+  "footprint_size_m": [
+   123.9,
+   91.8
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "V1–V6、V8–V10 办公楼",
+    "shape": "rect",
+    "size_m": [
+     123,
+     90
+    ],
+    "offset_m": [
+     null,
+     null
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "每栋轮廓约 122×90 m（Overture，可能为带内院的围合体），高度未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": null,
+   "facade": null,
+   "entrance": null
+  },
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "Overture place: Huawei Xi'an R&D Centre (华为西安研究所)",
+   "OSM w727385836–w727385845"
+  ],
+  "confidence": "low",
+  "notes": "锦业路西段（丈八六路以西）。仅位置与轮廓。 世界坐标≈(-9841, 7191)。"
+ }
+]
