@@ -5,6 +5,10 @@
   "lon": 108.981296,
   "lat": 34.273158,
   "coord_source": "overture_footprint_centroid(OSM w1266651327)",
+  "world_xz": [
+   3583.9,
+   -1352.2
+  ],
   "overture_id": "25b169f2-1cca-4977-acd4-fa25a166ec97",
   "footprint_size_m": [
    108,
@@ -137,6 +141,10 @@
   "lon": 108.932121,
   "lat": 34.220804,
   "coord_source": "overture_footprint_centroid(OSM r19307911)",
+  "world_xz": [
+   -940.4,
+   4474.9
+  ],
   "overture_id": "3622261a-9377-4070-aac9-f1e1e580ff62",
   "footprint_size_m": [
    149,
@@ -230,6 +238,10 @@
   "lon": 108.946542,
   "lat": 34.272293,
   "coord_source": "overture_footprint_centroid(OSM w1465145182)",
+  "world_xz": [
+   386.4,
+   -1255.9
+  ],
   "overture_id": "ec87f3a4-7825-4449-a2bf-ed485c82faf6",
   "footprint_size_m": [
    108,
@@ -301,6 +313,10 @@
   "lon": 109.060047,
   "lat": 34.285613,
   "coord_source": "overture_footprint_centroid(zenodo 8174931 数据集)",
+  "world_xz": [
+   10829.3,
+   -2739.0
+  ],
   "overture_id": "b9ea5be2-f51a-4f39-9584-4eddca28c8f0",
   "footprint_size_m": [
    65,
@@ -372,6 +388,10 @@
   "lon": 108.926657,
   "lat": 34.241775,
   "coord_source": "overture_footprint_centroid(OSM r17401798)",
+  "world_xz": [
+   -1443.1,
+   2141.2
+  ],
   "overture_id": "b50242bd-99b3-48b0-b75b-48a15a9b3cd2",
   "footprint_size_m": [
    70,
@@ -485,6 +505,10 @@
   "lon": 108.942953,
   "lat": 34.274237,
   "coord_source": "overture_footprint_centroid(OSM w1465144409)",
+  "world_xz": [
+   56.2,
+   -1472.3
+  ],
   "overture_id": "dfec9343-c6f4-42f4-922a-5ce4677defdb",
   "footprint_size_m": [
    53,
@@ -492,7 +516,7 @@
   ],
   "height_m": null,
   "floors": 16,
-  "height_source": "层数为照片计数（约15–16层，低置信）；米制高度未查到",
+  "height_source": "层数为本档照片计数（约15–16层，低置信）；core_south.json 同一照片计为约11层，两者不一致；米制高度未查到",
   "year": null,
   "massing": [
    {
@@ -553,9 +577,15 @@
   "podium": "约5层裙楼，米白墙面+绿色窗框，转角做圆弧",
   "signage": [
    {
-    "text": "西安市中心医院",
+    "text": "西安市中心医院（+红十字）",
     "color_hex": "#d0262b",
-    "position": "主楼顶部/弧形端竖排",
+    "position": "弧形端屋顶",
+    "approx_height_m": null
+   },
+   {
+    "text": "西安交通大学附属西安市中心医院",
+    "color_hex": "#b3261e",
+    "position": "主楼西端墙面竖排",
     "approx_height_m": null
    }
   ],
@@ -585,6 +615,10 @@
   "lon": 108.944008,
   "lat": 34.243632,
   "coord_source": "overture_footprint_centroid(OSM w1291043362)",
+  "world_xz": [
+   153.3,
+   1934.5
+  ],
   "overture_id": "35b93ebf-f53b-4c6a-8843-b2424cb41938",
   "footprint_size_m": [
    89,
@@ -677,6 +711,10 @@
   "lon": 108.922149,
   "lat": 34.263381,
   "coord_source": "overture_footprint_centroid(OSM r17688742)",
+  "world_xz": [
+   -1857.8,
+   -263.7
+  ],
   "overture_id": "4b65f8cb-f82d-4d11-934d-4a6c14dd7dd6",
   "footprint_size_m": [
    187,
@@ -748,6 +786,10 @@
   "lon": 108.928364,
   "lat": 34.221249,
   "coord_source": "overture_footprint_centroid(OSM w1411003695)",
+  "world_xz": [
+   -1286.0,
+   4425.3
+  ],
   "overture_id": "7f505423-5ecc-42e0-8ce8-3915d0477320",
   "footprint_size_m": [
    52,
@@ -818,6 +860,10 @@
   "lon": 108.940127,
   "lat": 34.265234,
   "coord_source": "overture_footprint_centroid(OSM w1263103970)",
+  "world_xz": [
+   -203.8,
+   -470.0
+  ],
   "overture_id": "75fd3a44-43ca-44dd-a32a-b5b326ad6bad",
   "footprint_size_m": [
    143,
@@ -905,6 +951,10 @@
   "lon": 108.936617,
   "lat": 34.261395,
   "coord_source": "overture_footprint_centroid(OSM w1263109032)",
+  "world_xz": [
+   -526.7,
+   -42.6
+  ],
   "overture_id": "b9abe57c-23a6-4633-a5ca-2c73782dd2ce",
   "footprint_size_m": [
    62,
@@ -985,6 +1035,10 @@
   "lon": 108.875183,
   "lat": 34.231556,
   "coord_source": "overture_footprint_centroid(OSM w1415051763)",
+  "world_xz": [
+   -6178.9,
+   3278.4
+  ],
   "overture_id": "65a31c2b-fd66-42e3-bfdd-5c3ae71fc782",
   "footprint_size_m": [
    134,
@@ -1075,6 +1129,10 @@
   "lon": 108.8372,
   "lat": 34.1465,
   "coord_source": "estimated（卫星图目测建筑群中心；Overture 此处无轮廓，buildings.bin 轮廓与影像明显错位）",
+  "world_xz": [
+   -9673.4,
+   12738.7
+  ],
   "overture_id": null,
   "footprint_size_m": null,
   "height_m": null,
@@ -1140,15 +1198,20 @@
   "lon": 108.959203,
   "lat": 34.322819,
   "coord_source": "overture_footprint_centroid(OSM r18911053)",
+  "world_xz": [
+   1551.3,
+   -6882.9
+  ],
   "overture_id": "37c17aee-7f29-4681-9dfc-a7a618dc1ffd",
   "footprint_size_m": [
    146,
    138
   ],
   "height_m": null,
-  "floors": null,
-  "height_source": "未查到",
-  "year": null,
+  "floors": 13,
+  "height_source": "采自 research/refs/dossiers/north.json（其来源：西安市卫健委等 WebSearch 摘要）：东院门诊医技楼5层、西院住院楼13层；本档未独立复核，且未确认13层楼对应哪一轮廓",
+  "year": 2016,
+  "year_note": "2016-12-15 试运营（north.json 引）",
   "massing": [
    {
     "part": "主体医疗综合楼（大体量方形）",
@@ -1191,7 +1254,8 @@
   "photos": [],
   "sources": [
    "OSM r18911053",
-   "public/data/pois.json 西安市第三医院"
+   "public/data/pois.json 西安市第三医院",
+   "research/refs/dossiers/north.json（西安市第三医院条目及其来源 https://xawjw.xa.gov.cn/xxgk/zzjg/zsjg/6124679df8fd1c0bdc4a1a1c.html）"
   ],
   "confidence": "low",
   "local_data": {
@@ -1210,6 +1274,10 @@
   "lon": 108.949535,
   "lat": 34.267053,
   "coord_source": "overture_footprint_centroid(OSM w1465146336)",
+  "world_xz": [
+   661.8,
+   -672.5
+  ],
   "overture_id": "f85d1586-4537-4d6e-8dec-2f682c8ccadf",
   "footprint_size_m": [
    180,
@@ -1297,7 +1365,7 @@
    "osm_levels": null,
    "footprint_area_m2": 4315
   },
-  "notes": "与 landmarks2026/heritage.json 的“新城黄楼（18 m/3层）”冲突：照片显示该轮廓（180×48 m）上的办公楼约10–11层"
+  "notes": "与 landmarks2026/heritage.json 的“新城黄楼（18 m/3层）”冲突：照片显示该轮廓（180×48 m）上的办公楼约10–11层（core_south.json 照片计约12层；其引头条视频称上世纪80年代建成、获鲁班奖，本档未复核）"
  },
  {
   "name": "西安市人民政府（西安市行政中心）",
@@ -1305,6 +1373,10 @@
   "lon": 108.935072,
   "lat": 34.344134,
   "coord_source": "overture_footprint_centroid(OSM r18903162)",
+  "world_xz": [
+   -668.9,
+   -9257.7
+  ],
   "overture_id": "7613d3a2-60de-46ee-b1e4-eaf1384bccf2",
   "footprint_size_m": [
    246,
@@ -1398,6 +1470,10 @@
   "lon": 108.956599,
   "lat": 34.268862,
   "coord_source": "overture_footprint_centroid(OSM w1465145886)",
+  "world_xz": [
+   1311.7,
+   -873.9
+  ],
   "overture_id": "8111cdfa-88c2-4e6c-83c4-b4d21bcbc736",
   "footprint_size_m": [
    59,
@@ -1477,6 +1553,10 @@
   "lon": 108.940067,
   "lat": 34.266933,
   "coord_source": "overture_footprint_centroid(OSM w1263373286)",
+  "world_xz": [
+   -209.3,
+   -659.2
+  ],
   "overture_id": "684918b7-bb25-40a9-86d6-dea1bea82b22",
   "footprint_size_m": [
    79,
@@ -1570,6 +1650,10 @@
   "lon": 108.94364,
   "lat": 34.224067,
   "coord_source": "overture_footprint_centroid(OSM w1419576582)",
+  "world_xz": [
+   119.4,
+   4111.8
+  ],
   "overture_id": "6864c4a1-e8f2-4efa-b7cc-eb96457c233f",
   "footprint_size_m": [
    62,
@@ -1663,6 +1747,10 @@
   "lon": 108.94682,
   "lat": 34.292803,
   "coord_source": "overture_footprint_centroid(OSM w1264995048)",
+  "world_xz": [
+   412.0,
+   -3539.6
+  ],
   "overture_id": "e6742d2b-c2f1-468a-b23b-ec31ab78fb4b",
   "footprint_size_m": [
    40,
@@ -1733,6 +1821,10 @@
   "lon": 108.902321,
   "lat": 34.160573,
   "coord_source": "overture_footprint_centroid(OSM w275396702)",
+  "world_xz": [
+   -3682.1,
+   11174.1
+  ],
   "overture_id": "40a23315-55d0-4ef6-8762-56d5aba5b4b3",
   "footprint_size_m": [
    191,
@@ -1803,6 +1895,10 @@
   "lon": 109.059293,
   "lat": 34.274624,
   "coord_source": "overture_footprint_centroid(OSM w1512651091)",
+  "world_xz": [
+   10759.9,
+   -1515.4
+  ],
   "overture_id": "90716c64-bf10-4d56-9af2-68a4231a11ce",
   "footprint_size_m": [
    49,
@@ -1873,6 +1969,10 @@
   "lon": 108.982413,
   "lat": 34.312707,
   "coord_source": "overture_footprint_centroid(OSM w1409622325)",
+  "world_xz": [
+   3686.7,
+   -5756.4
+  ],
   "overture_id": "72ae5589-7460-4ab3-b44e-75e0d20759df",
   "footprint_size_m": [
    124,
@@ -1943,6 +2043,10 @@
   "lon": 108.86623,
   "lat": 34.20447,
   "coord_source": "satellite（Esri z18 上量取方形主体中心；OSM w1417904093 轮廓连同东北侧建筑一起圈入，质心偏移约60 m）",
+  "world_xz": [
+   -7002.6,
+   6292.1
+  ],
   "overture_id": null,
   "footprint_size_m": [
    142,
@@ -2001,6 +2105,10 @@
   "lon": 108.978969,
   "lat": 34.248701,
   "coord_source": "overture_footprint_centroid(OSM w263624481)",
+  "world_xz": [
+   3369.8,
+   1370.3
+  ],
   "overture_id": "cafc0ed6-69a8-4c86-8017-450068602b61",
   "footprint_size_m": [
    144,
@@ -2103,6 +2211,10 @@
   "lon": 108.910986,
   "lat": 34.24456,
   "coord_source": "overture_footprint_centroid(OSM w1267628278)",
+  "world_xz": [
+   -2884.9,
+   1831.2
+  ],
   "overture_id": "f3470557-2afc-456c-8fc8-0e3bc00d0d54",
   "footprint_size_m": [
    40,
@@ -2230,63 +2342,15 @@
   "notes": "OSM 另有“西北工业大学老图书馆”(w1267629807) 在其西侧"
  },
  {
-  "name": "西北工业大学长安校区图书馆",
-  "category": "university",
-  "lon": 108.7598,
-  "lat": 34.03,
-  "coord_source": "landmarks2026/venues.json（estimated）；本地 Overture 无轮廓",
-  "overture_id": null,
-  "footprint_size_m": null,
-  "height_m": 49.5,
-  "floors": 9,
-  "height_source": "research/refs/landmarks2026/venues.json（前序调研）",
-  "year": 2013,
-  "massing": [
-   {
-    "part": "图书馆主体（湖中）",
-    "shape": "unknown",
-    "size_m": null,
-    "offset_m": null,
-    "rotation_deg": null,
-    "base_m": null,
-    "top_m": 49.5,
-    "floors": 9,
-    "setbacks": null,
-    "taper": null,
-    "notes": "沿用 venues.json 调研值"
-   }
-  ],
-  "crown": {
-   "type": null,
-   "height_m": null,
-   "description": null
-  },
-  "facade": {
-   "primary": null,
-   "glass_color_hex": null,
-   "frame_color_hex": null,
-   "wall_color_hex": null,
-   "pattern": null,
-   "floor_height_m": null,
-   "notes": "未获得本轮照片"
-  },
-  "podium": null,
-  "signage": [],
-  "night": null,
-  "photos": [],
-  "sources": [
-   "research/refs/landmarks2026/venues.json"
-  ],
-  "confidence": "low",
-  "local_data": null,
-  "notes": "位于长安区（MAIN 区南缘），本轮未能核实坐标"
- },
- {
   "name": "西安电子科技大学北校区大礼堂",
   "category": "university",
   "lon": 108.912015,
   "lat": 34.232025,
   "coord_source": "overture_footprint_centroid(OSM w1413302029)",
+  "world_xz": [
+   -2790.2,
+   3226.3
+  ],
   "overture_id": "821a501f-5058-49e2-9229-1994e84a7316",
   "footprint_size_m": [
    81,
@@ -2357,6 +2421,10 @@
   "lon": 108.921214,
   "lat": 34.251838,
   "coord_source": "overture_footprint_centroid(OSM w1283517931)",
+  "world_xz": [
+   -1943.8,
+   1021.2
+  ],
   "overture_id": "f5862b1f-da17-4fa6-8411-faead0662404",
   "footprint_size_m": [
    93,
@@ -2437,6 +2505,10 @@
   "lon": 108.945565,
   "lat": 34.204757,
   "coord_source": "overture_footprint_centroid(OSM w1409939791)",
+  "world_xz": [
+   296.5,
+   6260.2
+  ],
   "overture_id": "d908ba9a-ebf0-421a-ba4d-85f7174a11bb",
   "footprint_size_m": [
    115,
@@ -2508,6 +2580,10 @@
   "lon": 108.899517,
   "lat": 34.372652,
   "coord_source": "overture_footprint_centroid(OSM w1091739070)",
+  "world_xz": [
+   -3940.0,
+   -12436.0
+  ],
   "overture_id": "42e588d3-4ae9-4636-b94d-43a8495c193d",
   "footprint_size_m": [
    105,
@@ -2608,6 +2684,10 @@
   "lon": 108.961749,
   "lat": 34.238245,
   "coord_source": "overture_footprint_centroid(OSM r17610788)",
+  "world_xz": [
+   1785.5,
+   2534.1
+  ],
   "overture_id": "ba729f70-c1e8-4b4c-b968-28f3a7e12c34",
   "footprint_size_m": [
    79,
@@ -2677,6 +2757,10 @@
   "lon": 108.97896,
   "lat": 34.246733,
   "coord_source": "overture_footprint_centroid(OSM w264595812)",
+  "world_xz": [
+   3369.0,
+   1589.4
+  ],
   "overture_id": "9d91e9f6-f9ef-42c3-9071-797bcb3f28f9",
   "footprint_size_m": [
    95,
@@ -2751,6 +2835,10 @@
   "lon": 108.94086,
   "lat": 34.233144,
   "coord_source": "overture_footprint_centroid(OSM r17606810)",
+  "world_xz": [
+   -136.3,
+   3101.7
+  ],
   "overture_id": "928a0ecd-24bb-49c1-8d19-3402c1f74e70",
   "footprint_size_m": [
    130,
@@ -2837,6 +2925,10 @@
   "lon": 108.829437,
   "lat": 34.21463,
   "coord_source": "overture_footprint_centroid(OSM r17832823)",
+  "world_xz": [
+   -10387.6,
+   5161.8
+  ],
   "overture_id": "56529b11-5727-4779-8a38-2f9623753323",
   "footprint_size_m": [
    237,
@@ -2917,6 +3009,10 @@
   "lon": 108.93558,
   "lat": 34.23889,
   "coord_source": "overture_footprint_centroid(OSM w1284311333)",
+  "world_xz": [
+   -622.1,
+   2462.3
+  ],
   "overture_id": "04117c9d-5b33-47c4-8c94-d99202634fd8",
   "footprint_size_m": [
    66,
@@ -3025,6 +3121,10 @@
   "lon": 108.950592,
   "lat": 34.225714,
   "coord_source": "overture_footprint_centroid(OSM w1419576718)",
+  "world_xz": [
+   759.0,
+   3928.5
+  ],
   "overture_id": "47e5bb49-2d76-4c96-978c-d6067148f83d",
   "footprint_size_m": [
    70,
@@ -3159,15 +3259,19 @@
   "lon": 108.951593,
   "lat": 34.265465,
   "coord_source": "overture_footprint_centroid(OSM w1465146493)",
+  "world_xz": [
+   851.1,
+   -495.7
+  ],
   "overture_id": "c28be48e-20ff-4e18-9277-dacda8f39046",
   "footprint_size_m": [
    55,
    25
   ],
   "height_m": null,
-  "floors": null,
-  "height_source": "未查到",
-  "year": null,
+  "floors": 4,
+  "height_source": "采自 core_south.json（其来源：抖音探馆“馆内共四层”，1988 年建成见 360问答）；尖顶塔楼高于4层，未计",
+  "year": 1988,
   "massing": [
    {
     "part": "科技馆主楼",
@@ -3238,6 +3342,10 @@
   "lon": 108.941904,
   "lat": 34.198881,
   "coord_source": "overture_footprint_centroid(OSM w254328024)",
+  "world_xz": [
+   -40.3,
+   6913.8
+  ],
   "overture_id": "719faa0f-78cd-4ff2-82ff-7c5bf29c39d2",
   "footprint_size_m": [
    131,
@@ -3318,6 +3426,10 @@
   "lon": 108.93967,
   "lat": 34.232707,
   "coord_source": "overture_footprint_centroid(OSM w1284311239)",
+  "world_xz": [
+   -245.8,
+   3150.4
+  ],
   "overture_id": "54592e86-74f1-49a0-87c3-8e79dc19e788",
   "footprint_size_m": [
    62,
@@ -3398,6 +3510,10 @@
   "lon": 108.878068,
   "lat": 34.120241,
   "coord_source": "poi（public/data/pois.json）；Overture 此处无轮廓",
+  "world_xz": [
+   -5913.4,
+   15657.5
+  ],
   "overture_id": null,
   "footprint_size_m": null,
   "height_m": 36,
@@ -3453,6 +3569,10 @@
   "lon": 108.958725,
   "lat": 34.212691,
   "coord_source": "overture_footprint_centroid(OSM w1346634173)",
+  "world_xz": [
+   1507.3,
+   5377.5
+  ],
   "overture_id": "24effdfe-28ad-428d-9d61-3073b9ccd340",
   "footprint_size_m": [
    45,
@@ -3534,6 +3654,10 @@
   "lon": 108.943383,
   "lat": 34.264496,
   "coord_source": "overture_footprint_centroid(OSM w1465146725)",
+  "world_xz": [
+   95.8,
+   -387.9
+  ],
   "overture_id": "a1cae4b8-8bc3-4c40-b40c-46307e07afab",
   "footprint_size_m": [
    70,
@@ -3615,6 +3739,10 @@
   "lon": 108.937478,
   "lat": 34.234067,
   "coord_source": "overture_footprint_centroid(OSM r17606811)",
+  "world_xz": [
+   -447.5,
+   2999.0
+  ],
   "overture_id": "14b0cd4a-e305-4bfd-a79a-5be2422a3611",
   "footprint_size_m": [
    294,
@@ -3712,6 +3840,10 @@
   "lon": 109.018009,
   "lat": 34.37803,
   "coord_source": "overture_footprint_centroid(OSM r11269745)",
+  "world_xz": [
+   6961.6,
+   -13035.5
+  ],
   "overture_id": "30041ab9-2dfe-496e-b50c-05a22503ebbc",
   "footprint_size_m": [
    327,
@@ -3786,14 +3918,18 @@
   "lon": 108.939951,
   "lat": 34.34765,
   "coord_source": "overture_footprint_centroid(OSM w1372139804)",
+  "world_xz": [
+   -220.0,
+   -9649.5
+  ],
   "overture_id": "83b7b97c-8e62-41ce-9b70-fc1441ede306",
   "footprint_size_m": [
    106,
    106
   ],
-  "height_m": 34,
+  "height_m": null,
   "floors": null,
-  "height_source": "landmarks2026/venues.json",
+  "height_source": "未查到；landmarks2026/venues.json 记 34 m 但无出处（north.json 同样指出），未采用",
   "year": 1999,
   "massing": [
    {
@@ -3810,11 +3946,11 @@
     "rotation_deg": 90,
     "overture_id": "83b7b97c-8e62-41ce-9b70-fc1441ede306",
     "base_m": 0,
-    "top_m": 34,
+    "top_m": null,
     "floors": null,
     "setbacks": null,
     "taper": null,
-    "notes": "高度沿用 venues.json"
+    "notes": ""
    }
   ],
   "crown": {
@@ -3857,6 +3993,10 @@
   "lon": 108.954305,
   "lat": 34.269205,
   "coord_source": "overture_footprint_centroid(OSM r6848524)",
+  "world_xz": [
+   1100.6,
+   -912.1
+  ],
   "overture_id": "2d12a9ed-ae55-4dec-afbf-652b42f6c36c",
   "footprint_size_m": [
    212,
@@ -3949,14 +4089,18 @@
   "lon": 108.958066,
   "lat": 34.278697,
   "coord_source": "overture_footprint_centroid(OSM w1465142920)",
+  "world_xz": [
+   1446.7,
+   -1968.9
+  ],
   "overture_id": "1cc9aa2f-72ae-4bf0-80e5-095cede2fb19",
   "footprint_size_m": [
    143,
    53
   ],
-  "height_m": null,
+  "height_m": 27.7,
   "floors": 2,
-  "height_source": "OSM levels=2；高度未查到",
+  "height_source": "zh.wikipedia《西安站》：站房檐高18米，顶高27.7米，长142.8米，进深52米",
   "year": 1985,
   "year_note": "南站房1985年启用，2021年起改造（zh.wikipedia）",
   "massing": [
@@ -3974,11 +4118,11 @@
     "rotation_deg": 1,
     "overture_id": "1cc9aa2f-72ae-4bf0-80e5-095cede2fb19",
     "base_m": 0,
-    "top_m": null,
+    "top_m": 18,
     "floors": 2,
     "setbacks": null,
     "taper": null,
-    "notes": "1985 启用；两层"
+    "notes": "1985 启用；两层；檐高18 m（wiki）"
    },
    {
     "part": "中央塔楼（站名）",
@@ -3987,11 +4131,11 @@
     "offset_m": null,
     "rotation_deg": null,
     "base_m": null,
-    "top_m": null,
+    "top_m": 27.7,
     "floors": null,
     "setbacks": null,
     "taper": null,
-    "notes": "顶部立“西安”红字与时钟"
+    "notes": "顶高27.7 m（wiki）；顶部立“西安”红字"
    }
   ],
   "crown": {
@@ -4043,6 +4187,10 @@
   "lon": 108.958039,
   "lat": 34.281114,
   "coord_source": "overture_footprint_centroid(OSM w1046109814)",
+  "world_xz": [
+   1444.2,
+   -2238.0
+  ],
   "overture_id": "a40ded9b-50ec-4979-8efd-7d7aad21c135",
   "footprint_size_m": [
    221,
@@ -4125,6 +4273,10 @@
   "lon": 108.933927,
   "lat": 34.377738,
   "coord_source": "overture_footprint_centroid(OSM w250712078)",
+  "world_xz": [
+   -774.2,
+   -13002.9
+  ],
   "overture_id": "df3634a5-b5f6-46c6-a145-38b0aa793554",
   "footprint_size_m": [
    555,
@@ -4199,6 +4351,10 @@
   "lon": 108.933207,
   "lat": 34.18699,
   "coord_source": "overture_footprint_centroid(OSM w360836368)",
+  "world_xz": [
+   -840.4,
+   8236.5
+  ],
   "overture_id": "5a28856a-89cd-415b-ac3b-241a0fca7a00",
   "footprint_size_m": [
    141,
@@ -4279,6 +4435,10 @@
   "lon": 108.936743,
   "lat": 34.312334,
   "coord_source": "overture_footprint_centroid(OSM w1371869014)",
+  "world_xz": [
+   -515.1,
+   -5714.9
+  ],
   "overture_id": "457d93c1-d12c-4ce4-ab81-b782980fcb27",
   "footprint_size_m": [
    138,
@@ -4349,6 +4509,10 @@
   "lon": 108.971287,
   "lat": 34.279457,
   "coord_source": "overture_footprint_centroid(OSM w1213239207)",
+  "world_xz": [
+   2663.1,
+   -2053.5
+  ],
   "overture_id": "fed6d868-4621-462c-9e3e-97eeb252e89a",
   "footprint_size_m": [
    121,
@@ -4419,6 +4583,10 @@
   "lon": 108.957041,
   "lat": 34.276922,
   "coord_source": "overture_footprint_centroid(OSM w1465143088)",
+  "world_xz": [
+   1352.4,
+   -1771.3
+  ],
   "overture_id": "edcd6ba2-683b-4730-ad8f-f4b0677528bd",
   "footprint_size_m": [
    119,
