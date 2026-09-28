@@ -465,7 +465,7 @@ const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'f
 /**
  * 坡屋顶（hip 塔冠）：中心 (cx,cz)、长 w（沿 rot 方向）、宽 d，檐口高 y0（绝对）。返回屋顶高（檐口到正脊）。
  * o: {h 矢高（默认 0.3·宽）, eave 挑檐（默认 1.5 m）, ridge 正脊长占屋面长的比例（默认四坡等坡 (W−D)/W；取大些近似歇山，
- *     1 = 两坡硬山）, top:[长, 宽] 平顶四坡（盝顶 / 行政楼“大挑檐帽”，给了就不做正脊）, eaveH 檐口厚（默认 0.8）,
+ *     1 = 两坡硬山）, top:[长, 宽] 平顶四坡（盝顶 / 行政楼“大挑檐帽”，给了就不做正脊）, topMat 平顶材质（默认同 mat）, eaveH 檐口厚（默认 0.8）,
  *     mat 屋面（默认 roofTile 深灰瓦）, eaveMat 檐口（默认 dark）, ridgeH 正脊高（默认 0.6，0 不建）}
  */
 function hipRoof(env, cx, cz, w, d, rot, y0, o = {}) {
@@ -475,25 +475,30 @@ function hipRoof(env, cx, cz, w, d, rot, y0, o = {}) {
   const c = Math.cos(rot), s = Math.sin(rot);
   const P = (u, v, y) => [cx + u * c - v * s, y, cz + u * s + v * c];
   const a = P(-W / 2, -Dd / 2, y0), b = P(W / 2, -Dd / 2, y0), cc = P(W / 2, Dd / 2, y0), dd = P(-W / 2, Dd / 2, y0);
-  let pos;
+  let pos, topPos = null;
   if (o.top) {
-    // 平顶四坡（“盝顶”/大挑檐帽）：顶面 top:[长, 宽]，四个梯形坡面 + 平顶
+    // 平顶四坡（“盝顶”/大挑檐帽）：顶面 top:[长, 宽]，四个梯形坡面 + 平顶（平顶可用 topMat 单独给材质，如只有一圈琉璃挑檐的平屋面）
     const tw = Math.min(o.top[0], W) / 2, td = Math.min(o.top[1] ?? o.top[0], Dd) / 2, yt = y0 + rh;
     const ta = P(-tw, -td, yt), tb = P(tw, -td, yt), tc = P(tw, td, yt), tdd = P(-tw, td, yt);
     pos = [...a, ...ta, ...b, ...b, ...ta, ...tb, ...b, ...tb, ...cc, ...cc, ...tb, ...tc, ...cc, ...tc, ...dd, ...dd, ...tc, ...tdd,
-      ...dd, ...tdd, ...a, ...a, ...tdd, ...ta, ...ta, ...tdd, ...tb, ...tb, ...tdd, ...tc];
+      ...dd, ...tdd, ...a, ...a, ...tdd, ...ta];
+    topPos = [...ta, ...tdd, ...tb, ...tb, ...tdd, ...tc];
   } else {
     const r1 = P(-half, 0, y0 + rh), r2 = P(half, 0, y0 + rh);
     pos = [...a, ...r1, ...b, ...b, ...r1, ...r2, ...b, ...r2, ...cc, ...cc, ...r2, ...dd, ...dd, ...r2, ...r1, ...dd, ...r1, ...a];
   }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.computeVertexNormals();
-  // 统一法线朝上（坐标系手性与 rot 无关）
-  const pa = g.attributes.position.array, na = g.attributes.normal.array;
-  for (let i = 0; i < pa.length; i += 9) if (na[i + 1] < 0) for (let k = 0; k < 3; k++) { const t = pa[i + 3 + k]; pa[i + 3 + k] = pa[i + 6 + k]; pa[i + 6 + k] = t; }
-  g.computeVertexNormals();
-  env.solid.add(g, solidMat(env, o.mat || 'roofTile'), null, { worldUV: 1 });
+  const upGeo = (arr) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    g.computeVertexNormals();
+    // 统一法线朝上（坐标系手性与 rot 无关）
+    const pa = g.attributes.position.array, na = g.attributes.normal.array;
+    for (let i = 0; i < pa.length; i += 9) if (na[i + 1] < 0) for (let k = 0; k < 3; k++) { const t = pa[i + 3 + k]; pa[i + 3 + k] = pa[i + 6 + k]; pa[i + 6 + k] = t; }
+    g.computeVertexNormals();
+    return g;
+  };
+  env.solid.add(upGeo(pos), solidMat(env, o.mat || 'roofTile'), null, { worldUV: 1 });
+  if (topPos) env.solid.add(upGeo(topPos), solidMat(env, o.topMat || o.mat || 'roofTile'), null, { worldUV: 1 });
   // 檐口厚度（深色）+ 檐底
   const eh = o.eaveH ?? 0.8;
   const eave = G.rect(cx, cz, W, Dd, rot);
