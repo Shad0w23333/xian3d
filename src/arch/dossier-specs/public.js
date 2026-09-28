@@ -739,8 +739,8 @@ const xdlt = {
   name: '西安电子科技大学大礼堂',
   fp: '821a501f',
   parts: [{
-    name: 'hall', kind: 'podium', fp: '821a501f', base: 0, top: 9, style: { ...STONE_BEIGE, spd: '#cbc3b4', floorH: 4.5, colW: 4.0 },
-    roofMat: { color: '#6a6e72', roughness: 0.85 }, crown: [{ type: 'hip', h: 6, eave: 1.0, ridge: 0.92, mat: TILE_GRAY }],
+    name: 'hall', fp: '821a501f', base: 0, top: 9, style: { ...STONE_BEIGE, spd: '#cbc3b4', floorH: 4.5, colW: 4.0 },
+    crown: [{ type: 'hip', h: 6, eave: 1.0, ridge: 0.92, mat: TILE_GRAY }],
   }],
   supersede: { names: ['西安电子科技大学北校区大礼堂', '西安电子科技大学·北校区（太白南路） 西安电子科技大学-大礼堂'] },
   meta: {
