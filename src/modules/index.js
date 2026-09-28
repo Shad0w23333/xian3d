@@ -4,6 +4,8 @@ export const MODULES = [
   { id: 'water', load: () => import('./water.js') },
   { id: 'landuse', load: () => import('./landuse.js') },
   { id: 'roads', load: () => import('./roads.js') },
+  // 逐栋档案建筑：须在 skyline 等地标模块之前（其 prepare 登记 ctx.superseded，后续模块据此跳过被替代的旧定义）
+  { id: 'dossier', load: () => import('./dossier.js') },
   { id: 'citywall', load: () => import('./citywall.js') },
   { id: 'belltower', load: () => import('./belltower.js') },
   { id: 'pagoda', load: () => import('./pagoda.js') },
