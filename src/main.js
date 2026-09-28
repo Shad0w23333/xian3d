@@ -19,6 +19,7 @@ import { installHeightFog } from './core/fog.js';
 import { setupThematic } from './core/thematic.js';
 import { DisplaySettings } from './core/display.js';
 import { buildDisplayPanel } from './core/display-ui.js';
+import { setupInfoCard } from './core/infocard.js';
 
 installHeightFog();
 
@@ -372,6 +373,9 @@ async function main() {
 
   // —— 专题图层：路名 / 小区 / 建筑分类高亮（见 core/thematic.js） ——
   const thematic = setupThematic({ app, ctx, ui, root, params });
+
+  // —— 左上角“西安时讯”卡片：北京时间/农历节气、实时天气与空气质量、网络广播（见 core/infocard.js） ——
+  app.infoCard = setupInfoCard({ root, ui, sky, display, params });
 
   // —— 一键俯视（通用）：app.topDown(on) 平滑转到当前视点正上方俯视；app.topDown(false) 回到原视角 ——
   //    俯视中心：视线与地面交点（1.5 km 内），否则取相机正下方；保持原航向（屏幕上方 = 原前进方向）
