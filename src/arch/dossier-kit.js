@@ -716,7 +716,8 @@ function buildPart(env, R, P) {
       slope: slope ? { dir: faceDir(slope.dir ?? 'N'), drop: slope.drop } : null,
       roof: {
         mech: part.roof?.mech ?? crowns.every((c) => handled.has(c) || c.type === 'flat'),
-        parapet: par ? par.h : part.roof?.parapet,
+        // 有坡屋顶（hip）时默认不做女儿墙（否则会从挑檐坡面下穿出来）
+        parapet: par ? par.h : part.roof?.parapet ?? (crowns.some((c) => c.type === 'hip') ? 0.05 : undefined),
         helipad: !!heli, helipadY: heli?.lift ?? 2.5,
       },
     };
