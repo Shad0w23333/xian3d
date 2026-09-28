@@ -136,7 +136,7 @@ async function main() {
 
   const data = {};
   const optional = { optional: true };
-  const [roads, water, landuse, aeroway, pois, rail, buildings, bnames, landmarks, skyline] = await Promise.all([
+  const [roads, water, landuse, aeroway, pois, rail, buildings, bnames, landmarks, skyline, amapExtra] = await Promise.all([
     loadJSON('roads.json', optional),
     loadJSON('water.json', optional),
     loadJSON('landuse.json', optional),
@@ -147,8 +147,9 @@ async function main() {
     loadJSON('buildings_names.json', optional),
     loadJSON('landmarks.json', optional),
     loadJSON('skyline.json', optional),
+    loadJSON('amap_extra.json', optional),
   ]);
-  Object.assign(data, { roads, water, landuse, aeroway, pois, rail, buildings, buildingNames: bnames, landmarks, skyline });
+  Object.assign(data, { roads, water, landuse, aeroway, pois, rail, buildings, buildingNames: bnames, landmarks, skyline, amapExtra });
   offProg();
 
   // —— 系统 ——
@@ -312,7 +313,7 @@ async function main() {
     ui.setQualityActive(i);
     ui.toast(`画质：${quality.name}`);
   };
-  const layers = { traffic: true, labels: true, buildings: true };
+  const layers = { traffic: true, labels: true, buildings: true, districts: false };
   const setLayer = (name, v) => {
     layers[name] = v;
     if (name === 'labels') labels.setVisible(v);
@@ -340,6 +341,7 @@ async function main() {
   ui.on('traffic', (v) => setLayer('traffic', v));
   ui.on('labels', (v) => setLayer('labels', v));
   ui.on('buildings', (v) => setLayer('buildings', v));
+  ui.on('districts', (v) => setLayer('districts', v));
   sky.speed = 0.1666667;
 
   window.addEventListener('keydown', (e) => {

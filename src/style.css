@@ -110,6 +110,10 @@ input[type=checkbox] { accent-color: var(--gold); }
 .label-district .label-text { font-size: 15px; background: rgba(90,20,15,.55); border-color: rgba(255,120,90,.5); }
 .label-airport .label-text { background: rgba(10,40,70,.6); border-color: rgba(120,190,255,.5); }
 .label-street .label-text { font-size: 11px; font-weight: 500; background: rgba(0,0,0,.45); border-color: rgba(255,255,255,.2); }
+.label-admin .label-text { font-size: 17px; letter-spacing: 3px; background: rgba(60,40,10,.5); border-color: rgba(255,204,102,.6); }
+.label-town .label-text { font-size: 11px; font-weight: 500; background: rgba(40,30,10,.45); border-color: rgba(255,204,102,.3); }
+.label-biz .label-text { font-size: 12px; background: rgba(8,40,60,.55); border-color: rgba(79,195,247,.55); }
+.label-metro .label-text { font-size: 11px; background: rgba(10,30,70,.6); border-color: rgba(120,170,255,.5); }
 
 @media (max-width: 900px) {
   .info { min-width: 0; font-size: 11px; }

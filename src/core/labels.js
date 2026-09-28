@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 const _p = new THREE.Vector3();
 const CELL = 84;
-const CATEGORY_WEIGHT = { landmark: 5, airport: 4, district: 3, station: 2, street: 1 };
+const CATEGORY_WEIGHT = { landmark: 5, airport: 4, admin: 3.5, district: 3, biz: 2.5, station: 2, metro: 2, town: 1, street: 1 };
 
 export class Labels {
   constructor(container) {
@@ -34,7 +34,7 @@ export class Labels {
       minDist: opts.minDist ?? 60,
       maxDist: opts.maxDist ?? 12000,
       priority: opts.priority ?? 1,
-      labelWidth: Math.min(300, Math.max(56, 18 + Array.from(text).length * (opts.category === 'district' ? 15 : 13))),
+      labelWidth: Math.min(300, Math.max(56, 18 + Array.from(text).length * (opts.category === 'district' ? 15 : opts.category === 'admin' ? 20 : opts.category === 'town' || opts.category === 'metro' ? 11 : 13))),
       labelHeight: opts.sub ? 48 : opts.category === 'district' ? 42 : 38,
       shown: false,
     };
