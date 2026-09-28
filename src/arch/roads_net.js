@@ -367,9 +367,11 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
       const rx = -dz, rz = dx; // 右法线
       const hw = E.W / 2;
       const onBridge = !!E.b;
-      const deckY = onBridge ? roadY(terrain, f, cx, cz, s, total[E.fi]) : 0;
+      // 路面高取纵断面（地面路在引桥路堤段也被抬高）；地面路灯杆立在“路面高与所在点地面”较高者上
+      const deckY = roadY(terrain, f, cx, cz, s, total[E.fi]);
       if (deckY === null) continue;
-      const baseY = (x, z) => (onBridge ? deckY + 0.95 : terrain.heightAt(x, z) + LIFT + 0.15);
+      const gY = (x, z) => Math.max(deckY, terrain.heightAt(x, z) + LIFT);
+      const baseY = (x, z) => (onBridge ? deckY + 0.95 : gY(x, z) + 0.15);
       const off = onBridge ? 0.3 : 0.9;
       const yawR = Math.atan2(-rx, -rz); // 右侧灯：灯臂指向 -右法线（路中）
       const yawL = Math.atan2(rx, rz);
@@ -380,7 +382,7 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
           if (E.pairF > E.fi && E.gap > 0.5 && E.gap < 30) {
             const m = hw + E.gap / 2;
             const x = cx - rx * m, z = cz - rz * m;
-            push(x, onBridge ? deckY + 0.9 : terrain.heightAt(x, z) + LIFT + 0.2, z, yawL, LAMP.DOUBLE);
+            push(x, onBridge ? deckY + 0.9 : gY(x, z) + 0.2, z, yawL, LAMP.DOUBLE);
           } else if (onBridge && E.pairF > E.fi) {
             const x = cx - rx * (hw + off), z = cz - rz * (hw + off);
             push(x, baseY(x, z), z, yawL, LAMP.SINGLE);
@@ -401,14 +403,14 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
         if (E.pairF > E.fi && E.gap > 1.2 && E.gap < 40 && !onBridge) {
           const m = hw + E.gap / 2;
           const x = cx - rx * m, z = cz - rz * m;
-          push(x, terrain.heightAt(x, z) + LIFT + 0.2, z, yawL, sideType === LAMP.PALACE ? LAMP.PALACE : sideType === LAMP.KNOT ? LAMP.KNOT : LAMP.DOUBLE);
+          push(x, gY(x, z) + 0.2, z, yawL, sideType === LAMP.PALACE ? LAMP.PALACE : sideType === LAMP.KNOT ? LAMP.KNOT : LAMP.DOUBLE);
         }
       } else {
         const x = cx - rx * (hw + off), z = cz - rz * (hw + off);
         push(x, baseY(x, z), z, yawL, sideType);
         // 宽的双向路：中间再加一排双臂灯
         if (!E.oneway && E.W >= 24 && !onBridge) {
-          push(cx, terrain.heightAt(cx, cz) + LIFT + 0.2, cz, yawL, LAMP.DOUBLE);
+          push(cx, gY(cx, cz) + 0.2, cz, yawL, LAMP.DOUBLE);
         }
       }
     }
@@ -422,38 +424,6 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
     type: Uint8Array.from(out.type),
     lvl: Uint8Array.from(out.lvl),
   };
-}
-
-/**
- * 给桥梁要素标注两端衔接高度（供核心 roadheight.bridgeLift 将来使用；当前规则不读取，不影响现有行为）。
- * f.h0 / f.h1：起点/终点处应衔接的抬升量（米）；0 表示接地面道路。
- */
-export function annotateBridgeJoints(roads, BRIDGE_UNIT) {
-  const feats = roads?.features || [];
-  const lvl = new Map();
-  for (const f of feats) {
-    if (!f.b || f.t || !f.p || f.p.length < 4) continue;
-    const L = BRIDGE_UNIT * Math.max(1, f.y || 1);
-    for (let i = 0; i < f.p.length; i += 2) {
-      const k = nodeKey(f.p[i], f.p[i + 1]);
-      lvl.set(k, Math.max(lvl.get(k) || 0, L));
-    }
-  }
-  const cnt = new Map();
-  for (const f of feats) {
-    if (!f.b || f.t || !f.p || f.p.length < 4) continue;
-    for (let i = 0; i < f.p.length; i += 2) {
-      const k = nodeKey(f.p[i], f.p[i + 1]);
-      cnt.set(k, (cnt.get(k) || 0) + (i === 0 || i === f.p.length - 2 ? 1 : 2));
-    }
-  }
-  for (const f of feats) {
-    if (!f.b || f.t || !f.p || f.p.length < 4) continue;
-    const n = f.p.length;
-    const k0 = nodeKey(f.p[0], f.p[1]), k1 = nodeKey(f.p[n - 2], f.p[n - 1]);
-    f.h0 = (cnt.get(k0) || 0) >= 2 ? lvl.get(k0) || 0 : 0;
-    f.h1 = (cnt.get(k1) || 0) >= 2 ? lvl.get(k1) || 0 : 0;
-  }
 }
 
 // ================= 铁路 =================
