@@ -943,4 +943,5 @@ const chdLib = {
 
 export default [gov, shiwei, tcm, sheraton, yxc, rongmin, lijun, chengbei, tiandi, telecom, zhongdeng, changqing, suligs, igc1, igc2, jinhua, tianlang, weiyangGov,
   wygj, wygjzx, xidigang, darongcheng, ihg, ehb, xuhuiA, xuhuiB, zhixuan, nifc, hanshen, metroBldg, baoyi, gym,
-  thirdHosp, xiyueli, fulton, jkqGwh, beizhan, dahua, tianjie, sanfuwan, court, chdLib];
+  thirdHosp, xiyueli, fulton, jkqGwh, beizhan, dahua, tianjie, sanfuwan, court];
+// 去重：长安大学逸夫图书馆归 public.js（高校类由公共建筑片负责）

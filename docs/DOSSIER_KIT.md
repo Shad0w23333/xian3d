@@ -243,6 +243,22 @@ columns: [
 ```
 - `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。
 - 柱子进 `solid`（投影），`from/to` 为离地米（默认体块 base/top）。
+| `pubHip` | `h`（矢高，默认 0.3×宽）、`eave`（挑檐，默认 1.5）、`ridge`（正脊占长度比例，默认四坡等坡；取大近似歇山，1 = 双坡）、`top:[长,宽]`（平顶四坡 / 盝顶 / 行政楼“大挑檐帽”，给了就不做正脊；`topMat` 单给平顶材质，如“平屋面 + 一圈琉璃挑檐”）、`size:[长,宽]`+`at`/`offset`+`rot`（默认取体块外接矩形，`along:'short'` 换向）、`mat`（默认 `roofTile` 深灰瓦）、`eaveMat`、`eaveH`、`ridgeH` | 坡屋顶：公建仿古大屋顶、屋顶亭阁（两个 `pubHip` 叠放 = 重檐）、礼堂双坡 |
+| `sphere` | `r`、`cy`（球心离地，默认 `r` 即球底落地）、`at`/`offset`、`mat`、`ribs`（经线杆数，`false` 不建）、`ribMat`、`ribW` | 整球：球幕影院、网壳球体 |
+
+叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet / hip` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
+`dome / arch / masts / spire / helipad / sphere` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
+需要挂招牌或有明确层数的顶部体量（如信息大厦的玻璃圆筒）建议写成一个 **part**（`base` = 下层 `top`），而不是塔冠。
+
+材质名：`stone`、`white`、`dark`、`metal`、`parapet`、`glassRoof`、`roof`、`granite`、`membrane`、`roofTile`（深灰瓦，带贴图）、`grass`，或 `'#rrggbb'`，或 `{color, roughness, metalness, glow}`。
+
+**门架 / 校门 / 门楼 / 方尖塔**（2026-09 公建补充）：不需要专门的类型，用 `kind:'solid'` 体块组合——
+立柱 = 若干 `shape:'rect'|'circle'` 的 solid（`base:0`）；额枋 / 横梁 = `base>0` 的 solid（`footprint:false`，不产生排除区）；
+横梁上可以直接挂 `pubHip` 塔冠做门楼屋顶（solid 体块同样构建塔冠）。`kind:'solid'` 支持 `taper`（顶部轮廓缩放，方尖塔 / 锥形墩柱）。
+例：西北大学北门门楼、长安区政府中央门框、交大腾飞塔（`src/arch/dossier-specs/public.js`）。
+
+**meta.category**：公共建筑 spec 在 meta 里写 `category`（hospital / government / university / culture / sports / station），
+用于与片区档案去重（public.json 与片区档案重复的条目：医院/高校/政府归 public.js，商场/酒店/写字楼/剧院/会展及片区商圈内的文博体育场馆归片区文件）。
 
 ---
 

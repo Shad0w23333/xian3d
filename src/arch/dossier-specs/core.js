@@ -1092,7 +1092,7 @@ const qichezhan = {
 
 export default [
   kaiyuan, belltower, youju, baohua, zhonghuan, baisheng, zhongda, xingzhengyuan, qunguang, hongfu, kaiai, jiaohang,
-  huangcheng, aoluo, rmjy, yisu, shengzhengfu, renmindasha, hilton, kejiguan, minsheng, wandaMly, yuehui, zhongyi, zhongxin,
-  hehui, haosheng, zhongmao, fuyou, xinchengqu, qichezhan,
+  huangcheng, aoluo, rmjy, yisu, renmindasha, hilton, kejiguan, minsheng, wandaMly, yuehui, zhongyi, hehui, haosheng, zhongmao, qichezhan,
   // 华侨城·长安国际中心由 south.js 负责（照片 changan_gj_2/3：后排挂“华侨城·长安国际”的塔明显高于前排，south 的前低后高更符合照片）
 ];
+// 去重：省政府、市中心医院、市妇幼、新城区政府归 public.js（医院/政府类由公共建筑片负责）

@@ -989,5 +989,6 @@ const chengnan = {
 };
 
 export default [wHotel, wanzhong, saige, jinsha, yintaiXZ, kaide, yintaiQJ, joycity, jindi, tianjie, mandi, westin, canopy, wyndham,
-  stadium, library, artMuseum, conference, xaTheater, sxTheater, changanIntl, yifuyuan, natMuseum, chengnan];
+  stadium, library, artMuseum, conference, xaTheater, sxTheater, changanIntl, chengnan];
+// 去重：交大一附院、陕西自然博物馆归 public.js（医院/公共设施类由公共建筑片负责）
 // 合生汇、金花豪生由 core.js 负责（两份做法接近，core 的塔高用卫星位移标定），此处不导出以免重复建模
