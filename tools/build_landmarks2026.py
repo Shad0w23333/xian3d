@@ -37,6 +37,26 @@ OUT = ROOT / 'public' / 'data' / 'landmarks2026.json'
 MAX_R = 47000  # 与 skyline 通用高层同样的范围限制
 
 
+# ───────────── 坐标/高度覆盖表（tools/check_coords.py 审计结论；调研清单原值保留不动，在此覆盖） ─────────────
+# 键：调研清单中的 name。字段：lon/lat 新坐标（WGS-84）、rid 强制使用的 Overture/OSM 轮廓（record_id 如 'w123@2' 的 w123）、
+#      h 新高度、skip 跳过（已由手工精建覆盖）、note 依据
+OVERRIDE = {
+    '西安浐灞凯悦酒店（欧亚国际三期商业4号楼）': dict(
+        lon=109.01254, lat=34.33135, skip=True,
+        note='place.parquet 原值 109.0175,34.33 为 GCJ-02（比纠偏值正好东 454 m、南 152 m）；纠偏后落在 sky-data2 SPECIAL2.hyatt'
+             '（6458,−7833）“叠石”精建上，与 chanba/notes.md“欧亚大道×浐河西路西南角”一致；原先按错误坐标在浐河东岸重复生成了一栋'),
+    '招商局丝路中心 北塔': dict(
+        rid='w1381177356', note='港务西路×向东路西北、双寨站旁 OSM 同批轮廓 w1381177355–59（2026-09）：以 x≈8461 为轴左右对称的两组'
+                                '“三体式”建筑，西组主塔 w1381177356（45×33 m）'),
+    '招商局丝路中心 南塔': dict(
+        rid='w1381177357', note='同上，东组主塔 w1381177357（45×38 m）；原推测坐标在港兴二路以南 400 m 的 385 m² 小楼上'
+                                '（那里是华润万象汇地块），“南/北塔”实为东西对称的两塔'),
+    '西安安达仕酒店（迈科）': dict(
+        h=85, note='设计 247.4 m/50F，但 2024-03 起停工（高楼迷 2024-03-06 更新“停工”），现状约 20 层；按 20F×4.2 m 取 85 m 现状高度，'
+                   '不再按设计高度立一栋 247 m 的完工塔楼'),
+}
+
+
 def load_list(name):
     f = REF / f'{name}.json'
     if not f.exists():
@@ -71,6 +91,7 @@ class Footprints:
     def __init__(self):
         import pyarrow.parquet as pq
         self.polys, self.names, self.src = [], [], []
+        self.by_rid = {}
         sk = json.loads((ROOT / 'public/data/skyline.json').read_text('utf-8'))
         for f in sk['features']:
             o = f.get('outer') or []
@@ -82,11 +103,13 @@ class Footprints:
                     self.src.append(('skyline', f.get('h')))
         pf = ROOT / 'data-src/overture/building.parquet'
         if pf.exists():
-            t = pq.read_table(pf, columns=['names', 'height', 'num_floors', 'geometry'])
+            t = pq.read_table(pf, columns=['names', 'height', 'num_floors', 'geometry', 'sources'])
             geoms = shapely.from_wkb(t.column('geometry').to_pylist())
             names = t.column('names').to_pylist()
             hs = t.column('height').to_pylist()
-            for g, n, h in zip(geoms, names, hs):
+            rids = [next((str(q.get('record_id') or '').split('@')[0] for q in (ss or []) if q.get('dataset') == 'OpenStreetMap'), '')
+                    for ss in t.column('sources').to_pylist()]
+            for g, n, h, rid in zip(geoms, names, hs, rids):
                 if g is None or g.geom_type not in ('Polygon', 'MultiPolygon'):
                     continue
                 if g.geom_type == 'MultiPolygon':
@@ -103,6 +126,8 @@ class Footprints:
                 self.polys.append(p)
                 self.names.append((n or {}).get('primary') or '')
                 self.src.append(('overture', h))
+                if rid:
+                    self.by_rid[rid] = len(self.polys) - 1
         self.tree = STRtree(self.polys)
         print(f'轮廓库：{len(self.polys)} 个（skyline + Overture）')
 
@@ -122,6 +147,23 @@ class Footprints:
                 if best is None or d < best[0]:
                     best = (d, i)
         return best[1] if best else None
+
+
+def tower_min_area(h):
+    """高层塔楼标准层的最小占地（m²）：百米以上 500"""
+    return 500 if h >= 100 else 250
+
+
+def tower_fp_ok(p, h):
+    """对位到的轮廓能否当塔楼平面：太小/太细（百米以上宽 < 18 m）或整片综合体（塔楼 + 裙房）都不行。
+    上限：150 m 以上 4500 m²、100 m 以上 6000 m²、其余 8000 m²（超过的多半把裙房/整个街坊画成了一个轮廓，
+    整体拉到塔楼高度就成了一堵“巨墙”）"""
+    r = p.minimum_rotated_rectangle
+    c = list(r.exterior.coords)
+    w = min(math.dist(c[0], c[1]), math.dist(c[1], c[2]))
+    if p.area < tower_min_area(h) or (h >= 100 and w < 18):
+        return False
+    return p.area <= (4500 if h >= 150 else 6000 if h >= 100 else 8000)
 
 
 def poly_out(p, tol=0.6):
@@ -306,6 +348,12 @@ def main():
 
     def pos(it):
         n = it.get('name')
+        ov = OVERRIDE.get(n) or {}
+        if 'lon' in ov:
+            return project(ov['lon'], ov['lat']), 'fix'
+        if ov.get('rid') and ov['rid'] in fp.by_rid:
+            c = fp.polys[fp.by_rid[ov['rid']]].centroid
+            return (c.x, c.y), 'fix'
         if n in places:
             return places[n], 'amap'
         lon, lat = num(it.get('lon')), num(it.get('lat'))
@@ -346,13 +394,14 @@ def main():
     # —— 塔楼 ——
     for it in load_list('towers'):
         name = it.get('name')
-        if not name or it.get('already_modeled') or str(it.get('status', 'open')).startswith('under') and not re.search(r'封顶|topped', str(it.get('status'))):
+        ov = OVERRIDE.get(name) or {}
+        if not name or it.get('already_modeled') or ov.get('skip') or str(it.get('status', 'open')).startswith('under') and not re.search(r'封顶|topped', str(it.get('status'))):
             continue
         xz, cs = pos(it)
         if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
             continue
         x, z = xz
-        h = num(it.get('height_m'))
+        h = num(ov.get('h')) or num(it.get('height_m'))
         fl = num(it.get('floors'))
         if not h:
             h = fl * 3.8 if fl else None
@@ -360,7 +409,13 @@ def main():
             continue
         sz = it.get('footprint_size_m')
         want = (num(sz[0]) or 40) * (num(sz[1]) or 40) if isinstance(sz, list) and len(sz) == 2 else None
-        i, how = match(it, x, z, want, 250, 45)
+        if ov.get('rid') and ov['rid'] in fp.by_rid:
+            i, how = fp.by_rid[ov['rid']], 'fix'
+        else:
+            i, how = match(it, x, z, want, tower_min_area(h), 45)
+            if i is not None and not tower_fp_ok(fp.polys[i], h):
+                report.append(('塔楼轮廓不合理→合成', name, f'{fp.polys[i].area:.0f} m²', cs, h))
+                i, how = None, 'synth'
         key = key_of(name)
         if i is not None:
             pts = poly_out(fp.polys[i])
