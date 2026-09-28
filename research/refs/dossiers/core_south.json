@@ -1291,10 +1291,11 @@
    "https://mbd.baidu.com/newspage/data/dtlandingwise?nid=dt_4007959031900793216&amp;sourceFrom=homepage",
    "https://gaoloumi.cc/forum.php?mod=viewthread&tid=3301142",
    "https://m.fang.com/xiaoqu/xian/3610006277.html",
-   "https://xa.diandianzu.com/listing/detail-i866.html"
+   "https://xa.diandianzu.com/listing/detail-i866.html",
+   "https://xian.esf.fang.com/loupan/office/3610006277/housedetail.htm"
   ],
   "confidence": "low",
-  "notes": "西华门十字西北角（西华门1号），日本北岛集团与爱丽丝公司投资，建筑面积约6万㎡，号称“城内第一幢现代化办公大楼”。竣工年：房天下记1997，点点租记2010（且称地上12层，与实测高度矛盾），取1997并存疑。照片为报话大楼图集中的配图，是否即凯爱大厦系按“深蓝楼体+白色楼顶+塔尖+工行”特征比对判断。",
+  "notes": "西华门十字西北角（西华门1号），日本北岛集团与爱丽丝公司投资，建筑面积约6万㎡，号称“城内第一幢现代化办公大楼”。竣工年：房天下记1997（房天下写字楼概况：地上12层、地下1层、标准层高3.6 m、建面57741 ㎡，WebSearch 汇总），点点租记2010，取1997。【矛盾】12层×3.6 m≈43 m 与网友实测深蓝色塔楼 77–93 m 不符；地图上西华门西北角标有“凯爱大厦B座”“工行北大街支行”，推测 12 层数据可能仅指 A 座，深蓝色带塔尖的工行高楼可能为 B 座——未能证实，需人工核对。照片为报话大楼图集中的配图，是否即凯爱大厦系按“深蓝楼体+白色楼顶+塔尖+工行”特征比对判断。",
   "footprint_detail": {
    "area_m2": 1625,
    "long_axis_deg_from_east_ccw": 89.4,
@@ -2432,6 +2433,284 @@
   ]
  },
  {
+  "name": "西安悦荟广场（MOSAIC）",
+  "aliases": [
+   "悦荟广场",
+   "解放路悦荟",
+   "悦荟 MOSAIC"
+  ],
+  "category": "mall",
+  "lon": 108.957467,
+  "lat": 34.264929,
+  "coord_source": "overture_footprint_centroid",
+  "overture_id": "94eff4d9-de0b-4d0d-bf16-eb9a68256822",
+  "footprint_size_m": [
+   129.6,
+   99.5
+  ],
+  "height_m": null,
+  "floors": 8,
+  "height_source": "地上8层、地下3层，总建面12.2万㎡（WebSearch 汇总百科/西部网）",
+  "year": 2018,
+  "massing": [
+   {
+    "part": "主体",
+    "shape": "rect",
+    "size_m": [
+     130,
+     100
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 90,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：方正大盒子，街角处切角；效果图为浅银白色外皮，夜景实拍为深色外皮上布满圆点状“像素”灯孔"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平屋顶"
+  },
+  "facade": {
+   "primary": "金属板（带圆点穿孔/点光）",
+   "glass_color_hex": "#2e3a44",
+   "frame_color_hex": "#9aa0a6",
+   "wall_color_hex": "#2b2e33",
+   "pattern": "圆点矩阵（马赛克/像素）",
+   "floor_height_m": null,
+   "notes": "多块大尺寸LED广告屏嵌于立面"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "悦荟 MOSAIC",
+    "color_hex": "#35d0c0",
+    "position": "屋顶两侧角部（青绿色发光）",
+    "approx_height_m": null
+   }
+  ],
+  "night": "立面圆点灯阵闪烁，LED 广告屏，青绿色字牌（夜景照）",
+  "photos": [
+   "http://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20180922/531444bb31ab475a84afcffec985ff84.jpg",
+   "https://t4.focus-img.cn/sh740wsh/zx/wx/5d1ce9fdaa3313d09031f56067c859b1.jpg"
+  ],
+  "sources": [
+   "http://m.sohu.com/a/255362882_532418",
+   "https://xian.focus.cn/zixun/f60f30518fae007b.html",
+   "http://m.cnwest.com/sxxw/a/2023/07/31/21744059.html",
+   "https://news.qq.com/rain/a/20230919A0528F00"
+  ],
+  "confidence": "medium",
+  "notes": "东新街与解放路十字东南角；2014年以5.05亿元成为单价“地王”，2018年9月开业；2023年大量店面闲置，后由国资（城更基金）接盘（腾讯新闻2023-09）。",
+  "footprint_detail": {
+   "area_m2": 10791,
+   "long_axis_deg_from_east_ccw": 90.0,
+   "bbox_ew_ns_m": [
+    99.5,
+    129.6
+   ],
+   "osm_ref": "w1465146733@1",
+   "overture_name": "西安悦荟广场",
+   "overture_height": null,
+   "overture_floors": null
+  },
+  "world_xz": [
+   1391.6,
+   -436.1
+  ]
+ },
+ {
+  "name": "陕西省中医医院",
+  "aliases": [
+   "陕西中医医院（西华门）"
+  ],
+  "category": "hospital",
+  "lon": 108.940127,
+  "lat": 34.265234,
+  "coord_source": "Overture“住院楼”75fd3a44 质心（位于西华门西侧，推断属中医医院）",
+  "overture_id": "75fd3a44-43ca-44dd-a32a-b5b326ad6bad",
+  "footprint_size_m": [
+   143.0,
+   72.3
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "照片计：住院/门诊主楼约10层（非来源值）",
+  "year": null,
+  "massing": [
+   {
+    "part": "门诊楼（前部）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：4–5层浅灰面砖楼，中部通高蓝灰玻璃幕墙竖带与玻璃雨棚入口，屋顶立红色“陕西省中医医院”字，左侧竖排红字“门诊 Clinic”"
+   },
+   {
+    "part": "后部高层楼",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：约10层米黄色面砖板楼，窗间竖向壁柱，部分楼层外挑阳台"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平屋顶+红色字牌"
+  },
+  "facade": {
+   "primary": "浅灰/米黄面砖",
+   "glass_color_hex": "#50606c",
+   "frame_color_hex": "#d6cdbb",
+   "wall_color_hex": "#d9cfbd",
+   "pattern": "规则方窗+竖向壁柱",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "陕西省中医医院",
+    "color_hex": "#d7261e",
+    "position": "门诊楼屋顶",
+    "approx_height_m": null
+   },
+   {
+    "text": "门诊 Clinic",
+    "color_hex": "#d7261e",
+    "position": "门诊楼入口左侧竖排",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:%E9%99%95%E8%A5%BF%E7%9C%81%E4%B8%AD%E5%8C%BB%E5%8C%BB%E9%99%A2_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:%E9%99%95%E8%A5%BF%E7%9C%81%E4%B8%AD%E5%8C%BB%E5%8C%BB%E9%99%A2_02.jpg"
+  ],
+  "sources": [
+   "https://commons.wikimedia.org/wiki/Category:Hospitals_in_Xi'an"
+  ],
+  "confidence": "low",
+  "notes": "西华门附近（城内）。Overture 轮廓归属为推断；建成年、层数未查到可靠来源。",
+  "footprint_detail": {
+   "area_m2": 4522,
+   "long_axis_deg_from_east_ccw": 0.2,
+   "bbox_ew_ns_m": [
+    143.2,
+    72.4
+   ],
+   "osm_ref": "w1263103970@2",
+   "overture_name": "住院楼",
+   "overture_height": null,
+   "overture_floors": null
+  },
+  "world_xz": [
+   -203.8,
+   -470.0
+  ]
+ },
+ {
+  "name": "西安市中心医院（西安交通大学附属西安市中心医院）",
+  "aliases": [
+   "西安市中心医院"
+  ],
+  "category": "hospital",
+  "lon": null,
+  "lat": null,
+  "coord_source": null,
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": null,
+  "height_source": "照片计：主楼约11层（非来源值）",
+  "year": null,
+  "massing": [
+   {
+    "part": "高层主楼（弧形端头）",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：板楼一端为半圆形凸出的楼梯/病房塔，立面为白色面砖与蓝色玻璃横向带窗交替，顶部红色“西安市中心医院”字；圆端竖排红字“西安交通大学附属西安市中心医院”"
+   },
+   {
+    "part": "低层裙楼",
+    "shape": "custom",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：4–5层白色楼，转角圆弧，绿色窗框"
+   }
+  ],
+  "crown": {
+   "type": "flat",
+   "height_m": null,
+   "description": "平屋顶+红色字牌"
+  },
+  "facade": {
+   "primary": "白色面砖+蓝色玻璃带窗",
+   "glass_color_hex": "#3f6fa8",
+   "frame_color_hex": "#eeeeee",
+   "wall_color_hex": "#ecebe6",
+   "pattern": "横向带窗",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安市中心医院",
+    "color_hex": "#d7261e",
+    "position": "高层主楼屋顶",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:%E8%A5%BF%E5%AE%89%E5%B8%82%E4%B8%AD%E5%BF%83%E5%8C%BB%E9%99%A2_2023-09-28.jpg"
+  ],
+  "sources": [],
+  "confidence": "low",
+  "notes": "城内西五路/北大街一带（Commons 照片拍摄于2023-09-28）。本次未完成坐标与 Overture 轮廓对位（见 notes 文件），坐标暂缺。",
+  "world_xz": null
+ },
+ {
   "name": "西安SKP",
   "aliases": [
    "SKP西安",
@@ -3422,11 +3701,55 @@
   "floors": null,
   "height_source": null,
   "year": 2000,
-  "massing": [],
-  "crown": null,
-  "facade": null,
-  "podium": null,
-  "signage": [],
+  "massing": [
+   {
+    "part": "圆鼓形主馆",
+    "shape": "round",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：大半径圆筒（鼓形）体量，米黄色石材横向分缝，实墙为主、仅入口处开窗，顶部檐口一道横线脚；正面刻“陕西省美术博物馆 SHAANXI PROVINCE ART MUSEUM”"
+   }
+  ],
+  "crown": {
+   "type": "parapet",
+   "height_m": null,
+   "description": "圆形平屋面+檐口线脚"
+  },
+  "facade": {
+   "primary": "米黄色石材",
+   "glass_color_hex": "#3e4a52",
+   "frame_color_hex": "#c8b99c",
+   "wall_color_hex": "#d2c3a5",
+   "pattern": "横向石材分缝（实墙为主）",
+   "floor_height_m": null,
+   "notes": "张锦秋设计"
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "台阶入口",
+   "facade": "石材",
+   "entrance": "朝东北（长安北路侧），入口上方红色小字牌"
+  },
+  "signage": [
+   {
+    "text": "陕西省美术博物馆 SHAANXI PROVINCE ART MUSEUM",
+    "color_hex": "#4a4036",
+    "position": "鼓形立面入口上方（刻字）",
+    "approx_height_m": null
+   }
+  ],
   "night": null,
   "photos": [
    "https://commons.wikimedia.org/wiki/File:%E7%A2%91%E6%9E%97_%E9%99%95%E8%A5%BF%E7%9C%81%E7%BE%8E%E6%9C%AF%E5%8D%9A%E7%89%A9%E9%A6%86.jpg"
@@ -3434,8 +3757,8 @@
   "sources": [
    "https://zh.wikipedia.org/wiki/陕西省美术博物馆"
   ],
-  "confidence": "low",
-  "notes": "长安北路14号，2000年4月建成，张锦秋设计，国家重点美术馆（wiki）。形体与立面未做照片判读。",
+  "confidence": "medium",
+  "notes": "长安北路14号，2000年4月建成，张锦秋设计，国家重点美术馆（wiki）。照片背景可见陕西信息大厦。",
   "footprint_detail": {
    "area_m2": 2786,
    "long_axis_deg_from_east_ccw": -47.2,
@@ -5641,22 +5964,82 @@
   "floors": null,
   "height_source": null,
   "year": 2009,
-  "massing": [],
-  "crown": null,
-  "facade": null,
-  "podium": null,
-  "signage": [],
-  "night": null,
+  "massing": [
+   {
+    "part": "主体（格栅方盒）",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": [
+     0,
+     0
+    ],
+    "rotation_deg": 0,
+    "base_m": 0,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：正立面为通高红褐色竖向格栅（木色/红漆方管），中部入口大台阶"
+   },
+   {
+    "part": "屋顶唐风楼阁",
+    "shape": "rect",
+    "size_m": [
+     null,
+     null
+    ],
+    "offset_m": null,
+    "rotation_deg": 0,
+    "base_m": null,
+    "top_m": null,
+    "setbacks": [],
+    "taper": null,
+    "notes": "照片：格栅体量之上为一座重檐唐风楼阁（红色柱枋、斗拱、平座栏杆），檐下挂红灯笼"
+   }
+  ],
+  "crown": {
+   "type": "pyramid",
+   "height_m": null,
+   "description": "重檐歇山/庑殿唐风楼阁，深灰瓦"
+  },
+  "facade": {
+   "primary": "红褐色竖向格栅",
+   "glass_color_hex": "#3a2e2a",
+   "frame_color_hex": "#8b2a1e",
+   "wall_color_hex": "#9a3a2a",
+   "pattern": "竖向格栅",
+   "floor_height_m": null,
+   "notes": null
+  },
+  "podium": {
+   "floors": null,
+   "height_m": null,
+   "shape": "台阶入口",
+   "facade": "石材台阶",
+   "entrance": "朝大唐不夜城步行街（贞观文化广场）"
+  },
+  "signage": [
+   {
+    "text": "西安美术馆 Xi'an Art Museum",
+    "color_hex": "#f2c14e",
+    "position": "格栅立面中部，金色大字",
+    "approx_height_m": null
+   }
+  ],
+  "night": "格栅整体红光，楼阁檐口斗拱金黄泛光，红灯笼（Commons 夜景）",
   "photos": [
-   "https://commons.wikimedia.org/wiki/File:Xi'an_Art_Gallery.jpg",
-   "https://commons.wikimedia.org/wiki/File:雁塔_大唐不夜城和西安美术馆_04.jpg"
+   "https://commons.wikimedia.org/wiki/File:%E9%9B%81%E5%A1%94_%E5%A4%A7%E5%94%90%E4%B8%8D%E5%A4%9C%E5%9F%8E%E5%92%8C%E8%A5%BF%E5%AE%89%E7%BE%8E%E6%9C%AF%E9%A6%86_04.jpg",
+   "https://commons.wikimedia.org/wiki/File:%E8%A5%BF%E5%AE%89%E7%BE%8E%E6%9C%AF%E9%A6%86_-_panoramio.jpg",
+   "https://commons.wikimedia.org/wiki/File:2023-10-10_%E8%A5%BF%E5%AE%89%E5%A4%A7%E5%94%90%E4%B8%8D%E5%A4%9C%E5%9F%8E_Great_Tang_All_Day_Mall_26.jpg"
   ],
   "sources": [
    "https://zh.wikipedia.org/wiki/西安美术馆",
    "https://commons.wikimedia.org/wiki/Category:Xi'an_Art_Museum"
   ],
-  "confidence": "low",
-  "notes": "大唐不夜城贞观文化广场，2009年9月开馆，占地1.7万㎡，一号展厅3000余㎡（wiki）。外观照片已列出但尚未完成判读（见 notes 文件）。",
+  "confidence": "medium",
+  "notes": "大唐不夜城贞观文化广场，2009年9月开馆，占地1.7万㎡，一号展厅3000余㎡（wiki）。",
   "footprint_detail": {
    "area_m2": 1456,
    "long_axis_deg_from_east_ccw": 0.0,

@@ -8,7 +8,7 @@
 //   · 开关：setLayer('people', false) 时整个系统停更新、不绘制；同时隐藏大唐不夜城的游客人流（'不夜城人流'）。
 import * as THREE from 'three';
 import { personGeometry } from '../arch/datang-props.js';
-import { LIFT } from '../core/roadheight.js';
+import { LIFT, roadY } from '../core/roadheight.js';
 
 // 各画质档：最大人数 / 活动半径上限 / 绘制距离 / 生效的最大离地高度
 const CAP = [500, 1000, 1800, 2800];
@@ -140,7 +140,7 @@ export default {
       const pts = Float32Array.from(src);
       const mid = Math.floor(n / 2) * 2;
       const hk = hotAt(src[mid], src[mid + 1]);
-      for (const [off, jit, w] of sides) paths.push({ pts, cum, n, len, off, jit, w: w * hk, lift: c >= 1 && c <= 4 ? 0.14 : 0.04 });
+      for (const [off, jit, w] of sides) paths.push({ f, pts, cum, n, len, off, jit, w: w * hk, lift: c >= 1 && c <= 4 ? 0.14 : 0.04 });
     }
     // 空间网格：cell → [pathIndex, segIndex, ...]
     const grid = new Map();
@@ -206,7 +206,13 @@ export default {
       wZ[i] = az + (bz - az) * t + dx * wOff[i];
       if (wSpd[i] > 0) wYaw[i] = Math.atan2(dx * wDir[i], dz * wDir[i]);
     };
-    const groundY = (i) => { wY[i] = terrain.heightAt(wX[i], wZ[i]) + LIFT + paths[wPath[i]].lift; };
+    // 高度跟随道路纵断面（引桥路堤、被抬高的地面路上行人不再低于路面）；无纵断面时退回地形
+    const groundY = (i) => {
+      const p = paths[wPath[i]];
+      const g = terrain.heightAt(wX[i], wZ[i]) + LIFT;
+      const r = p.f._rp ? roadY(terrain, p.f, wX[i], wZ[i], wS[i], p.len) : null;
+      wY[i] = Math.max(g, r ?? g) + p.lift;
+    };
 
     const spawn = (i, anywhere) => {
       if (!nCand) return false;
