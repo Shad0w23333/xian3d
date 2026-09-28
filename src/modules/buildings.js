@@ -12,7 +12,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, STYLE_NAMES } from '../arch/bld-gen.js';
-import { createFacadeMaterials, createDataTexture } from '../arch/bld-shader.js';
+import { createFacadeMaterials, createDataTexture, createClassTexture } from '../arch/bld-shader.js';
+import { classifyBuildings, classTextureData, BLD_CLASSES } from '../arch/bld-class.js';
 import BldWorker from '../arch/bld-worker.js?worker&inline';
 
 const HI_AGL = 900; // 相机离地高于此值不使用近景小块
@@ -747,7 +748,38 @@ export default {
     );
     updateRuns();
 
+    // —— 分类高亮（专题图）：首次开启时在主线程分类（约 0.5 s），写入 R8 纹理；关闭只改 uniform，不重建几何 ——
+    let clsResult = null;
+    const ensureClasses = () => {
+      if (clsResult) return clsResult;
+      const t = performance.now();
+      clsResult = classifyBuildings(P, ctx.data.buildingNames, ctx.data.landuse, ctx.data.pois);
+      const td = classTextureData(clsResult.cls);
+      const old = U.uCls.value;
+      U.uCls.value = createClassTexture(td.data, td.width, td.height);
+      old.dispose();
+      const st = clsResult.stats;
+      console.log(
+        `[buildings] 分类 ${(performance.now() - t).toFixed(0)} ms：已判定 ${((st.classified / st.total) * 100).toFixed(1)}%；` +
+          BLD_CLASSES.map((c, i) => `${c.name}${st.byClass[i]}`).join(' ')
+      );
+      return clsResult;
+    };
+    const _col = new THREE.Color();
+    /** on：开关；selected：选中类别编号集合（null = 全部） */
+    const setClassHighlight = (on, selected = null) => {
+      if (on) ensureClasses();
+      U.uClsOn.value = on ? 1 : 0;
+      BLD_CLASSES.forEach((c, i) => {
+        _col.set(c.color); // 转为线性工作色彩空间
+        U.uClsCol.value[i].set(_col.r, _col.g, _col.b, !selected || selected.has(i) ? 1 : 0);
+      });
+    };
+
     const inst = {
+      setClassHighlight,
+      classStats: () => ensureClasses().stats,
+      classOf: (i) => ensureClasses().cls[i],
       nearestFacade,
       api: { nearestFacade },
       stats: () => ({
