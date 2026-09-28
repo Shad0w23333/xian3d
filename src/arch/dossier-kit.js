@@ -230,7 +230,7 @@ export function facadeStyle(st = {}, seed) {
 }
 
 // ═════════════════════════ 材质 ═════════════════════════
-const NAMED = { stone: 'stone', white: 'white', dark: 'dark', metal: 'metal', parapet: 'parapet', glassRoof: 'glassRoof', roof: 'roof', granite: 'granite', membrane: 'membrane' };
+const NAMED = { stone: 'stone', white: 'white', dark: 'dark', metal: 'metal', parapet: 'parapet', glassRoof: 'glassRoof', roof: 'roof', granite: 'granite', membrane: 'membrane', roofTile: 'roofTile' };
 /** 'stone' | 'white' | … | '#rrggbb' | {color, metalness, roughness, emissive, glow} → 材质（同参数复用） */
 export function solidMat(env, m) {
   if (!m) return env.mats.stone;
@@ -286,6 +286,22 @@ function washMat(env, color, strength) {
 }
 
 // ═════════════════════════ spec 解析（prepare 与 build 共用） ═════════════════════════
+/** 半平面裁切多边形（Sutherland–Hodgman）：保留 f(x, z) ≥ 0 的一侧 */
+function clipHalfPlane(pts, f) {
+  const out = [];
+  const n = pts.length / 2;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const ax = pts[i * 2], az = pts[i * 2 + 1], bx = pts[j * 2], bz = pts[j * 2 + 1];
+    const fa = f(ax, az), fb = f(bx, bz);
+    if (fa >= 0) out.push(ax, az);
+    if ((fa >= 0) !== (fb >= 0)) {
+      const t = fa / (fa - fb);
+      out.push(ax + (bx - ax) * t, az + (bz - az) * t);
+    }
+  }
+  return out;
+}
 function partPolygon(spec, part, center) {
   let pts, holes = [];
   if (part.fp) {
@@ -304,6 +320,14 @@ function partPolygon(spec, part, center) {
     holes = (loc.holes || []).map((h) => h.flatMap(([u, w]) => T(u, w)));
   } else throw new Error(`part ${part.name || ''} 需要 fp / pts / shape 之一`);
   pts = G.ccw(pts);
+  // cut：沿某方位把轮廓切掉一截（{face:'S', by:7} = 保留离南端 7 m 以北的部分），用于“沿街立面逐层退台”
+  for (const c of [].concat(part.cut || [])) {
+    const d = faceDir(c.face);
+    let m = -Infinity;
+    for (let i = 0; i < pts.length; i += 2) m = Math.max(m, pts[i] * d[0] + pts[i + 1] * d[1]);
+    pts = G.ccw(clipHalfPlane(pts, (x, z) => m - (c.by || 0) - (x * d[0] + z * d[1])));
+    holes = holes.map((h) => clipHalfPlane(G.ccw(h), (x, z) => m - (c.by || 0) - (x * d[0] + z * d[1]))).filter((h) => h.length >= 6);
+  }
   if (part.grow) pts = G.inset(pts, -part.grow);
   if (part.roundCorners) pts = roundCorners(pts, part.roundCorners, part.roundSeg ?? 5);
   if (Array.isArray(part.holes)) holes = holes.concat(part.holes);
@@ -459,8 +483,99 @@ function beam(ax, ay, az, bx, by, bz, w) {
   return g;
 }
 
+/**
+ * 唐风庑殿（四坡）大屋顶几何：屋面“举折”微凹（檐部平缓、近脊陡）、翼角起翘；四个坡面各自成网格，戗脊（四条斜脊）处精确闭合。
+ * P(u, v, y) → 世界坐标 [x, y, z]；u 沿长边（半长 A）、v 沿短边（半宽 B），均已含出檐；rh 正脊半长（0 = 攒尖）；
+ * y0 檐口高（绝对）、h 檐口到正脊的高；curve 凹曲指数（0 = 平直坡面）；lift 翼角起翘（米）。
+ * 返回 {roof 屋面（含檐口封边与檐底）, ridges 正脊/戗脊/鸱吻, eave 檐口轮廓（世界坐标扁平数组，供夜景灯带）}
+ */
+function hipGeometry(P, A, B, rh, y0, h, curve, lift, { nt = 18, ns = 8, sMax = 1 } = {}) {
+  // sMax < 1：盝顶（只做檐口一圈宽 sMax×B 的坡面，h 为这圈坡面的高，中间为平屋面）
+  const f = (s) => Math.pow(Math.max(0, Math.min(1, s / sMax)), 1 + curve);
+  const Lc = Math.min(A, B) * 0.5;
+  const liftAt = (u, v) => {
+    const d = Math.hypot(A - Math.abs(u), B - Math.abs(v));
+    return lift * Math.max(0, 1 - d / Lc) ** 2;
+  };
+  const H = (u, v, s) => y0 + h * f(s) + liftAt(u, v);
+  const pos = [];
+  const quad = (a, b, c, d) => pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+  // 四个坡面：face(t, s) → [u, v]
+  const faces = [
+    (t, s) => { const e = A - s * (A - rh); return [-e + 2 * e * t, -B + s * B]; },
+    (t, s) => { const e = A - s * (A - rh); return [e - 2 * e * t, B - s * B]; },
+    (t, s) => { const e = B - s * B; return [A - s * (A - rh), -e + 2 * e * t]; },
+    (t, s) => { const e = B - s * B; return [-(A - s * (A - rh)), e - 2 * e * t]; },
+  ];
+  for (const F of faces) {
+    const n = F === faces[0] || F === faces[1] ? nt : Math.max(4, Math.round((nt * B) / A));
+    for (let j = 0; j < ns; j++) {
+      const s0 = (sMax * j) / ns, s1 = (sMax * (j + 1)) / ns;
+      for (let i = 0; i < n; i++) {
+        const t0 = i / n, t1 = (i + 1) / n;
+        const pt = (t, s) => { const [u, v] = F(t, s); return P(u, v, H(u, v, s)); };
+        quad(pt(t0, s0), pt(t1, s0), pt(t1, s1), pt(t0, s1));
+      }
+    }
+  }
+  // 檐口封边（0.5 m 厚的竖向檐板，随翼角起翘）与檐底
+  const rim = [[-A, -B], [A, -B], [A, B], [-A, B]];
+  const eave = [];
+  for (let k = 0; k < 4; k++) {
+    const [ua, va] = rim[k], [ub, vb] = rim[(k + 1) % 4];
+    const m = 12;
+    for (let i = 0; i < m; i++) {
+      const u0 = ua + ((ub - ua) * i) / m, v0 = va + ((vb - va) * i) / m, u1 = ua + ((ub - ua) * (i + 1)) / m, v1 = va + ((vb - va) * (i + 1)) / m;
+      quad(P(u0, v0, y0 - 0.5), P(u1, v1, y0 - 0.5), P(u1, v1, H(u1, v1, 0)), P(u0, v0, H(u0, v0, 0)));
+      const w = P(u0, v0, 0);
+      eave.push(w[0], w[2]);
+    }
+  }
+  const [a, b, c, d] = rim.map(([u, v]) => P(u, v, y0 - 0.5));
+  quad(a, d, c, b);
+  if (sMax < 0.999) { // 盝顶中间的平屋面
+    const eu = A - sMax * (A - rh), evv = B - sMax * B;
+    quad(P(-eu, -evv, y0 + h), P(eu, -evv, y0 + h), P(eu, evv, y0 + h), P(-eu, evv, y0 + h));
+  }
+  const roof = new THREE.BufferGeometry();
+  roof.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  // 统一绕序：屋面朝上、檐板朝外、檐底朝下
+  const p = roof.attributes.position.array;
+  const [ox, , oz] = P(0, 0, y0);
+  for (let i = 0; i < p.length; i += 9) {
+    const e1 = [p[i + 3] - p[i], p[i + 4] - p[i + 1], p[i + 5] - p[i + 2]], e2 = [p[i + 6] - p[i], p[i + 7] - p[i + 1], p[i + 8] - p[i + 2]];
+    const nx = e1[1] * e2[2] - e1[2] * e2[1], ny = e1[2] * e2[0] - e1[0] * e2[2], nz = e1[0] * e2[1] - e1[1] * e2[0];
+    const mx = (p[i] + p[i + 3] + p[i + 6]) / 3 - ox, my = (p[i + 1] + p[i + 4] + p[i + 7]) / 3, mz = (p[i + 2] + p[i + 5] + p[i + 8]) / 3 - oz;
+    const soffit = Math.abs(my - (y0 - 0.5)) < 0.01 && Math.abs(p[i + 1] - p[i + 4]) < 0.01 && Math.abs(p[i + 1] - p[i + 7]) < 0.01;
+    const want = soffit ? ny < 0 : Math.abs(ny) > 1e-6 && Math.hypot(nx, nz) < Math.abs(ny) * 4 ? ny > 0 : nx * mx + nz * mz > 0;
+    if (!want) for (let k = 0; k < 3; k++) { const t = p[i + 3 + k]; p[i + 3 + k] = p[i + 6 + k]; p[i + 6 + k] = t; }
+  }
+  roof.computeVertexNormals();
+  // 正脊、戗脊、鸱吻
+  const rg = [];
+  const top = y0 + h;
+  if (rh > 0.5 && sMax >= 0.999) {
+    const [x0, , z0] = P(-rh, 0, 0), [x1, , z1] = P(rh, 0, 0);
+    rg.push(beam(x0, top + 0.35, z0, x1, top + 0.35, z1, 0.9));
+    for (const sgn of [-1, 1]) {
+      const [x, , z] = P(sgn * rh, 0, 0);
+      rg.push(G.box(x, top + 1.3, z, 1.0, 2.2, 1.0));
+    }
+  }
+  for (const [su, sv] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    const K = 6;
+    for (let k = 0; k < K; k++) {
+      const s0 = (sMax * k) / K, s1 = (sMax * (k + 1)) / K;
+      const q = (s) => { const u = su * (A - s * (A - rh)), v = sv * (B - s * B); return P(u, v, H(u, v, s) + 0.25); };
+      const A0 = q(s0), A1 = q(s1);
+      rg.push(beam(A0[0], A0[1], A0[2], A1[0], A1[1], A1[2], 0.55));
+    }
+  }
+  return { roof, ridges: rg, eave };
+}
+
 // ═════════════════════════ 塔冠 ═════════════════════════
-const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid']);
+const VOLUME_CROWNS = new Set(['parapet', 'lantern', 'glassCylinder', 'disk', 'frame', 'pyramid', 'tangRoof']);
 function normCrowns(c) {
   if (!c) return [];
   return [].concat(c).map((x) => (typeof x === 'string' ? { type: x } : x));
@@ -566,11 +681,70 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         if (cr.stack) yNext = yb + (cr.h ?? d * 0.25);
         break;
       }
-      case 'dome': { // 穹顶：半球按 r / h 缩放；r 可为 [东西半径, 南北半径]
+      case 'tangRoof': { // 唐风庑殿大屋顶（可重檐、可盝顶）：默认取体块外接矩形；size:[长,宽]+at/offset+rot 可显式指定（不含出檐）
+        let w, d, ang, cx = c.x, cz = c.z;
+        if (cr.size) {
+          [w, d] = cr.size;
+          ang = -(cr.rot || 0) * D;
+        } else {
+          const o = G.obb(topPoly);
+          ({ w, d } = o); ang = o.rot; cx = o.cx; cz = o.cz;
+        }
+        const cs = Math.cos(ang), sn = Math.sin(ang);
+        const P = (u, v, yy) => [cx + u * cs - v * sn, yy, cz + u * sn + v * cs];
+        const ev = cr.eave ?? 2.5, A = w / 2 + ev, B = d / 2 + ev;
+        const h = cr.h ?? B * 0.55;
+        const rh = cr.ridge != null ? Math.max(0, cr.ridge * A) : Math.max(0, A - B);
+        const y0 = yb + (cr.base ?? 1.0); // 檐口默认比屋面高 1 m：盖住女儿墙，不让墙顶穿出屋面
+        const mat = solidMat(env, cr.mat || 'roofTile');
+        const ridgeMat = solidMat(env, cr.ridgeMat || 'dark');
+        // band：盝顶——只有檐口一圈宽 band 米的坡面（高 h），中间平屋面
+        const sMax = cr.band ? Math.min(1, cr.band / B) : 1;
+        const R0 = hipGeometry(P, A, B, rh, y0, h, cr.curve ?? 0.45, cr.lift ?? Math.min(2.2, h * 0.12), { sMax });
+        solid.add(R0.roof, mat, null, { worldUV: 1 });
+        for (const g of R0.ridges) detail.add(g, ridgeMat);
+        if (cr.glow) detail.add(ribbon(G.ccw(R0.eave), () => y0 - 0.5, 0.35, 0.08), glowMat(env, cr.glow, { base: '#6b5a3c', night: cr.strength ?? 2.4 }));
+        if (cr.double) { // 重檐：主屋面下 gap 米处一圈外挑 out 米、坡高 h 的下檐
+          const dd = cr.double, gap = dd.gap ?? 4, out = dd.out ?? ev + 2, hh = dd.h ?? 2.2;
+          const A2 = w / 2, B2 = d / 2, yT = y0 - gap, yE = yT - hh;
+          const pos = [];
+          const q = (a, b, cc, e) => pos.push(...a, ...b, ...cc, ...a, ...cc, ...e);
+          const inner = [[-A2, -B2], [A2, -B2], [A2, B2], [-A2, B2]], outer = [[-A2 - out, -B2 - out], [A2 + out, -B2 - out], [A2 + out, B2 + out], [-A2 - out, B2 + out]];
+          for (let k = 0; k < 4; k++) {
+            const j = (k + 1) % 4;
+            q(P(...outer[k], yE), P(...outer[j], yE), P(...inner[j], yT), P(...inner[k], yT));
+            q(P(...outer[k], yE - 0.45), P(...outer[j], yE - 0.45), P(...outer[j], yE), P(...outer[k], yE));
+          }
+          const sk = new THREE.BufferGeometry();
+          sk.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+          const p = sk.attributes.position.array;
+          for (let i = 0; i < p.length; i += 9) {
+            const e1 = [p[i + 3] - p[i], p[i + 4] - p[i + 1], p[i + 5] - p[i + 2]], e2 = [p[i + 6] - p[i], p[i + 7] - p[i + 1], p[i + 8] - p[i + 2]];
+            const nx = e1[1] * e2[2] - e1[2] * e2[1], ny = e1[2] * e2[0] - e1[0] * e2[2], nz = e1[0] * e2[1] - e1[1] * e2[0];
+            const mx = (p[i] + p[i + 3] + p[i + 6]) / 3 - cx, mz = (p[i + 2] + p[i + 5] + p[i + 8]) / 3 - cz;
+            const ok = Math.abs(ny) > Math.hypot(nx, nz) * 0.2 ? ny > 0 : nx * mx + nz * mz > 0;
+            if (!ok) for (let k = 0; k < 3; k++) { const t = p[i + 3 + k]; p[i + 3 + k] = p[i + 6 + k]; p[i + 6 + k] = t; }
+          }
+          sk.computeVertexNormals();
+          solid.add(sk, mat, null, { worldUV: 1 });
+          const ob = outer.flatMap(([u, v]) => { const r = P(u, v, 0); return [r[0], r[2]]; });
+          solid.add(G.capGeometry(G.ccw(ob), yE - 0.45, { down: true }), ridgeMat);
+          if (cr.glow) detail.add(ribbon(G.ccw(ob), () => yE - 0.45, 0.3, 0.08), glowMat(env, cr.glow, { base: '#6b5a3c', night: cr.strength ?? 2.4 }));
+        }
+        yNext = y0 + h;
+        break;
+      }
+      case 'dome': { // 穹顶：半球按 r / h 缩放；r 可为 [东西半径, 南北半径]；full:true 为整球（底部落在 yb，h 为整球高）
         const [rx, rz] = [].concat(cr.r ?? 10).length > 1 ? cr.r : [cr.r ?? 10, cr.r ?? 10];
-        const g = new THREE.SphereGeometry(1, cr.seg ?? 28, 10, 0, TAU, 0, Math.PI / 2);
-        g.scale(rx, cr.h ?? Math.min(rx, rz) * 0.5, rz);
-        g.translate(c.x, yb, c.z);
+        const g = new THREE.SphereGeometry(1, cr.seg ?? 28, cr.full ? 20 : 10, 0, TAU, 0, cr.full ? Math.PI : Math.PI / 2);
+        if (cr.full) {
+          const hh = (cr.h ?? 2 * Math.min(rx, rz)) / 2;
+          g.scale(rx, hh, rz);
+          g.translate(c.x, yb + hh, c.z);
+        } else {
+          g.scale(rx, cr.h ?? Math.min(rx, rz) * 0.5, rz);
+          g.translate(c.x, yb, c.z);
+        }
         solid.add(g, solidMat(env, cr.mat || 'glassRoof'));
         if (cr.ring !== false) detail.add(G.cyl(c.x, yb - 0.1, c.z, Math.max(rx, rz) + 0.5, Math.max(rx, rz) + 0.5, 0.8, cr.seg ?? 28), mats.parapet);
         if (cr.glow) detail.add(G.cyl(c.x, yb, c.z, Math.max(rx, rz) * 0.96, 0.4, (cr.h ?? Math.min(rx, rz) * 0.5) * 0.9, cr.seg ?? 28), washMat(env, cr.glow, 0.5));
@@ -659,8 +833,11 @@ function buildPart(env, R, P) {
     yTop = base + H; // 塔冠从屋面起算（女儿墙 1.2 m 另计）
   } else if (kind === 'solid') {
     const mat = solidMat(env, part.mat || 'stone');
-    solid.add(G.wallGeometry(P.pts, P.pts, base - 2, base + H), mat, null, { worldUV: 1 });
+    // 落地实体向下多挤 2 m 埋进地形；悬空实体（挑檐板、连廊等，base > 0.5）不下挤，并补底面
+    const sink = part.sink ?? (P.base <= 0.5 ? 2 : 0);
+    solid.add(G.wallGeometry(P.pts, P.pts, base - sink, base + H), mat, null, { worldUV: 1 });
     solid.add(G.capGeometry(P.pts, base + H), mat, null, { worldUV: 1 });
+    if (!sink) solid.add(G.capGeometry(P.pts, base, { down: true }), mat, null, { worldUV: 1 });
   } else if (kind === 'facade') {
     // 只有立面、没有屋面处理的直筒（被上部体块盖住的中段等）
     fb.prism(P.pts, base - 0.5, base + H, mkStyle(facadeStyle(part.style, part.seed)), { vBase: g0 });
