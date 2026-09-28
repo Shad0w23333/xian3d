@@ -8,11 +8,16 @@
 //   · 屋顶构件（楼梯间/机房、水箱、空调机组、太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
 //   · 航空障碍灯：高度 ≥ 100 m 的楼顶四角红色闪光灯（Points）。
 //   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的逐窗亮灯。
+//   · 小区风貌：public/data/estates_style.json（tools/build_estates.py，按档案与实景照片）——落在有照片依据的小区多边形内的
+//     住宅楼按小区 style 着色与生成细节（墙色/点缀色/窗套/腰线/阳台/坡屋顶/塔冠/构架），参数走一张 RGBA32F 小纹理（uEst），
+//     不新建材质；有照片依据的小区大门合并成一个网格（src/arch/bld-estates.js）。
 // 对外 API：nearestFacade(x, z, maxDist) → {x, z, nx, nz, height, index, …}（招牌模块用）
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, STYLE_NAMES } from '../arch/bld-gen.js';
-import { createFacadeMaterials, createDataTexture, createClassTexture } from '../arch/bld-shader.js';
+import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, STYLE_NAMES, packEstateStyles } from '../arch/bld-gen.js';
+import { createFacadeMaterials, createDataTexture, createClassTexture, createEstateTexture } from '../arch/bld-shader.js';
+import { buildEstateGates } from '../arch/bld-estates.js';
+import { loadJSON } from '../core/data.js';
 import { classifyBuildings, classTextureData, BLD_CLASSES } from '../arch/bld-class.js';
 import BldWorker from '../arch/bld-worker.js?worker&inline';
 
@@ -335,10 +340,12 @@ export default {
     if (ctx.exclusions) ctx.exclusions.buildingSkip = pre.skip;
     const roads = packRoads(ctx.data.roads);
     const tPre = performance.now() - t0;
+    // 小区风貌（可选数据；缺失时全部按通用规则）
+    const estDoc = await loadJSON('estates_style.json', { optional: true });
 
     // —— Worker：解析 + 分类 + 数据纹理 + 远景几何 ——
     const gen = new GenClient();
-    const init = await gen.call({ type: 'init', buffer: ctx.data.buildings, ga: pre.ga, base: pre.base, skip: pre.skip, roads });
+    const init = await gen.call({ type: 'init', buffer: ctx.data.buildings, ga: pre.ga, base: pre.base, skip: pre.skip, roads, estates: estDoc });
     if (!init || init.type !== 'init' || !init.ok) {
       gen.dispose();
       throw new Error('建筑生成失败：' + ((init && init.message) || '未知错误'));
@@ -348,6 +355,11 @@ export default {
     const dataTex = createDataTexture(texArr, init.texRows);
     const mats = createFacadeMaterials(ctx, dataTex);
     const U = mats.uniforms;
+    if (estDoc?.styles?.length) {
+      const pk = packEstateStyles(estDoc.styles);
+      U.uEst.value.dispose();
+      U.uEst.value = createEstateTexture(pk.data, pk.width);
+    }
     U.uDrawDist.value = ctx.quality.buildingDistance || 16000;
     let hiRadius = HI_RADIUS[ctx.quality.level ?? 2] || 1200;
 
@@ -684,6 +696,18 @@ export default {
       }
     };
 
+    // —— 小区大门（有照片依据的门楼/门架） ——
+    let gates = null;
+    if (estDoc) {
+      try {
+        gates = buildEstateGates(ctx, estDoc);
+        root.add(gates.group);
+      } catch (e) {
+        console.warn('[buildings] 小区大门生成失败', e);
+        gates = null;
+      }
+    }
+
     // —— 航空障碍灯 ——
     let obstacle = null;
     if (init.lights && init.lights.length) {
@@ -795,7 +819,8 @@ export default {
     console.log(
       `[buildings] v${init.version} ${N} 栋（排除 ${pre.nEx}，skyline 让位 ${pre.nSky}）；远景 ${blocks.length} 块 ${(stat.loTris / 1e6).toFixed(2)}M 三角形；` +
         `Worker ${stat.ms} ms；主线程预处理 ${tPre.toFixed(0)} ms + 建网格 ${(performance.now() - t1).toFixed(0)} ms；风格 ` +
-        STYLE_NAMES.map((s, i) => `${s}${stat.styles[i]}`).join(' ')
+        STYLE_NAMES.map((s, i) => `${s}${stat.styles[i]}`).join(' ') +
+        (estDoc ? `；小区风貌 ${stat.estNames} 个小区 ${stat.estates} 栋（坡屋面 ${stat.estRoofs}），大门 ${gates ? gates.count : 0} 座` : '')
     );
     updateRuns();
 
@@ -856,6 +881,7 @@ export default {
         U.uLit.value.set(curve(LIT_RES, h), curve(LIT_OFF, h), curve(LIT_COM, h), smooth(0.06, 0.5, nf));
         if (frame % 3 === 0 || frame < 3) manageHi();
         updateRuns();
+        if (gates && frame % 15 === 0) gates.update(ctx.camera.position);
       },
       setLayer(name, on) {
         if (name !== 'buildings') return;
@@ -874,6 +900,8 @@ export default {
         for (const m of propMeshes) m && m.dispose();
         propGeos.forEach((g) => g.dispose());
         dataTex.dispose();
+        U.uEst.value.dispose();
+        if (gates) gates.dispose();
         mats.lo.dispose();
         mats.hi.dispose();
         ctx.scene.remove(root);
