@@ -144,6 +144,7 @@
 - `face`：方位（可数组，每个方位一块）；自动挑**外法线最接近该方位、且长度 ≥ 2×字高**的边；圆/曲面没有合适的边时按该方向外缘切平面贴字。
 - `edge`：直接给边下标（`G.ccw` 后的轮廓）。`near`：沿该边推向某方位一端；`shift`：沿边再平移（米）；`margin`：离边端距离（默认 3）。
 - `y` 字中心离地高（默认体块顶下 0.9×字高）、`h` 字高、`fill` 最大宽度占边长比例（0.8）、`out` 离墙距离、`color` / `glow` / `serif` / `weight` / `bg`。
+- `vertical: true`：竖排字（`h` 为整列字高，如角楼上的竖排店名、酒店竖排名）。
 - `face:'roof'`：屋面文字，`at`/`offset` 定中心，`rot` 为文字行进方向（地图角度），`maxW` 最大宽度。
 - 所有招牌进同一张图集（夜间自发光）。字要写**档案 signage 里的原文**，颜色用档案 `color_hex`。
 
@@ -178,9 +179,17 @@ night: {
 | `pyramid` | `h`、`inset`、`spire`、`mat` | 玻璃棱锥 + 可选塔尖 |
 | `arch` | `h`（矢高）；`size:[长,跨]`+`at`/`offset`+`rot`，或默认取体块外接矩形（`along:'short'` 换向） | 筒拱：采光中庭、拱形屋面 |
 | `dome` | `r` 或 `r:[东西,南北]`、`h`、`at`/`offset`、`mat`、`glow`、`ring` | 穹顶 |
+| `hip` | `style`（`'wudian'` 庑殿 / `'xieshan'` 歇山 / `'zanjian'` 攒尖；正方平面默认攒尖）、`h`（屋面矢高）、`ov`（出檐，默认 1.2）、`lift`（檐角起翘）、`fascia`（封檐板厚）、`xk`（歇山山花高度比，默认 0.45）、`mat`（默认深灰筒瓦 roofTile）、`eaveMat`、`gableMat`、`ridgeMat`、`chiwei:false`、`finialMat`；`size:[长,宽]`+`at`/`offset`+`rot`，或默认取体块顶面外接矩形（`along:'short'` 换向） | 中式大屋顶（直坡面 + 正脊/鸱吻或宝顶）；放在 tower 体块上时女儿墙自动压到 0.2 m |
+| `eave` | `ov`（外挑，默认 1.8）、`depth`（向内，默认 2.5）、`h`（坡高，默认 1.6）、`fascia`、`mat`、`eaveMat`、`y` | 沿体块轮廓一圈的斜坡披檐（重檐的下檐、仿古街区檐口、挑檐）；任意多边形可用 |
+| `slab` | `ov`（外扩，默认 1.5）、`h`（厚，默认 0.8）、`mat`、`glow`（檐口夜间发光带） | 挑檐平板：大出挑薄屋檐、亭式平顶、帽檐 |
 
-叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
-`dome / arch / masts / spire / helipad` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
+叠放规则：`glassCylinder / disk / frame / pyramid / lantern / parapet / hip / slab` 是**体量类**，会把高度游标抬到自己顶上，后面的塔冠叠在其上；
+`dome / arch / masts / spire / helipad / eave` 是**屋面类**，不抬游标（`stack:true` 可强制）。任何塔冠都可用 `y`（离地米）显式指定起点。
+
+中式屋顶的常见写法（`src/arch/dossier-specs/core.js` 有实例）：
+- 单檐歇山顶：`crown: [{ type: 'hip', style: 'xieshan', ov: 1.6, h: 4.2 }]`（钟楼邮局两端、时代盛典裙楼亭）；
+- 重檐：墙身体块 `crown: [{ type: 'eave', ov: 2.4, depth: 3.5, h: 2 }]` + 上一层小体块（`base` = 下层 `top`）`crown: [{ type: 'hip', … }]`（中环广场角楼、省政府屋顶楼阁）；
+- 仿古街区的檐口：`crown: [{ type: 'eave', … }]`；大出挑平屋檐 / 亭式平顶：`{ type: 'slab', ov: 3, h: 1.2, glow: '#ffd08a' }`（希尔顿、钟楼饭店塔屋、皇城海航角亭）。
 需要挂招牌或有明确层数的顶部体量（如信息大厦的玻璃圆筒）建议写成一个 **part**（`base` = 下层 `top`），而不是塔冠。
 
 材质名：`stone`、`white`、`dark`、`metal`、`parapet`、`glassRoof`、`roof`、`granite`、`membrane`，或 `'#rrggbb'`，或 `{color, roughness, metalness, glow}`。
