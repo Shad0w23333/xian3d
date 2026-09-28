@@ -34,9 +34,14 @@ if (!opt.shots.length) {
 const server = await createServer({ root, logLevel: 'error', server: { port: 0, host: '127.0.0.1' } });
 await server.listen();
 const port = server.httpServer.address().port;
+const exe = process.env.CHROME_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
 const browser = await chromium.launch({
+  ...(exe && process.platform !== 'darwin' ? { executablePath: exe } : {}),
   headless: !opt.headed,
-  args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-webgpu'],
+  // macOS 用 Metal GPU；Linux 云端通常无 GPU，改用 SwiftShader 软件渲染（慢，但结果一致）
+  args: process.platform === 'darwin' && !process.env.SWIFTSHADER
+    ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-webgpu']
+    : ['--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const results = [];
 try {
@@ -94,7 +99,22 @@ try {
       logs.push('[shot] ' + e.message);
     }
     fs.mkdirSync(path.dirname(path.resolve(root, out)), { recursive: true });
-    await page.screenshot({ path: path.resolve(root, out) });
+    // 暂停主循环后直接读取 WebGL 画布（shot=1 时 preserveDrawingBuffer 已开启）；失败再退回整页截图
+    let saved = false;
+    try {
+      const url = await page.evaluate(async () => {
+        window.xian.paused = true;
+        await new Promise((r) => setTimeout(r, 200));
+        return window.xian.renderer.domElement.toDataURL('image/png');
+      });
+      if (url && url.startsWith('data:image/png')) {
+        fs.writeFileSync(path.resolve(root, out), Buffer.from(url.split(',')[1], 'base64'));
+        saved = true;
+      }
+    } catch (e) {
+      logs.push('[shot] canvas 读取失败：' + e.message);
+    }
+    if (!saved) await page.screenshot({ path: path.resolve(root, out), timeout: 180000 });
     results.push({ out, seconds: +((Date.now() - t0) / 1000).toFixed(1), ...info, logs: logs.slice(0, 30) });
     await page.close();
   }

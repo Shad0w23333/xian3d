@@ -11,6 +11,7 @@ export const MODULES = [
   { id: 'qujiang', load: () => import('./qujiang.js') },
   { id: 'heritage', load: () => import('./heritage.js') },
   { id: 'skyline', load: () => import('./skyline.js') },
+  { id: 'huimin', load: () => import('./huimin.js') },
   { id: 'airports', load: () => import('./airports.js') },
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'vegetation', load: () => import('./vegetation.js') },

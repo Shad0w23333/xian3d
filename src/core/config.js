@@ -11,6 +11,13 @@ export const IMAGERY_PROVIDERS = {
     gcj: true,
     attribution: '影像 © 高德地图 AutoNavi',
   },
+  local: {
+    name: '本地离线高清',
+    local: true, // 由 TilePack 提供（public/tiles/*.xtp），不联网
+    maxZoom: 19,
+    gcj: false, // 管线中已纠偏
+    attribution: '影像：本地离线瓦片包（仅供个人本地使用）',
+  },
   esri: {
     name: 'Esri 卫星',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',

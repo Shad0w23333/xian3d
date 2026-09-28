@@ -330,6 +330,10 @@ export class Terrain {
     const q = this.quality.maxTileZoom;
     const onlineOn = this.imagery.online.enabled;
     if (!inMain) return 13;
+    // 本地离线高清包：比在线再细一级（包里有 z19/z20 时，“高”画质到 19、“超高”到 20），
+    // 但只细分到本块范围内包里实际有的最深一级；包只有粗级（全域 z15）或没覆盖的地方按无在线影像时的深度
+    const im = this.imagery;
+    if (onlineOn && im.provider.local && im.pack) return Math.min(q + 1, Math.max(im.pack.coverZ(n.z, n.x, n.y), Math.min(q, 16)));
     return onlineOn ? q : Math.min(q, 16);
   }
 
@@ -370,6 +374,8 @@ export class Terrain {
       }
       if (ready) {
         if (n.mesh) n.mesh.visible = false;
+        // 中间节点仍在使用（父节点细分前要求子网格齐全）：记为活跃，免得 _gc 每 30 帧销毁后又立刻重建
+        n.lastVisible = this.frame;
         for (const c of n.children) this._select(c, cam, true);
         return;
       }
@@ -390,6 +396,9 @@ export class Terrain {
 
   _gc() {
     const keepFrames = 240;
+    // 引用的是旧影像源的在线瓦片（切换影像源之后）
+    const pid = this.imagery.providerId + ':';
+    const stale = (n) => n.srcKey && n.srcKey !== 'none' && !n.srcKey.startsWith('m:') && !n.srcKey.startsWith(pid);
     const walk = (n) => {
       if (n.children) {
         for (const c of n.children) walk(c);
@@ -398,7 +407,10 @@ export class Terrain {
           if (this.frame - Math.max(...n.children.map((c) => c.lastVisible)) > keepFrames) n.children = null;
         }
       }
-      if (n.mesh && !n.mesh.visible && this.frame - n.lastVisible > keepFrames && n.parent) this._dispose(n);
+      if (n.mesh && !n.mesh.visible) {
+        if (this.frame - n.lastVisible > keepFrames && n.parent) this._dispose(n);
+        else if (stale(n)) this._refreshTexture(n, 1e9, false); // 隐藏的中间节点仍引用旧影像源纹理：换掉（不发请求），让旧纹理能被回收
+      }
     };
     for (const r of this.roots) walk(r);
   }
@@ -542,16 +554,14 @@ export class Terrain {
   }
 
   /** 选择当前最清晰的可用影像：在线瓦片（自身或祖先）或内置底图 */
-  _refreshTexture(n, dist) {
+  _refreshTexture(n, dist, request = true) {
     const im = this.imagery;
     const onlineMax = im.online.maxZoom;
     let best = null; // {tex, level(越大越清晰), bounds, key}
     if (im.online.enabled || im.cache.size) {
       const zTop = Math.min(n.z, onlineMax);
-      if (im.online.enabled && zTop >= 10) {
-        const s = n.z - zTop;
-        im.request(zTop, n.x >> s, n.y >> s, dist / Math.max(1, n.size));
-      }
+      const prio = dist / Math.max(1, n.size);
+      let want = request && im.online.enabled; // 还需要为本块请求一级影像
       for (let z = zTop; z >= 9; z--) {
         const s = n.z - z;
         const ax = n.x >> s, ay = n.y >> s;
@@ -560,6 +570,12 @@ export class Terrain {
           const bb = tileWorldBounds(z, ax, ay);
           best = { tex, mpp: (bb.x1 - bb.x0) / 256, bounds: bb, key: `${im.providerId}:${z}/${ax}/${ay}` };
           break;
+        }
+        // 请求最深一级尚未失败的影像：本地包缺这一级时 request 会同步记为失败，继续向上请求祖先
+        // （否则包里只有 z17 的地方，z18+ 叶子在切换影像源后再没人请求 z17）
+        if (want && z >= 10 && !im.isFailed(z, ax, ay)) {
+          im.request(z, ax, ay, prio);
+          if (!im.isFailed(z, ax, ay)) want = false;
         }
       }
     }

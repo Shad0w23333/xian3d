@@ -154,7 +154,7 @@ function preprocess(ctx, P) {
         }
       }
     }
-    if (!skip[i] && ex && ex.test(ax, az, 'buildings')) {
+    if (!skip[i] && ex && ex.test(ax, az, 'buildings', P.heightDm[i] * 0.1)) {
       skip[i] = 1;
       nEx++;
     }

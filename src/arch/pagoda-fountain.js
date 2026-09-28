@@ -35,10 +35,10 @@ float jetK(float t, float type, float u, float v, float ph, out float scene) {
   float fade = smoothstep(0.0, 1.6, st) * (1.0 - smoothstep(10.6, 12.0, st));
   float k;
   if (scene < 0.5) k = 0.55 + 0.45 * sin(t * 2.0);
-  else if (scene < 1.5) k = 0.15 + 0.85 * pow(0.5 + 0.5 * sin(t * 2.6 - u * 16.0), 1.5);
+  else if (scene < 1.5) k = 0.15 + 0.85 * pow(max(0.5 + 0.5 * sin(t * 2.6 - u * 16.0), 0.0), 1.5);
   else if (scene < 2.5) k = 0.12 + 0.88 * smoothstep(-0.35, 0.35, sin(t * 2.4 + ph * 3.14159));
   else if (scene < 3.5) k = 0.2 + 0.8 * (0.5 + 0.5 * sin(t * 2.8 - length(vec2((u - 0.5) * 5.0, v * 1.2)) * 4.0));
-  else if (scene < 4.5) k = 0.2 + 0.8 * pow(0.5 + 0.5 * sin(t * 1.6 + v * 2.2), 2.0);
+  else if (scene < 4.5) k = 0.2 + 0.8 * pow(max(0.5 + 0.5 * sin(t * 1.6 + v * 2.2), 0.0), 2.0);
   else k = 0.82 + 0.18 * sin(t * 5.0 + ph * 6.28);
   // 拱喷在 2、4 段最活跃，主喷在 0、5 段冲高
   if (type > 0.5 && type < 1.5) k *= (scene > 1.5 && scene < 2.5) || (scene > 3.5 && scene < 4.5) ? 1.0 : 0.45;

@@ -341,7 +341,7 @@ export function lightBeams(ctx, pts, { h = 320, color = 0xffd9a0 } = {}) {
       void main() {
         #include <logdepthbuf_fragment>
         float t = vY / uH;
-        float edge = pow(abs(dot(normalize(vN), normalize(vV))), 1.6);
+        float edge = pow(clamp(abs(dot(vN / max(length(vN), 1e-4), vV / max(length(vV), 1e-4))), 0.0, 1.0), 1.6);
         float a = (1.0 - t) * (1.0 - t) * edge * smoothstep(0.35, 0.8, uNight) * 0.55;
         gl_FragColor = vec4(uColor * a * 1.6, a);
       }`,

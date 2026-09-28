@@ -702,7 +702,8 @@ export function floodlit(material, opts = {}) {
           #ifdef USE_INSTANCING
             fn = mat3( instanceMatrix ) * fn;
           #endif
-          vFloodN = normalize( mat3( modelMatrix ) * fn );
+          vFloodN = mat3( modelMatrix ) * fn;
+          vFloodN /= max( length( vFloodN ), 1e-6 );
         }`
       );
     shader.fragmentShader = shader.fragmentShader
@@ -720,7 +721,7 @@ export function floodlit(material, opts = {}) {
         {
           float fh = clamp( ( vFloodW.y - uFloodBase ) / uFloodHeight, 0.0, 1.0 );
           float prof = mix( 1.0, uFloodTop, fh ) * smoothstep( -1.5, 0.5, vFloodW.y - uFloodBase );
-          vec3 fN = normalize( vFloodN );
+          vec3 fN = vFloodN / max( length( vFloodN ), 1e-4 ); // 插值法线可能为 0（双面薄片），不能直接 normalize
           float face = 1.0 - uFloodUp * max( fN.y, 0.0 ) + 0.35 * max( -fN.y, 0.0 );
           totalEmissiveRadiance += diffuseColor.rgb * uFloodColor * ( uFloodStrength * uNight * prof * face );
         }`
