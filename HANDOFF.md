@@ -194,4 +194,4 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 - **高德深度接入**：`tools/amap_fetch.py metro|district|place|all` + merge → `public/data/amap_extra.json`；`amapinfo` 模块（行政区界、街道、商圈、高德地铁线，面板开关）。需要用户自己的 Web 服务 Key，云端网络访问不了高德。
 - **城墙**：18 座门 65 孔券洞真实贯通墙体（`GATE_HOLES`）；西南圆形角台重做（资料与影像均为西南角圆、其余方角）；魁星楼移到文昌门西侧。
 - **专题**：路名（近处沿路显示）、小区名与边界、建筑 12 类分类高亮（B）、一键俯视（V）；`src/core/{roadnames,estates,thematic}.js`、`src/arch/bld-class.js`。
-- 待核：约 30 个地标坐标为 estimated；下沉广场深度/尺寸多为估计；国瑞 IFC 实高 350 m（sky-data 为 330）。
+- 待核：约 30 个地标坐标为 estimated；下沉广场深度/尺寸多为估计；skyline.json 原始数据里国瑞 IFC 为 330 m（精建模型已按 350 m）。
