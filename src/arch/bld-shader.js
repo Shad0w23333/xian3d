@@ -21,6 +21,8 @@ const VERT_PARS = /* glsl */ `
 uniform highp sampler2D uBld;
 uniform float uDrawDist;
 uniform vec4 uHiRect;   // 已由近景小块接管的 1 km 小块范围（含端点，小块坐标）；远景在其中的建筑塌缩
+uniform highp sampler2D uCls;   // 分类高亮：每栋 1 texel（R8，类别编号），每行 1024 栋
+flat varying float vCls;
 varying vec3 vWPos;
 varying vec3 vFac;
 flat varying vec4 vB0;
@@ -52,6 +54,7 @@ vB0 = texelFetch(uBld, bldT, 0);
 vB1 = texelFetch(uBld, bldT + ivec2(1, 0), 0);
 vB2 = texelFetch(uBld, bldT + ivec2(2, 0), 0);
 vB3 = texelFetch(uBld, bldT + ivec2(3, 0), 0);
+vCls = texelFetch(uCls, ivec2(bldId & 1023, bldId >> 10), 0).r * 255.0;
 vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
 // 超出绘制距离的整栋建筑塌缩成退化三角形
 if (distance(cameraPosition.xz, vB3.xy) - vB3.z > uDrawDist) transformed = vec3(0.0);
@@ -67,6 +70,9 @@ const FRAG_PARS = /* glsl */ `
 uniform float uTime;
 uniform float uNight;
 uniform vec4 uLit;   // 亮灯率：x 住宅 y 办公 z 商业；w 夜间开灯系数
+uniform float uClsOn;        // 分类高亮开关（0/1）
+uniform vec4 uClsCol[12];    // 类别色（线性），a=1 选中高亮，a=0 灰化
+flat varying float vCls;
 varying vec3 vWPos;
 varying vec3 vFac;
 flat varying vec4 vB0;
@@ -663,6 +669,22 @@ float bldAOS = 1.0;
   bldAO = ao;
   bldAOS = mix(1.0, ao, 0.7);
   bldEmis = emi;
+  // ===== 分类高亮（专题图）：选中类别按类别色着色（屋面满色、立面保留少量细节），其余灰化 =====
+  if (uClsOn > 0.5) {
+    vec4 cc = uClsCol[clamp(int(vCls + 0.5), 0, 11)];
+    float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    bool roofF = abs(Nw.y) >= 0.6;
+    if (cc.a > 0.5) {
+      vec3 tc = cc.rgb * (roofF ? 1.0 : 0.8) * (0.85 + 0.6 * lum);
+      diffuseColor.rgb = mix(diffuseColor.rgb, tc, roofF ? 0.94 : 0.72);
+      bldEmis = bldEmis * 0.35 + cc.rgb * (0.03 + 0.28 * uNight) * (roofF ? 1.0 : 0.7);
+    } else {
+      diffuseColor.rgb = vec3(0.1 + 0.35 * lum);
+      bldEmis *= 0.08;
+    }
+    roughnessFactor = max(roughnessFactor, 0.75);
+    metalnessFactor = 0.0;
+  }
 }
 `;
 
@@ -676,6 +698,10 @@ export function createFacadeMaterials(ctx, dataTex) {
     uDrawDist: { value: 16000 },
     uHiRect: { value: new THREE.Vector4(1e6, 1e6, -1e6, -1e6) },
     uLit: { value: new THREE.Vector4(0.6, 0.4, 0.8, 0) },
+    // 分类高亮（专题图）：默认 1×1 空纹理，开启时由 buildings 模块填充
+    uCls: { value: createClassTexture(new Uint8Array(1), 1, 1) },
+    uClsOn: { value: 0 },
+    uClsCol: { value: Array.from({ length: 12 }, () => new THREE.Vector4(0.6, 0.6, 0.6, 1)) },
   };
   const make = (hi) => {
     const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0, flatShading: true });
@@ -685,6 +711,9 @@ export function createFacadeMaterials(ctx, dataTex) {
       shader.uniforms.uDrawDist = shared.uDrawDist;
       shader.uniforms.uHiRect = shared.uHiRect;
       shader.uniforms.uLit = shared.uLit;
+      shader.uniforms.uCls = shared.uCls;
+      shader.uniforms.uClsOn = shared.uClsOn;
+      shader.uniforms.uClsCol = shared.uClsCol;
       shader.uniforms.uTime = ctx.uniforms.uTime;
       shader.uniforms.uNight = ctx.uniforms.uNight;
       shader.vertexShader = shader.vertexShader
@@ -701,11 +730,21 @@ export function createFacadeMaterials(ctx, dataTex) {
           '#include <aomap_fragment>\nreflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, vec3(0.2126, 0.7152, 0.0722))), 0.5) * bldAO * bldIndK;\nreflectedLight.indirectSpecular *= bldAOS;'
         );
     };
-    m.customProgramCacheKey = () => (hi ? 'xian-bld-hi-v1' : 'xian-bld-lo-v1');
+    m.customProgramCacheKey = () => (hi ? 'xian-bld-hi-v2' : 'xian-bld-lo-v2');
     m.name = hi ? '通用建筑立面（近景）' : '通用建筑立面（远景）';
     return m;
   };
   return { lo: make(false), hi: make(true), uniforms: shared };
+}
+
+/** 分类纹理（R8，每栋 1 texel，值为类别编号） */
+export function createClassTexture(data, width, height) {
+  const t = new THREE.DataTexture(data, width, height, THREE.RedFormat, THREE.UnsignedByteType);
+  t.minFilter = t.magFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  t.unpackAlignment = 1;
+  t.needsUpdate = true;
+  return t;
 }
 
 /** 数据纹理（RGBA32F） */
