@@ -161,6 +161,47 @@ def ellipse(cx, cz, a, b, rot=0.0, n=40):
     return ccw_flat(out)
 
 
+_ROADS = None
+
+
+def road_rot(x, z, r=120):
+    """最近的主要道路（非匝道/小路）走向；下沉广场长边顺着街道"""
+    global _ROADS
+    if _ROADS is None:
+        from shapely.geometry import LineString
+        R = json.loads((ROOT / 'public/data/roads.json').read_text('utf-8'))
+        keep = {i for i, c in enumerate(R['classes']) if c in ('primary', 'secondary', 'tertiary', 'trunk', 'pedestrian', 'residential', 'unclassified')}
+        segs = []
+        for f in R['features']:
+            if f['c'] not in keep:
+                continue
+            q = f['p']
+            for i in range(0, len(q) - 2, 2):
+                segs.append(LineString([(q[i], q[i + 1]), (q[i + 2], q[i + 3])]))
+        _ROADS = (segs, STRtree(segs))
+    segs, tree = _ROADS
+    P = Point(x, z)
+    idx = [int(i) for i in tree.query(P.buffer(r))]
+    if not idx:
+        return None
+    j = min(idx, key=lambda i: segs[i].distance(P))
+    (ax, az), (bx, bz) = segs[j].coords
+    a = math.atan2(bz - az, bx - ax)
+    return (a + math.pi / 2) % math.pi - math.pi / 2
+
+
+# 已知走向（影像核对）：南门两翼顺护城河东西向；张家堡四象限正南北
+SUNKEN_ROT = {'榴园': 0.0, '合生汇': 0.0, '未央城市广场': 0.0}
+
+
+def _sunken_rot(name, x, z, fp):
+    for k, v in SUNKEN_ROT.items():
+        if k in name:
+            return v
+    r = road_rot(x, z)
+    return r if r is not None else local_rot(fp, x, z)
+
+
 def local_rot(fp, x, z):
     """附近最大建筑的最小外接矩形方向（合成矩形轮廓时顺着街区走向）"""
     best = None
@@ -558,7 +599,7 @@ def main():
         out['sunken'].append({
             'key': key_of('sk' + name), 'name': name, 'x': round(x, 1), 'z': round(z, 1),
             'L': round(min(max(L, 16), 260), 1), 'W': round(min(max(W, 12), 200), 1), 'depth': round(min(max(dep, 3), 16), 1),
-            'rot': round(local_rot(fp, x, z), 4),
+            'rot': round(_sunken_rot(name, x, z, fp), 4),
             'round': bool(re.search(r'圆|环形', shape)),
             'terrace': bool(re.search(r'退台|阶梯|台阶|看台|多层', shape + feat)),
             'water': bool(re.search(r'水|喷泉|镜面', feat)),
