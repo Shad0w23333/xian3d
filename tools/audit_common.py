@@ -74,7 +74,8 @@ def load_overture_buildings(only_named_or_measured=False):
                 r = s.get('record_id') or ''
                 break
         rid.append(r)
-    return dict(geom=g, h=h[ki], fl=fl[ki], name=[names[i] for i in ki], cls=[cls[i] for i in ki], rid=rid)
+    ids = t.column('id').to_pylist()
+    return dict(geom=g, h=h[ki], fl=fl[ki], name=[names[i] for i in ki], cls=[cls[i] for i in ki], rid=rid, id=[ids[i] for i in ki])
 
 
 def load_places():

@@ -37,24 +37,70 @@ OUT = ROOT / 'public' / 'data' / 'landmarks2026.json'
 MAX_R = 47000  # 与 skyline 通用高层同样的范围限制
 
 
-# ───────────── 坐标/高度覆盖表（tools/check_coords.py 审计结论；调研清单原值保留不动，在此覆盖） ─────────────
-# 键：调研清单中的 name。字段：lon/lat 新坐标（WGS-84）、rid 强制使用的 Overture/OSM 轮廓（record_id 如 'w123@2' 的 w123）、
-#      h 新高度、skip 跳过（已由手工精建覆盖）、note 依据
+# ───────────── 坐标/高度覆盖表（tools/check_coords.py 审计 + research/refs/dossiers/*.json 逐栋档案；调研清单原值保留，在此覆盖） ─────────────
+# 键：调研清单中的 name。字段：
+#   lon/lat（WGS-84）或 xz（世界坐标）新位置；rid 强制使用的 OSM 轮廓（Overture record_id 去掉 @ 版本）；
+#   rect=[长, 宽, 转角°]（按此尺寸合成轮廓、不去对位现有轮廓；转角按 G.rect 约定：+x 转向 +z 为正）；
+#   h 新高度；skip 不生成（已精建 / 已拆 / 停业 / 不是高层 / 另有表达）；sign_text / sign_color 商场招牌；note 依据
+DOSSIER = 'research/refs/dossiers/'
 OVERRIDE = {
+    # —— 塔楼 ——
     '西安浐灞凯悦酒店（欧亚国际三期商业4号楼）': dict(
         lon=109.01254, lat=34.33135, skip=True,
         note='place.parquet 原值 109.0175,34.33 为 GCJ-02（比纠偏值正好东 454 m、南 152 m）；纠偏后落在 sky-data2 SPECIAL2.hyatt'
              '（6458,−7833）“叠石”精建上，与 chanba/notes.md“欧亚大道×浐河西路西南角”一致；原先按错误坐标在浐河东岸重复生成了一栋'),
     '招商局丝路中心 北塔': dict(
-        rid='w1381177356', note='港务西路×向东路西北、双寨站旁 OSM 同批轮廓 w1381177355–59（2026-09）：以 x≈8461 为轴左右对称的两组'
-                                '“三体式”建筑，西组主塔 w1381177356（45×33 m）'),
-    '招商局丝路中心 南塔': dict(
-        rid='w1381177357', note='同上，东组主塔 w1381177357（45×38 m）；原推测坐标在港兴二路以南 400 m 的 385 m² 小楼上'
-                                '（那里是华润万象汇地块），“南/北塔”实为东西对称的两塔'),
+        note='144 m/31F 有设计方出处；位置未定：双寨站旁 OSM 两个候选方形轮廓 w1381177356/57 东西并列，与“南北对称”描述不符'
+             f'（{DOSSIER}east_west.json），保持调研推测坐标，待影像核对'),
+    '招商局丝路中心 南塔': dict(note='同北塔：坐标未定，保持推测；原先“就近”对上的 385 m² 小楼轮廓已由塔楼平面合理性检查排除，改为合成'),
     '西安安达仕酒店（迈科）': dict(
-        h=85, note='设计 247.4 m/50F，但 2024-03 起停工（高楼迷 2024-03-06 更新“停工”），现状约 20 层；按 20F×4.2 m 取 85 m 现状高度，'
-                   '不再按设计高度立一栋 247 m 的完工塔楼'),
+        xz=(-6632, 7648), h=85,
+        note='设计 247.4 m/50F，但 2022-05 主体约 20 层后停滞（腾讯 2023；高楼迷 2024-04 仍记停工），按 20F×4.2 m 取 85 m 现状高度；'
+             f'位置取 CTBUH 坐标（宗地：锦业一路以南、丈八三路以西、锦业五街以东；{DOSSIER}gaoxin.json）'),
+    '秦商国际中心（天朗·秦商国际总部大厦）1号楼': dict(
+        xz=(-5794, 7521), rect=[52.65, 34.3, 0], h=217,
+        note='CTBUH 217 m/50F；楼书：丈八一路与锦业一路十字西北角地块东侧、标准层 52.65×34.3 m；OSM w1387164542（87×31 m，被标成'
+             f'“永利 212 m”）正落在该地块，塔楼放在其东段（原推测点 (−5930,7497) 偏西约 130 m；{DOSSIER}gaoxin.json）'),
+    '泰信大厦': dict(
+        xz=(-5904, 7654), h=214,
+        note=f'CTBUH 坐标（锦业一路 6 号、永利西侧）214 m/37F（199.9 m 屋面 + 塔冠）；原推测点对上的是中投国际综合体（{DOSSIER}gaoxin.json）'),
+    '西安皇冠假日酒店': dict(skip=True, note='皇冠假日即陕西信息大厦裙楼内的酒店（core_south.json），信息大厦已精建，不再单列一栋 80 m 楼'),
+    '长安国际中心（南关正街）': dict(
+        skip=True, note='实际为永宁门外西南的 2×2 四塔组团（108.9413,34.2492，王府井百货永宁门店裙楼上），22 层；四座塔在 buildings.bin 中'
+                        '已有轮廓，由 tools/check_heights.py 的 POINT_FIX 按 22 层改高，这里不再在错误位置另立一栋'),
+    '钟楼饭店': dict(skip=True, note='7 层长板楼（新浪 2022 实拍“一共是七层”），不是高层；buildings.bin 中该楼由 POINT_FIX 按 7 层改高'),
+    '陕西省人民政府（新城大院）': dict(skip=True, note='约 12 层东西向长板楼（照片计数，非官方），由 POINT_FIX 按 12 层改 buildings.bin 高度'),
+    '金花豪生国际大酒店': dict(h=75.6, note='21 层（携程/百科摘要），按 21×3.6 m 取 75.6 m（原 70 m 为估计）'),
+    '陕铁大厦': dict(
+        lon=108.968439, lat=34.157468, h=99.8,
+        note='99.8 m/23F（商策网招商稿，二手）；位于东长安街×神舟四路十字西北角（路口 108.9697,34.1561），取路口西北侧 54×45 m 候选轮廓'
+             f'（Overture 5e076029，未证实）；原推测坐标 108.99,34.147 相差约 2 km（{DOSSIER}east_west.json）'),
+    '中国国际丝路中心大厦（绿地）': dict(
+        lon=108.768209, lat=34.258591,
+        note='现状核心筒约 300 m/61 层（2024-03 官方回复）；位置取 buildings.bin 该处 71 m 局部块（沣东大道×复兴大道东南角），'
+             '原推测点偏开约 30 m 导致旧块与新塔并存'),
+    # —— 商场 ——
+    '百盛购物中心(西大街/时代盛典)': dict(skip=True, note='西大街百盛 2018 年底终止经营（搜狐）；楼体（时代盛典大厦）留给通用建筑，不再挂“百盛”招牌'),
+    '群光广场': dict(sign_text='华侨印象', sign_color='#ffffff', note='已更名“华侨印象”（core_south 档案）；招牌颜色未查到，用白色'),
+    '西安西咸吾悦广场': dict(sign_color='#1d3f8c', note='照片中招牌为深蓝色字（east_west 档案；颜色值为目测近似，未取色），malls.json 记为红色有误'),
+    '盛大时代广场': dict(skip=True, note='2025 年起拆除改造（高楼迷 2025-04/05，gaoxin 档案），不再按商场建'),
 }
+
+# 调研清单里没有、逐栋档案补充的已建/现状塔楼（与 towers.json 同字段）
+EXTRA_TOWERS = [
+    dict(name='华润国际广场T1', lon=108.826087, lat=34.291173, height_m=187, floors=41, status='completed', coord_source='dossier',
+         note='187 m/41F（百科摘要），西咸万象城·三桥站上盖；OSM w969242842 仅 49×16 m 不可用，按标准层约 2000 m² 合成 50×40 m',
+         _rect=[50, 40, 0]),
+    dict(name='苏陕国际金融中心 塔1', lon=None, lat=None, _xz=(9827.4, -5754.8), height_m=132.7, floors=32, status='completed',
+         coord_source='dossier', form='烂尾塔（幕墙未闭合）',
+         note='原规划 153.4 m/37F，2023-06—2024-08 因限高拆降至 32 层（拍卖公告），按原层高折算 153.4×32/37 ≈ 132.7 m；位置为 Overture ML 候选'
+              ' a5834407（35×34 m，长边自正东逆时针 17°），未经影像确认', _rect=[35, 34, -17]),
+    dict(name='苏陕国际金融中心 塔2', lon=None, lat=None, _xz=(9916.4, -5718.8), height_m=132.7, floors=32, status='completed',
+         coord_source='dossier', form='烂尾塔（幕墙未闭合）', note='同塔1；候选 07ab9d29（40×31 m，21°）', _rect=[40, 31, -21]),
+    dict(name='比亚迪西安研发中心', lon=108.84043, lat=34.18185, height_m=200, floors=43, status='completed', coord_source='dossier',
+         note='CTBUH 200 m/43F（2025 完工），亚迪路 2 号；平面尺寸未查到，按 48×40 m 合成（该点 Overture 93.6×90 m 轮廓疑为裙房）',
+         _rect=[48, 40, 0]),
+]
 
 
 def load_list(name):
@@ -349,6 +395,10 @@ def main():
     def pos(it):
         n = it.get('name')
         ov = OVERRIDE.get(n) or {}
+        if 'xz' in ov:
+            return tuple(ov['xz']), 'fix'
+        if it.get('_xz'):
+            return tuple(it['_xz']), it.get('coord_source') or 'dossier'
         if 'lon' in ov:
             return project(ov['lon'], ov['lat']), 'fix'
         if ov.get('rid') and ov['rid'] in fp.by_rid:
@@ -392,9 +442,11 @@ def main():
         return None, 'synth'
 
     # —— 塔楼 ——
-    for it in load_list('towers'):
+    for it in load_list('towers') + EXTRA_TOWERS:
         name = it.get('name')
         ov = OVERRIDE.get(name) or {}
+        if it.get('_rect') and 'rect' not in ov:
+            ov = dict(ov, rect=it['_rect'])
         if not name or it.get('already_modeled') or ov.get('skip') or str(it.get('status', 'open')).startswith('under') and not re.search(r'封顶|topped', str(it.get('status'))):
             continue
         xz, cs = pos(it)
@@ -409,7 +461,9 @@ def main():
             continue
         sz = it.get('footprint_size_m')
         want = (num(sz[0]) or 40) * (num(sz[1]) or 40) if isinstance(sz, list) and len(sz) == 2 else None
-        if ov.get('rid') and ov['rid'] in fp.by_rid:
+        if ov.get('rect'):
+            i, how = None, 'fix'
+        elif ov.get('rid') and ov['rid'] in fp.by_rid:
             i, how = fp.by_rid[ov['rid']], 'fix'
         else:
             i, how = match(it, x, z, want, tower_min_area(h), 45)
@@ -419,10 +473,15 @@ def main():
         key = key_of(name)
         if i is not None:
             pts = poly_out(fp.polys[i])
+        elif ov.get('rect'):
+            w, d, rdeg = ov['rect']
+            pts = rect(x, z, w, d, math.radians(rdeg))
         else:
             w, d = (num(sz[0]) or 42, num(sz[1]) or 42) if isinstance(sz, list) and len(sz) == 2 else (42, 42)
             pts = rect(x, z, min(w, 90), min(d, 90), local_rot(fp, x, z))
         crown, roof = crown_from(it, key, h)
+        if re.search(r'烂尾|停工', str(it.get('form') or '')) or ov.get('h') and str(it.get('status', '')).startswith('stalled'):
+            crown, roof = None, {}   # 烂尾/停工现状：不加发光塔冠
         spec = {'key': key, 'name': name, 'pts': pts, 'h': round(h, 1), 'style': style_from(it, key, 'tower'), 'src': how}
         if crown:
             spec['crown'] = crown
@@ -440,8 +499,11 @@ def main():
     # —— 商场 ——
     for it in load_list('malls'):
         name = it.get('name')
-        if not name or it.get('already_modeled') or str(it.get('status', 'open')).startswith('under'):
+        ov = OVERRIDE.get(name) or {}
+        if not name or it.get('already_modeled') or ov.get('skip') or str(it.get('status', 'open')).startswith('under'):
             continue
+        if ov.get('sign_text') or ov.get('sign_color'):
+            it = dict(it, short_sign=ov.get('sign_text') or it.get('short_sign'), sign_color=ov.get('sign_color') or it.get('sign_color'))
         xz, cs = pos(it)
         if not xz or math.hypot(*xz) > MAX_R or dup(name, *xz):
             continue

@@ -112,15 +112,15 @@ export function towerSpecs2() {
   L.push({
     key: 'meridien', name: '西安浐灞艾美酒店', d: 'chanba',
     // 147 m / 32F，2017-11 开业；两河交汇半岛尖端，蓝灰玻璃幕墙、转角全玻璃
-    pts: FP2.meridienT, h: 147, crown: { h: 11, color: '#ffe6c2', colW: 2.4 },
+    // 原 11 m 暖色塔冠与“LE MERIDIEN 艾美”楼顶字均无照片/文字依据（research/refs/dossiers/east_west.json）：去掉，平顶
+    pts: FP2.meridienT, h: 147,
     style: { tint: '#3b5566', spd: '#8e9aa4', floorH: 4.0, colW: 1.5, spandrel: 0.22, mullW: 0.1, lit: 0.5, seed: 111 },
-    signs: [{ text: 'LE MERIDIEN 艾美', color: '#ffffff', h: 4.8, faces: 2 }],
     podium: { pts: FP2.meridienP, h: 18, style: { tint: '#35414b', spd: '#c9c2b6' } },
   });
   L.push({
     key: 'icc', name: '欧亚国际 ICC', d: 'chanba',
-    // 欧亚国际一期 27F 办公，约 120 m【推测】（欧亚大道×浐河西路西北角）
-    pts: FP2.icc, h: 120, crown: { h: 6, color: '#dfe9ff' },
+    // 欧亚国际一期 27F 办公（楼盘资料：27 层、标准层高 3.6 m；米数无出处，原 120 m 为推测）：27×3.6 ≈ 97 m + 屋顶 → 98 m
+    pts: FP2.icc, h: 98, crown: { h: 6, color: '#dfe9ff' },
     style: { tint: '#3e5667', spd: '#5f6a73', floorH: 4.1, colW: 1.5, spandrel: 0.26, lit: 0.38, mode: 2, seed: 112 },
     signs: [{ text: '欧亚国际', color: '#ffffff', h: 4.6, faces: 2 }],
   });
@@ -147,7 +147,7 @@ export function mallSpecs2() {
     // 招牌挂在东北块朝西北、正对入口缺口的那面墙（约 14.7 m）；同块更长的西北向边（22.6 m）是内院墙面，不在入口处
     { key: 'wy168d', d: 'weiyang', pts: WY168_T3[1], h: 24, style: { tint: '#3b4a57', spd: '#e6e3dc', floorH: 4.2 },
       signs: [{ text: 'WE YOUNG 168', h: 2.6, faces: F(faceNear(WY168_T3[1], -1, -1, ...WY168_GATE)) }] },
-    // 锦江国际酒店（原凯宾斯基，欧亚经济论坛永久会址）：三翼曲线形 5 层，约 24 m；中部穹顶会议厅
+    // 锦江国际酒店（原凯宾斯基，欧亚经济论坛永久会址）：三翼曲线形 5 层（huodongjia 场地资料；米数未查到，按 5 层推 24 m）；中部穹顶会议厅
     { key: 'jinjiang', d: 'chanba', pts: FP2.jinjiang, h: 24,
       style: { mode: 7, tint: '#34424c', spd: '#d8cfbf', floorH: 4.6, colW: 2.4, spandrel: 0.45 },
       signs: [{ text: '锦江国际酒店', h: 3.2, faces: 1, color: '#f4e4c6' }],

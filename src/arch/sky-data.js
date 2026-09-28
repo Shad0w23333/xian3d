@@ -61,7 +61,8 @@ export function towerSpecs() {
     crown: { h: 15, color: '#d6e6ff', colW: 2.4 },
     roof: { helipad: true, helipadY: 2 },
     style: { tint: '#2f4455', spd: '#2b343c', floorH: 4.3, colW: 1.5, spandrel: 0.22, band: 14, lit: 0.4, seed: 4 },
-    signs: [{ text: '中国中铁', color: '#e8392c', h: 6, faces: 2 }],
+    // 塔冠字：CTBUH 2020 照片为“新华保险”（新华保险购置 21 层；research/refs/dossiers/gaoxin.json），原写“中国中铁”无依据
+    signs: [{ text: '新华保险', color: '#ffffff', h: 6, faces: 1 }],
   });
   L.push({
     key: 'mkT', name: '迈科中心',
@@ -76,14 +77,19 @@ export function towerSpecs() {
   });
   L.push({
     key: 'hyatt', name: '西安君悦酒店',
-    pts: FP.hyatt, h: 155, crown: { h: 8, color: '#ffd9a8' },
+    // 高度：CTBUH 161 m/34F（OSM 155.35、开发商口径 165；取 CTBUH 建筑高度）
+    pts: FP.hyatt, h: 161, crown: { h: 8, color: '#ffd9a8' },
     style: { tint: '#485861', spd: '#7a6d5c', floorH: 3.9, colW: 1.6, spandrel: 0.34, lit: 0.55, seed: 6 },
     signs: [{ text: '君悦酒店', color: '#f4e4c6', h: 4.6, faces: 1, serif: true }],
   });
   L.push({
     key: 'yongli', name: '陕西永利国际金融中心',
-    pts: FP.yongli, h: 212, crown: { h: 10, color: '#e2ecff' },
+    // 位置：地址“锦业一路与丈八一路十字西南角”、CTBUH 坐标均指向锦业一路以南的 OSM w772926964（75.5×65.3 m，
+    //   东侧 31×64 m 主塔 + 西侧 45×22 m 的 8 层辅楼）；原 FP.yongli（−5812,7521，锦业一路以北）实为秦商国际中心 1 号楼地块
+    //   （OSM w1387164542 把“永利 212 m”标错了楼；research/refs/dossiers/gaoxin.json）。212 m/46F（开发/鲁班奖口径，CTBUH 211 m）
+    pts: G.rect(-5788.5, 7622, 31, 64, 0, { chamfer: 1.5 }), h: 212, crown: { h: 10, color: '#e2ecff' },
     style: { tint: '#3c576b', spd: '#4d5964', floorH: 4.5, colW: 1.5, spandrel: 0.25, band: 12, lit: 0.36, seed: 7 },
+    podium: { pts: [-5804, 7624.4, -5804, 7646.2, -5848.6, 7646, -5849, 7623.8], h: 32 },
   });
   L.push({
     key: 'yongwei', name: '永威·时代中心',
@@ -111,7 +117,7 @@ export function towerSpecs() {
     pts: [-5202, 5971, -5170, 5943, -5118, 5942, -5118, 6000, -5170, 5999], h: 217,
     crown: { h: 12, color: '#ffe0a8', colW: 2.4 },
     style: { tint: '#3b5c72', spd: '#6b7883', floorH: 4.3, colW: 1.5, spandrel: 0.26, band: 12, lit: 0.36, mode: 2, seed: 11 },
-    signs: [{ text: '延长石油', color: '#ffffff', h: 6, faces: 2 }],
+    // 楼顶字“延长石油”无照片依据（参考图疑为“秦农银行”，未核实）：先不挂
     podium: { pts: [-5118, 5940, -4968, 5940, -4968, 6002, -5118, 6002], h: 36 },
   });
   L.push({
@@ -123,7 +129,8 @@ export function towerSpecs() {
     style: { tint: '#476679', spd: '#5b6771', floorH: 4.2, colW: 1.5, spandrel: 0.28, band: 12, lit: 0.36, seed: 13 },
   });
   L.push({
-    key: 'dxgc', name: '陕西电信广场', pts: FP.dxgc, h: 160, crown: { h: 7, color: '#cfe0ff' },
+    // 高度：CTBUH 180 m/36F（2004 年竣工，即“陕西省电信网管大厦”）；OSM 160 m/50 层为旧值
+    key: 'dxgc', name: '陕西电信广场', pts: FP.dxgc, h: 180, crown: { h: 7, color: '#cfe0ff' },
     style: { tint: '#3f5a70', spd: '#6e7881', floorH: 3.9, colW: 1.6, spandrel: 0.3, lit: 0.36, seed: 14 },
     signs: [{ text: '中国电信', color: '#3f7fe8', h: 5, faces: 2 }],
   });
@@ -195,7 +202,9 @@ export const SPECIAL = {
   aoti: { stadium: { cx: 6965, cz: -13052 }, arena: { cx: 7330, cz: -12805, r: 105 }, aqua: { cx: 7460, cz: -13160, w: 130, d: 100, rot: 0 } },
   north: { cx: -780, cz: -13011, rot: -16.8 * D, w: 192, L: 533 },
   conf: [
-    { cx: 8812, cz: -8300, side: 210, rot: 30 * D, name: '丝路国际会议中心' },
+    // 丝路国际会议中心：OSM w808104181（209×205 m）质心 (8819,−8288)、外接矩形边方向 34.6°（G.rect 约定：+x 转向 +z 为正，
+    //   即档案里“长轴自正东逆时针 55°”的正方形等价角）；主体高 51.05 m（同济设计官网），buildConference 顶部圆鼓顶约 50 m
+    { cx: 8819, cz: -8288, side: 208, rot: 34.6 * D, name: '丝路国际会议中心' },
     { cx: 8147, cz: -8743, side: 200, rot: 32 * D },
   ],
   igc1: { pts: G.rect(140, -7752, 52, 52, 0, { chamfer: 3 }), facadeTo: 64, slabTo: 128, coreTo: 140 },

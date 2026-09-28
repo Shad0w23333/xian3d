@@ -209,7 +209,9 @@ def audit_landmarks(ix):
             row = dict(list=lst, name=name, cs=cs, src=src, x=round(x, 1), z=round(z, 1), cands=cands[:8])
             if fix:
                 fx = fz = None
-                if 'lon' in fix:
+                if 'xz' in fix:
+                    fx, fz = fix['xz']
+                elif 'lon' in fix:
                     fx, fz = project(fix['lon'], fix['lat'])
                 elif fix.get('rid'):
                     j = [k for k, r in enumerate(ix.arid) if r.split('@')[0] == fix['rid']]
@@ -248,7 +250,7 @@ def main():
         fxs = ''
         if fx:
             fxs = '  → 覆盖' + (f"({fx['x']:.0f},{fx['z']:.0f}) 移动 {fx['moved']} m" if fx['x'] is not None else '')
-            fxs += (f" 高度 {fx['h']} m" if fx['h'] else '') + (' 跳过（已精建）' if fx['skip'] else '') + f"：{fx['note'][:60]}"
+            fxs += (f" 高度 {fx['h']} m" if fx['h'] else '') + (' 跳过' if fx['skip'] else '') + f"：{fx['note'][:60]}"
         print(f"- [{r['list']}] {r['name']}  cs={r['cs'][:30]} src={r['src']} 现({r['x']:.0f},{r['z']:.0f})" + fxs)
         if not args.brief:
             for c in r['cands']:

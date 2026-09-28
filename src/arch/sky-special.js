@@ -49,9 +49,9 @@ const ringPts = (cx, cz, r, y, n, a0 = 0) => {
 };
 const flat = (ring) => ring.flatMap((p) => [p[0], p[2]]);
 
-// ================= 陕西广播电视塔（245 m） =================
+// ================= 陕西广播电视塔（设计 245 m，塔总高 249 m：zh.wikipedia / 本地宝“设计高度 245 米，塔总高 249 米”） =================
 // 1987 年建成；塔身白色八棱柱收分，约 147~176 m 为八角形玻璃塔楼（菱形钢框），其上观景檐、小塔楼，
-// 186 m 以上钢桅杆至 245 m。夜间塔楼通亮、塔身竖向灯带、桅杆红色障碍灯。
+// 186 m 以上钢桅杆至 249 m。夜间塔楼通亮、塔身竖向灯带、桅杆红色障碍灯。
 export function buildTVTower(env, { cx, cz, basePts }) {
   const { ctx, fb, solid, detail, mats, beacons } = env;
   const base = groundMin(ctx, basePts);
@@ -100,14 +100,14 @@ export function buildTVTower(env, { cx, cz, basePts }) {
   solid.add(G.annulus(G.circle(cx, cz, 13, n, a0), G.circle(cx, cz, 4, n, a0), y3 + 8.8), mats.white);
   solid.add(loft(ringPts(cx, cz, 11.5, y3 + 8.6, n, a0), ringPts(cx, cz, 13, y3 + 8.8, n, a0), cx, cz), mats.white);
   solid.add(G.cyl(cx, y3 + 8.8, cz, 6.5, 5.5, 6.5, 8), mats.white);
-  // 桅杆 186→245 m
+  // 桅杆 186→249 m
   const m0 = base + 186.8;
   solid.add(G.cyl(cx, m0, cz, 3.0, 2.2, 20, 8), mats.metal);
   solid.add(G.cyl(cx, m0 + 20, cz, 2.2, 1.4, 20, 8), mats.metal);
-  solid.add(G.cyl(cx, m0 + 40, cz, 1.2, 0.35, base + 245 - m0 - 40, 8), mats.metal);
+  solid.add(G.cyl(cx, m0 + 40, cz, 1.2, 0.35, base + 249 - m0 - 40, 8), mats.metal);
   for (const [yy, r] of [[m0 + 12, 4.2], [m0 + 27, 3.4]]) detail.add(G.cyl(cx, yy, cz, r, r, 1.1, 12), mats.white);
   for (let k = 0; k < 10; k++) detail.add(G.box(cx, m0 + 4 + k * 5.2, cz, 3.2, 0.3, 3.2, (k * Math.PI) / 10), mats.metal);
-  beacons.add(cx, base + 245.5, cz, 0, 8);
+  beacons.add(cx, base + 249.5, cz, 0, 8);
   for (const yy of [m0 + 13.2, m0 + 28.2, m0 + 45]) beacons.add(cx + 3, yy, cz, 1, 3);
   for (let i = 0; i < 4; i++) {
     const a = a0 + (i / 4) * TAU;
@@ -115,7 +115,7 @@ export function buildTVTower(env, { cx, cz, basePts }) {
   }
   // 泛光：塔楼暖光点光源（进入光源池）
   ctx.lights.add({ position: new THREE.Vector3(cx, y2 - 6, cz), color: 0xffc98a, intensity: 2500, distance: 90, nightOnly: true, priority: 2 });
-  return { base, top: base + 245 };
+  return { base, top: base + 249 };
 }
 
 // ================= 长安塔（2011 世园会，约 99 m） =================
