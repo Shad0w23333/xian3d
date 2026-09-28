@@ -268,8 +268,9 @@ export default {
       if (!r) continue;
       const F = b.F, hw = HALL_W / 2 - 0.05;
       for (let u = -PLAT_L / 2 + 10; u <= PLAT_L / 2 - 10; u += 24) {
-        signQuad(F(u + 3.2, -hw, 3.1), F(u - 3.2, -hw, 3.1), F(u - 3.2, -hw, 4.3), F(u + 3.2, -hw, 4.3), r);
-        signQuad(F(u - 3.2, hw, 3.1), F(u + 3.2, hw, 3.1), F(u + 3.2, hw, 4.3), F(u - 3.2, hw, 4.3), r);
+        // 从站台看向侧墙时文字从左到右：-v 侧墙左→右为 +u，+v 侧墙左→右为 -u
+        signQuad(F(u - 3.2, -hw, 3.1), F(u + 3.2, -hw, 3.1), F(u + 3.2, -hw, 4.3), F(u - 3.2, -hw, 4.3), r);
+        signQuad(F(u + 3.2, hw, 3.1), F(u - 3.2, hw, 3.1), F(u - 3.2, hw, 4.3), F(u + 3.2, hw, 4.3), r);
       }
       const yC = PLAT_H + LVL_H + SLAB;
       for (const [u, sgn] of [[-HALL_L / 2 + 0.05, 1], [HALL_L / 2 - 0.05, -1]]) {
