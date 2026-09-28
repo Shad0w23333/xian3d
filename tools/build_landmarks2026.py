@@ -519,7 +519,8 @@ def main():
             continue
         x, z = xz
         out['labels'].append({'n': name, 'x': round(x, 1), 'z': round(z, 1), 'cat': 'campus'})
-        lbs = it.get('landmark_buildings') or []
+        lbs = list(it.get('landmark_buildings') or []) + [q for q in it.get('named_buildings_in_campus(overture)') or []
+                                                        if isinstance(q, dict) and re.search(r'图书馆|主楼|中心楼|大礼堂|博物馆|教学楼|科技楼|行政楼', q.get('name') or '')]
         for lb in lbs if isinstance(lbs, list) else []:
             bn = lb.get('name') if isinstance(lb, dict) else str(lb)
             if not bn or re.search(r'校门|大门|牌楼|门$', bn):
@@ -540,7 +541,10 @@ def main():
     out['sunken'] = []
     for it in load_list('sunken'):
         name = it.get('name')
-        if not name:
+        if not name or it.get('confidence') == 'low' or str(it.get('status') or '').startswith('under'):
+            continue
+        # 只做露天下沉广场：地下通道/地下商业街/连廊/地下枢纽没有地面开口；大雁塔北广场由 datang 模块表现
+        if re.search(r'地下通道|地下商业街|地下连|连廊|地下交通枢纽|连通|大雁塔北广场|室内|西安站南广场|陆空TOD', name):
             continue
         xz, cs = pos(it)
         if not xz or math.hypot(*xz) > MAX_R:
