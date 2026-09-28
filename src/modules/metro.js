@@ -539,6 +539,7 @@ export default {
       },
       setLayer(layer, v) {
         if (layer === 'metro') setXray(v);
+        if (layer === 'trains') bodyIM.visible = stripeIM.visible = v; // 画质面板“列车”开关
       },
       dispose() {
         root.traverse((o) => o.geometry?.dispose());
