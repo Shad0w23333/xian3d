@@ -63,10 +63,41 @@ SKY_FIX = [
          why='13466 m² 的整片轮廓（西端塔楼 + 东侧裙楼，236×62 m），不能整体 217 m；塔楼由 sky-data 精建，整片取裙楼 36 m；'
              '原 levels=68 与公开资料 46F 不符'),
 ]
+SKY_FIX += [
+    dict(n='陕西电信广场', h=180, levels=36,
+         why='CTBUH 180 m/36F（2004 年竣工，即“陕西省电信网管大厦”，高新路与科技路十字西南角）；OSM 160 m/50 层为旧值'),
+    dict(n='君悦酒店(迈科中心店)', h=161, levels=34, why='CTBUH 161 m/34F（OSM 155.35；开发商口径 165）'),
+    dict(n='陕西永利国际金融中心', cond={'area_lt': 3000, 'z_lt': 7560}, rename='天朗·秦商国际中心 1号楼', h=217, levels=50,
+         why='锦业一路以北这块 87×31 m 轮廓（OSM w1387164542）是秦商国际中心 1 号楼地块，被错标成“永利 212 m”；永利实际在锦业一路以南'
+             '（地址“锦业一路与丈八一路十字西南角”、CTBUH 坐标，research/refs/dossiers/gaoxin.json）；按秦商 CTBUH 217 m/50F'),
+]
+
+# ───────────── 逐栋档案（research/refs/dossiers/*.json）给出的高度：直接改 buildings.bin ─────────────
+# ovt：Overture building id（可给前缀，多个）；ll/xz：点位（取包含该点的楼，或 r 米内锚点最近、面积 ≥ 300 m² 的楼）
+# 层数换算：办公/酒店/公建 3.6 m/层、商场 4.5 m/层、写字楼“近百米”项目 4.2 m/层（均在 why 中写明）
+POINT_FIX = [
+    dict(n='交通银行陕西省分行大楼', ovt=['12eda0bf'], h=74.4, why='高楼迷网友仰角实测不含塔尖 74.4 m（非官方）；OSM height=20 偏低'),
+    dict(n='皇城大厦（皇城海航酒店）', ll=(108.9503, 34.2644), r=30, h=70.4,
+         why='16 层；网友实测屋顶平台 70.4 m（塔尖 82.9 m 不计）；位置为影像目视（±30 m）'),
+    dict(n='西安钟楼饭店', ovt=['5a869da7'], h=25.2, why='7 层（新浪 2022 实拍“一共是七层”），7×3.6 m'),
+    dict(n='陕西省人民政府办公大楼', ovt=['f85d1586'], h=43.2, why='照片计数约 12 层（非来源值），12×3.6 m'),
+    dict(n='西安金花豪生国际大酒店', ovt=['7cae1c50'], h=75.6, why='21 层（携程/百科摘要），21×3.6 m'),
+    dict(n='银泰城（小寨店）', ovt=['57401636'], h=45.0, why='地上 10 层（商场 4.5 m/层）'),
+    dict(n='陕西奥罗国际大酒店', ovt=['d5f6ad4f'], h=74.1, why='网友实测北侧方塔 74.1 m（南侧弧面 70.5 m），非官方'),
+    dict(n='华侨城·长安国际中心 四塔', ovt=['a873ff83', '3bccb574', '863b36ab', '87701acc'], h=92.4,
+         why='永宁门外西南 2×2 四塔，项目 22 层（“近百米”），22×4.2 m；原 buildings.bin 为 26–56 m 推断值'),
+    dict(n='中国国际丝路中心大厦（现状核心筒）', ll=(108.768209, 34.258591), r=25, h=300.0,
+         why='2024-03 官方回复：核心筒 61 层约 300 m、外框 40 余层；bin 此处为 71 m 局部块'),
+    dict(n='苏陕国际金融中心 塔1', xz=(9827.4, -5754.8), r=25, h=132.7, why='拆降至 32 层，153.4 m×32/37 ≈ 132.7 m；位置为 ML 候选轮廓'),
+    dict(n='苏陕国际金融中心 塔2', xz=(9916.4, -5718.8), r=25, h=132.7, why='同塔1'),
+    dict(n='陕铁大厦', ll=(108.968439, 34.157468), r=25, h=99.8, why='99.8 m/23F（招商稿）；东长安街×神舟四路西北角候选轮廓'),
+]
+
 # Overture 高度黑名单（名称 → 依据）：不参与修正
 OVT_BLACKLIST = {
     '西安公路研究院': 'height=800 为错标',
     '主题楼': 'height=225/45F（108.9253,34.2196 一带学校建筑），查无此超高层，疑为错标（research towers_notes §4）',
+    '陕西永利国际金融中心': 'w1387164542 上的 height=212/46F 属于永利，但该轮廓（锦业一路以北）实为秦商国际中心 1 号楼地块（错标，gaoxin 档案）',
 }
 # 综合体整片轮廓阈值
 BIG_AREA = 8000.0
@@ -160,10 +191,14 @@ def apply_sky_fix(sky, B, P):
     rec = []
     for f in sky['features']:
         for fx in SKY_FIX:
-            if f.get('n') != fx['n']:
+            if f.get('n') != fx['n'] and not (fx.get('rename') and f.get('n') == fx['rename'] and f.get('n_osm') == fx['n']):
                 continue
             c = fx.get('cond') or {}
             if 'area_gt' in c and not (f.get('area', 0) > c['area_gt']):
+                continue
+            if 'area_lt' in c and not (f.get('area', 0) < c['area_lt']):
+                continue
+            if 'z_lt' in c and not (f['z'] < c['z_lt']):
                 continue
             old = (f.get('h_osm', f['h']), f.get('levels_osm', f.get('levels')))
             if fx['h'] == 'bin' and f.get('hsrc') == 'fix':
@@ -181,7 +216,11 @@ def apply_sky_fix(sky, B, P):
             f['h'] = nh
             f['levels'] = fx.get('levels', f.get('levels'))
             f['hsrc'] = 'fix'
-            rec.append(dict(n=f['n'], x=f['x'], z=f['z'], area=f.get('area'), before=old, after=(f['h'], f['levels']), why=fx['why']))
+            if fx.get('rename') and f['n'] != fx['rename']:
+                f['n_osm'] = f['n']
+                f['n'] = fx['rename']
+            rec.append(dict(n=f.get('n_osm', f['n']) + (f' → 改名“{f["n"]}”' if f.get('n_osm') else ''), x=f['x'], z=f['z'], area=f.get('area'),
+                            before=old, after=(f['h'], f['levels']), why=fx['why']))
     return rec
 
 
@@ -381,7 +420,49 @@ def main():
     m = np.isfinite(ref_pub)
     h1[m] = ref_pub[m]
     src[m] = 'public'
-    trusted = np.isin(src, ['public', 'overture', 'skyline']) | measured0
+    # 逐栋档案
+    pf_rec = []
+    ref_dos = np.full(n, np.nan)
+    dos_name = {}
+    Ofull = AC.load_overture_buildings(only_named_or_measured=False) if any('ovt' in q for q in POINT_FIX) else None
+    btree = shapely.STRtree(P)
+    for q in POINT_FIX:
+        hit = []
+        if 'ovt' in q:
+            ks = [k for k, oid in enumerate(Ofull['id']) if any(str(oid).startswith(pfx) for pfx in q['ovt'])]
+            for k in ks:
+                g = Ofull['geom'][k]
+                best, bi = None, 0.0
+                got = False
+                for j in btree.query(g, predicate='intersects'):
+                    inter = shapely.area(shapely.intersection(P[j], g))
+                    if inter >= 0.5 * area[j] and inter >= 0.1 * g.area:
+                        hit.append(int(j))
+                        got = True
+                    elif inter > bi:
+                        best, bi = int(j), inter
+                # 兜底：CMAB 轮廓相对 OSM 错位（屋顶/底座投影差）时，取重叠最大、面积相近、质心 30 m 内的那一栋
+                if not got and best is not None and bi >= 0.15 * g.area and 0.5 <= area[best] / g.area <= 2.0 \
+                        and shapely.distance(shapely.centroid(P[best]), g.centroid) < 30:
+                    hit.append(best)
+        else:
+            x, z = q['xz'] if 'xz' in q else AC.geo.project(*q['ll'])
+            pt = shapely.Point(x, z)
+            hit = [int(j) for j in btree.query(pt, predicate='within')]
+            if not hit:
+                d = np.hypot(B['ax'] - x, B['az'] - z)
+                cand = np.nonzero((d < q.get('r', 25)) & (area >= 300))[0]
+                if len(cand):
+                    hit = [int(cand[np.argmin(d[cand])])]
+        for j in hit:
+            ref_dos[j] = q['h']
+            dos_name[j] = q['n']
+        pf_rec.append(dict(n=q['n'], h=q['h'], bins=[(j, float(h0[j])) for j in hit], why=q['why']))
+    m = np.isfinite(ref_dos)
+    h1[m] = ref_dos[m]
+    src[m] = 'dossier'
+    log(f'逐栋档案 POINT_FIX {len(POINT_FIX)} 条，命中 {int(m.sum())} 栋：' + '；'.join(f"{r['n']}×{len(r['bins'])}" for r in pf_rec))
+    trusted = np.isin(src, ['public', 'overture', 'skyline', 'dossier']) | measured0
 
     # 综合体整片轮廓带塔楼高（高度来自实测标签，即塔楼高被标在整片轮廓上）：取裙房高（skyline 修正值 ≤ 60 m 时用之，缺省 30 m）；
     # 无实测的模型值走下面的“大面积”规则
@@ -425,9 +506,9 @@ def main():
     h1 = np.round(h1, 1)
 
     # —— 6. 统计（修正前 / 后）——
-    ref_best = np.where(np.isfinite(ref_pub), ref_pub, np.where(np.isfinite(ref_ov), ref_ov, ref_sk))
+    ref_best = np.where(np.isfinite(ref_dos), ref_dos, np.where(np.isfinite(ref_pub), ref_pub, np.where(np.isfinite(ref_ov), ref_ov, ref_sk)))
     rows = {}
-    for lab, ref in (('公开资料', ref_pub), ('Overture', ref_ov), ('skyline.json', ref_sk), ('最可信来源', ref_best)):
+    for lab, ref in (('公开资料', ref_pub), ('逐栋档案', ref_dos), ('Overture', ref_ov), ('skyline.json', ref_sk), ('最可信来源', ref_best)):
         rows[lab] = (err_stats(h0, ref, np.ones(n, bool)), err_stats(h1, ref, np.ones(n, bool)))
     changed = np.nonzero(np.abs(h1 - h0) >= 0.5)[0]
     by_src = Counter(src[i] for i in changed)
@@ -463,6 +544,10 @@ def main():
     # 模型预测值（修正前无实测）与本次新增的实测对比：检验“封顶”是否系统性偏低
     newm = (~measured0) & np.isfinite(np.where(np.isfinite(ref_pub), ref_pub, ref_ov))
     truth_new = np.where(np.isfinite(ref_pub), ref_pub, ref_ov)
+    md += ['', '## 逐栋档案（research/refs/dossiers）直接给定的高度（POINT_FIX）', '']
+    for r in pf_rec:
+        md.append(f"- **{r['n']}** → {r['h']} m：" + ('、'.join(f'#{j}（原 {hb:.1f} m）' for j, hb in r['bins']) or '未命中 buildings.bin（另由 landmarks2026 建模）')
+                  + f"。{r['why']}")
     md += ['', '## 模型预测值 vs 本次新增实测（修正前无实测、现有公开资料/Overture 值的楼）', '',
            '| 模型值区间 m | 栋数 | 实测中位 m | 实测 25–75% m |', '|---|---|---|---|']
     for lo, hi in ((0, 12), (12, 24), (24, 50), (50, 78), (78, 91), (91, 400)):
@@ -512,7 +597,7 @@ def main():
         why = {'public': '公开资料：' + (pub[j_pub[i]][0] if j_pub[i] >= 0 else ''),
                'overture': f'Overture {O["rid"][j_ov[i]] if j_ov[i] >= 0 else ""} {O["name"][j_ov[i]] if j_ov[i] >= 0 else ""}',
                'skyline': 'skyline.json', 'podium': '整片综合体轮廓→裙房高', 'bigcap': '大面积无实测上限',
-               'sibling': '同型楼实测', 'sibling_snap': '同型楼组内中位'}.get(src[i], src[i])
+               'sibling': '同型楼实测', 'sibling_snap': '同型楼组内中位', 'dossier': '逐栋档案：' + dos_name.get(int(i), '')}.get(src[i], src[i])
         md.append(f'| {i} | {bname(i)} | {B["ax"][i]:.0f},{B["az"][i]:.0f} | {area[i]:.0f} | {h0[i]:.1f} | {h1[i]:.1f} | {why} |')
     (out / 'heights_report.md').write_text('\n'.join(md) + '\n', 'utf-8')
     log(f'写出 {out / "heights_report.md"}、heights_changes.json（{time.time() - t0:.0f}s）')
@@ -539,7 +624,7 @@ def main():
     md_ = np.frombuffer(bytes(raw[o_m:o_m + 2 * n]), '<u2').copy()
     md_ = np.minimum(md_, np.maximum(hd.astype(np.int64) - 10, 0)).astype('<u2')
     fl = flags0.copy()
-    meas = np.isin(src, ['public', 'overture', 'skyline', 'sibling'])
+    meas = np.isin(src, ['public', 'overture', 'skyline', 'sibling', 'dossier'])
     fl[meas] |= 1
     fl = np.where(hd >= 1000, fl | 4, fl & ~np.uint8(4)).astype(np.uint8)
     fl[np.isfinite(ref_sk)] |= 8
