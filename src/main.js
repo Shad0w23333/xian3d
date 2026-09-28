@@ -16,6 +16,8 @@ import { QUALITY_LEVELS, PRESETS, PRESETS_EXTRA, START_VIEW, defaultQualityLevel
 import { project, unproject } from './core/geo.js';
 import { MODULES } from './modules/index.js';
 import { installHeightFog } from './core/fog.js';
+import { DisplaySettings } from './core/display.js';
+import { buildDisplayPanel } from './core/display-ui.js';
 
 installHeightFog();
 
@@ -70,12 +72,11 @@ async function main() {
   const ui = new UI(root);
   const offProg = onProgress((p) => ui.setLoading(Math.min(0.6, (p.done / Math.max(1, p.total)) * 0.6), `加载数据：${p.current}（${p.done}/${p.total}）`));
 
-  let qIndex = params.has('q') ? parseInt(params.get('q')) : (() => {
-    try { const s = localStorage.getItem('xian3d.quality'); if (s != null) return parseInt(s); } catch {}
-    return defaultQualityLevel();
-  })();
-  qIndex = THREE.MathUtils.clamp(qIndex || 0, 0, QUALITY_LEVELS.length - 1);
-  let quality = { ...QUALITY_LEVELS[qIndex], level: qIndex };
+  // 画质：预设档位 + 细项（localStorage 记忆，URL 参数可覆盖），见 core/display.js
+  const display = new DisplaySettings(params, defaultQualityLevel());
+  app.display = display;
+  let qIndex = display.base;
+  let quality = display.toQuality();
 
   // —— 渲染器 ——
   const reversed = supportsClipControl() && params.get('rdepth') !== '0';
@@ -95,7 +96,7 @@ async function main() {
   renderer.info.autoReset = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !!quality.shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   app.renderer = renderer;
   app.reversedDepth = reversed;
@@ -297,20 +298,12 @@ async function main() {
     setView(v, false);
     ui.toast(`前往：${v.name}`);
   };
+  // 画质预设：填充“画质与显示”各细项并增量应用（core/display.js）
   const applyQuality = (i) => {
-    qIndex = i;
-    quality = { ...QUALITY_LEVELS[i], level: i };
-    Object.assign(ctx.quality, quality);
-    try { localStorage.setItem('xian3d.quality', String(i)); } catch {}
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.pixelRatio));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    sky.setQuality(quality);
-    terrain.setQuality(ctx.quality);
-    lights.setCount(quality.pointLights);
-    post.build(quality);
-    for (const inst of instances) if (inst.setQuality) inst.setQuality(ctx.quality);
-    ui.setQualityActive(i);
-    ui.toast(`画质：${quality.name}`);
+    qIndex = THREE.MathUtils.clamp(i | 0, 0, QUALITY_LEVELS.length - 1);
+    display.applyPreset(qIndex);
+    quality = ctx.quality;
+    ui.toast(`画质：${QUALITY_LEVELS[qIndex].name}`);
   };
   const layers = { traffic: true, labels: true, buildings: true };
   const setLayer = (name, v) => {
@@ -337,10 +330,19 @@ async function main() {
       ui.toast(`影像源：${imagery.provider.name}`);
     }
   });
-  ui.on('traffic', (v) => setLayer('traffic', v));
+  // “交通流与航班”作为总开关：同时切换 车辆 / 列车 / 航班（细项见“画质与显示 → 显示对象”）
+  ui.on('traffic', (v) => display.setMany({ vehicles: v, trains: v, flights: v }));
   ui.on('labels', (v) => setLayer('labels', v));
   ui.on('buildings', (v) => setLayer('buildings', v));
   sky.speed = 0.1666667;
+  initDisplaySettings();
+
+  // —— 画质与显示设置：接入运行时对象、生成面板区块 ——
+  function initDisplaySettings() {
+    display.attach({ renderer, scene, camera, sky, post, terrain, lights, ctx, instances, ui, setLayer });
+    const panel = buildDisplayPanel(ui, display, { open: params.get('disp') === '1' ? true : undefined });
+    ui.addSectionAfterQuality(panel.el);
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;

@@ -117,3 +117,26 @@ input[type=checkbox] { accent-color: var(--gold); }
   .hints { display: none; }
   .help-cols { grid-template-columns: 1fr; }
 }
+
+/* —— 画质与显示（core/display-ui.js） —— */
+.q-custom { display: none; align-self: center; padding: 3px 8px; border-radius: 7px; border: 1px dashed var(--gold); color: var(--gold); font-size: 11px; }
+.q-custom.on { display: inline-block; }
+.disp { padding-top: 8px; }
+.disp > summary { cursor: pointer; list-style: none; user-select: none; margin-bottom: 0; }
+.disp > summary::-webkit-details-marker { display: none; }
+.disp > summary::before { content: '▸'; color: var(--gold); margin-right: 2px; transition: transform .2s; display: inline-block; }
+.disp[open] > summary::before { transform: rotate(90deg); }
+.disp-state { color: var(--ink-dim); font-weight: 400; font-size: 11px; margin-left: auto; letter-spacing: 0; }
+.disp-body { margin-top: 8px; }
+.disp-group { padding: 6px 0 4px; border-top: 1px solid rgba(255,255,255,.05); }
+.disp-group:first-child { border-top: none; padding-top: 0; }
+.disp-gh { color: var(--ink-dim); font-size: 11px; letter-spacing: 2px; margin: 2px 0 4px; }
+.disp-row { margin: 4px 0; }
+label.disp-row { justify-content: space-between; }
+label.disp-row.disp-bool { justify-content: flex-start; }
+label.disp-row select { max-width: 60%; padding: 3px 6px; font-size: 11px; }
+.disp-range .disp-rl { display: flex; justify-content: space-between; align-items: baseline; }
+.disp-range .disp-rl b { font-weight: 500; color: var(--gold); font-variant-numeric: tabular-nums; font-size: 11px; }
+.disp-range input[type=range] { margin: 2px 0 2px; }
+.disp-row.disabled { opacity: .42; }
+.disp-actions { margin-top: 6px; justify-content: flex-end; }
