@@ -234,7 +234,7 @@ const maike = {
     {
       name: 'podium', kind: 'podium', fp: '6d7d6135-22e9-4d4b-a2bb-d2a059a770a2', base: 0, top: 18,
       style: { pattern: 'verticalFins', tint: '#2b2622', spd: '#a4704a', floorH: 6, colW: 1.2, spandrel: 0.1, mullW: 0.5, lit: 0.7 },
-      roofMat: { color: '#7d8a70', roughness: 0.85 },
+      roofMat: { color: '#8b8984', roughness: 0.88 }, // 裙楼屋面颜色无资料，取中性灰（首轮截图的灰绿色整片过于显眼）
     },
     {
       name: 'shopfront', kind: 'facade', fp: '6d7d6135-22e9-4d4b-a2bb-d2a059a770a2', grow: 0.15, base: 0, top: 6.5,
