@@ -156,7 +156,7 @@
    "Esri z19 卫星（马蹄形外缘）"
   ],
   "confidence": "medium（平面）；low（高度）",
-  "notes": "温室为“半埋入山丘”的折面玻璃体，最高处约 11 m（照片比例，南端最高、两臂向北埋入土丘）；模型用 4.5 m 收进的斜玻璃面近似折面。"
+  "notes": "温室为“半埋入山丘”的折面玻璃体，最高处约 11 m（照片比例，南端最高、两臂向北埋入土丘）；模型用 2.8 m 收进的斜玻璃面近似折面（两臂最窄处约 8 m，收进过多会自交）。"
  },
  {
   "name": "西安半坡博物馆",
@@ -934,5 +934,42 @@
   ],
   "confidence": "medium（平面、分跨）；low（高度）",
   "notes": "四个展厅各一段南北轴向的弧形屋面（跨 53 m、矢高 5 m）；东端斜切的大会堂部分为平屋面。"
+ },
+ {
+  "name": "招商局丝路中心",
+  "spec_id": "lm2-cmsk-silkroad-n",
+  "category": "office",
+  "lon": 109.03436,
+  "lat": 34.373899,
+  "world_xz": [
+   8466,
+   -12575
+  ],
+  "overture_id": "ab02e1fd-19cd-49fc-b46e-f233c60031c3 / e1c5c273-05d8-4c94-aa16-4041c5b50922 / bc28c4f6-6c81-46c5-bec7-d51a357fa20a / 265f8bf7-cfac-4125-a5d0-dea426e49afa / 8bc53c7f-cdaa-44b7-a123-672d937207ad",
+  "height_m": 144,
+  "height_source": "北区总高度 144 m / 31 层（搜狐焦点）；另两塔约 123 / 70 m 按 Esri 屋面倾斜偏移比例估算",
+  "floors": 31,
+  "year": null,
+  "massing": "圆角玻璃塔楼 3 座（144 / 123 / 70 m）+ 北侧低层 2 座",
+  "facade": "玻璃 + 白色竖向线条（效果图）",
+  "replaced": "landmarks2026“北塔”通用塔；落在住宅区的合成“南塔”一并移除",
+  "photos": [
+   {
+    "source": "https://xian.newhouse.fang.com/2021-04-12/39329115.htm（效果图、总平面）"
+   },
+   {
+    "source": "https://xian.news.fang.com/house/3610192266_22947499.htm"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/zhaoshang/",
+  "sources": [
+   "https://www.sohu.com/a/882246443_121966444",
+   "https://m.focus.cn/xian/zixun/16d95fabb125821e.html",
+   "https://www.sunyat.com/shangyezongheti/319.html",
+   "Overture building w1381177355–w1381177359",
+   "Esri z19 卫星（屋面倾斜偏移标定高度）"
+  ],
+  "confidence": "high（落位、最高塔 144 m）；low（另两塔高度按卫星倾斜比例估算）",
+  "notes": "塔间连廊与弧形裙房未建（高度与位置无依据）。"
  }
 ]

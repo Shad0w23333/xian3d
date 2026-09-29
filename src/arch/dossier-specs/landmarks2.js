@@ -235,7 +235,7 @@ const ziran = {
 //   · 大门：两榀“人”字形交叉木构（粉褐色仿木石材），顶端交叉出头，横梁挂“西安半坡博物馆”金字，山花内有人面鱼纹；两侧为白墙门房，
 //     檐下一道红黑彩陶纹饰带；大门面西，正对半坡路入口甬道（卫星：入口轴线 z≈−1500，甬道东端圆形水池 (9597, −1497)）。
 //   · 遗址保护大厅：灰色毛石贴面，正立面顶部为弧形，前有大台阶（照片 02/06/08）；OSM w1512651327（83×79 m）。
-// 高度无公开数据：大门按照片（人高比例）约 15 m、宽约 23 m；大厅墙身约 9.5 m + 弧形屋面（照片比例）。
+// 高度无公开数据：大门按照片（门洞约 4 m 为尺）约 13.5 m、宽约 23 m；大厅墙身约 9.5 m + 弧形屋面（照片比例）。
 const BP_GATE = [9528, -1500];
 const BP_WOOD = { color: '#9d7f70', roughness: 0.85 }; // 粉褐色仿木石材
 /** 斜梁（A 字形大门的一条腿）：底部中心 a、顶部中心 b（均为 [x,z]），截面 w×d，顶端离地 h */
@@ -259,23 +259,23 @@ const banpo = {
       style: { pattern: 'stoneWindows', spd: '#e3dfd6', tint: '#39424a', floorH: 6.5, colW: 3.2, spandrel: 0.35, mullW: 1.2, lit: 0.5 }, roofMat: { color: '#9a9690', roughness: 0.9 } },
     // 大门：前后两榀 A 字交叉斜梁（南北跨，面西）
     ...[-3.5, 3.5].flatMap((dx, k) => [
-      leg('legN' + k, [BP_GATE[0] + dx, BP_GATE[1] - 11.5], [BP_GATE[0] + dx, BP_GATE[1] + 2.6], 15.5),
-      leg('legS' + k, [BP_GATE[0] + dx, BP_GATE[1] + 11.5], [BP_GATE[0] + dx, BP_GATE[1] - 2.6], 15.5),
+      leg('legN' + k, [BP_GATE[0] + dx, BP_GATE[1] - 11.5], [BP_GATE[0] + dx, BP_GATE[1] + 2.6], 13.5),
+      leg('legS' + k, [BP_GATE[0] + dx, BP_GATE[1] + 11.5], [BP_GATE[0] + dx, BP_GATE[1] - 2.6], 13.5),
     ]),
     // 横梁（挂门匾）+ 上横梁
-    { name: 'beam', kind: 'solid', shape: 'rect', size: [9.5, 27], at: BP_GATE, base: 6.6, top: 8.2, mat: BP_WOOD, footprint: false },
-    { name: 'beam2', kind: 'solid', shape: 'rect', size: [9.5, 15], at: BP_GATE, base: 10.2, top: 11.2, mat: BP_WOOD, footprint: false },
+    { name: 'beam', kind: 'solid', shape: 'rect', size: [9.5, 25], at: BP_GATE, base: 5.8, top: 7.2, mat: BP_WOOD, footprint: false },
+    { name: 'beam2', kind: 'solid', shape: 'rect', size: [9.5, 13], at: BP_GATE, base: 8.9, top: 9.8, mat: BP_WOOD, footprint: false },
     // 山花：横梁以上的三角形板（人面鱼纹，深色）
     { name: 'gable', kind: 'solid', pts: [BP_GATE[0] - 0.3, BP_GATE[1] - 5.2, BP_GATE[0] + 0.3, BP_GATE[1] - 5.2, BP_GATE[0] + 0.3, BP_GATE[1] + 5.2, BP_GATE[0] - 0.3, BP_GATE[1] + 5.2],
       topPts: [BP_GATE[0] - 0.3, BP_GATE[1] - 0.3, BP_GATE[0] + 0.3, BP_GATE[1] - 0.3, BP_GATE[0] + 0.3, BP_GATE[1] + 0.3, BP_GATE[0] - 0.3, BP_GATE[1] + 0.3],
-      base: 8.2, top: 13.2, mat: { color: '#6f5a4c', roughness: 0.9 }, footprint: false },
+      base: 7.2, top: 11.6, mat: { color: '#6f5a4c', roughness: 0.9 }, footprint: false },
     // 两侧白墙门房
     ...[-1, 1].map((sg, i) => ({ name: 'lodge' + i, kind: 'solid', shape: 'rect', size: [7, 20], at: [BP_GATE[0] + 1, BP_GATE[1] + sg * 22], base: 0, top: 4.6,
       mat: { color: '#ecebe6', roughness: 0.9 }, crown: [{ type: 'slab', ov: 0.6, h: 0.5, mat: { color: '#9d7f70', roughness: 0.85 } }] })),
   ],
   bands: [0, 1].map((i) => ({ part: 'lodge' + i, levels: [3.6], h: 0.7, depth: 0.12, color: '#7a2f22' })), // 红黑彩陶纹饰带（简化为红褐色带）
   signs: [
-    { text: '西安半坡博物馆', part: 'beam', face: 'W', y: 7.4, h: 1.2, color: '#e8c35a', serif: true },
+    { text: '西安半坡博物馆', part: 'beam', face: 'W', y: 6.5, h: 1.1, color: '#e8c35a', serif: true },
     { text: '半坡遗址', part: 'hall', face: 'W', y: 8, h: 1.8, color: '#c9b27a', serif: true },
   ],
   night: { floodlight: [{ part: 'hall', color: '#ffe0b0', strength: 0.25 }, { part: 'beam', color: '#ffd08a', strength: 0.5 }] },
@@ -286,7 +286,7 @@ const banpo = {
     sources: ['http://xa.bendibao.com/tour/2020810/ly77108.shtm（4A 名单）', 'Overture building w1512651327 / w1512651315', 'Esri z19 卫星（入口轴线、水池）'],
     photos: ['https://you.ctrip.com/sight/xian7/1409.html', 'https://www.meipian.cn/（西安半坡博物馆--李泓广）', 'http://www.dianping.com/（半坡遗址大厅）'],
     confidence: 'medium（形制、落位）；low（大门、大厅高度按照片比例）',
-    notes: '大门位置按卫星入口轴线与路口推定（±5 m）；A 字交叉斜梁顶端约 15.5 m、跨 23 m、两榀间距 7 m（照片比例）。'
+    notes: '大门位置按卫星入口轴线与路口推定（±5 m）；A 字交叉斜梁顶端约 13.5 m（以门洞约 4 m 为尺）、跨 23 m、两榀间距 7 m（照片比例）。'
       + '遗址大厅墙高 9.5 m + 弧形屋面 4.5 m（照片比例）。原 heritage26 通用院落（3 座仿古建筑，与实物不符）被替代。',
   },
 };
@@ -861,6 +861,7 @@ const gwStation = {
         { type: 'arch', size: [104, 4], at: GW, rot: 82.8, h: 1.2, y: 18.6, mat: 'glassRoof' }] },
   ],
   label: false,
+  site: ['215d63b0-f996-4d64-9771-d1df829adb1f'], // 站房 OSM 轮廓：让位通用建筑（buildings.bin 里该轮廓的通用楼块）
   supersede: { names: ['西安国际港务区管委会大楼', '国际港务区'] },
   meta: {
     category: 'station',
@@ -994,4 +995,38 @@ const bike = {
   },
 };
 
-export default [qinhan, dafengge, chuangyi, ziran, banpo, yisushe, laogang, kaogu, dianjing, xishi, expo, hesheng, ritz, shangri, hilton, haiyang, tiantan, linde, silkroadSculpture, gangzhan, gwStation, shengtiguan, dmgMuseum, xizhan, bike];
+// ═════════════════════════ 26. 招商局丝路中心·北区（国际港务区，奥体中轴北翼） ═════════════════════════
+// 招商蛇口开发，奥体中轴公园南北两翼“奥体之翼、中轴之门”；北区总高度 144 m / 31 层（搜狐焦点），层高 4.2 m；
+// 效果图（房天下）：圆角玻璃塔楼 + 白色竖向线条、弧形商业裙房，两塔之间有连廊。
+// 轮廓：OSM w1381177355–359（塔楼 3 座 + 北侧低层 2 座）。Esri z19：三座塔屋面随倾斜向北偏移，偏移量分别约 41 / 35 / 20 m；
+// 以最高者 = 144 m 标定（约 0.28 m/米），另两座约 123 m、70 m（卫星倾斜估算，±10 m）。
+// 原 landmarks2026“招商局丝路中心 北塔”（144 m 通用塔）被替代；南区（奥体中轴南翼）塔楼落位未能核实，本条不建。
+const ZS_GLASS = { pattern: 'verticalFins', tint: '#6f93ad', spd: '#eef0f1', floorH: 4.2, colW: 1.6, spandrel: 0.08, mullW: 0.35, lit: 0.45 };
+const zhaoshangN = {
+  id: 'lm2-cmsk-silkroad-n',
+  name: '招商局丝路中心',
+  center: [8466, -12575],
+  parts: [
+    { name: 't1', fp: 'ab02e1fd-19cd-49fc-b46e-f233c60031c3', roundCorners: 4, base: 0, top: 144, style: ZS_GLASS, crown: [{ type: 'parapet', h: 3 }] },
+    { name: 't2', fp: 'e1c5c273-05d8-4c94-aa16-4041c5b50922', roundCorners: 4, base: 0, top: 123, style: { ...ZS_GLASS, seed: 41 }, crown: [{ type: 'parapet', h: 3 }] },
+    { name: 't3', fp: 'bc28c4f6-6c81-46c5-bec7-d51a357fa20a', roundCorners: 4, base: 0, top: 70, style: { ...ZS_GLASS, seed: 42 }, crown: [{ type: 'parapet', h: 2.5 }] },
+    { name: 'podW', kind: 'podium', fp: '265f8bf7-cfac-4125-a5d0-dea426e49afa', base: 0, top: 18, style: { pattern: 'retail', tint: '#4b6272', spd: '#e8e8e6' }, roofMat: { color: '#9aa0a2', roughness: 0.8 } },
+    { name: 'podC', kind: 'podium', fp: '8bc53c7f-cdaa-44b7-a123-672d937207ad', base: 0, top: 14, style: { pattern: 'retail', tint: '#4b6272', spd: '#e8e8e6' }, roofMat: { color: '#9aa0a2', roughness: 0.8 } },
+  ],
+  signs: [{ text: '招商局丝路中心', part: 't1', face: 'S', y: 138, h: 3.2, color: '#ffffff', glow: '#d8ecff' }],
+  night: { outline: [{ part: 't1', color: '#e8f4ff', w: 0.45, vertical: true }, { part: 't2', color: '#e8f4ff', w: 0.45, vertical: true }] },
+  // landmarks2026 另有“招商局丝路中心 南塔”（synth 合成落位 (8479, −12140)）：卫星上该处为住宅楼群，南翼地块 w1246792166 为带天窗的大型商业体，
+  // 未见 144 m 塔楼——合成塔落位无依据，一并移除。
+  supersede: { names: ['招商局丝路中心 北塔', '招商局丝路中心 南塔'] },
+  meta: {
+    category: 'office',
+    dossier: 'landmarks2.json#招商局丝路中心（北区）',
+    sources: ['https://www.sohu.com/a/882246443_121966444', 'https://m.focus.cn/xian/zixun/16d95fabb125821e.html', 'https://www.sunyat.com/shangyezongheti/319.html',
+      'Overture building w1381177355–w1381177359', 'Esri z19 卫星（屋面倾斜偏移标定高度）'],
+    photos: ['https://xian.newhouse.fang.com/2021-04-12/39329115.htm（效果图、总平面）', 'https://xian.news.fang.com/house/3610192266_22947499.htm'],
+    confidence: 'high（落位、最高塔 144 m）；low（另两塔高度按卫星倾斜比例估算）',
+    notes: '塔间连廊与弧形裙房未建（高度与位置无依据）。',
+  },
+};
+
+export default [qinhan, dafengge, chuangyi, ziran, banpo, yisushe, laogang, kaogu, dianjing, xishi, expo, hesheng, ritz, shangri, hilton, haiyang, tiantan, linde, silkroadSculpture, gangzhan, gwStation, shengtiguan, dmgMuseum, xizhan, bike, zhaoshangN];
