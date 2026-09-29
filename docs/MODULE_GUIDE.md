@@ -27,6 +27,7 @@
 - `ctx.lights.add({position, color, intensity, distance, nightOnly, priority})`：动态点光源池（只点亮离相机最近的 4~12 盏真实 PointLight）。用于地标泛光、广场灯等“重要光源”；大量路灯请用自发光 + 假光斑贴花，不要全部注册。
 - `ctx.exclusions.add({points|rect|circle}, {buildings, trees, roads})`（prepare 阶段）：通用 OSM/CMAB 建筑和树木会避开这些区域——地标模块一定要把自己的占地加进来，否则会和白盒建筑重叠。
 - `ctx.terrain.addFlatten({points, height, feather, mode})`（prepare 阶段）：把台基/广场/跑道下的地形压平（height 为 null 时取平均）。
+- `ctx.terrain.addHole(points)`（prepare 阶段）：下沉广场、坑、地下入口等在地形上挖洞，坑内几何自己补齐（见 `src/modules/sunken.js`、`src/arch/sunken-liuyuan.js`）。
 - `util.js`：`Batcher`（按材质合并几何，**强烈推荐**，每个地标最终 draw call ≤ 30~40）、`worldBoxUV`、`ribbon`（贴地条带）、`overlay(material, bias)`（贴地覆盖层防 Z 冲突）、`rectPoly`、`circlePoly`、`resample`、`pointInPoly` 等。
 - `ctx.labels.add(text, Vector3, {category, minDist, maxDist, priority})`：浮动地名标注。**每个模块最多 6 个**，只给真正的地标名称（比如“钟楼”“永宁门”），不要把 POI 全部加进来。
 - `ctx.data`：`roads / water / landuse / aeroway / pois / rail / buildings(ArrayBuffer) / buildingNames / landmarks / skyline`。

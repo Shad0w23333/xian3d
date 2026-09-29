@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """建筑穿模/重叠诊断的分析部分（由 tools/check_overlap.mjs 调用，也可单独对已有 dump.json 运行）。
 
-输入 dump.json（页面导出）：通用建筑 skip/底高/轮廓地形采样、skyline 渲染清单、排除区（带注册模块）。
+输入 dump.json（页面导出）：通用建筑 skip/底高/轮廓地形采样、skyline 渲染清单、逐栋档案建筑各体块（dossier）、
+  下沉广场坑口（sunken 诊断；旧版没有诊断接口时按 landmarks2026.json 的估计矩形复原）、排除区（带注册模块）。
 轮廓：通用建筑直接读 public/data/buildings.bin；回民街逐户轮廓读 public/data/huimin.json；道路读 public/data/roads.json。
 
 统计：
@@ -12,6 +13,7 @@
                另含“同名异位”：两套来源的塔楼名称相同/近似、高度相近、相距 < 250 m（各建一份但位置不同）
   d) float / bury —— 底高与轮廓下地形差 > 2 m（悬空：底高 - 地形最低；埋地：地形最高 - 底高；
                坡地上平底楼以最低点为底，上坡侧埋入属正常；另列“严重埋地”：上坡侧露出地面不足 2 m（楼顶低于或贴着轮廓下最高地面）
+  e) pit     —— 下沉广场坑口压到渲染建筑（任一来源）或非步道道路
 
 用法：python tools/check_overlap.py dump.json [--out report.json] [--top 20] [--bin 旧 buildings.bin --names 旧名称表]
 """
@@ -36,6 +38,7 @@ AREA_MIN = 4.0      # 相交面积阈值（m²）
 DUP_RATIO = 0.5     # 较小者被覆盖比例 ≥ 此值视为重复生成
 ROAD_MIN = 4.0      # 压路面积阈值（m²）
 FLOAT_MIN = 2.0     # 悬空/埋地阈值（m）
+CLEAR_MIN = 4.5     # 架空体块（过街楼、雨棚、连廊）底面离地 ≥ 此值时视为跨路，不算压道路
 # 参与“压路”判定的道路等级（机动车道路；service/pedestrian/footway 另计为次要）
 MAJOR = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified',
          'motorway_link', 'trunk_link', 'primary_link', 'secondary_link'}
@@ -154,6 +157,15 @@ def main():
             continue
         items.append(dict(src=s['src'], name=s['name'], key=s['key'] or f"s{len(items)}", poly=p, bot=s['base'], top=s['base'] + s['h'],
                           tmin=s['t'][0], tmax=s['t'][1], h=s['h'], part=False))
+    # —— 逐栋档案建筑（各体块；同一栋的体块之间不互查） ——
+    for s in D.get('dossier') or []:
+        if len(s['pts']) < 6:
+            continue
+        p = valid(Polygon(np.array(s['pts'], float).reshape(-1, 2)))
+        if p is None or p.area < 1:
+            continue
+        items.append(dict(src='dossier', name=s['name'], key=f"d:{s['id']}:{s['part']}", bld=s['id'], poly=p, bot=s['bot'], top=s['top'],
+                          tmin=s['t'][0], tmax=s['t'][1], h=s['top'] - s['bot'], part=not s['ground']))
     # —— 回民街逐户 ——
     if 'huimin' in mods:
         hm = json.loads((ROOT / 'public/data/huimin.json').read_text('utf-8'))
@@ -180,6 +192,8 @@ def main():
             continue
         if A['src'] == 'huimin' and Bq['src'] == 'huimin':
             continue
+        if A.get('bld') and A.get('bld') == Bq.get('bld'):
+            continue  # 同一栋档案建筑的体块（裙房/塔楼/屋顶构件）
         if min(A['top'], Bq['top']) <= max(A['bot'], Bq['bot']) + 0.5:
             continue  # 竖向不重叠（building:part 叠层等）
         inter = A['poly'].intersection(Bq['poly'])
@@ -200,13 +214,13 @@ def main():
     # —— 同一栋被两套来源按不同位置各建一份（位置不重叠，靠名称+高度识别）：skyline 的塔楼（手工/批量/通用高层） ——
     tw = []
     for k, it in enumerate(items):
-        if it['src'] in ('cur', 'lm', 'lm-synth', 'osm') and it['h'] >= 34 and it['name'] and not it['name'].endswith('·裙房'):
+        if it['src'] in ('cur', 'lm', 'lm-synth', 'osm', 'dossier') and it['h'] >= 34 and it['name'] and not it['name'].endswith('·裙房'):
             c = it['poly'].centroid
             tw.append(dict(k=k, x=c.x, z=c.y, h=it['h'], n=norm_name(it['name']), soft=it['src'] == 'lm-synth'))
     for a_ in range(len(tw)):
         for b_ in range(a_ + 1, len(tw)):
             A, Bq = items[tw[a_]['k']], items[tw[b_]['k']]
-            if A['key'] == Bq['key'] or (A['src'] == Bq['src'] == 'osm') or not same_tower(tw[a_], tw[b_]):
+            if A['key'] == Bq['key'] or (A['src'] == Bq['src'] == 'osm') or (A.get('bld') and A.get('bld') == Bq.get('bld')) or not same_tower(tw[a_], tw[b_]):
                 continue
             if A['poly'].intersection(Bq['poly']).area >= DUP_RATIO * min(A['poly'].area, Bq['poly'].area):
                 continue  # 轮廓重合的已在上面计入
@@ -231,8 +245,12 @@ def main():
             mh = e['flags'].get('maxHeight')
             if mh is not None and it['h'] > mh:
                 continue
-            if it['src'] == 'huimin':
+            if it['src'] == 'huimin' or (it['src'] == 'dossier' and e['owner'] == 'dossier'):
                 continue
+            if e['owner'] == 'sunken':
+                continue  # 坑口与建筑的关系单独按“下沉广场”统计（排除区只是坑口外扩的让位带）
+            if it['src'] == 'dossier' and e['owner'] == 'datang' and (D.get('datang') or {}).get('yieldToDossier'):
+                continue  # 大唐不夜城的程序化唐风建筑已给档案建筑让位，沿街区排除区里不一定有唐风楼
             ar = it['poly'].intersection(zp).area
             if ar <= AREA_MIN:
                 continue
@@ -265,6 +283,8 @@ def main():
     road = defaultdict(list)
     for i, ks in by.items():
         it = items[i]
+        if it['tmax'] is not None and it['bot'] - it['tmax'] >= CLEAR_MIN:
+            continue  # 架空跨路
         for tier in ('major', 'minor'):
             sel = [k for k in ks if (meta[k][0] in MAJOR) == (tier == 'major') and not meta[k][2]]
             if not sel:
@@ -277,6 +297,41 @@ def main():
             k0 = max(sel, key=lambda k: segs[k].intersection(it['poly']).area)
             road[f"{fam(it['src'])}·{tier}"].append(dict(area=round(ar, 1), ratio=round(ar / it['poly'].area, 2), x=round(c.x, 1), z=round(c.y, 1),
                                                          a=f"{it['src']}:{it['name'] or it['key']}({it['h']:.0f}m)", b=f"{meta[k0][0]}:{meta[k0][1]}"))
+
+    # —— 下沉广场坑口 × 渲染建筑 / 道路 ——
+    pits = []
+    if D.get('sunken'):
+        for p in D['sunken'].get('pits') or []:
+            pits.append((p['name'], np.array(p['rim'], float).reshape(-1, 2)))
+    elif 'sunken' in mods:
+        # 旧版模块没有诊断接口：按 landmarks2026.json 的估计矩形复原（旧版在墙线外再压低 4 m + 4 m 过渡带）
+        lm = json.loads((ROOT / 'public/data/landmarks2026.json').read_text('utf-8'))
+        for s in lm.get('sunken') or []:
+            if '生命之树' in s['name']:
+                continue
+            cu, su, hl, hw = math.cos(s['rot']), math.sin(s['rot']), s['L'] / 2, s['W'] / 2
+            if s.get('round'):
+                pts = [(s['x'] + math.cos(a) * hl * cu - math.sin(a) * hw * su, s['z'] + math.cos(a) * hl * su + math.sin(a) * hw * cu)
+                       for a in np.linspace(0, 2 * math.pi, 40, endpoint=False)]
+            else:
+                pts = [(s['x'] + u * cu - v * su, s['z'] + u * su + v * cu) for u, v in ((-hl, -hw), (hl, -hw), (hl, hw), (-hl, hw))]
+            pits.append((s['name'], np.array(pts)))
+    pitrep = defaultdict(list)
+    for name, P in pits:
+        pp = valid(Polygon(P))
+        if pp is None:
+            continue
+        for k in tree.query(pp, predicate='intersects').tolist():
+            it = items[k]
+            ar = it['poly'].intersection(pp).area
+            if ar > AREA_MIN:
+                pitrep[f"坑×{fam(it['src'])}"].append(dict(area=round(ar, 1), x=round(it['poly'].centroid.x, 1), z=round(it['poly'].centroid.y, 1), a=name, b=f"{it['src']}:{it['name'] or it['key']}"))
+        for k in rt.query(pp, predicate='intersects').tolist():
+            if meta[k][0] == 'footway' or meta[k][2]:
+                continue
+            ar = segs[k].intersection(pp).area
+            if ar > ROAD_MIN:
+                pitrep[f"坑×道路·{'major' if meta[k][0] in MAJOR else 'minor'}"].append(dict(area=round(ar, 1), x=round(pp.centroid.x, 1), z=round(pp.centroid.y, 1), a=name, b=f"{meta[k][0]}:{meta[k][1]}"))
 
     # —— 悬空 / 埋地 ——
     flo, bur, sev = defaultdict(list), defaultdict(list), defaultdict(list)
@@ -301,8 +356,14 @@ def main():
         return dict(total=tot, by={k: len(v) for k, v in sorted(dct.items(), key=lambda kv: -len(kv[1]))}, top=allv[:a.top],
                     top_by={k: sorted(v, key=lambda r: -r[key])[:5] for k, v in dct.items()})
 
-    rep = dict(overlap=pack(overlap, 'area'), dup=pack(dup, 'area'), road=pack(road, 'area'), float=pack(flo, 'gap'), bury=pack(bur, 'depth'), bury_severe=pack(sev, 'depth'))
-    for k, t in (('overlap', 'a) 轮廓相交'), ('road', 'b) 压道路'), ('dup', 'c) 重复生成'), ('float', 'd) 悬空'), ('bury', 'd) 埋地'), ('bury_severe', 'd) 严重埋地（上坡侧露出 < 2 m）')):
+    rep = dict(overlap=pack(overlap, 'area'), dup=pack(dup, 'area'), road=pack(road, 'area'), float=pack(flo, 'gap'), bury=pack(bur, 'depth'), bury_severe=pack(sev, 'depth'),
+               pit=pack(pitrep, 'area'))
+    rep['pits'] = len(pits)
+    if D.get('sunken'):
+        rep['pit_rejected'] = D['sunken'].get('rejected') or []
+    print(f'\n下沉广场：已挖坑 {len(pits)} 处' + (f"，核验未通过 {len(rep.get('pit_rejected') or [])} 处" if D.get('sunken') else ''))
+    for k, t in (('overlap', 'a) 轮廓相交'), ('road', 'b) 压道路'), ('dup', 'c) 重复生成'), ('float', 'd) 悬空'), ('bury', 'd) 埋地'), ('bury_severe', 'd) 严重埋地（上坡侧露出 < 2 m）'),
+                 ('pit', 'e) 下沉广场坑口压建筑/道路')):
         r = rep[k]
         print(f"\n{t}：{r['total']}  " + '，'.join(f'{c} {n}' for c, n in r['by'].items()))
         for s in r['top'][:a.top]:

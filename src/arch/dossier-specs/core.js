@@ -282,14 +282,21 @@ const baisheng = {
       { name, pts, base: 0, top: 24, style: BS_W, roof: { mech: false, parapet: 0.6 } },
       { name: name + 'Att', pts, grow: -2.5, base: 24, top: 27.5, style: BS_RED, roof: { mech: false, parapet: 0.3 }, crown: [{ type: 'eave', ov: 1.8, depth: 3, h: 1.3, mat: TILE }] },
     ]),
-    { name: 'main', pts: R(-755, -129, -711, -54), base: 0, top: 31, style: { ...BS_W, seed: 51 }, roof: { mech: false, parapet: 0.3 }, crown: [{ type: 'eave', ov: 2.4, depth: 3.5, h: 1.8, mat: TILE }] },
+    // 北广济街（roads.json 中心线 x≈-732.5、路宽 8 m）从中部主楼与正中门楼底下穿过（影像：街口在门楼下进入楼内）：
+    // 主楼、门楼在路面上方架空（base 6.5），两侧落地段托起，底面补石材顶板；footprint 让架空段仍算占地（排除区）
+    { name: 'main', pts: R(-755, -129, -711, -54), base: 6.5, top: 31, footprint: true, style: { ...BS_W, seed: 51 }, roof: { mech: false, parapet: 0.3 }, crown: [{ type: 'eave', ov: 2.4, depth: 3.5, h: 1.8, mat: TILE }] },
+    { name: 'mainW', pts: R(-755, -129, -737.5, -54), base: 0, top: 6.5, style: { ...BS_W, seed: 51 }, roof: { mech: false, parapet: 0 } },
+    { name: 'mainE', pts: R(-727.5, -129, -711, -54), base: 0, top: 6.5, style: { ...BS_W, seed: 52 }, roof: { mech: false, parapet: 0 } },
+    { name: 'passSoffit', kind: 'solid', mat: 'stone', pts: R(-737.5, -129, -727.5, -36), base: 6.1, top: 6.5 },
     { name: 'mainTop', pts: R(-750, -122, -716, -61), base: 31, top: 35, style: BS_RED, crown: [{ type: 'cnhip', style: 'wudian', ov: 2.6, h: 7, mat: TILE }] },
     ...[['podW', R(-804, -52, -755, -31)], ['podE', R(-711, -52, -668, -34)]].map(([name, pts]) => ({ name, pts, base: 0, top: 13, style: BS_POD, roof: { mech: false, parapet: 1.0 } })),
     // 裙楼屋面上的两座红柱歇山亭
     ...[['pavW', [-779.5, -42]], ['pavE', [-689.5, -43.5]]].map(([name, at]) => ({
       name, shape: 'rect', size: [24, 11], at, base: 13, top: 18, style: BS_RED, crown: [{ type: 'cnhip', style: 'xieshan', ov: 1.8, h: 4.2, mat: TILE }],
     })),
-    { name: 'gate', pts: R(-746, -54, -720, -36), base: 0, top: 11, style: { ...BS_RED, floorH: 5.5, colW: 3.2, mullW: 0.9 }, crown: [{ type: 'cnhip', style: 'xieshan', ov: 1.6, h: 3.4, mat: TILE }] },
+    { name: 'gate', pts: R(-746, -54, -720, -36), base: 6.5, top: 11, footprint: true, style: { ...BS_RED, floorH: 4.5, colW: 3.2, mullW: 0.9 }, crown: [{ type: 'cnhip', style: 'xieshan', ov: 1.6, h: 3.4, mat: TILE }] },
+    { name: 'gateW', pts: R(-746, -54, -737.5, -36), base: 0, top: 6.5, style: { ...BS_RED, floorH: 5.5, colW: 3.2, mullW: 0.9 }, roof: { mech: false, parapet: 0 } },
+    { name: 'gateE', pts: R(-727.5, -54, -720, -36), base: 0, top: 6.5, style: { ...BS_RED, floorH: 5.5, colW: 3.2, mullW: 0.9 }, roof: { mech: false, parapet: 0 } },
   ],
   bands: [
     { part: 'main', levels: [29.6], h: 1.2, depth: 0.3, color: '#7a2a22' }, { part: 'wingW', levels: [23], h: 0.8, depth: 0.25, color: '#7a2a22' }, { part: 'wingE', levels: [23], h: 0.8, depth: 0.25, color: '#7a2a22' },

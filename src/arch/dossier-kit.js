@@ -1619,8 +1619,10 @@ function buildNight(env, R) {
 export function buildDossier(env, spec) {
   const R = spec.parts && spec.spec ? spec : resolveSpec(spec);
   const S = R.spec;
-  const all = R.parts.filter((p) => p.base <= 0.5).flatMap((p) => p.pts);
-  R.ground = S.ground ?? groundMin(env.ctx, all.length ? all : R.parts[0].pts);
+  // 落地体块逐块取最低点（顶点 + 各自质心）。原先把各体块顶点串成一个“多边形”求质心，多体块时质心可能落到楼外很远的低处，
+  // 整栋楼随之下沉（交大主楼曾因此比周围地面低 4.2 m）
+  const gps = R.parts.filter((p) => p.base <= 0.5).map((p) => p.pts);
+  R.ground = S.ground ?? Math.min(...(gps.length ? gps : [R.parts[0].pts]).map((pts) => groundMin(env.ctx, pts)));
   for (const P of R.parts) buildPart(env, R, P);
   buildSigns(env, R);
   buildBands(env, R);

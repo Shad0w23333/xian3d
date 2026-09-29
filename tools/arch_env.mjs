@@ -4,7 +4,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { register } from 'node:module';
 import { fileURLToPath } from 'node:url';
+
+// Vite 的 import.meta.glob（dossier-specs 汇总）在 Node 里展开
+register('./node-glob-loader.mjs', import.meta.url);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -151,9 +155,9 @@ globalThis.fetch = async (url) => {
 
 /**
  * 构建指定模块，返回 {THREE, scene, ctx, instances}
- * ids：模块 id 列表（按 index.js 顺序执行）
+ * ids：模块 id 列表（按 index.js 顺序执行）；build:false 时只跑 prepare（排除区/平整区/挖洞登记完即返回）
  */
-export async function buildModules(ids) {
+export async function buildModules(ids, { build = true } = {}) {
   const THREE = await import('three');
   const { Terrain } = await import('../src/core/terrain.js');
   const { Exclusions } = await import('../src/core/exclusions.js');
@@ -177,7 +181,17 @@ export async function buildModules(ids) {
     const f = path.join(ROOT, 'public/data', n);
     return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
   };
-  const data = { landmarks: readJ('landmarks.json'), water: readJ('water.json') };
+  // 与 src/main.js 加载的数据集一致（下沉广场核验、排除区等要用道路/建筑/水面）
+  const readB = (n) => {
+    const f = path.join(ROOT, 'public/data', n);
+    if (!fs.existsSync(f)) return null;
+    const b = fs.readFileSync(f);
+    return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  };
+  const data = {
+    landmarks: readJ('landmarks.json'), water: readJ('water.json'), roads: readJ('roads.json'), landuse: readJ('landuse.json'),
+    rail: readJ('rail.json'), pois: readJ('pois.json'), skyline: readJ('skyline.json'), buildings: readB('buildings.bin'), buildingNames: readJ('buildings_names.json'),
+  };
   const noop = { add() {}, remove() {}, update() {} };
   const ctx = createContext({ renderer: null, scene, camera, terrain, imagery: null, sky: null, lights: noop, labels: noop, exclusions: new Exclusions(), quality: { level: 3 }, data, meta });
   const mods = [];
@@ -187,6 +201,7 @@ export async function buildModules(ids) {
   try {
     for (const mod of mods) if (mod.prepare) await mod.prepare(ctx);
     const instances = {};
+    if (!build) return { THREE, scene, ctx, instances, terrain, mods };
     for (const mod of mods) {
       const n0 = scene.children.length;
       instances[mod.id] = (await mod.build(ctx)) || {};
