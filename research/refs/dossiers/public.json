@@ -1,0 +1,4668 @@
+[
+ {
+  "name": "西京医院（空军军医大学第一附属医院）",
+  "category": "hospital",
+  "lon": 108.981296,
+  "lat": 34.273158,
+  "coord_source": "overture_footprint_centroid(OSM w1266651327)",
+  "world_xz": [
+   3583.9,
+   -1352.2
+  ],
+  "overture_id": "25b169f2-1cca-4977-acd4-fa25a166ec97",
+  "footprint_size_m": [
+   108,
+   86
+  ],
+  "height_m": null,
+  "floors": 20,
+  "height_source": "层数来自中联西北院通稿：地下2层，地上南楼19层、北楼20层，裙楼5层；未查到米制高度（CMAB 该处仅 12.6–19.9 m，明显偏低不可用）",
+  "year": 2020,
+  "year_note": "住院二部 2020-10 启用",
+  "massing": [
+   {
+    "part": "住院二部裙楼（5层）",
+    "shape": "footprint",
+    "size_m": [
+     108,
+     86
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 163,
+    "overture_id": "25b169f2-1cca-4977-acd4-fa25a166ec97",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "门诊/检查/手术等功能裙房"
+   },
+   {
+    "part": "住院二部北楼（20层）",
+    "shape": "box",
+    "size_m": [
+     68,
+     26
+    ],
+    "offset_m": [
+     14.9,
+     38.2
+    ],
+    "rotation_deg": 1,
+    "overture_id": "de5f7efc-70a3-4545-8562-5b796e6aa62f",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 20,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图可见长阴影，东西向板式塔楼 68×26 m"
+   },
+   {
+    "part": "住院二部南楼（19层）",
+    "shape": "box",
+    "size_m": [
+     68,
+     26
+    ],
+    "offset_m": [
+     -15.7,
+     -36.6
+    ],
+    "rotation_deg": 1,
+    "overture_id": "38bb39c5-4b4d-4229-93c2-73830212cbb4",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 19,
+    "setbacks": null,
+    "taper": null,
+    "notes": "东西向板式塔楼 68×26 m"
+   },
+   {
+    "part": "门诊/病房弧形主楼群",
+    "shape": "footprint(弧形+南侧横楼)",
+    "size_m": [
+     145,
+     134
+    ],
+    "offset_m": [
+     190.5,
+     -77.4
+    ],
+    "rotation_deg": 92,
+    "overture_id": "96b28c39-6254-4acb-a514-539b403c5a99",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "环绕圆形广场的弧形高层+南侧曲面横楼；层数未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得实拍照片"
+  },
+  "podium": "5层裙楼连接南北两座塔楼（卫星图可见）",
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.sinomach.com.cn/xwzx/zgsdt/2020_qydt/202010/t20201001_254259.html",
+   "Esri World Imagery z18",
+   "Overture/OSM w1266651327,w1266651617,w1266651492,w1266651258"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1266651327",
+   "osm_name": null,
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 5877
+  },
+  "notes": "“主楼”取住院二部（资料最完整）；两座塔楼对应关系由卫星阴影+“南19/北20层”推断",
+  "confidence_note": "medium(体量/层数)/low(立面)"
+ },
+ {
+  "name": "西安交通大学第一附属医院（雁塔西路院区）",
+  "category": "hospital",
+  "lon": 108.932121,
+  "lat": 34.220804,
+  "coord_source": "overture_footprint_centroid(OSM r19307911)",
+  "world_xz": [
+   -940.4,
+   4474.9
+  ],
+  "overture_id": "3622261a-9377-4070-aac9-f1e1e580ff62",
+  "footprint_size_m": [
+   149,
+   86
+  ],
+  "height_m": null,
+  "floors": 5,
+  "height_source": "层数：门诊大楼地上5层（丁香园/健康界）；外科大楼13层（健康界 2023-10-27）；米制高度未查到",
+  "year": null,
+  "year_note": "外科大楼 2019-10 开工、2021-07 封顶、2023-10-26 投用；门急诊楼年代未查到",
+  "massing": [
+   {
+    "part": "门急诊大楼",
+    "shape": "footprint(回字形，4个内天井+中央玻璃中庭)",
+    "size_m": [
+     149,
+     86
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "3622261a-9377-4070-aac9-f1e1e580ff62",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“门急诊大楼”；地上5层地下1层，5.36万㎡"
+   },
+   {
+    "part": "外科大楼（推断）",
+    "shape": "footprint",
+    "size_m": [
+     111,
+     97
+    ],
+    "offset_m": [
+     35.9,
+     203.3
+    ],
+    "rotation_deg": 180,
+    "overture_id": "99a9a52a-69c8-4ead-9e2b-2c8d36fc590c",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 13,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地上13层、地下3层，2023-10-26投用；与门急诊楼二层连廊相连。该轮廓 CMAB 高 55.9 m 与13层相符，但对应关系为推断"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得实拍照片；卫星图门急诊楼为浅灰屋面+中央玻璃采光顶"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.cn-healthcare.com/articlewm/20231027/wap-content-1615965.html",
+   "https://y.dxy.cn/hospital/52/915875.html",
+   "OSM r19307911",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "r19307911",
+   "osm_name": "西安交通大学医学院第一附属医院-门急诊大楼",
+   "cmab_h": 16.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 10049
+  },
+  "notes": "雁塔西路277号；OSM 另有 西1楼/东一楼/科研楼/信息楼 等命名轮廓"
+ },
+ {
+  "name": "西安交通大学第二附属医院（西五路院区）",
+  "category": "hospital",
+  "lon": 108.946542,
+  "lat": 34.272293,
+  "coord_source": "overture_footprint_centroid(OSM w1465145182)",
+  "world_xz": [
+   386.4,
+   -1255.9
+  ],
+  "overture_id": "ec87f3a4-7825-4449-a2bf-ed485c82faf6",
+  "footprint_size_m": [
+   108,
+   46
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到主楼层数/高度。另查到“西门诊住院楼”地上8层、地下3层、32981.54㎡，2015-07开工、2020-05投用，但未能在轮廓中确认其位置",
+  "year": null,
+  "massing": [
+   {
+    "part": "西五路临街主楼",
+    "shape": "footprint",
+    "size_m": [
+     108,
+     46
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 1,
+    "overture_id": "ec87f3a4-7825-4449-a2bf-ed485c82faf6",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图北侧有长阴影，为高层；层数未查到"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得实拍照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "http://www.2yuan.xjtu.edu.cn/defsyy/",
+   "OSM w1465145182",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1465145182",
+   "osm_name": null,
+   "cmab_h": 16.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 4032
+  },
+  "notes": "西五路157号；主楼选取依据：距 POI 最近的大体量建筑"
+ },
+ {
+  "name": "唐都医院（空军军医大学第二附属医院）",
+  "category": "hospital",
+  "lon": 109.060047,
+  "lat": 34.285613,
+  "coord_source": "overture_footprint_centroid(zenodo 8174931 数据集)",
+  "world_xz": [
+   10829.3,
+   -2739.0
+  ],
+  "overture_id": "b9ea5be2-f51a-4f39-9584-4eddca28c8f0",
+  "footprint_size_m": [
+   65,
+   26
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "院区中部主楼（南侧弧形立面）",
+    "shape": "footprint",
+    "size_m": [
+     65,
+     26
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 4,
+    "overture_id": "b9ea5be2-f51a-4f39-9584-4eddca28c8f0",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图南立面呈半圆弧形；轮廓来自 zenodo 数据集（非 OSM）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://www.fmmu.edu.cn/info/1377/1261.htm",
+   "Esri World Imagery z18",
+   "Overture(zenodo 8174931)"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": null,
+   "osm_name": null,
+   "cmab_h": 14.8,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1611
+  },
+  "notes": "新寺路1号；主楼识别仅依据卫星图，未核实"
+ },
+ {
+  "name": "陕西省人民医院",
+  "category": "hospital",
+  "lon": 108.926657,
+  "lat": 34.241775,
+  "coord_source": "overture_footprint_centroid(OSM r17401798)",
+  "world_xz": [
+   -1443.1,
+   2141.2
+  ],
+  "overture_id": "b50242bd-99b3-48b0-b75b-48a15a9b3cd2",
+  "footprint_size_m": [
+   70,
+   65
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到现有主楼层数。查到“医疗西区A栋住院楼（院区西北角）地上19层、地下3层、裙房5层”在建报道，竣工情况未查到",
+  "year": 1931,
+  "year_note": "1931年建院（杨虎城创办）；现存建筑年代未查到",
+  "massing": [
+   {
+    "part": "北部高层（推断住院楼）",
+    "shape": "footprint",
+    "size_m": [
+     58,
+     33
+    ],
+    "offset_m": [
+     -0.6,
+     48.1
+    ],
+    "rotation_deg": 180,
+    "overture_id": "a3ece8f4-6a1e-407b-915f-0aa9cffd0571",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "CMAB 76.5 m、卫星长阴影"
+   },
+   {
+    "part": "主体裙房",
+    "shape": "footprint",
+    "size_m": [
+     70,
+     65
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "b50242bd-99b3-48b0-b75b-48a15a9b3cd2",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "70×65 m 大体量"
+   },
+   {
+    "part": "南部高层楼",
+    "shape": "footprint",
+    "size_m": [
+     116,
+     48
+    ],
+    "offset_m": [
+     -69.6,
+     -116.9
+    ],
+    "rotation_deg": 0,
+    "overture_id": "71f6bac6-b8f4-4b40-9517-c328e28e2510",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "116×48 m，含高层塔身（阴影）"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片；卫星图院内有数栋红色坡屋顶老楼"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西省人民医院",
+   "https://www.pharnexcloud.com/zixun/zb_21328",
+   "OSM r17401798",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "r17401798",
+   "osm_name": null,
+   "cmab_h": 26.3,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 3337
+  },
+  "notes": "友谊西路256号；楼栋功能对应关系未核实"
+ },
+ {
+  "name": "西安市中心医院（西五路院区）",
+  "category": "hospital",
+  "lon": 108.942953,
+  "lat": 34.274237,
+  "coord_source": "overture_footprint_centroid(OSM w1465144409)",
+  "world_xz": [
+   56.2,
+   -1472.3
+  ],
+  "overture_id": "dfec9343-c6f4-42f4-922a-5ce4677defdb",
+  "footprint_size_m": [
+   53,
+   29
+  ],
+  "height_m": null,
+  "floors": 16,
+  "height_source": "层数为本档照片计数（约15–16层，低置信）；core_south.json 同一照片计为约11层，两者不一致；米制高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "高层主楼（弧形端部）",
+    "shape": "footprint（一端半圆）",
+    "size_m": [
+     53,
+     29
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "dfec9343-c6f4-42f4-922a-5ce4677defdb",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 16,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片：约15–16层，弧形端部为横向蓝色玻璃带"
+   },
+   {
+    "part": "裙楼（约5层，弧形转角）",
+    "shape": "footprint",
+    "size_m": [
+     50,
+     37
+    ],
+    "offset_m": [
+     27.1,
+     -52.2
+    ],
+    "rotation_deg": 2,
+    "overture_id": "bb6f1842-dedb-4915-99c6-72122a4de365",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片：5层，绿色窗框，转角弧形；对应轮廓为推断"
+   }
+  ],
+  "crown": {
+   "type": "平顶+屋顶红十字/院名招牌",
+   "height_m": null,
+   "description": "主楼顶部立红色“西安市中心医院”字与红十字（照片）"
+  },
+  "facade": {
+   "primary": "米白/浅灰面砖+横向蓝色玻璃带（弧形端）",
+   "glass_color_hex": "#5d7fa6",
+   "frame_color_hex": "#9aa3a8",
+   "wall_color_hex": "#e2ddd2",
+   "pattern": "弧形端横向带窗；板式段为规则方窗",
+   "floor_height_m": null,
+   "notes": "Commons 2023-09-28 照片目测"
+  },
+  "podium": "约5层裙楼，米白墙面+绿色窗框，转角做圆弧",
+  "signage": [
+   {
+    "text": "西安市中心医院（+红十字）",
+    "color_hex": "#d0262b",
+    "position": "弧形端屋顶",
+    "approx_height_m": null
+   },
+   {
+    "text": "西安交通大学附属西安市中心医院",
+    "color_hex": "#b3261e",
+    "position": "主楼西端墙面竖排",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安市中心医院_2023-09-28.jpg"
+  ],
+  "sources": [
+   "https://commons.wikimedia.org/wiki/File:西安市中心医院_2023-09-28.jpg",
+   "OSM w1465144409",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1465144409",
+   "osm_name": null,
+   "cmab_h": 16.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1484
+  },
+  "notes": "西五路161号；主楼与轮廓对应为推断"
+ },
+ {
+  "name": "西安市红会医院（友谊东路院区）",
+  "category": "hospital",
+  "lon": 108.944008,
+  "lat": 34.243632,
+  "coord_source": "overture_footprint_centroid(OSM w1291043362)",
+  "world_xz": [
+   153.3,
+   1934.5
+  ],
+  "overture_id": "35b93ebf-f53b-4c6a-8843-b2424cb41938",
+  "footprint_size_m": [
+   89,
+   38
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "1号楼（高层）",
+    "shape": "footprint",
+    "size_m": [
+     89,
+     38
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 180,
+    "overture_id": "35b93ebf-f53b-4c6a-8843-b2424cb41938",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安市红会医院-1号楼”；卫星图西北向长阴影，为高层"
+   },
+   {
+    "part": "3号楼（高层）",
+    "shape": "footprint",
+    "size_m": [
+     55,
+     31
+    ],
+    "offset_m": [
+     -34.0,
+     83.3
+    ],
+    "rotation_deg": 180,
+    "overture_id": "af0c46fa-0854-4273-bed4-81d48a37a96c",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安市红十字会医院3号楼”"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1291043362",
+   "OSM w1291043525",
+   "Esri World Imagery z18",
+   "https://www.xahhyy.com/"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1291043362",
+   "osm_name": "西安市红会医院-1号楼",
+   "cmab_h": 26.3,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2257
+  },
+  "notes": "友谊东路555号"
+ },
+ {
+  "name": "西安市儿童医院（西举院巷院区）",
+  "category": "hospital",
+  "lon": 108.922149,
+  "lat": 34.263381,
+  "coord_source": "overture_footprint_centroid(OSM r17688742)",
+  "world_xz": [
+   -1857.8,
+   -263.7
+  ],
+  "overture_id": "4b65f8cb-f82d-4d11-934d-4a6c14dd7dd6",
+  "footprint_size_m": [
+   187,
+   89
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到；位于城墙内（西门内），CMAB 14.2 m",
+  "year": null,
+  "massing": [
+   {
+    "part": "院区主楼群（回廊式）",
+    "shape": "footprint(多翼+庭院)",
+    "size_m": [
+     187,
+     89
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 180,
+    "overture_id": "4b65f8cb-f82d-4d11-934d-4a6c14dd7dd6",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：中部楼顶为灰色四坡屋顶，西侧为屋顶花园/庭院，东侧两翼板楼；南侧广场有停机坪标志"
+   }
+  ],
+  "crown": {
+   "type": "灰色四坡顶（卫星图）",
+   "height_m": null,
+   "description": "中部楼顶为坡屋面"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM r17688742",
+   "Esri World Imagery z18",
+   "https://www.xachyy.com/yygk/yyjj.htm"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "r17688742",
+   "osm_name": "西安市儿童医院",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 10892
+  },
+  "notes": "西举院巷69号；OSM 关系 r17688742 名“西安市儿童医院”"
+ },
+ {
+  "name": "陕西省肿瘤医院",
+  "category": "hospital",
+  "lon": 108.928364,
+  "lat": 34.221249,
+  "coord_source": "overture_footprint_centroid(OSM w1411003695)",
+  "world_xz": [
+   -1286.0,
+   4425.3
+  ],
+  "overture_id": "7f505423-5ecc-42e0-8ce8-3915d0477320",
+  "footprint_size_m": [
+   52,
+   48
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "住院部B楼",
+    "shape": "footprint",
+    "size_m": [
+     52,
+     48
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 180,
+    "overture_id": "7f505423-5ecc-42e0-8ce8-3915d0477320",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“住院部B楼”"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1411003695",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1411003695",
+   "osm_name": "住院部B楼",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2135
+  },
+  "notes": "雁塔西路309号"
+ },
+ {
+  "name": "陕西省中医医院",
+  "category": "hospital",
+  "lon": 108.940127,
+  "lat": 34.265234,
+  "coord_source": "overture_footprint_centroid(OSM w1263103970)",
+  "world_xz": [
+   -203.8,
+   -470.0
+  ],
+  "overture_id": "75fd3a44-43ca-44dd-a32a-b5b326ad6bad",
+  "footprint_size_m": [
+   143,
+   72
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "层数照片目测（门诊约8层），高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "住院楼/门诊楼",
+    "shape": "footprint(L形高层+多层门诊)",
+    "size_m": [
+     143,
+     72
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "75fd3a44-43ca-44dd-a32a-b5b326ad6bad",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“住院楼”；照片：门诊楼约8层，后部为约16层以上的高层"
+   }
+  ],
+  "crown": {
+   "type": "平顶+红色院名大字",
+   "height_m": null,
+   "description": "门诊楼女儿墙顶立红色“陕西省中医医院”大字"
+  },
+  "facade": {
+   "primary": "米黄色面砖墙+中部蓝色玻璃幕墙竖带",
+   "glass_color_hex": "#4f6f8f",
+   "frame_color_hex": "#c9c1b0",
+   "wall_color_hex": "#ddd3c0",
+   "pattern": "规则方窗+转角挑台",
+   "floor_height_m": null,
+   "notes": "Commons 2023-09-28 两张照片目测"
+  },
+  "podium": "门诊入口玻璃雨棚",
+  "signage": [
+   {
+    "text": "陕西省中医医院",
+    "color_hex": "#d0262b",
+    "position": "门诊楼屋顶女儿墙",
+    "approx_height_m": null
+   },
+   {
+    "text": "门诊",
+    "color_hex": "#d0262b",
+    "position": "门诊楼转角竖排",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:陕西省中医医院_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:陕西省中医医院_02.jpg"
+  ],
+  "sources": [
+   "OSM w1263103970",
+   "Commons 陕西省中医医院 01/02",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1263103970",
+   "osm_name": "住院楼",
+   "cmab_h": 26.3,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 4522
+  },
+  "notes": "西华门2号"
+ },
+ {
+  "name": "西安市妇幼保健院",
+  "category": "hospital",
+  "lon": 108.936617,
+  "lat": 34.261395,
+  "coord_source": "overture_footprint_centroid(OSM w1263109032)",
+  "world_xz": [
+   -526.7,
+   -42.6
+  ],
+  "overture_id": "b9abe57c-23a6-4633-a5ca-2c73782dd2ce",
+  "footprint_size_m": [
+   62,
+   50
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到（CMAB 14.2 m）",
+  "year": null,
+  "massing": [
+   {
+    "part": "西大街临街主楼",
+    "shape": "footprint",
+    "size_m": [
+     62,
+     50
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 177,
+    "overture_id": "b9abe57c-23a6-4633-a5ca-2c73782dd2ce",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安市妇幼保健院”"
+   }
+  ],
+  "crown": {
+   "type": "仿唐坡檐",
+   "height_m": null,
+   "description": "临街立面为深灰筒瓦坡檐（西大街统一仿古风貌）"
+  },
+  "facade": {
+   "primary": "仿古（西大街风貌）：灰色石材墙面+红褐色面砖+深灰瓦檐",
+   "glass_color_hex": null,
+   "frame_color_hex": "#3a3a3a",
+   "wall_color_hex": "#b9b4ab",
+   "pattern": "方窗，入口为深色木纹门框",
+   "floor_height_m": null,
+   "notes": "Commons 2023-09-28 照片"
+  },
+  "podium": "首层为玻璃店面+红褐面砖柱",
+  "signage": [
+   {
+    "text": "西安市妇幼保健院",
+    "color_hex": "#c8a45a",
+    "position": "入口门楣（金色字匾）",
+    "approx_height_m": 4
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安市妇幼保健院_2023-09-28_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安市妇幼保健院_2023-09-28_02.jpg"
+  ],
+  "sources": [
+   "OSM w1263109032",
+   "Commons 西安市妇幼保健院 2023-09-28"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1263109032",
+   "osm_name": "西安市妇幼保健院",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2516
+  },
+  "notes": "西大街北侧"
+ },
+ {
+  "name": "西安高新医院",
+  "category": "hospital",
+  "lon": 108.875183,
+  "lat": 34.231556,
+  "coord_source": "overture_footprint_centroid(OSM w1415051763)",
+  "world_xz": [
+   -6178.9,
+   3278.4
+  ],
+  "overture_id": "65a31c2b-fd66-42e3-bfdd-5c3ae71fc782",
+  "footprint_size_m": [
+   134,
+   111
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "住院部",
+    "shape": "footprint",
+    "size_m": [
+     134,
+     111
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "65a31c2b-fd66-42e3-bfdd-5c3ae71fc782",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安高新医院-住院部”"
+   },
+   {
+    "part": "医疗综合楼",
+    "shape": "footprint",
+    "size_m": [
+     76,
+     71
+    ],
+    "offset_m": [
+     -156.1,
+     -5.0
+    ],
+    "rotation_deg": 180,
+    "overture_id": "de9878f4-feb2-45a7-ae5c-b61dbc15111a",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安高新医院-医疗综合楼”"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1415051763",
+   "OSM w1415051756"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1415051763",
+   "osm_name": "西安高新医院-住院部",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 10893
+  },
+  "notes": "团结南路16号"
+ },
+ {
+  "name": "西安国际医学中心医院",
+  "category": "hospital",
+  "lon": 108.8372,
+  "lat": 34.1465,
+  "coord_source": "estimated（卫星图目测建筑群中心；Overture 此处无轮廓，buildings.bin 轮廓与影像明显错位）",
+  "world_xz": [
+   -9673.4,
+   12738.7
+  ],
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": null,
+  "floors": 11,
+  "height_source": "中建三局 2018-05-11 封顶通稿：总建筑面积约52万㎡，地上11层、地下3层；米制高度未查到",
+  "year": 2019,
+  "year_note": "2018-05 封顶；中新网 2024-09-24 报道“开诊五周年”→2019年开诊",
+  "massing": [
+   {
+    "part": "多栋板式医疗塔楼围合中心圆形广场（广场中央有停机坪标志）",
+    "shape": "多栋矩形/L形塔楼+连廊",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 11,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：约6栋主要塔楼，屋顶多为绿化；北侧有一椭圆形建筑"
+   }
+  ],
+  "crown": {
+   "type": "平顶+屋顶发光字",
+   "height_m": null,
+   "description": "各塔楼顶部立院名/科室名招牌（如“国际医学”“骨科医院”，红色字）"
+  },
+  "facade": {
+   "primary": "玻璃幕墙，横向彩色条带（绿、蓝、紫等不同塔楼不同色）",
+   "glass_color_hex": "#4f9a6a",
+   "frame_color_hex": "#d8dde0",
+   "wall_color_hex": "#e6e8ea",
+   "pattern": "水平通长窗带+色彩渐变横纹",
+   "floor_height_m": null,
+   "notes": "中新网 2024-09-24 两张照片目测；主色随塔楼不同：绿/蓝/淡紫"
+  },
+  "podium": "塔楼之间以连廊相连",
+  "signage": [
+   {
+    "text": "国际医学",
+    "color_hex": "#d0262b",
+    "position": "塔楼顶部",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://www.shx.chinanews.com/2024/0924/U995P10DT20240924175454.jpg",
+   "https://www.shx.chinanews.com/2024/0924/U995P10DT20240924175522.jpg"
+  ],
+  "sources": [
+   "https://www.cscec.com/xwzx_new/zqydt_new/201805/2881944.html",
+   "https://www.shx.chinanews.com.cn/news/2024/0924/101413.html",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": null,
+  "notes": "高新区团结南路与西太路一带；“全球最大单体医疗建筑”为开发/施工方宣传口径",
+  "confidence_note": "medium(层数)/low(坐标)"
+ },
+ {
+  "name": "西安市第三医院",
+  "category": "hospital",
+  "lon": 108.959203,
+  "lat": 34.322819,
+  "coord_source": "overture_footprint_centroid(OSM r18911053)",
+  "world_xz": [
+   1551.3,
+   -6882.9
+  ],
+  "overture_id": "37c17aee-7f29-4681-9dfc-a7a618dc1ffd",
+  "footprint_size_m": [
+   146,
+   138
+  ],
+  "height_m": null,
+  "floors": 13,
+  "height_source": "采自 research/refs/dossiers/north.json（其来源：西安市卫健委等 WebSearch 摘要）：东院门诊医技楼5层、西院住院楼13层；本档未独立复核，且未确认13层楼对应哪一轮廓",
+  "year": 2016,
+  "year_note": "2016-12-15 试运营（north.json 引）",
+  "massing": [
+   {
+    "part": "主体医疗综合楼（大体量方形）",
+    "shape": "footprint",
+    "size_m": [
+     146,
+     138
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "37c17aee-7f29-4681-9dfc-a7a618dc1ffd",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM r18911053 146×138 m"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM r18911053",
+   "public/data/pois.json 西安市第三医院",
+   "research/refs/dossiers/north.json（西安市第三医院条目及其来源 https://xawjw.xa.gov.cn/xxgk/zzjg/zsjg/6124679df8fd1c0bdc4a1a1c.html）"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "r18911053",
+   "osm_name": null,
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 14569
+  },
+  "notes": "凤城三路；主楼识别依据：距 POI 最近的最大体量建筑"
+ },
+ {
+  "name": "陕西省人民政府（新城大院办公楼）",
+  "category": "government",
+  "lon": 108.949535,
+  "lat": 34.267053,
+  "coord_source": "overture_footprint_centroid(OSM w1465146336)",
+  "world_xz": [
+   661.8,
+   -672.5
+  ],
+  "overture_id": "f85d1586-4537-4d6e-8dec-2f682c8ccadf",
+  "footprint_size_m": [
+   180,
+   48
+  ],
+  "height_m": null,
+  "floors": 11,
+  "height_source": "层数为照片目测（Commons 2023-09-29），高度未查到；CMAB 14.2 m 明显偏低",
+  "year": null,
+  "massing": [
+   {
+    "part": "主楼（东西向长板）",
+    "shape": "footprint（中部南凸门廊）",
+    "size_m": [
+     180,
+     48
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "f85d1586-4537-4d6e-8dec-2f682c8ccadf",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 11,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片计数约10–11层，对称；中央与两端屋顶各有一座仿古重檐亭阁"
+   },
+   {
+    "part": "中央门廊（柱廊雨棚）",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "南立面中部多柱柱廊，上挂红色横幅"
+   }
+  ],
+  "crown": {
+   "type": "仿古屋顶亭阁（中央+两端共3座）",
+   "height_m": null,
+   "description": "橙褐色琉璃瓦檐口、深色屋面的重檐亭阁置于平屋顶上；主楼檐口一圈橙褐色挑檐"
+  },
+  "facade": {
+   "primary": "米黄/浅驼色面砖墙+规则竖向窗",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#d8c3a0",
+   "pattern": "规则方窗阵列，竖向壁柱分隔",
+   "floor_height_m": null,
+   "notes": "照片目测"
+  },
+  "podium": "首层中央为柱廊门廊，前有汉白玉栏杆台阶与旗杆",
+  "signage": [
+   {
+    "text": "（门廊红色横幅标语）",
+    "color_hex": "#c8102e",
+    "position": "门廊上方",
+    "approx_height_m": 8
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:陕西省人民政府_2023-09-29_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:陕西省人民政府_2023-09-29_02.jpg",
+   "https://commons.wikimedia.org/wiki/File:陕西省政府办公大楼（1）_-_panoramio.jpg"
+  ],
+  "sources": [
+   "OSM w1465146336（名称“陕西省人民政府”）",
+   "Commons 陕西省人民政府 2023-09-29",
+   "https://zh.wikipedia.org/wiki/陕西省人民政府"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1465146336",
+   "osm_name": "陕西省人民政府",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 4315
+  },
+  "notes": "与 landmarks2026/heritage.json 的“新城黄楼（18 m/3层）”冲突：照片显示该轮廓（180×48 m）上的办公楼约10–11层（core_south.json 照片计约12层；其引头条视频称上世纪80年代建成、获鲁班奖，本档未复核）"
+ },
+ {
+  "name": "西安市人民政府（西安市行政中心）",
+  "category": "government",
+  "lon": 108.935072,
+  "lat": 34.344134,
+  "coord_source": "overture_footprint_centroid(OSM r18903162)",
+  "world_xz": [
+   -668.9,
+   -9257.7
+  ],
+  "overture_id": "7613d3a2-60de-46ee-b1e4-eaf1384bccf2",
+  "footprint_size_m": [
+   246,
+   240
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到；CMAB 55.9 m（仅作参考）",
+  "year": null,
+  "massing": [
+   {
+    "part": "行政中心主体（回字形+中轴两座高层）",
+    "shape": "footprint（对称回字形，南北两座高层板楼+东西两侧低层翼楼围合内院）",
+    "size_m": [
+     246,
+     240
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "7613d3a2-60de-46ee-b1e4-eaf1384bccf2",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片：两座高层约12–14层（未能准确计数），翼楼约4–5层"
+   },
+   {
+    "part": "北侧附楼（H形）",
+    "shape": "footprint",
+    "size_m": [
+     123,
+     81
+    ],
+    "offset_m": [
+     -259.3,
+     -26.3
+    ],
+    "rotation_deg": 90,
+    "overture_id": "3bf75889-9d75-499b-a792-4b9d7ee303cb",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图"
+   }
+  ],
+  "crown": {
+   "type": "平顶+大挑檐帽（深灰色）",
+   "height_m": null,
+   "description": "高层与翼楼顶部均为外挑的深灰色平檐（照片）"
+  },
+  "facade": {
+   "primary": "浅灰白石材+竖向条窗",
+   "glass_color_hex": null,
+   "frame_color_hex": "#5d6468",
+   "wall_color_hex": "#e3e3df",
+   "pattern": "竖向窄长窗",
+   "floor_height_m": null,
+   "notes": "Commons 20201209 照片目测"
+  },
+  "podium": "东西两侧4–5层翼楼",
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:20201209_The_Building_of_Xi%27an_Municipal_People%27s_Government.jpg"
+  ],
+  "sources": [
+   "OSM r18903162",
+   "Commons 20201209 The Building of Xi'an Municipal People's Government",
+   "https://zh.wikipedia.org/wiki/西安市人民政府（凤城八路109号）"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "r18903162",
+   "osm_name": null,
+   "cmab_h": 55.9,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 35257
+  },
+  "notes": "凤城八路109号",
+  "confidence_note": "medium(体量)/low(高度)"
+ },
+ {
+  "name": "西安市新城区人民政府",
+  "category": "government",
+  "lon": 108.956599,
+  "lat": 34.268862,
+  "coord_source": "overture_footprint_centroid(OSM w1465145886)",
+  "world_xz": [
+   1311.7,
+   -873.9
+  ],
+  "overture_id": "8111cdfa-88c2-4e6c-83c4-b4d21bcbc736",
+  "footprint_size_m": [
+   59,
+   31
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到；照片可见约7层以上",
+  "year": null,
+  "massing": [
+   {
+    "part": "办公楼",
+    "shape": "footprint",
+    "size_m": [
+     59,
+     31
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 3,
+    "overture_id": "8111cdfa-88c2-4e6c-83c4-b4d21bcbc736",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "轮廓对应为推断"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "米黄面砖两翼+中部蓝色玻璃幕墙竖向中庭",
+   "glass_color_hex": "#5a86b8",
+   "frame_color_hex": "#b8b8b8",
+   "wall_color_hex": "#d9bf9a",
+   "pattern": "两翼规则窗+挑出空调板",
+   "floor_height_m": null,
+   "notes": "Commons 2023-09-29 照片目测"
+  },
+  "podium": "入口为红柱+红色琉璃瓦坡檐门廊，挂红灯笼",
+  "signage": [
+   {
+    "text": "（门廊红色标语横幅）",
+    "color_hex": "#c8102e",
+    "position": "门廊檐下",
+    "approx_height_m": 4
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安市新城区人民政府.jpg"
+  ],
+  "sources": [
+   "Commons 西安市新城区人民政府.jpg（带拍摄坐标 34.268154,108.95591）",
+   "OSM w1465145886"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1465145886",
+   "osm_name": null,
+   "cmab_h": null,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1835
+  },
+  "notes": "楼体与轮廓的对应未核实"
+ },
+ {
+  "name": "西安市莲湖区人民政府",
+  "category": "government",
+  "lon": 108.940067,
+  "lat": 34.266933,
+  "coord_source": "overture_footprint_centroid(OSM w1263373286)",
+  "world_xz": [
+   -209.3,
+   -659.2
+  ],
+  "overture_id": "684918b7-bb25-40a9-86d6-dea1bea82b22",
+  "footprint_size_m": [
+   79,
+   16
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "办公楼",
+    "shape": "footprint",
+    "size_m": [
+     79,
+     16
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "684918b7-bb25-40a9-86d6-dea1bea82b22",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：白色屋面长条楼"
+   },
+   {
+    "part": "大门",
+    "shape": "门架：4根方柱+大平板雨棚，中间悬国徽",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "浅灰白外墙（后方楼体）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#e4e2dc",
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "照片仅见大门与侧楼"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "（国徽）",
+    "color_hex": "#c8a13a",
+    "position": "大门横梁正中",
+    "approx_height_m": 6
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安市莲湖区人民政府.jpg"
+  ],
+  "sources": [
+   "Commons 西安市莲湖区人民政府.jpg",
+   "OSM w1263373286",
+   "pois.json 莲湖区人民政府"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1263373286",
+   "osm_name": null,
+   "cmab_h": 19.9,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1261
+  },
+  "notes": "北院门/西华门附近"
+ },
+ {
+  "name": "西安市雁塔区人民政府",
+  "category": "government",
+  "lon": 108.94364,
+  "lat": 34.224067,
+  "coord_source": "overture_footprint_centroid(OSM w1419576582)",
+  "world_xz": [
+   119.4,
+   4111.8
+  ],
+  "overture_id": "6864c4a1-e8f2-4efa-b7cc-eb96457c233f",
+  "footprint_size_m": [
+   62,
+   19
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "区委/区政府办公楼",
+    "shape": "footprint",
+    "size_m": [
+     62,
+     19
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "6864c4a1-e8f2-4efa-b7cc-eb96457c233f",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“雁塔区委”"
+   },
+   {
+    "part": "大门",
+    "shape": "两根深褐方柱+外挑折板雨棚，金色“雁塔”二字",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "只拍到大门"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "雁塔",
+    "color_hex": "#b8935a",
+    "position": "大门雨棚正面",
+    "approx_height_m": 6
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:雁塔区政府.jpg"
+  ],
+  "sources": [
+   "Commons 雁塔区政府.jpg（拍摄坐标 34.22447,108.94414）",
+   "OSM w1419576582",
+   "pois.json 雁塔区政府"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1419576582",
+   "osm_name": "雁塔区委",
+   "cmab_h": 14.8,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1010
+  },
+  "notes": "小寨东路，紧邻赛格国际购物中心"
+ },
+ {
+  "name": "西安市未央区人民政府",
+  "category": "government",
+  "lon": 108.94682,
+  "lat": 34.292803,
+  "coord_source": "overture_footprint_centroid(OSM w1264995048)",
+  "world_xz": [
+   412.0,
+   -3539.6
+  ],
+  "overture_id": "e6742d2b-c2f1-468a-b23b-ec31ab78fb4b",
+  "footprint_size_m": [
+   40,
+   21
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "办公楼",
+    "shape": "footprint",
+    "size_m": [
+     40,
+     21
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "e6742d2b-c2f1-468a-b23b-ec31ab78fb4b",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "距 Overture place 11 m"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "Overture place 西安未央区政府 (108.946781,34.292892)",
+   "OSM w1264995048"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1264995048",
+   "osm_name": null,
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 641
+  },
+  "notes": "仅坐标可信；主楼识别未核实"
+ },
+ {
+  "name": "西安市长安区人民政府",
+  "category": "government",
+  "lon": 108.902321,
+  "lat": 34.160573,
+  "coord_source": "overture_footprint_centroid(OSM w275396702)",
+  "world_xz": [
+   -3682.1,
+   11174.1
+  ],
+  "overture_id": "40a23315-55d0-4ef6-8762-56d5aba5b4b3",
+  "footprint_size_m": [
+   191,
+   38
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到；CMAB 10 m",
+  "year": null,
+  "massing": [
+   {
+    "part": "办公楼（东西向长板）",
+    "shape": "footprint",
+    "size_m": [
+     191,
+     38
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "40a23315-55d0-4ef6-8762-56d5aba5b4b3",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西安市长安区人民政府”，191×38 m"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w275396702",
+   "pois.json 西安市长安区人民政府"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w275396702",
+   "osm_name": "西安市长安区人民政府",
+   "cmab_h": 10.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 3762
+  },
+  "notes": "",
+  "confidence_note": "medium(位置)/low(体量)"
+ },
+ {
+  "name": "西安市灞桥区人民政府",
+  "category": "government",
+  "lon": 109.059293,
+  "lat": 34.274624,
+  "coord_source": "overture_footprint_centroid(OSM w1512651091)",
+  "world_xz": [
+   10759.9,
+   -1515.4
+  ],
+  "overture_id": "90716c64-bf10-4d56-9af2-68a4231a11ce",
+  "footprint_size_m": [
+   49,
+   18
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "办公楼",
+    "shape": "footprint",
+    "size_m": [
+     49,
+     18
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 3,
+    "overture_id": "90716c64-bf10-4d56-9af2-68a4231a11ce",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "距 POI 51 m，识别未核实"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "pois.json 灞桥区政府",
+   "OSM w1512651091"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1512651091",
+   "osm_name": null,
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 752
+  },
+  "notes": "纺织城一带"
+ },
+ {
+  "name": "西安市中级人民法院",
+  "category": "government",
+  "lon": 108.982413,
+  "lat": 34.312707,
+  "coord_source": "overture_footprint_centroid(OSM w1409622325)",
+  "world_xz": [
+   3686.7,
+   -5756.4
+  ],
+  "overture_id": "72ae5589-7460-4ab3-b44e-75e0d20759df",
+  "footprint_size_m": [
+   124,
+   79
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "审判综合楼",
+    "shape": "footprint",
+    "size_m": [
+     124,
+     79
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "72ae5589-7460-4ab3-b44e-75e0d20759df",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "距 POI 29 m；北侧4栋方形高层（CMAB 56–68 m）是否属法院未核实"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "pois.json 陕西省西安市中级人民法院",
+   "OSM w1409622325"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1409622325",
+   "osm_name": null,
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 5255
+  },
+  "notes": ""
+ },
+ {
+  "name": "陕西大会堂",
+  "category": "government",
+  "lon": 108.86623,
+  "lat": 34.20447,
+  "coord_source": "satellite（Esri z18 上量取方形主体中心；OSM w1417904093 轮廓连同东北侧建筑一起圈入，质心偏移约60 m）",
+  "world_xz": [
+   -7002.6,
+   6292.1
+  ],
+  "overture_id": null,
+  "footprint_size_m": [
+   142,
+   131
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2011,
+  "year_note": "2011年底建成投用（百度百科摘要）",
+  "massing": [
+   {
+    "part": "大会堂主体（方形，四周深灰坡檐围合，中部平顶+采光带）",
+    "shape": "box(约142×131 m，卫星图量取)",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图；四面柱廊：直径2.4 m、高10余米廊柱各8根（百度百科摘要）"
+   }
+  ],
+  "crown": {
+   "type": "四周坡檐+中部平顶",
+   "height_m": null,
+   "description": "卫星图：外圈深灰色坡屋面环绕，中部浅色平屋顶上有采光天窗带"
+  },
+  "facade": {
+   "primary": "四面柱廊（每面8根廊柱，直径2.4 m、高10余米）",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": "巨柱廊",
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://baike.baidu.com/item/陕西大会堂/17572249（搜索摘要）",
+   "OSM w1417904093",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "medium",
+  "local_data": null,
+  "notes": "丈八北路1号陕西宾馆内；总建筑面积6.5万㎡。OSM 轮廓 w1417904093（Overture 2d8b37e1，365×187 m）包含了东北侧相邻建筑；北侧 zenodo 1ed8da3f 实为广场铺装，非建筑"
+ },
+ {
+  "name": "西安交通大学钱学森图书馆",
+  "category": "university",
+  "lon": 108.978969,
+  "lat": 34.248701,
+  "coord_source": "overture_footprint_centroid(OSM w263624481)",
+  "world_xz": [
+   3369.8,
+   1370.3
+  ],
+  "overture_id": "cafc0ed6-69a8-4c86-8017-450068602b61",
+  "footprint_size_m": [
+   144,
+   124
+  ],
+  "height_m": null,
+  "floors": 11,
+  "height_source": "层数：西安交大官网/西安市地方志办（北楼4层；南楼II段地上11层，含机房水箱共14层）；米制高度未查到。CMAB 32.2 m 仅供参考",
+  "year": 1961,
+  "year_note": "北楼1961年建成，南楼1991年3月启用，1995年命名“钱学森图书馆”",
+  "massing": [
+   {
+    "part": "北楼（1961，“山”字形4层+南侧5层书库）",
+    "shape": "山字形",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 4,
+    "setbacks": null,
+    "taper": null,
+    "notes": "苏式对称立面，中部柱廊入口（Commons 航拍照片）"
+   },
+   {
+    "part": "南楼II段（1991，中部塔楼）",
+    "shape": "逐级收分的阶梯形塔楼",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 11,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地上11层+地下1层，顶部另有电梯机房/水箱2层，共14层；中部竖向深色窗带"
+   },
+   {
+    "part": "南楼I、III段（两翼）",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 3,
+    "setbacks": null,
+    "taper": null,
+    "notes": "3层"
+   }
+  ],
+  "crown": {
+   "type": "阶梯收分塔顶（南楼）",
+   "height_m": null,
+   "description": "南楼中部塔身两侧逐层退台，顶部为机房/水箱小体量"
+  },
+  "facade": {
+   "primary": "米黄/浅驼色面砖+竖向深色玻璃带",
+   "glass_color_hex": "#2f3d4f",
+   "frame_color_hex": "#6d6a66",
+   "wall_color_hex": "#d9ccb3",
+   "pattern": "南楼中部通高竖向窗带，两侧退台；北楼规则竖窗+柱廊",
+   "floor_height_m": null,
+   "notes": "Commons 照片目测"
+  },
+  "podium": "南楼两翼3层",
+  "signage": [
+   {
+    "text": "钱学森图书馆",
+    "color_hex": "#3a3a3a",
+    "position": "入口上方石材墙面（深色立体字）",
+    "approx_height_m": 8
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:钱学森图书馆.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安交通大学_钱学森图书馆和四大发明广场.jpg",
+   "https://commons.wikimedia.org/wiki/File:西交兴庆之俯瞰钱学森图书馆.jpg"
+  ],
+  "sources": [
+   "https://www.xjtu.edu.cn/tsda/qxstsg.htm",
+   "https://xadfz.xa.gov.cn/xadq/rwxa/645c431cf8fd1c1a702b73ee.html",
+   "OSM w263624481"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w263624481",
+   "osm_name": "钱学森图书馆",
+   "cmab_h": 32.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 8013
+  },
+  "notes": "轮廓 w263624481 同时包含南北两楼",
+  "confidence_note": "high(层数/年代)/medium(外观)"
+ },
+ {
+  "name": "西北工业大学友谊校区图书馆",
+  "category": "university",
+  "lon": 108.910986,
+  "lat": 34.24456,
+  "coord_source": "overture_footprint_centroid(OSM w1267628278)",
+  "world_xz": [
+   -2884.9,
+   1831.2
+  ],
+  "overture_id": "f3470557-2afc-456c-8fc8-0e3bc00d0d54",
+  "footprint_size_m": [
+   40,
+   35
+  ],
+  "height_m": null,
+  "floors": 5,
+  "height_source": "两翼 OSM levels=5；高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "中部凹弧形主入口体量",
+    "shape": "footprint（凹弧立面）",
+    "size_m": [
+     40,
+     35
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 89,
+    "overture_id": "f3470557-2afc-456c-8fc8-0e3bc00d0d54",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM 名称“西北工业大学 图书馆”"
+   },
+   {
+    "part": "北翼",
+    "shape": "box",
+    "size_m": [
+     54,
+     15
+    ],
+    "offset_m": [
+     23.7,
+     26.6
+    ],
+    "rotation_deg": 180,
+    "overture_id": "adf3dc0e-3b7c-4bc2-ab5a-78c52a157f1d",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM building:levels=5"
+   },
+   {
+    "part": "南翼",
+    "shape": "box",
+    "size_m": [
+     54,
+     15
+    ],
+    "offset_m": [
+     22.8,
+     -26.8
+    ],
+    "rotation_deg": 0,
+    "overture_id": "fc34603b-2610-4d1d-8844-409e58482155",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM building:levels=5"
+   },
+   {
+    "part": "东侧圆形体量",
+    "shape": "cylinder",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图可见"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "米黄石材+蓝绿色玻璃幕墙（中部凹弧面为竖向通高玻璃）",
+   "glass_color_hex": "#4f7f9a",
+   "frame_color_hex": "#c9c0ad",
+   "wall_color_hex": "#d8cdb8",
+   "pattern": "石材实墙夹竖向玻璃带",
+   "floor_height_m": null,
+   "notes": "Commons 2024-09-15 照片目测"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "图书馆（竖排牌匾）",
+    "color_hex": "#3a3a3a",
+    "position": "入口上方",
+    "approx_height_m": 8
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西北工业大学友谊校区图书馆.jpg"
+  ],
+  "sources": [
+   "Commons 西北工业大学友谊校区图书馆.jpg",
+   "OSM w1267628278,w1267628912,w1267629927"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1267628278",
+   "osm_name": "西北工业大学 图书馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 938
+  },
+  "notes": "OSM 另有“西北工业大学老图书馆”(w1267629807) 在其西侧"
+ },
+ {
+  "name": "西安电子科技大学北校区大礼堂",
+  "category": "university",
+  "lon": 108.912015,
+  "lat": 34.232025,
+  "coord_source": "overture_footprint_centroid(OSM w1413302029)",
+  "world_xz": [
+   -2790.2,
+   3226.3
+  ],
+  "overture_id": "821a501f-5058-49e2-9229-1994e84a7316",
+  "footprint_size_m": [
+   81,
+   45
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "大礼堂",
+    "shape": "footprint（坡屋顶）",
+    "size_m": [
+     81,
+     45
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 62,
+    "overture_id": "821a501f-5058-49e2-9229-1994e84a7316",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图深灰坡屋面，长轴约62°（东北—西南）"
+   }
+  ],
+  "crown": {
+   "type": "坡屋顶（深灰）",
+   "height_m": null,
+   "description": "卫星图"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1413302029（名称“西安电子科技大学-大礼堂”）",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1413302029",
+   "osm_name": "西安电子科技大学-大礼堂",
+   "cmab_h": 9.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2931
+  },
+  "notes": "北校区“主楼”未能在资料中确认，此处以 OSM 命名的大礼堂代替；西北侧有 OSM“科技楼”(w1413301992) 高层"
+ },
+ {
+  "name": "西北大学博物馆（太白校区）",
+  "category": "university",
+  "lon": 108.921214,
+  "lat": 34.251838,
+  "coord_source": "overture_footprint_centroid(OSM w1283517931)",
+  "world_xz": [
+   -1943.8,
+   1021.2
+  ],
+  "overture_id": "f5862b1f-da17-4fa6-8411-faead0662404",
+  "footprint_size_m": [
+   93,
+   51
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "博物馆",
+    "shape": "footprint",
+    "size_m": [
+     93,
+     51
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "f5862b1f-da17-4fa6-8411-faead0662404",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片约3–4层，方正石材体量"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "浅灰白石材墙+底层深色玻璃入口",
+   "glass_color_hex": "#2f4a44",
+   "frame_color_hex": "#8a8a86",
+   "wall_color_hex": "#e2e0da",
+   "pattern": "大面积实墙，上部小窗",
+   "floor_height_m": null,
+   "notes": "Commons 2014-01-20 照片"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西北大学博物馆",
+    "color_hex": "#2b2b2b",
+    "position": "正立面上部（黑字+红色校徽）",
+    "approx_height_m": 12
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:Museum_of_Northwest_University.JPG",
+   "https://commons.wikimedia.org/wiki/File:Northwest_University_Taibai_Campus.JPG"
+  ],
+  "sources": [
+   "OSM w1283517931",
+   "Commons Museum of Northwest University.JPG"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1283517931",
+   "osm_name": "西北大学博物馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 4380
+  },
+  "notes": "太白北路229号校内"
+ },
+ {
+  "name": "陕西师范大学雁塔校区图书馆",
+  "category": "university",
+  "lon": 108.945565,
+  "lat": 34.204757,
+  "coord_source": "overture_footprint_centroid(OSM w1409939791)",
+  "world_xz": [
+   296.5,
+   6260.2
+  ],
+  "overture_id": "d908ba9a-ebf0-421a-ba4d-85f7174a11bb",
+  "footprint_size_m": [
+   115,
+   27
+  ],
+  "height_m": null,
+  "floors": 3,
+  "height_source": "层数沿用 venues.json（3层）；高度未查到",
+  "year": 1956,
+  "year_note": "venues.json 记 1956，本轮未复核",
+  "massing": [
+   {
+    "part": "图书馆（南北向长楼）",
+    "shape": "footprint",
+    "size_m": [
+     115,
+     27
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "d908ba9a-ebf0-421a-ba4d-85f7174a11bb",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 3,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：深灰色坡屋面长楼，两端带翼"
+   }
+  ],
+  "crown": {
+   "type": "坡屋顶（深灰）",
+   "height_m": null,
+   "description": "卫星图"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得外观照片（Commons 仅有校门与礼堂内景）"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM w1409939791（名称“图书馆”）",
+   "research/refs/landmarks2026/venues.json"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1409939791",
+   "osm_name": "图书馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2336
+  },
+  "notes": "OSM 另有“外借部”(w1409939781) 紧邻其东"
+ },
+ {
+  "name": "长安大学渭水校区逸夫图书馆",
+  "category": "university",
+  "lon": 108.899517,
+  "lat": 34.372652,
+  "coord_source": "overture_footprint_centroid(OSM w1091739070)",
+  "world_xz": [
+   -3940.0,
+   -12436.0
+  ],
+  "overture_id": "42e588d3-4ae9-4636-b94d-43a8495c193d",
+  "footprint_size_m": [
+   105,
+   60
+  ],
+  "height_m": null,
+  "floors": 13,
+  "height_source": "长安大学官网“建筑地标”摘要：主体地上13层、约4.5万㎡；高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "主楼（中部高层）",
+    "shape": "footprint",
+    "size_m": [
+     105,
+     60
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 20,
+    "overture_id": "42e588d3-4ae9-4636-b94d-43a8495c193d",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 13,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地上13层"
+   },
+   {
+    "part": "弧形裙楼（面向南侧半圆广场）",
+    "shape": "弧形",
+    "size_m": [
+     115,
+     42
+    ],
+    "offset_m": [
+     103.0,
+     -18.6
+    ],
+    "rotation_deg": 147,
+    "overture_id": "c2a124db-9a47-40a5-a28b-402e72fe4730",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：主楼两侧弧形低层翼楼环抱圆形广场"
+   }
+  ],
+  "crown": {
+   "type": "平顶+屋顶校名大字",
+   "height_m": null,
+   "description": "楼顶立红色“长安大学”书法字（照片）"
+  },
+  "facade": {
+   "primary": "中部通高蓝灰玻璃幕墙+两侧浅灰石材实墙框",
+   "glass_color_hex": "#3c5874",
+   "frame_color_hex": "#9aa0a4",
+   "wall_color_hex": "#c9c7c2",
+   "pattern": "玻璃幕墙竖向分格",
+   "floor_height_m": null,
+   "notes": "Commons 2007/2011 照片目测"
+  },
+  "podium": "两侧弧形低层翼楼",
+  "signage": [
+   {
+    "text": "长安大学",
+    "color_hex": "#c0282d",
+    "position": "屋顶",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:ChdUniversityLibrary.jpg",
+   "https://commons.wikimedia.org/wiki/File:Chang%27an_University_Gate.jpg"
+  ],
+  "sources": [
+   "https://www.chd.edu.cn/xxgk/cdyx1/jzdb.htm",
+   "OSM w1091739070"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1091739070",
+   "osm_name": "逸夫图书馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 3737
+  },
+  "notes": "渭水校区（未央区北部）"
+ },
+ {
+  "name": "西安建筑科技大学雁塔校区图书馆",
+  "category": "university",
+  "lon": 108.961749,
+  "lat": 34.238245,
+  "coord_source": "overture_footprint_centroid(OSM r17610788)",
+  "world_xz": [
+   1785.5,
+   2534.1
+  ],
+  "overture_id": "ba729f70-c1e8-4b4c-b968-28f3a7e12c34",
+  "footprint_size_m": [
+   79,
+   68
+  ],
+  "height_m": null,
+  "floors": 5,
+  "height_source": "OSM levels=5；高度未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "图书馆（三翼放射形）",
+    "shape": "footprint（Y/三叉形，三翼围合中心庭院）",
+    "size_m": [
+     79,
+     68
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "ba729f70-c1e8-4b4c-b968-28f3a7e12c34",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "OSM building:levels=5"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得外观照片（Commons 有“Library in XAUAT Yanta Campus”文件，本轮未下载查看）"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "OSM r17610788"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "r17610788",
+   "osm_name": "图书馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": 5,
+   "footprint_area_m2": 2908
+  },
+  "notes": "雁塔路13号校内"
+ },
+ {
+  "name": "西安交通大学兴庆校区主楼群（中心楼·主楼A–G座）",
+  "category": "university",
+  "lon": 108.97896,
+  "lat": 34.246733,
+  "coord_source": "overture_footprint_centroid(OSM w264595812)",
+  "world_xz": [
+   3369.0,
+   1589.4
+  ],
+  "overture_id": "9d91e9f6-f9ef-42c3-9071-797bcb3f28f9",
+  "footprint_size_m": [
+   95,
+   39
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "中部高层主楼",
+    "shape": "footprint",
+    "size_m": [
+     95,
+     39
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "9d91e9f6-f9ef-42c3-9071-797bcb3f28f9",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图有长阴影；Commons“Zhulou xjtu.jpg”：高层塔楼，竖向深色玻璃带，顶部为镂空方框构架"
+   }
+  ],
+  "crown": {
+   "type": "顶部镂空方框构架",
+   "height_m": null,
+   "description": "Commons Zhulou xjtu.jpg 照片"
+  },
+  "facade": {
+   "primary": "浅灰/米灰石材+竖向深色玻璃带",
+   "glass_color_hex": "#3d4a55",
+   "frame_color_hex": null,
+   "wall_color_hex": "#c9c4ba",
+   "pattern": "竖向条带",
+   "floor_height_m": null,
+   "notes": "照片目测（阴天）"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:Zhulou_xjtu.jpg",
+   "https://commons.wikimedia.org/wiki/File:西交兴庆之俯瞰钱图与主楼_01.jpg"
+  ],
+  "sources": [
+   "Overture 9d91e9f6（无名称）",
+   "Commons Category:Xingqing Campus of Xi'an Jiaotong University",
+   "research/refs/landmarks2026/universities.json（主楼A–G座命名轮廓）"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w264595812",
+   "osm_name": null,
+   "cmab_h": null,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2707
+  },
+  "notes": "主楼与 Overture 轮廓的对应为卫星图+照片推断；universities.json 中已有“主楼B座/E座”等命名轮廓，可交叉使用"
+ },
+ {
+  "name": "陕西省图书馆（长安北路主馆）",
+  "category": "culture",
+  "lon": 108.94086,
+  "lat": 34.233144,
+  "coord_source": "overture_footprint_centroid(OSM r17606810)",
+  "world_xz": [
+   -136.3,
+   3101.7
+  ],
+  "overture_id": "928a0ecd-24bb-49c1-8d19-3402c1f74e70",
+  "footprint_size_m": [
+   130,
+   81
+  ],
+  "height_m": null,
+  "floors": 10,
+  "height_source": "zh.wikipedia《陕西省图书馆》（主楼地上十层，裙楼地上五层）；米制高度未查到，CMAB 16 m 偏低",
+  "year": 2001,
+  "year_note": "1996-05 动工，2000年底竣工，2001-09-30 开放",
+  "massing": [
+   {
+    "part": "主楼",
+    "shape": "footprint（变形“工”字，内含庭院，东侧弧形入口）",
+    "size_m": [
+     130,
+     81
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 177,
+    "overture_id": "928a0ecd-24bb-49c1-8d19-3402c1f74e70",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 10,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地下2层+地上10层"
+   },
+   {
+    "part": "裙楼",
+    "shape": "footprint",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地下1层+地上5层"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "Commons 分类中所见均为室内照；外观未核实"
+  },
+  "podium": "5层裙楼",
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/Category:Shaanxi_Library"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西省图书馆",
+   "OSM r17606810"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "r17606810",
+   "osm_name": "陕西省图书馆",
+   "cmab_h": 16.0,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 6322
+  },
+  "notes": "张锦秋设计；建筑面积4.7万㎡；与陕西省美术博物馆、省体育场相邻"
+ },
+ {
+  "name": "陕西省图书馆高新馆",
+  "category": "culture",
+  "lon": 108.829437,
+  "lat": 34.21463,
+  "coord_source": "overture_footprint_centroid(OSM r17832823)",
+  "world_xz": [
+   -10387.6,
+   5161.8
+  ],
+  "overture_id": "56529b11-5727-4779-8a38-2f9623753323",
+  "footprint_size_m": [
+   237,
+   109
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2022,
+  "year_note": "2015-08-18 开工，2022-04-24 开放（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "中央主馆（大屋顶方形体量）",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图：中部大方形体量，深灰四坡大屋顶，中央有采光天窗"
+   },
+   {
+    "part": "四角附楼（各带四坡顶）",
+    "shape": "box×4",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图"
+   }
+  ],
+  "crown": {
+   "type": "唐风四坡大屋顶（深灰）",
+   "height_m": null,
+   "description": "主馆及四角楼均为深灰色大出挑四坡顶"
+  },
+  "facade": {
+   "primary": "米黄石材墙+中部深红褐木色竖向格栅/柱廊",
+   "glass_color_hex": null,
+   "frame_color_hex": "#6e3b2c",
+   "wall_color_hex": "#d6c4a3",
+   "pattern": "竖向格栅柱廊",
+   "floor_height_m": null,
+   "notes": "Commons 2024-12-21 照片目测"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:Shaanxi_Library_New_Building.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西省图书馆",
+   "OSM r17832823",
+   "Commons Shaanxi Library New Building"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "r17832823",
+   "osm_name": "陕西省图书馆高新馆",
+   "cmab_h": 14.8,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 22950
+  },
+  "notes": "天谷七路899号；建筑面积8万㎡"
+ },
+ {
+  "name": "西安博物院",
+  "category": "culture",
+  "lon": 108.93558,
+  "lat": 34.23889,
+  "coord_source": "overture_footprint_centroid(OSM w1284311333)",
+  "world_xz": [
+   -622.1,
+   2462.3
+  ],
+  "overture_id": "04117c9d-5b33-47c4-8c94-d99202634fd8",
+  "footprint_size_m": [
+   66,
+   65
+  ],
+  "height_m": null,
+  "floors": 2,
+  "height_source": "西安博物院 百科/携程摘要：地上两层、地下一层；高度未查到",
+  "year": 2007,
+  "year_note": "2007-05-18 正式对外开放（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "方形基座（地上2层）",
+    "shape": "footprint(近正方形 66×65 m)",
+    "size_m": [
+     66,
+     65
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "04117c9d-5b33-47c4-8c94-d99202634fd8",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地上2层、地下1层"
+   },
+   {
+    "part": "中央圆形鼓座+玻璃环带+伞形圆顶",
+    "shape": "cylinder+cone",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "“天圆地方”；顶部尖刹"
+   },
+   {
+    "part": "四角小亭",
+    "shape": "box+四坡顶",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片"
+   }
+  ],
+  "crown": {
+   "type": "圆形伞顶+尖刹",
+   "height_m": null,
+   "description": "中央圆鼓上为灰色环形出檐伞顶，顶部金属尖刹；鼓身为浅绿色玻璃环带"
+  },
+  "facade": {
+   "primary": "米黄/浅灰石材，基座水平线脚",
+   "glass_color_hex": "#9fc3b6",
+   "frame_color_hex": "#8c8c88",
+   "wall_color_hex": "#e0d8c6",
+   "pattern": "水平分层出檐",
+   "floor_height_m": null,
+   "notes": "Commons 2019/2024 照片目测"
+  },
+  "podium": "正门大台阶+白色栏杆",
+  "signage": [
+   {
+    "text": "西安博物院欢迎您（LED）",
+    "color_hex": "#d0262b",
+    "position": "入口上方",
+    "approx_height_m": 6
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:Xi%27an_Museum.jpg",
+   "https://commons.wikimedia.org/wiki/File:Xi%27an_Museum_2024.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安博物院.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安博物院",
+   "OSM w1284311333"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1284311333",
+   "osm_name": "西安博物院",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 3863
+  },
+  "notes": "张锦秋设计；“天圆地方”；博物馆建筑面积1.6万㎡（wiki）"
+ },
+ {
+  "name": "陕西历史博物馆（小寨本馆）",
+  "category": "culture",
+  "lon": 108.950592,
+  "lat": 34.225714,
+  "coord_source": "overture_footprint_centroid(OSM w1419576718)",
+  "world_xz": [
+   759.0,
+   3928.5
+  ],
+  "overture_id": "47e5bb49-2d76-4c96-978c-d6067148f83d",
+  "footprint_size_m": [
+   70,
+   36
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 1991,
+  "year_note": "1986 奠基，1991 建成开放（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "序厅（中央主殿，重檐庑殿顶）",
+    "shape": "footprint",
+    "size_m": [
+     70,
+     36
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "47e5bb49-2d76-4c96-978c-d6067148f83d",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "面阔九间、进深五间（搜索摘要）"
+   },
+   {
+    "part": "国宝馆（北）",
+    "shape": "footprint",
+    "size_m": [
+     87,
+     74
+    ],
+    "offset_m": [
+     0.0,
+     53.5
+    ],
+    "rotation_deg": 90,
+    "overture_id": "a86caeae-7684-40d1-a7b5-dbedf9f83ddd",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   },
+   {
+    "part": "东侧展厅（第六–七展厅）",
+    "shape": "footprint",
+    "size_m": [
+     150,
+     42
+    ],
+    "offset_m": [
+     59.2,
+     -0.7
+    ],
+    "rotation_deg": 90,
+    "overture_id": "1b47b939-1516-4b99-baa7-b46c20c2d550",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "南北向长条，两端崇楼"
+   },
+   {
+    "part": "西侧展厅（第四–五展厅）",
+    "shape": "footprint",
+    "size_m": [
+     150,
+     42
+    ],
+    "offset_m": [
+     -59.2,
+     -0.7
+    ],
+    "rotation_deg": 90,
+    "overture_id": "0dcd2a95-c203-450c-90ee-07edccc5b845",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "南北向长条，两端崇楼"
+   }
+  ],
+  "crown": {
+   "type": "重檐庑殿顶（主殿）+四隅崇楼",
+   "height_m": null,
+   "description": "灰色琉璃瓦屋面"
+  },
+  "facade": {
+   "primary": "乳白色墙面+茶色玻璃门窗+灰色琉璃瓦（唐风宫殿式）",
+   "glass_color_hex": "#5a4632",
+   "frame_color_hex": null,
+   "wall_color_hex": "#ece6d8",
+   "pattern": "柱廊+格窗",
+   "floor_height_m": null,
+   "notes": "色彩描述引自搜索摘要，与 Commons 照片一致"
+  },
+  "podium": "主殿前大台阶与水池广场",
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:Shaanxi_History_Museum.jpg",
+   "https://commons.wikimedia.org/wiki/File:2023-10-10_Shaanxi_History_Museum_陝西歷史博物館_01.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西历史博物馆",
+   "OSM w1419576718,w1419576917,w1419577259,w1419577663"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1419576718",
+   "osm_name": "序厅",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2496
+  },
+  "notes": "张锦秋设计；中轴对称、中央殿堂、四隅崇楼"
+ },
+ {
+  "name": "陕西科学技术馆（新城广场老馆）",
+  "category": "culture",
+  "lon": 108.951593,
+  "lat": 34.265465,
+  "coord_source": "overture_footprint_centroid(OSM w1465146493)",
+  "world_xz": [
+   851.1,
+   -495.7
+  ],
+  "overture_id": "c28be48e-20ff-4e18-9277-dacda8f39046",
+  "footprint_size_m": [
+   55,
+   25
+  ],
+  "height_m": null,
+  "floors": 4,
+  "height_source": "采自 core_south.json（其来源：抖音探馆“馆内共四层”，1988 年建成见 360问答）；尖顶塔楼高于4层，未计",
+  "year": 1988,
+  "massing": [
+   {
+    "part": "科技馆主楼",
+    "shape": "footprint",
+    "size_m": [
+     55,
+     25
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "c28be48e-20ff-4e18-9277-dacda8f39046",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片：约8–10层白色楼，顶部有尖塔"
+   }
+  ],
+  "crown": {
+   "type": "顶部尖塔",
+   "height_m": null,
+   "description": "白色楼顶立细高尖塔（照片）"
+  },
+  "facade": {
+   "primary": "白色外墙+蓝色玻璃竖带",
+   "glass_color_hex": "#5c7fa6",
+   "frame_color_hex": null,
+   "wall_color_hex": "#eeeae2",
+   "pattern": "规则窗",
+   "floor_height_m": null,
+   "notes": "Commons 2017 照片目测"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "陕西科技馆",
+    "color_hex": "#d0262b",
+    "position": "顶部",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:陕西科技馆2017.jpg"
+  ],
+  "sources": [
+   "OSM w1465146493",
+   "Commons 陕西科技馆2017"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1465146493",
+   "osm_name": "陕西科技馆",
+   "cmab_h": null,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 950
+  },
+  "notes": "OSM 轮廓仅 55×25 m，是否为照片中主楼未核实"
+ },
+ {
+  "name": "陕西自然博物馆",
+  "category": "culture",
+  "lon": 108.941904,
+  "lat": 34.198881,
+  "coord_source": "overture_footprint_centroid(OSM w254328024)",
+  "world_xz": [
+   -40.3,
+   6913.8
+  ],
+  "overture_id": "719faa0f-78cd-4ff2-82ff-7c5bf29c39d2",
+  "footprint_size_m": [
+   131,
+   46
+  ],
+  "height_m": null,
+  "floors": 3,
+  "height_source": "球体外径38 m（搜索摘要，陕西自然博物馆官网/地方志）",
+  "year": 2008,
+  "year_note": "2008-01-05 开馆（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "科技展馆（球体）",
+    "shape": "sphere",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "外径38 m 球体，内有18 m 球幕影院"
+   },
+   {
+    "part": "自然展馆（月牙形）",
+    "shape": "crescent",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": 3,
+    "setbacks": null,
+    "taper": null,
+    "notes": "三层，建筑面积8940㎡"
+   }
+  ],
+  "crown": {
+   "type": "网壳球体",
+   "height_m": 38,
+   "description": "银灰色三角形分格玻璃/金属网壳球"
+  },
+  "facade": {
+   "primary": "球体为三角形分格银灰玻璃网壳；裙房为米灰石材",
+   "glass_color_hex": "#9aa3aa",
+   "frame_color_hex": "#3c3f42",
+   "wall_color_hex": "#c8c0b0",
+   "pattern": "三角网格",
+   "floor_height_m": null,
+   "notes": "Commons 2025-11-13 照片"
+  },
+  "podium": "球体下为1层石材裙房",
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:陕西自然博物馆.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西自然博物馆",
+   "https://www.sxnm.net/",
+   "OSM w254328024"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w254328024",
+   "osm_name": null,
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 5489
+  },
+  "notes": "球形科技馆与月牙形自然馆环绕陕西电视塔，寓意“日月同辉”"
+ },
+ {
+  "name": "陕西省美术博物馆",
+  "category": "culture",
+  "lon": 108.93967,
+  "lat": 34.232707,
+  "coord_source": "overture_footprint_centroid(OSM w1284311239)",
+  "world_xz": [
+   -245.8,
+   3150.4
+  ],
+  "overture_id": "54592e86-74f1-49a0-87c3-8e79dc19e788",
+  "footprint_size_m": [
+   62,
+   58
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2000,
+  "year_note": "2000-04 建成，张锦秋设计（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "圆形主体",
+    "shape": "cylinder（直径约60 m，OSM 62×58）",
+    "size_m": [
+     62,
+     58
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 133,
+    "overture_id": "54592e86-74f1-49a0-87c3-8e79dc19e788",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片约4层高，中央有圆形采光顶（卫星图）"
+   }
+  ],
+  "crown": {
+   "type": "平顶+中央圆形玻璃穹顶",
+   "height_m": null,
+   "description": "卫星图"
+  },
+  "facade": {
+   "primary": "浅驼色石材圆鼓，水平分层线+横向窗带",
+   "glass_color_hex": "#3b3f45",
+   "frame_color_hex": null,
+   "wall_color_hex": "#cbbba2",
+   "pattern": "水平条带",
+   "floor_height_m": null,
+   "notes": "Commons 2019 照片目测"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "陕西省美术博物馆 SHAANXI PROVINCE ART MUSEUM",
+    "color_hex": "#2b2b2b",
+    "position": "正立面上部",
+    "approx_height_m": 12
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:碑林_陕西省美术博物馆.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西省美术博物馆",
+   "OSM w1284311239"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1284311239",
+   "osm_name": "陕西省美术博物馆",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2787
+  },
+  "notes": "长安北路14号"
+ },
+ {
+  "name": "陕西考古博物馆",
+  "category": "culture",
+  "lon": 108.878068,
+  "lat": 34.120241,
+  "coord_source": "poi（public/data/pois.json）；Overture 此处无轮廓",
+  "world_xz": [
+   -5913.4,
+   15657.5
+  ],
+  "overture_id": null,
+  "footprint_size_m": null,
+  "height_m": 36,
+  "floors": 4,
+  "height_source": "zh.wikipedia《陕西考古博物馆》",
+  "year": 2022,
+  "year_note": "2022-04-16 开馆活动，4月28日对外开放",
+  "massing": [
+   {
+    "part": "主体（唐风园林式）",
+    "shape": "unknown",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": 36,
+    "floors": 4,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地上4层，框剪结构，高度36 m"
+   }
+  ],
+  "crown": {
+   "type": "唐代建筑典型屋顶形式（借鉴）",
+   "height_m": null,
+   "description": "wiki：借鉴唐代建筑典型屋顶，主体嵌入绿化园林"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "本轮未查看照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:陕西省考古博物馆正门.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西考古博物馆"
+  ],
+  "confidence": "medium",
+  "local_data": null,
+  "notes": "长安区；张锦秋主持设计"
+ },
+ {
+  "name": "西安美术馆（曲江）",
+  "category": "culture",
+  "lon": 108.958725,
+  "lat": 34.212691,
+  "coord_source": "overture_footprint_centroid(OSM w1346634173)",
+  "world_xz": [
+   1507.3,
+   5377.5
+  ],
+  "overture_id": "24effdfe-28ad-428d-9d61-3073b9ccd340",
+  "footprint_size_m": [
+   45,
+   32
+  ],
+  "height_m": null,
+  "floors": 2,
+  "height_source": "未查到",
+  "year": 2009,
+  "year_note": "2009-09-28 开馆（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "美术馆主体（仿唐大屋顶）",
+    "shape": "footprint",
+    "size_m": [
+     45,
+     32
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 0,
+    "overture_id": "24effdfe-28ad-428d-9d61-3073b9ccd340",
+    "base_m": 0,
+    "top_m": null,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "二号展厅在二楼（wiki）"
+   }
+  ],
+  "crown": {
+   "type": "仿唐四坡大屋顶（深灰瓦）",
+   "height_m": null,
+   "description": "檐下斗拱、屋角起翘，檐口挂红灯笼（照片）"
+  },
+  "facade": {
+   "primary": "深红褐色木色竖向格栅+灰色实墙",
+   "glass_color_hex": null,
+   "frame_color_hex": "#6b2e22",
+   "wall_color_hex": "#8c8a86",
+   "pattern": "密集竖向格栅",
+   "floor_height_m": null,
+   "notes": "Commons panoramio 照片目测"
+  },
+  "podium": "入口前大台阶",
+  "signage": [
+   {
+    "text": "西安美术馆",
+    "color_hex": "#d8b45a",
+    "position": "正立面（金色大字竖排）",
+    "approx_height_m": 8
+   }
+  ],
+  "night": "檐口挂红灯笼（照片）",
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安美术馆_-_panoramio.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安美术馆南面_-_panoramio.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安美术馆",
+   "OSM w1346634173"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1346634173",
+   "osm_name": "西安美术馆",
+   "cmab_h": null,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 1457
+  },
+  "notes": "位于大唐不夜城（曲江）；占地1.7万㎡"
+ },
+ {
+  "name": "西安人民剧院",
+  "category": "culture",
+  "lon": 108.943383,
+  "lat": 34.264496,
+  "coord_source": "overture_footprint_centroid(OSM w1465146725)",
+  "world_xz": [
+   95.8,
+   -387.9
+  ],
+  "overture_id": "a1cae4b8-8bc3-4c40-b40c-46307e07afab",
+  "footprint_size_m": [
+   70,
+   38
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "year_note": "Commons 文件名称“建于20世纪50年代的人民剧院”；具体年份未核实",
+  "massing": [
+   {
+    "part": "剧院主体",
+    "shape": "footprint",
+    "size_m": [
+     70,
+     38
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 179,
+    "overture_id": "a1cae4b8-8bc3-4c40-b40c-46307e07afab",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   }
+  ],
+  "crown": {
+   "type": "平顶+正立面中央浮雕山花",
+   "height_m": null,
+   "description": "立面顶部中央为灰色石材卷草浮雕山花，嵌“人民剧院”字"
+  },
+  "facade": {
+   "primary": "民族形式：4根红柱门廊+青绿彩画额枋+灰色石材上墙；两侧实墙满布爬山虎",
+   "glass_color_hex": null,
+   "frame_color_hex": "#b3261e",
+   "wall_color_hex": "#bdb6a8",
+   "pattern": "柱廊三开间",
+   "floor_height_m": null,
+   "notes": "Commons 2017/2023 照片目测"
+  },
+  "podium": "门廊前台阶",
+  "signage": [
+   {
+    "text": "人民剧院",
+    "color_hex": "#3a3a3a",
+    "position": "立面顶部山花内",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安人民剧院_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安人民剧院2017夏.jpg"
+  ],
+  "sources": [
+   "OSM w1465146725",
+   "Commons Category:Xi'an People's Theater"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1465146725",
+   "osm_name": "人民剧院",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 2630
+  },
+  "notes": "北大街"
+ },
+ {
+  "name": "陕西省体育场",
+  "category": "sports",
+  "lon": 108.937478,
+  "lat": 34.234067,
+  "coord_source": "overture_footprint_centroid(OSM r17606811)",
+  "world_xz": [
+   -447.5,
+   2999.0
+  ],
+  "overture_id": "14b0cd4a-e305-4bfd-a79a-5be2422a3611",
+  "footprint_size_m": [
+   294,
+   204
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 1999,
+  "year_note": "1952 建成（西北人民体育场），1996 起改扩建，1999 落成（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "椭圆看台",
+    "shape": "ellipse(294×204 m)",
+    "size_m": [
+     294,
+     204
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 91,
+    "overture_id": "14b0cd4a-e305-4bfd-a79a-5be2422a3611",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "东西两侧有白色罩棚看台，南北弯道为红色座椅（卫星图）"
+   },
+   {
+    "part": "东罩棚",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图"
+   },
+   {
+    "part": "西罩棚",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "卫星图"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "白色罩棚+红色座椅",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#e8e6e0",
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "卫星图"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/陕西省体育场",
+   "OSM r17606811"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "r17606811",
+   "osm_name": "陕西省体育场",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 27101
+  },
+  "notes": "座位 50,100（2018，wiki）；朱雀大街旁"
+ },
+ {
+  "name": "西安奥体中心体育场",
+  "category": "sports",
+  "lon": 109.018009,
+  "lat": 34.37803,
+  "coord_source": "overture_footprint_centroid(OSM r11269745)",
+  "world_xz": [
+   6961.6,
+   -13035.5
+  ],
+  "overture_id": "30041ab9-2dfe-496e-b50c-05a22503ebbc",
+  "footprint_size_m": [
+   327,
+   310
+  ],
+  "height_m": 58.3,
+  "floors": 5,
+  "height_source": "landmarks2026/venues.json（OSM height）",
+  "year": 2020,
+  "massing": [
+   {
+    "part": "体育场（石榴花瓣形罩棚）",
+    "shape": "footprint（花瓣形，327×310 m）",
+    "size_m": [
+     327,
+     310
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 93,
+    "overture_id": "30041ab9-2dfe-496e-b50c-05a22503ebbc",
+    "base_m": 0,
+    "top_m": 58.3,
+    "floors": 5,
+    "setbacks": null,
+    "taper": null,
+    "notes": "高度沿用 venues.json（OSM 58.3 m）"
+   }
+  ],
+  "crown": {
+   "type": "波浪花瓣形罩棚",
+   "height_m": null,
+   "description": "白色/银灰色竖向百叶构成起伏花瓣立面"
+  },
+  "facade": {
+   "primary": "银灰色铝合金波浪条带幕墙+白色 V 形斜柱",
+   "glass_color_hex": null,
+   "frame_color_hex": "#c9ccce",
+   "wall_color_hex": "#e4e6e7",
+   "pattern": "水平波浪条带",
+   "floor_height_m": null,
+   "notes": "Commons 2021 照片目测"
+  },
+  "podium": "环形高架平台+坡道",
+  "signage": [],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:灞桥_奥体中心十四运主场馆外_01.jpg",
+   "https://commons.wikimedia.org/wiki/File:Xi%27an_Olympic_Sports_Center(Aerial_image).jpg"
+  ],
+  "sources": [
+   "research/refs/landmarks2026/venues.json",
+   "OSM r11269745",
+   "Commons Category:Xi'an Olympic Sports Center"
+  ],
+  "confidence": "high",
+  "local_data": {
+   "osm_id": "r11269745",
+   "osm_name": "西安奥体中心体育场",
+   "cmab_h": 14.8,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 54202
+  },
+  "notes": "十四运主场馆"
+ },
+ {
+  "name": "西安城市运动公园体育馆",
+  "category": "sports",
+  "lon": 108.939951,
+  "lat": 34.34765,
+  "coord_source": "overture_footprint_centroid(OSM w1372139804)",
+  "world_xz": [
+   -220.0,
+   -9649.5
+  ],
+  "overture_id": "83b7b97c-8e62-41ce-9b70-fc1441ede306",
+  "footprint_size_m": [
+   106,
+   106
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到；landmarks2026/venues.json 记 34 m 但无出处（north.json 同样指出），未采用",
+  "year": 1999,
+  "massing": [
+   {
+    "part": "体育馆（八角形，钢网架屋盖）",
+    "shape": "octagon(106×106 m)",
+    "size_m": [
+     106,
+     106
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 90,
+    "overture_id": "83b7b97c-8e62-41ce-9b70-fc1441ede306",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   }
+  ],
+  "crown": {
+   "type": "浅色金属屋面+白色钢网架外露",
+   "height_m": null,
+   "description": "卫星图"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "research/refs/landmarks2026/venues.json",
+   "OSM w1372139804",
+   "Esri World Imagery z18"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1372139804",
+   "osm_name": null,
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 8922
+  },
+  "notes": ""
+ },
+ {
+  "name": "西安市人民体育场",
+  "category": "sports",
+  "lon": 108.954305,
+  "lat": 34.269205,
+  "coord_source": "overture_footprint_centroid(OSM r6848524)",
+  "world_xz": [
+   1100.6,
+   -912.1
+  ],
+  "overture_id": "2d12a9ed-ae55-4dec-afbf-652b42f6c36c",
+  "footprint_size_m": [
+   212,
+   157
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "体育场",
+    "shape": "ellipse(212×157 m)",
+    "size_m": [
+     212,
+     157
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 88,
+    "overture_id": "2d12a9ed-ae55-4dec-afbf-652b42f6c36c",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "黄色看台座椅（卫星图）"
+   },
+   {
+    "part": "北门",
+    "shape": "门架：深灰蓝色弧顶门楣+方柱",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "照片"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "仅拍到北门"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安市人民体育场",
+    "color_hex": "#d8b45a",
+    "position": "北门门楣（金字）",
+    "approx_height_m": 6
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安市人民体育场北门.jpg"
+  ],
+  "sources": [
+   "OSM r6848524",
+   "Commons 西安市人民体育场北门.jpg"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "r6848524",
+   "osm_name": null,
+   "cmab_h": null,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 8593
+  },
+  "notes": "东新街北侧"
+ },
+ {
+  "name": "西安站（南站房）",
+  "category": "station",
+  "lon": 108.958066,
+  "lat": 34.278697,
+  "coord_source": "overture_footprint_centroid(OSM w1465142920)",
+  "world_xz": [
+   1446.7,
+   -1968.9
+  ],
+  "overture_id": "1cc9aa2f-72ae-4bf0-80e5-095cede2fb19",
+  "footprint_size_m": [
+   143,
+   53
+  ],
+  "height_m": 27.7,
+  "floors": 2,
+  "height_source": "zh.wikipedia《西安站》：站房檐高18米，顶高27.7米，长142.8米，进深52米",
+  "year": 1985,
+  "year_note": "南站房1985年启用，2021年起改造（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "南站房",
+    "shape": "footprint(143×53 m)",
+    "size_m": [
+     143,
+     53
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 1,
+    "overture_id": "1cc9aa2f-72ae-4bf0-80e5-095cede2fb19",
+    "base_m": 0,
+    "top_m": 18,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "1985 启用；两层；檐高18 m（wiki）"
+   },
+   {
+    "part": "中央塔楼（站名）",
+    "shape": "box",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": 27.7,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "顶高27.7 m（wiki）；顶部立“西安”红字"
+   }
+  ],
+  "crown": {
+   "type": "绿色琉璃瓦檐口（多重）+中央高起体量",
+   "height_m": null,
+   "description": "檐口一圈绿色琉璃瓦坡檐，中部顶立红色“西安”二字（吴三大题）"
+  },
+  "facade": {
+   "primary": "米黄墙+竖向玻璃窗格",
+   "glass_color_hex": "#2e3b46",
+   "frame_color_hex": "#d9c9a0",
+   "wall_color_hex": "#e5dcc6",
+   "pattern": "竖向长窗，底层入口雨棚",
+   "floor_height_m": null,
+   "notes": "Commons 2025 照片"
+  },
+  "podium": "入口有绿琉璃瓦雨棚",
+  "signage": [
+   {
+    "text": "西安",
+    "color_hex": "#c8102e",
+    "position": "屋顶中央",
+    "approx_height_m": null
+   }
+  ],
+  "night": "檐口暖黄色轮廓灯带+站名红色发光（照片）",
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:20250911_Xi%27an_Railway_Station_-_South_side.jpg",
+   "https://commons.wikimedia.org/wiki/File:Xi%27an_Railway_Station_2024.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安站",
+   "OSM w1465142920"
+  ],
+  "confidence": "high",
+  "local_data": {
+   "osm_id": "w1465142920",
+   "osm_name": "西安站南站房",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": 2,
+   "footprint_area_m2": 4611
+  },
+  "notes": ""
+ },
+ {
+  "name": "西安站北站房",
+  "category": "station",
+  "lon": 108.958039,
+  "lat": 34.281114,
+  "coord_source": "overture_footprint_centroid(OSM w1046109814)",
+  "world_xz": [
+   1444.2,
+   -2238.0
+  ],
+  "overture_id": "a40ded9b-50ec-4979-8efd-7d7aad21c135",
+  "footprint_size_m": [
+   221,
+   61
+  ],
+  "height_m": 24,
+  "floors": 2,
+  "height_source": "搜索摘要（华商网/澎湃 2021）：建筑高度24米，4.86万㎡",
+  "year": 2021,
+  "year_note": "2021-05-31 启用",
+  "massing": [
+   {
+    "part": "北站房",
+    "shape": "footprint(221×61 m)",
+    "size_m": [
+     221,
+     61
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 1,
+    "overture_id": "a40ded9b-50ec-4979-8efd-7d7aad21c135",
+    "base_m": 0,
+    "top_m": 24,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "地下3层、地上2层"
+   }
+  ],
+  "crown": {
+   "type": "仿唐大出挑屋檐",
+   "height_m": null,
+   "description": "深灰屋面+檐下橙褐色仿木构件（照片）"
+  },
+  "facade": {
+   "primary": "仿唐：米色石材柱+大面积玻璃+深色格栅",
+   "glass_color_hex": "#27313a",
+   "frame_color_hex": "#b8743c",
+   "wall_color_hex": "#e2d6bf",
+   "pattern": "柱间玻璃+方格格栅",
+   "floor_height_m": null,
+   "notes": "Commons 2021 照片"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安站 XI'AN RAILWAY STATION",
+    "color_hex": "#c8102e",
+    "position": "主立面玻璃上方",
+    "approx_height_m": 12
+   }
+  ],
+  "night": "檐口暖黄色灯带（照片）",
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:20250911_Xi%27an_Railway_Station_-_North_side.jpg",
+   "https://commons.wikimedia.org/wiki/File:西安站北站房近景.jpg"
+  ],
+  "sources": [
+   "https://news.hsw.cn/system/2021/0530/1329533.shtml",
+   "https://www.thepaper.cn/newsDetail_forward_12904389",
+   "OSM w1046109814"
+  ],
+  "confidence": "high",
+  "local_data": {
+   "osm_id": "w1046109814",
+   "osm_name": "西安站北站房",
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": 2,
+   "footprint_area_m2": 13136
+  },
+  "notes": "与大明宫丹凤门呼应"
+ },
+ {
+  "name": "西安北站",
+  "category": "station",
+  "lon": 108.933927,
+  "lat": 34.377738,
+  "coord_source": "overture_footprint_centroid(OSM w250712078)",
+  "world_xz": [
+   -774.2,
+   -13002.9
+  ],
+  "overture_id": "df3634a5-b5f6-46c6-a145-38b0aa793554",
+  "footprint_size_m": [
+   555,
+   457
+  ],
+  "height_m": 43.6,
+  "floors": 2,
+  "height_source": "搜索摘要：站房总高43.6 m（中国铁路/百度百科）",
+  "year": 2011,
+  "year_note": "2011年启用（zh.wikipedia 分类）",
+  "massing": [
+   {
+    "part": "站房（线上高架候车+南北站房）",
+    "shape": "footprint",
+    "size_m": null,
+    "offset_m": null,
+    "rotation_deg": null,
+    "base_m": null,
+    "top_m": 43.6,
+    "floors": 2,
+    "setbacks": null,
+    "taper": null,
+    "notes": "屋顶由7个单元组成，每单元中脊开梭形天窗"
+   }
+  ],
+  "crown": {
+   "type": "波浪形单元大屋面（7个单元+梭形天窗）",
+   "height_m": null,
+   "description": "深灰色金属屋面，取意大明宫含元殿"
+  },
+  "facade": {
+   "primary": "米色石材柱廊+蓝灰玻璃幕墙",
+   "glass_color_hex": "#3f5a6e",
+   "frame_color_hex": "#d6cdb8",
+   "wall_color_hex": "#e2d9c5",
+   "pattern": "立柱分隔大玻璃",
+   "floor_height_m": null,
+   "notes": "Commons 2020 照片"
+  },
+  "podium": "两侧高架落客平台",
+  "signage": [
+   {
+    "text": "西安北站",
+    "color_hex": "#c8102e",
+    "position": "屋檐正中",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:South_facade_of_Xi%27anbei_Railway_Station_20200429.jpg",
+   "https://commons.wikimedia.org/wiki/File:Xi%27an_North_Railway_Station_(South).jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安北站",
+   "http://www.china-railway.com.cn/zyyw/lkys/fwss/202005/t20200529_104911.html"
+  ],
+  "confidence": "high",
+  "local_data": {
+   "osm_id": "w250712078",
+   "osm_name": "西安北站",
+   "cmab_h": 16.3,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 208850
+  },
+  "notes": "站房建筑面积17.1万㎡（wiki）"
+ },
+ {
+  "name": "西安城南客运站",
+  "category": "station",
+  "lon": 108.933207,
+  "lat": 34.18699,
+  "coord_source": "overture_footprint_centroid(OSM w360836368)",
+  "world_xz": [
+   -840.4,
+   8236.5
+  ],
+  "overture_id": "5a28856a-89cd-415b-ac3b-241a0fca7a00",
+  "footprint_size_m": [
+   141,
+   39
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": 2012,
+  "year_note": "新站2012-08-30 投用（zh.wikipedia）",
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "footprint(141×39 m)",
+    "size_m": [
+     141,
+     39
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 180,
+    "overture_id": "5a28856a-89cd-415b-ac3b-241a0fca7a00",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": "米黄/土黄色外墙上部横带",
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": "#d9ab6c",
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "Commons 2019 远景照片"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安城南客运站 XI'AN CHENGNAN COACH STATION",
+    "color_hex": "#c8102e",
+    "position": "屋顶",
+    "approx_height_m": null
+   }
+  ],
+  "night": null,
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:雁塔_西安城南客运站.jpg"
+  ],
+  "sources": [
+   "https://zh.wikipedia.org/wiki/西安城南客运站",
+   "OSM w360836368"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w360836368",
+   "osm_name": "西安城南客运站",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 5472
+  },
+  "notes": "朱雀大街南段与南绕城交汇处"
+ },
+ {
+  "name": "西安城北客运站",
+  "category": "station",
+  "lon": 108.936743,
+  "lat": 34.312334,
+  "coord_source": "overture_footprint_centroid(OSM w1371869014)",
+  "world_xz": [
+   -515.1,
+   -5714.9
+  ],
+  "overture_id": "457d93c1-d12c-4ce4-ab81-b782980fcb27",
+  "footprint_size_m": [
+   138,
+   66
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "footprint",
+    "size_m": [
+     138,
+     66
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 1,
+    "overture_id": "457d93c1-d12c-4ce4-ab81-b782980fcb27",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "pois.json 西安城北客运站",
+   "OSM w1371869014"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1371869014",
+   "osm_name": null,
+   "cmab_h": 15.5,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 5961
+  },
+  "notes": ""
+ },
+ {
+  "name": "三府湾客运站",
+  "category": "station",
+  "lon": 108.971287,
+  "lat": 34.279457,
+  "coord_source": "overture_footprint_centroid(OSM w1213239207)",
+  "world_xz": [
+   2663.1,
+   -2053.5
+  ],
+  "overture_id": "fed6d868-4621-462c-9e3e-97eeb252e89a",
+  "footprint_size_m": [
+   121,
+   48
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "footprint",
+    "size_m": [
+     121,
+     48
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 2,
+    "overture_id": "fed6d868-4621-462c-9e3e-97eeb252e89a",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": "与北侧 f6bc55ec 并列"
+   }
+  ],
+  "crown": {
+   "type": null,
+   "height_m": null,
+   "description": null
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "未获得照片"
+  },
+  "podium": null,
+  "signage": [],
+  "night": null,
+  "photos": [],
+  "sources": [
+   "pois.json 三府湾客运站",
+   "OSM w1213239207"
+  ],
+  "confidence": "low",
+  "local_data": {
+   "osm_id": "w1213239207",
+   "osm_name": null,
+   "cmab_h": 14.2,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 4187
+  },
+  "notes": ""
+ },
+ {
+  "name": "西安市汽车站（火车站西广场）",
+  "category": "station",
+  "lon": 108.957041,
+  "lat": 34.276922,
+  "coord_source": "overture_footprint_centroid(OSM w1465143088)",
+  "world_xz": [
+   1352.4,
+   -1771.3
+  ],
+  "overture_id": "edcd6ba2-683b-4730-ad8f-f4b0677528bd",
+  "footprint_size_m": [
+   119,
+   33
+  ],
+  "height_m": null,
+  "floors": null,
+  "height_source": "未查到",
+  "year": null,
+  "massing": [
+   {
+    "part": "站房",
+    "shape": "footprint(119×33 m)",
+    "size_m": [
+     119,
+     33
+    ],
+    "offset_m": [
+     0.0,
+     0.0
+    ],
+    "rotation_deg": 1,
+    "overture_id": "edcd6ba2-683b-4730-ad8f-f4b0677528bd",
+    "base_m": 0,
+    "top_m": null,
+    "floors": null,
+    "setbacks": null,
+    "taper": null,
+    "notes": ""
+   }
+  ],
+  "crown": {
+   "type": "屋顶发光字",
+   "height_m": null,
+   "description": "屋顶立“西安汽车站”红色发光字（夜景照片）"
+  },
+  "facade": {
+   "primary": null,
+   "glass_color_hex": null,
+   "frame_color_hex": null,
+   "wall_color_hex": null,
+   "pattern": null,
+   "floor_height_m": null,
+   "notes": "夜景照片，立面细节不清"
+  },
+  "podium": null,
+  "signage": [
+   {
+    "text": "西安汽车站",
+    "color_hex": "#e8322c",
+    "position": "屋顶",
+    "approx_height_m": null
+   }
+  ],
+  "night": "屋顶红色发光字",
+  "photos": [
+   "https://commons.wikimedia.org/wiki/File:西安火车站广场附近·西安汽车站_01.jpg"
+  ],
+  "sources": [
+   "OSM w1465143088",
+   "Commons Category:Xi'an Bus Station"
+  ],
+  "confidence": "medium",
+  "local_data": {
+   "osm_id": "w1465143088",
+   "osm_name": "西安市汽车站",
+   "cmab_h": 12.6,
+   "osm_height": null,
+   "osm_levels": null,
+   "footprint_area_m2": 3594
+  },
+  "notes": ""
+ }
+]

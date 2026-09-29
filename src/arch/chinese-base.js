@@ -340,6 +340,22 @@ export function lantern(b, x, y, z, o = {}) {
   b.pop();
   if (o.light) b.lightAnchors.push({ position: [x, y - s * 0.6, z], color: kind === 'palace' ? 0xffd9a0 : 0xff5a30, intensity: o.light, distance: 12 });
 }
+/**
+ * 灯笼柱（广场/甬道两侧）：石础 + 红漆立柱 + 横担，灯笼挂在横担端头。(x, z) = 灯笼吊点平面位置，hookY = 吊点高，
+ * y0 = 地面高。o: {kind, size, color, yaw（横担从立柱指向灯笼的方向，默认 +X）, arm（横担长，默认 0.6）}
+ * 用于替代“凭空悬挂”的灯笼（原先只有灯笼、没有任何挂点）。
+ */
+export function lanternPost(b, x, y0, z, hookY, o = {}) {
+  const arm = o.arm ?? 0.6;
+  b.push(x, 0, z, o.yaw ?? 0);
+  const px = -arm; // 立柱在灯笼 -X 侧
+  b.cyl('stone', px, y0, 0, 0.26, 0.22, 0.35, 8, 0xbab3a6);
+  b.box('paint', px - 0.08, y0 + 0.35, -0.08, px + 0.08, hookY + 0.32, 0.08, 0x7a2418, { skip: 'bottom' });
+  b.box('paint', px - 0.12, hookY + 0.32, -0.12, px + 0.12, hookY + 0.42, 0.12, 0x3a2a20, { skip: 'bottom' });
+  b.box('paint', px, hookY + 0.04, -0.05, 0.12, hookY + 0.16, 0.05, 0x3a2a20);
+  b.pop();
+  lantern(b, x, hookY, z, { kind: o.kind, size: o.size, color: o.color });
+}
 /** 灯笼串：两点间悬链线（缆绳 + 等距灯笼）。o: {n, sag, size, color, kind, cable:true} */
 export function lanternString(b, p0, p1, o = {}) {
   const n = o.n ?? Math.max(2, Math.round(Math.hypot(p1[0] - p0[0], p1[2] - p0[2]) / 1.6));

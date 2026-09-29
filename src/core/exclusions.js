@@ -6,6 +6,8 @@ export class Exclusions {
     this.items = [];
     this.cell = 500;
     this.grid = new Map();
+    /** 通用建筑模块写入：每栋 buildings.bin 建筑是否让位（非 0 = 不渲染）；未加载该模块时为 null */
+    this.buildingSkip = null;
   }
 
   /**
@@ -23,6 +25,8 @@ export class Exclusions {
       flags: { buildings: true, trees: true, roads: false, pois: true, ...flags },
       name: shape.name || '',
     };
+    // 诊断（tools/check_overlap.mjs 设置 globalThis.__XIAN_DIAG）：记下注册该排除区的模块，便于按来源统计
+    if (globalThis.__XIAN_DIAG) it.owner = (/\/modules\/(?:dev\/)?([\w-]+)\.js/.exec(new Error().stack || '') || [])[1] || '';
     this.items.push(it);
     const b = it.bb;
     for (let cx = Math.floor(b.x0 / this.cell); cx <= Math.floor(b.x1 / this.cell); cx++)

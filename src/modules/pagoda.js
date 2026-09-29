@@ -9,7 +9,7 @@
 //   · 南广场：玄奘像 (1572, 4850)，面南正对大唐不夜城
 // 地坪：寺院台地约 423.6 m，北广场约 418.8 m（DEM 实测，寺北坡坎 4.8 m 用跌水与台阶过渡）。
 import * as THREE from 'three';
-import { ArchBuilder, floodlit, hall, multiStoreyTower, corridor, yardWall, lantern, getKit, stats } from '../arch/chinese.js';
+import { ArchBuilder, floodlit, hall, multiStoreyTower, corridor, yardWall, lantern, lanternPost, getKit, stats } from '../arch/chinese.js';
 import { dayanta, dayantaLights } from '../arch/pagoda-tower.js';
 import { buildFountain } from '../arch/pagoda-fountain.js';
 import { xuanzangStatue, tangLampPost, bronzeGroup, censer } from '../arch/pagoda-figures.js';
@@ -70,7 +70,8 @@ function templeFn(b) {
   yardWall(b, [[-11, 188], [-80, 188], [-80, -133], [-7, -133]], wall);
   yardWall(b, [[7, -133], [84, -133], [84, 188], [11, 188]], wall);
   // 中轴灯笼
-  for (const z of [100, 112, 140, 160]) for (const sx of [-1, 1]) lantern(b, sx * 7, 3.2, z, { kind: 'palace' });
+  // 中轴灯笼：挂在灯笼柱横担上（原先凭空悬在 3.2 m 高处）
+  for (const z of [100, 112, 140, 160]) for (const sx of [-1, 1]) lanternPost(b, sx * 7, 0, z, 3.2, { kind: 'palace', yaw: sx > 0 ? Math.PI : 0 });
 }
 
 // —— 北广场、南广场小品 ——
