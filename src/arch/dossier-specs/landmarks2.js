@@ -237,7 +237,7 @@ const ziran = {
 //   · 遗址保护大厅：灰色毛石贴面，正立面顶部为弧形，前有大台阶（照片 02/06/08）；OSM w1512651327（83×79 m）。
 // 高度无公开数据：大门按照片（门洞约 4 m 为尺）约 13.5 m、宽约 23 m；大厅墙身约 9.5 m + 弧形屋面（照片比例）。
 const BP_GATE = [9528, -1500];
-const BP_WOOD = { color: '#9d7f70', roughness: 0.85 }; // 粉褐色仿木石材
+const BP_WOOD = { color: '#8a6b5c', roughness: 0.9 }; // 粉褐色仿木石材（截图对照后压深）
 /** 斜梁（A 字形大门的一条腿）：底部中心 a、顶部中心 b（均为 [x,z]），截面 w×d，顶端离地 h */
 const leg = (name, a, b, h, w = 1.3, d = 1.5) => ({
   name, kind: 'solid', pts: [a[0] - d / 2, a[1] - w / 2, a[0] + d / 2, a[1] - w / 2, a[0] + d / 2, a[1] + w / 2, a[0] - d / 2, a[1] + w / 2],
@@ -448,7 +448,7 @@ const dianjing = {
 // （白墙、朱红窗框与栏杆、深灰瓦）；广场上有圆形下沉广场与骆驼群雕。夜景：金色轮廓灯 + 暖光泛光。
 // 轮廓：OSM w17405494（主楼 80.7×65.5 m）、w1267628564（北翼）、w1267628811（南翼）。阙楼、主殿位置按 Esri z19 卫星（屋面与阴影）量取。
 // 高度无公开数据：按照片比例，主楼基座 12 m、阙楼约 30 m + 攒尖顶、主殿重檐屋脊约 35 m、两翼檐口约 16 m。
-const XS_WALL = { pattern: 'stoneWindows', spd: '#e4ddd0', tint: '#6e2a20', floorH: 4.2, colW: 3.2, spandrel: 0.42, mullW: 1.0, lit: 0.7 };
+const XS_WALL = { pattern: 'stoneWindows', spd: '#e8e1d4', tint: '#7a2a1f', floorH: 4.6, colW: 4.6, spandrel: 0.52, mullW: 2.2, lit: 0.7 }; // 白墙 + 朱红窗框（截图对照：原窗格过密像写字楼）
 const XS_RED = { pattern: 'stoneWindows', spd: '#8e2f24', tint: '#3a2a22', floorH: 4.2, colW: 3.0, spandrel: 0.3, mullW: 0.9, lit: 0.75 };
 const XS_C = [-3592, 1454];
 const xishi = {
@@ -460,7 +460,8 @@ const xishi = {
     { name: 'hall', shape: 'rect', size: [30, 32], at: XS_C, base: 12, top: 21, footprint: false, style: XS_RED, roof: { mech: false },
       crown: [{ type: 'tangRoof', eave: 3, h: 8, curve: 0.45, lift: 1.0, base: 1.0, double: { gap: 3, out: 4, h: 1.8 }, glow: '#ffc35a', strength: 2 }] },
     ...[[-3566, 1428], [-3566, 1481]].map((at, i) => ({ name: 'que' + i, shape: 'rect', size: [14, 14], at, base: 0, top: 30, style: XS_WALL, roof: { mech: false },
-      crown: [{ type: 'tangRoof', eave: 2.2, h: 5, ridge: 0, curve: 0.4, lift: 0.8, base: 0.8, glow: '#ffc35a', strength: 2 }] })),
+      crown: [{ type: 'eave', y: 13, ov: 1.8, depth: 1.2, h: 1.1, mat: ROOF_TILE }, { type: 'eave', y: 21.5, ov: 1.6, depth: 1.2, h: 1.0, mat: ROOF_TILE }, // 阙楼逐层腰檐（照片）
+        { type: 'tangRoof', eave: 2.2, h: 5, ridge: 0, curve: 0.4, lift: 0.8, base: 0.8, glow: '#ffc35a', strength: 2 }] })),
     // 阙楼与主殿之间的空中廊桥（照片 03）
     ...[[[-3566, 1435], [-3578, 1446]], [[-3566, 1474], [-3578, 1462]]].map(([a, b], i) => ({ name: 'bridge' + i, kind: 'solid', pts: strip(a, b, 5), base: 17, top: 20.5, footprint: false,
       mat: { color: '#8e2f24', roughness: 0.7 }, crown: [{ type: 'slab', ov: 0.8, h: 0.6, mat: ROOF_TILE }] })),
@@ -888,7 +889,7 @@ const shengtiguan = {
       style: { pattern: 'stoneWindows', spd: '#cdb89a', tint: '#3a5566', floorH: 5, colW: 3.4, spandrel: 0.4, mullW: 0.8, lit: 0.7 },
       crown: [
         { type: 'dome', at: [-5470, 6236], r: [44, 38], h: 12, mat: STG_SILVER, ring: false },
-        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 12.4, mat: { color: '#28323a', roughness: 0.2, metalness: 0.5 }, ring: false }, // 中部椭圆开洞（深色）
+        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 13.2, mat: { color: '#28323a', roughness: 0.2, metalness: 0.5 }, ring: false }, // 中部椭圆开洞（深色，略高出连接壳以便可见）
         { type: 'dome', at: [-5398, 6253], r: [52, 64], h: 26, mat: STG_SILVER, ring: false },
         { type: 'dome', at: [-5545, 6246], r: [52, 43], h: 18, mat: STG_SILVER, ring: false },
       ] },

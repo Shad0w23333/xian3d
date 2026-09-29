@@ -13,7 +13,7 @@
 | `src/modules/skyline.js` | `isSuperseded(ctx, s)`：跳过被档案替代的 sky-data / sky-data2 / landmarks2026 / skyline.json 通用高层 / SPECIAL(2) |
 | `research/refs/dossiers/model_log.md` | 每栋建完后的“照片 vs 模型”对照差异记录 |
 | `src/arch/dossier-specs/demo.js` | 示范：陕西信息大厦、西安SKP、大明宫万达（读这三个就能上手） |
-| `src/arch/dossier-specs/landmarks2.js` | 地标补建第二批（25 处：秦汉馆、大风阁、世博园、半坡、易俗社、老钢厂、考古博物馆、电竞中心、大唐西市、国际会展中心、禾盛京广、天坛、麟德殿、丝路群雕、国际港站等），档案 `research/refs/dossiers/landmarks2.json`，对照 `model_log_landmarks2.md` |
+| `src/arch/dossier-specs/landmarks2.js` | 地标补建第二批（26 处：秦汉馆、大风阁、世博园、半坡、易俗社、老钢厂、考古博物馆、电竞中心、大唐西市、国际会展中心、禾盛京广、天坛、麟德殿、丝路群雕、国际港站、招商局丝路中心等），档案 `research/refs/dossiers/landmarks2.json`，对照 `model_log_landmarks2.md` |
 
 ---
 
