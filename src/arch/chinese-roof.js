@@ -392,9 +392,13 @@ export function roof(b, o) {
     info.ridgeLines.push(ord.map((p) => [p[0], p[1] + ridgeH * 0.9, p[2]]).concat([[ord[0][0], ord[0][1] + ridgeH * 0.9, ord[0][2]]]));
   } else if (type === 'zanjian') {
     const N = E.length;
-    for (let i = 0; i < N; i++) hipRidge(i, E[i].nbR, -ov + 0.02, polyA * 0.93, true);
-    finial(b, [0, topY - 0.1, 0], o.finial, { size: clamp(w * 0.09, 0.8, 3.2), rc, mRidge, style, detail });
-    info.topY = topY + clamp(w * 0.09, 0.8, 3.2) * 1.5;
+    // 宝顶：座底裙边须压进屋面（按座底半径处的坡面高度下探），垂脊收头伸进座底，攒尖交汇处不露缝
+    const fin = finialDims(o.finial, clamp(w * 0.09, 0.8, 3.2));
+    const yApex = topY - 0.1;
+    for (let i = 0; i < N; i++) hipRidge(i, E[i].nbR, -ov + 0.02, Math.max(polyA * 0.93, Math.min(polyA * 0.985, polyA - fin.rBase * 0.6)), true);
+    finial(b, [0, yApex, 0], o.finial, { fin, rc, mRidge, style, detail, skirtY: G.y + hAt(G.prof, Math.max(0, run - fin.rBase * 1.05), ov) - 0.12 });
+    info.topY = yApex + fin.H;
+    info.finialBase = yApex;
   } else if (type === 'wudian') {
     const xr = Math.abs(X - Z);
     const alongX = X >= Z;
@@ -404,7 +408,7 @@ export function roof(b, o) {
       info.ridgeLines.push(path.map((p) => [p[0], p[1] + ridgeH + 0.02, p[2]]));
     }
     for (let i = 0; i < 4; i++) hipRidge(i, E[i].nbR, -ov + 0.02, run, true);
-    if (ornament !== 'none' && detail >= 1)
+    if (ornament !== 'none') // 远景也保留正吻（简化剪影），各级 LOD 顶高一致
       for (const sgn of [-1, 1]) ridgeEnd(b, alongX ? [sgn * xr, topY - 0.08, 0] : [0, topY - 0.08, sgn * xr], alongX ? (sgn > 0 ? 0 : Math.PI) : sgn > 0 ? -Math.PI / 2 : Math.PI / 2, { ornament, ridgeH, ridgeW, rc, mRidge, style, detail });
   } else if (type === 'xieshan') {
     const xr = xG + gableOv * 0.5;
@@ -412,7 +416,7 @@ export function roof(b, o) {
       const path = [[-xr, topY - 0.08, 0], [xr, topY - 0.08, 0]];
       b.sweep(mRidge, path, mainProf, rc.ridge, {});
       info.ridgeLines.push(path.map((p) => [p[0], p[1] + ridgeH + 0.02, p[2]]));
-      if (ornament !== 'none' && detail >= 1)
+      if (ornament !== 'none') // 远景也保留正吻（简化剪影），各级 LOD 顶高一致
         for (const sgn of [-1, 1]) ridgeEnd(b, [sgn * xr, topY - 0.08, 0], sgn > 0 ? 0 : Math.PI, { ornament, ridgeH, ridgeW, rc, mRidge, style, detail });
     }
     // 垂脊（山面前后坡沿博风）→ 戗脊（下段斜向翼角）
@@ -460,7 +464,7 @@ export function roof(b, o) {
       const path = [[-xr, topY - 0.08, 0], [xr, topY - 0.08, 0]];
       b.sweep(mRidge, path, mainProf, rc.ridge, {});
       info.ridgeLines.push(path.map((p) => [p[0], p[1] + ridgeH + 0.02, p[2]]));
-      if (ornament !== 'none' && detail >= 1)
+      if (ornament !== 'none') // 远景也保留正吻（简化剪影），各级 LOD 顶高一致
         for (const sgn of [-1, 1]) ridgeEnd(b, [sgn * xr, topY - 0.08, 0], sgn > 0 ? 0 : Math.PI, { ornament, ridgeH, ridgeW, rc, mRidge, style, detail });
     }
     const ac = xr - gableOv * 0.15;
@@ -582,9 +586,11 @@ function roundRoof(b, G, o, c) {
   info.eaveY = pt(0, -ov)[1];
   if (type === 'band') info.bandTopY = topY;
   else {
-    const size = clamp(polyA * 0.2, 0.6, 2.5);
-    finial(b, [0, topY - 0.15, 0], o.finial, { size, rc, mRidge, style: o.style || b.style, detail });
-    info.topY = topY + size * 1.5;
+    const fin = finialDims(o.finial, clamp(polyA * 0.2, 0.6, 2.5));
+    const yApex = topY - 0.15;
+    finial(b, [0, yApex, 0], o.finial, { fin, rc, mRidge, style: o.style || b.style, detail, skirtY: G.y + hAt(G.prof, Math.max(0, sTop - fin.rBase * 1.05), ov) - 0.12 });
+    info.topY = yApex + fin.H;
+    info.finialBase = yApex;
   }
 }
 
@@ -783,7 +789,8 @@ function cornerBeam(b, G, i, j, c) {
     // 风铎
     b.push(tip[0], tip[1] - bh, tip[2], yaw);
     const s = clamp(ov * 0.06, 0.12, 0.3);
-    b.cyl('metal', 0, -s * 3.2, 0, 0, 0, s * 1.2, 4, 0x6b5a3a, { top: false });
+    // 吊杆：原为零半径圆柱（不可见，风铎悬空），改为细铁杆从角梁底直通铎顶
+    b.cyl('metal', 0, -s * 1.95, 0, s * 0.06, s * 0.06, s * 1.95 + 0.04, 4, 0x6b5a3a, { top: false });
     b.lathe('metal', [[0.0, -s * 3.8], [s * 0.55, -s * 3.6], [s * 0.45, -s * 2.6], [s * 0.2, -s * 2.0], [0, -s * 1.9]], 6, 0x5d6a52);
     b.pop();
   }
@@ -836,12 +843,11 @@ function ridgeEnd(b, pos, yaw, c) {
   // shape 在 (x,y) 平面，u→+x（外），沿 z 拉伸
   const col = c.color ?? rc.ridge;
   b.prism(mRidge, detail >= 2 ? shape : simplify(shape), 'z', -th / 2, th / 2, col);
+  // 剑把（吻的最高点）：各级 LOD 都做，远近切换时正吻高度不跳
+  if (!tang) b.box(mRidge, H * 0.3, H * 0.95, -th * 0.12, H * 0.38, H * 1.18, th * 0.12, col);
   if (detail >= 2) {
     if (!tang) {
-      // 剑把
-      b.box(mRidge, H * 0.3, H * 0.95, -th * 0.12, H * 0.38, H * 1.18, th * 0.12, col);
-      // 背兽（吻身侧面圆饼）
-      for (const z of [-1, 1]) b.cyl(mRidge, 0, 0, 0, 0, 0, 0, 3, col); // 占位（空）
+      // 背兽（吻身侧面圆饼）。原先这里还有两个零尺寸圆柱“占位”，只产生退化三角形与 NaN 法线，已删
       b.boxC(mRidge, H * 0.4, H * 0.45, 0, H * 0.18, H * 0.18, th * 1.25, col);
     } else {
       // 鸱尾侧面鳍纹：两侧浅浮雕条
@@ -904,19 +910,43 @@ function ridgeBeasts(b, G, i, j, c) {
 }
 
 // ───────────── 宝顶 ─────────────
+/**
+ * 宝顶尺寸：opt.h = 宝顶连座总高（米）；缺省按屋顶规模 size×1.5。
+ * 比例取自西安钟楼实测（2020 年重新贴金报道：金顶高 1.86 m、宝顶加琉璃须弥座总高 4.53 m；金顶上粗 1.42 m、下粗 1.12 m）：
+ * 座高 ≈ 0.59H、金顶高 ≈ 0.41H、金顶最大直径 ≈ 0.31H、座底直径 ≈ 0.48H。
+ */
+function finialDims(opt, size) {
+  const H = opt?.h ?? size * 1.5;
+  return { H, seatH: opt?.seatH ?? H * 0.59, rBase: opt?.rBase ?? H * 0.24, rBall: (opt?.ballD ?? H * 0.314) / 2 };
+}
+/**
+ * 宝顶（须弥座/莲座 + 宝珠）。pos = 攒尖交汇点（座底面所在高度）；skirtY：座底裙边下探到的高度
+ * （应低于座底半径处的屋面，保证与四坡/八坡交汇处严丝合缝，不悬空、不露缝）。所有高度均为 builder 局部绝对高度。
+ */
 function finial(b, pos, opt = {}, c) {
-  const { size, rc, mRidge, style, detail } = c;
-  const s = opt?.h ? opt.h / 1.5 : size;
-  const seg = detail >= 2 ? 16 : 8;
-  // 座（屋面色）
-  b.lathe(mRidge, [[0.5 * s, -0.3 * s], [0.5 * s, 0.1 * s], [0.36 * s, 0.16 * s], [0.3 * s, 0.3 * s], [0.4 * s, 0.36 * s], [0.4 * s, 0.44 * s]].map(([r, y]) => [r, y]), seg, rc.ridge, pos[0], pos[2]);
-  b.push(pos[0], pos[1], pos[2]);
-  // 宝珠（金）
+  const { fin, rc, mRidge, detail } = c;
+  const { H, seatH, rBase, rBall } = fin;
+  const seg = detail >= 2 ? 20 : detail === 1 ? 12 : 8;
+  const [x, y0, z] = pos;
+  const yS = Math.min(c.skirtY ?? y0 - 0.2, y0 - 0.05);
+  const hs = seatH;
+  // 座（屋脊同色琉璃）：裙边 → 下枋 → 下枭 → 束腰 → 上枭（仰莲）→ 上枋 → 颈
+  const seat = [
+    [0.001, yS], [rBase, yS], [rBase, y0 + hs * 0.07], [rBase * 0.86, y0 + hs * 0.13], [rBase * 0.72, y0 + hs * 0.19],
+    [rBase * 0.72, y0 + hs * 0.5], [rBase * 0.9, y0 + hs * 0.62], [rBase * 1.04, y0 + hs * 0.76], [rBase * 1.04, y0 + hs * 0.85],
+    [rBase * 0.7, y0 + hs * 0.93], [rBall * 0.8, y0 + hs],
+  ];
+  b.lathe(mRidge, seat, seg, rc.ridge, x, z);
+  // 宝珠（鎏金）：下粗 ≈ 0.79×上粗，上部收成尖顶
+  const hb = H - hs, yb = y0 + hs;
   const gold = opt?.gold === false ? rc.ridge : 0xd9a63a;
-  const prof = [[0.001, 0.44 * s], [0.18 * s, 0.46 * s], [0.34 * s, 0.56 * s], [0.4 * s, 0.72 * s], [0.34 * s, 0.9 * s], [0.14 * s, 1.0 * s], [0.08 * s, 1.08 * s], [0.18 * s, 1.18 * s], [0.2 * s, 1.28 * s], [0.12 * s, 1.36 * s], [0.03 * s, 1.44 * s], [0.001, 1.5 * s]];
-  b.lathe(opt?.gold === false ? mRidge : 'metal', prof, seg, gold);
-  b.pop();
-  b.lathe(mRidge, [[0.001, pos[1] - 0.3 * s], [0.5 * s, pos[1] - 0.3 * s]], seg, rc.ridge, pos[0], pos[2]);
+  const ball = [
+    [rBall * 0.79, yb], [rBall * 0.9, yb + hb * 0.08], [rBall, yb + hb * 0.28], [rBall * 0.97, yb + hb * 0.46], [rBall * 0.78, yb + hb * 0.66],
+    [rBall * 0.36, yb + hb * 0.8], [rBall * 0.2, yb + hb * 0.86], [rBall * 0.3, yb + hb * 0.91], [rBall * 0.16, yb + hb * 0.97], [0.001, yb + hb],
+  ];
+  b.lathe(opt?.gold === false ? mRidge : 'metal', ball, seg, gold, x, z);
+  // 宝珠底面封口（与座颈相接）
+  b.lathe(opt?.gold === false ? mRidge : 'metal', [[0.001, yb], [rBall * 0.79, yb]], seg, gold, x, z);
 }
 
 // ───────────── 博风板（山面檐边） ─────────────

@@ -137,11 +137,24 @@ def main():
                     pts.append((x, z, DEPTH0))
             if len(pts) >= 2:
                 segs[int(m.group(1))].append(pts)
+    # 调研清单里没有线号的线（西户线、西安云巴）：OSM 地铁数据里没有，按站序连线（地面/高架，d=0 不做隧道）
+    extra = {}
+    if rf.exists():
+        k = 100
+        for L in json.loads(rf.read_text('utf-8')).get('lines', []):
+            if as_num(L.get('num')) or len(L.get('stations') or []) < 2:
+                continue
+            k += 1
+            pts = [(float(st['x']), float(st['z']), 0.0) if st.get('x') is not None else (*project(float(st['lon']), float(st['lat'])), 0.0)
+                   for st in L['stations']]
+            segs[k] = [pts]
+            ref[k] = {**L, 'num': k}
+            extra[k] = re.sub(r'（.*?）', '', L.get('name') or f'线路{k}')
     lines = []
     for n in sorted(segs):
         paths = [p for p in chain(segs[n]) if len(p) >= 2]
         col = (ref.get(n) or {}).get('color') or COLORS.get(n, '#9aa4b0')
-        lines.append({'num': n, 'name': f'{n}号线', 'color': col,
+        lines.append({'num': n, 'name': extra.get(n, f'{n}号线'), 'color': col,
                       'paths': [[round(v, 1) for q in p for v in q] for p in paths]})
 
     # —— 车站：出入口按站名聚类 ——

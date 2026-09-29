@@ -19,24 +19,99 @@ let LM = null;
 const towerSpecs = () => towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2(), LM?.towers || []);
 const mallSpecs = () => mallSpecs1().filter((m) => !SUPERSEDED.has(m.key)).concat(mallSpecs2(), LM?.malls || []);
 
-/** 批量地标过滤：与手工精建（sky-data / sky-data2 / 特殊地标）同名或质心落在其轮廓内、或落在其他模块排除区内的跳过；
+/** 轮廓内 6×6 网格取样点（落在轮廓内的），取不到时退回质心 */
+function samplesIn(p) {
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (let i = 0; i < p.length; i += 2) {
+    x0 = Math.min(x0, p[i]); x1 = Math.max(x1, p[i]); z0 = Math.min(z0, p[i + 1]); z1 = Math.max(z1, p[i + 1]);
+  }
+  const out = [];
+  for (let i = 0; i < 6; i++)
+    for (let j = 0; j < 6; j++) {
+      const x = x0 + ((i + 0.5) / 6) * (x1 - x0), z = z0 + ((j + 0.5) / 6) * (z1 - z0);
+      if (G.pointIn(x, z, p)) out.push([x, z]);
+    }
+  if (!out.length) { const c = G.centroid(p); out.push([c.x, c.z]); }
+  return out;
+}
+const HIT_FRAC = 0.25; // 批量地标轮廓落入精建轮廓/其他模块排除区的比例 ≥ 此值则跳过
+
+// —— 同名/近名塔楼去重 ——
+/** 名称归一化：去空白、间隔号、连字符、括号（“禾盛京广中心-A座”与“禾盛京广中心A座”视为同名） */
+const normName = (n) => String(n || '').replace(/[\s·・\-—_()（）]/g, '').toLowerCase();
+/** 最长公共子串 */
+function lcs(a, b) {
+  let best = '';
+  for (let i = 0; i < a.length; i++)
+    for (let j = i + best.length + 1; j <= a.length; j++) {
+      if (!b.includes(a.slice(i, j))) break;
+      best = a.slice(i, j);
+    }
+  return best;
+}
+// 楼号/座号：A座、B座、1号楼、北塔……（仅这部分不同的是同一项目的不同楼，不算重复）
+const DESIG = /^[a-z0-9#＃一二三四五六七八九十东西南北]{1,3}(座|号楼|号|栋|塔|楼)?$/;
+/** 两座塔楼是否同一栋：相距 < 250 m、高度差 ≤ 6%，且同名；或其中一座是推算位置（合成矩形/综合体塔楼，soft），
+ *  名称核心（≥ 4 字的公共子串）相同、剩余部分不是两个不同楼号。两座都有实测轮廓且不同名的不算（同名小区的两栋楼） */
+function sameTower(a, b) {
+  if (Math.hypot(a.x - b.x, a.z - b.z) > 250 || Math.abs(a.h - b.h) > 0.06 * Math.max(a.h, b.h)) return false;
+  if (a.n === b.n) return true;
+  if (!a.soft && !b.soft) return false;
+  const core = lcs(a.n, b.n);
+  if (core.length < 4) return false;
+  const ra = a.n.replace(core, ''), rb = b.n.replace(core, '');
+  return !(DESIG.test(ra) && DESIG.test(rb) && ra !== rb);
+}
+const towerKey = (t) => { const c = G.centroid(G.ccw(t.pts)); return { x: c.x, z: c.z, h: t.h, n: normName(t.name), soft: !!(t.onPodium || t.src === 'synth') }; };
+
+/** 批量地标过滤（在 build 开头调用：此时所有模块的 prepare 都已注册完排除区——回民街/下沉广场/机场等排在 skyline 之后，
+ *  放在 prepare 里会漏判）：与手工精建（sky-data / sky-data2 / 特殊地标）同名、质心落在其轮廓内或轮廓 ≥ HIT_FRAC 与之重叠、
+ *  或质心/轮廓 ≥ HIT_FRAC 落在其他模块的建筑排除区内的跳过（skyline 自己注册的排除区不算）；
  *  商场综合体里推算落位的塔楼（onPodium），若轮廓内已有 OSM 实测高层（skyline.json）也跳过，以实测为准 */
 function filterLandmarks(ctx, raw) {
   const { curated } = allFootprints(ctx); // 此时 LM 为空：curated.polys 只有手工精建与特殊地标（不含通用高层）
-  const hit = (s) => {
-    const c = G.centroid(G.ccw(s.pts));
-    return curated.names.has(s.name) || curated.polys.some((p) => G.pointIn(c.x, c.z, p)) || ctx.exclusions.test(c.x, c.z, 'buildings', 1e4);
+  const curNames = new Set([...curated.names].map(normName));
+  const curTowers = towerSpecs().map((t) => G.ccw(t.pts));
+  const zones = ctx.exclusions.items.filter((it) => it.flags.buildings && it.name !== 'skyline');
+  const inZone = (x, z, h) =>
+    zones.some((it) => {
+      const b = it.bb;
+      if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) return false;
+      if (it.flags.maxHeight != null && h > it.flags.maxHeight) return false;
+      return G.pointIn(x, z, it.p);
+    });
+  const hit = (s, isMall = false) => {
+    const p = G.ccw(s.pts), c = G.centroid(p);
+    if (curNames.has(normName(s.name)) || curated.polys.some((q) => G.pointIn(c.x, c.z, q)) || inZone(c.x, c.z, s.h)) return true;
+    const sp = samplesIn(p);
+    const frac = (f) => sp.filter(([x, z]) => f(x, z)).length / sp.length;
+    // 商场/场馆：手工精建塔楼立在其裙房上属正常（禾盛京广 T11 与 A/B 座），塔楼占的部分不算重叠
+    const tw = isMall ? curTowers : [];
+    const inCur = (x, z) => curated.polys.some((q) => G.pointIn(x, z, q)) && !tw.some((q) => G.pointIn(x, z, q));
+    return frac(inCur) >= HIT_FRAC || frac((x, z) => inZone(x, z, s.h)) >= HIT_FRAC;
   };
-  const malls = (raw.malls || []).filter((m) => m.pts?.length >= 6 && !hit(m));
+  const malls = (raw.malls || []).filter((m) => m.pts?.length >= 6 && !hit(m, true));
   const mallKeys = new Set(malls.map((m) => m.key));
   const osm = (ctx.data.skyline?.features || []).filter((f) => f.h >= 34);
-  const towers = (raw.towers || []).filter((t) => {
+  const cand = (raw.towers || []).filter((t) => {
     if (!(t.pts?.length >= 6) || hit(t)) return false;
     if (!t.onPodium) return true;
     if (!mallKeys.has(t.onPodium)) return false;
     const m = malls.find((q) => q.key === t.onPodium), mp = G.ccw(m.pts);
     return !osm.some((f) => G.pointIn(f.x, f.z, mp));
   });
+  // 同一栋被建两遍（手工精建与批量同名/近名，或批量清单里独立条目与“综合体塔楼”各一份，如 ICC 写字楼/酒店、禾盛京广 A/B）：
+  // 手工精建 > 批量实测轮廓 > 批量合成 > 综合体推算塔楼，依次接纳，与已接纳者 sameTower 的丢弃
+  const rank = (t) => (t.onPodium ? 3 : t.src === 'synth' ? 2 : 1);
+  const kept = towerSpecs1().filter((t) => !SUPERSEDED.has(t.key)).concat(towerSpecs2()).map(towerKey);
+  const towers = [];
+  for (const t of [...cand].sort((a, b) => rank(a) - rank(b))) {
+    const k = towerKey(t);
+    if (kept.some((q) => sameTower(k, q))) continue;
+    kept.push(k);
+    towers.push(t);
+  }
+  towers.sort((a, b) => cand.indexOf(a) - cand.indexOf(b));
   for (const s of malls) { s.lm = true; if (!s.d) { const c = G.centroid(G.ccw(s.pts)); s.d = districtOf(c.x, c.z); } }
   for (const s of towers) s.lm = true;
   console.warn(`[skyline] landmarks2026：塔楼 ${towers.length}/${(raw.towers || []).length}，商场·场馆 ${malls.length}/${(raw.malls || []).length}`);
@@ -61,14 +136,18 @@ const districtOf = (x, z) => {
 };
 
 // —— skyline.json 中其余实测高层（OSM height/levels）：通用塔楼 ——
-const HFIX = { 西安公路研究院: 60 };
+// 数据本身已由 tools/check_heights.py --fix 修正（SKY_FIX：公路研究院 103 层/330 m 错标降为通用建筑、IFC 330→350、
+// 迈科/延长石油整片综合体轮廓取裙房高）；HFIX 只作运行时兜底（旧数据文件仍能得到正确结果），按名称覆盖高度，0 = 不是高层
+const HFIX = { 西安公路研究院: 0, 'IFC国瑞·西安金融中心': 350 };
 function genericFeatures(ctx, curated) {
-  const feats = (ctx.data.skyline?.features || []).filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000);
+  const feats = (ctx.data.skyline?.features || [])
+    .map((f) => (f.n in HFIX && f.hsrc !== 'fix' ? { ...f, h: HFIX[f.n] } : f))
+    .filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000);
   const out = [];
   for (const f of feats) {
     if (curated.names.has(f.n)) continue;
     if (curated.polys.some((p) => G.pointIn(f.x, f.z, p))) continue;
-    out.push({ ...f, h: HFIX[f.n] ?? f.h });
+    out.push(f);
   }
   return out;
 }
@@ -99,6 +178,7 @@ function allFootprints(ctx) {
   const soft = [];
   for (const m of mallSpecs()) { polys.push(G.ccw(m.pts)); if (m.lm) soft.push(polys[polys.length - 1]); }
   const S = SPECIAL;
+  const s0 = polys.length;
   polys.push(G.ccw(S.tv.basePts), G.circle(S.tv.cx, S.tv.cz, 24, 16));
   polys.push(G.rect(S.changan.cx, S.changan.cz, 60, 60, S.changan.rot));
   polys.push(G.ccw(Array.from({ length: 48 }, (_, i) => [S.aoti.stadium.cx + Math.cos((i / 48) * Math.PI * 2) * 156, S.aoti.stadium.cz + Math.sin((i / 48) * Math.PI * 2) * 174]).flat()));
@@ -110,17 +190,19 @@ function allFootprints(ctx) {
   for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
   for (const p of S.gov) polys.push(G.ccw(p));
   polys.push(...special2Footprints());
+  const special = polys.slice(s0);
   const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.filter((p) => !soft.includes(p)) };
   for (const f of genericFeatures(ctx, curated)) polys.push(G.ccw(f.outer));
-  return { polys, curated };
+  return { polys, curated, special };
 }
 
 export default {
   id: 'skyline',
   name: '现代地标与摩天楼',
   async prepare(ctx) {
-    const raw = await loadJSON('landmarks2026.json', { optional: true });
-    LM = raw ? filterLandmarks(ctx, raw) : null;
+    // 批量地标（landmarks2026）只在这里读入；过滤与排除区注册推迟到 build 开头（见 filterLandmarks）
+    this.lmRaw = await loadJSON('landmarks2026.json', { optional: true });
+    LM = null;
     const { polys } = allFootprints(ctx);
     for (const p of polys) ctx.exclusions.add({ points: G.inset(p, -2.5), name: 'skyline' }, { buildings: true, trees: true });
     // 大型场馆/站房下压平地形
@@ -133,6 +215,12 @@ export default {
 
   async build(ctx) {
     const t0 = performance.now();
+    // 所有模块的 prepare 已完成：过滤批量地标，并为保留下来的注册排除区（通用建筑 buildings 在其后 build，树木更晚）
+    if (this.lmRaw) {
+      LM = filterLandmarks(ctx, this.lmRaw);
+      for (const s of [...LM.towers, ...LM.malls]) ctx.exclusions.add({ points: G.inset(G.ccw(s.pts), -2.5), name: 'skyline' }, { buildings: true, trees: true });
+      // skyline.json 通用高层与地标塔楼的去重由 genericFeatures（此后 curated 含地标塔楼）负责
+    }
     const root = new THREE.Group();
     root.name = '现代地标与摩天楼';
     ctx.scene.add(root);
@@ -275,6 +363,24 @@ export default {
     void tmpBox;
     return {
       stats,
+      /** 诊断（tools/check_overlap.mjs）：本模块最终渲染的全部建筑轮廓与底高 */
+      diag() {
+        const out = [];
+        const put = (src, name, key, pts, h, base) => out.push({ src, name: name || '', key: key || '', pts: Array.from(pts), h, base });
+        for (const t of towerSpecs()) {
+          const pts = G.ccw(t.pts), b = t.base ?? groundMin(ctx, t.podium ? t.podium.pts.concat(pts) : pts);
+          put(t.lm ? (t.src === 'synth' ? 'lm-synth' : 'lm') : 'cur', t.name, t.onPodium || t.key, pts, t.h, b); // 坐商场裙房的塔楼与商场同 key（有意嵌套，不算重叠）
+          if (t.podium) put(t.lm ? 'lm' : 'cur', (t.name || '') + '·裙房', t.key, G.ccw(t.podium.pts), t.podium.h, b);
+        }
+        for (const m of mallSpecs()) {
+          const pts = G.ccw(m.pts);
+          put(m.lm ? (m.src === 'synth' ? 'lm-synth' : 'lm') : 'cur', m.name || m.key, m.key, pts, m.h, m.base ?? groundMin(ctx, pts));
+        }
+        const { special } = allFootprints(ctx);
+        special.forEach((p, i) => put('special', 'special#' + i, '', p, 30, groundMin(ctx, p)));
+        gen.forEach((f, i) => put('osm', f.n, '', G.ccw(f.outer), f.h, groundMin(ctx, G.ccw(f.outer))));
+        return out;
+      },
       update() {
         const cam = ctx.camera;
         beacons.update(ctx.renderer, cam);
