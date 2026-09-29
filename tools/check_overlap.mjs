@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 全城建筑穿模/重叠诊断：启动 Vite + 无头 Chromium（与 tools/shot.mjs 相同的方式），场景 ready 后从 window.xian 取出
 // “最终会被渲染”的建筑：通用建筑（buildings.bin，扣掉 skip）、skyline（手工精建 / landmarks2026 批量 / skyline.json 通用高层 / 特殊地标）、
-// 回民街逐户轮廓，以及各片区模块注册的排除区（带注册模块名），并在页面里按渲染规则取底高、沿轮廓采样地形高程。
+// 回民街逐户轮廓、逐栋档案建筑（dossier 各体块）、下沉广场坑口，以及各片区模块注册的排除区（带注册模块名），
+// 并在页面里按渲染规则取底高、沿轮廓采样地形高程。
 // 然后交给 tools/check_overlap.py（shapely）统计：
 //   a) 两栋渲染建筑轮廓相交（按来源对分类）   b) 建筑压在道路面上（按路宽缓冲）
 //   c) 同一栋楼被两套来源重复生成             d) 底部悬空/埋地（底高与地形差 > 2 m）
@@ -105,6 +106,13 @@ async function dumpScene() {
       // —— skyline ——
       const S = ctx.modules.skyline?.diag;
       out.sky = S ? S().map((s) => ({ ...s, pts: s.pts.map(r1), base: r1(s.base), t: samp(s.pts) })) : [];
+      // —— 逐栋档案建筑（各体块） ——
+      const Dz = ctx.modules.dossier?.diag;
+      out.dossier = Dz ? Dz().map((p) => ({ ...p, pts: Array.from(p.pts, r1), bot: r1(p.bot), top: r1(p.top), t: samp(p.pts) })) : null;
+      // —— 下沉广场（坑口轮廓、压顶/坑底高） ——
+      const Sk = ctx.modules.sunken?.diag;
+      out.sunken = Sk ? Sk() : null;
+      out.datang = ctx.modules.datang?.diag ? ctx.modules.datang.diag() : null;
       // —— 排除区 ——
       out.excl = ctx.exclusions.items.map((it) => ({ owner: it.owner || '', name: it.name, flags: it.flags, p: Array.from(it.p, r1) }));
       return out;

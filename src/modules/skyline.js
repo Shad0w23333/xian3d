@@ -191,18 +191,23 @@ function allFootprints(ctx) {
   for (const m of mallSpecs(ctx)) { polys.push(G.ccw(m.pts)); if (m.lm) soft.push(polys[polys.length - 1]); }
   const S = SPECIAL;
   const s0 = polys.length;
-  polys.push(G.ccw(S.tv.basePts), G.circle(S.tv.cx, S.tv.cz, 24, 16));
-  polys.push(G.rect(S.changan.cx, S.changan.cz, 60, 60, S.changan.rot));
-  polys.push(G.ccw(Array.from({ length: 48 }, (_, i) => [S.aoti.stadium.cx + Math.cos((i / 48) * Math.PI * 2) * 156, S.aoti.stadium.cz + Math.sin((i / 48) * Math.PI * 2) * 174]).flat()));
-  polys.push(G.circle(S.aoti.arena.cx, S.aoti.arena.cz, S.aoti.arena.r + 4, 24));
-  polys.push(G.rect(S.aoti.aqua.cx, S.aoti.aqua.cz, S.aoti.aqua.w + 6, S.aoti.aqua.d + 6, S.aoti.aqua.rot));
-  polys.push(G.ccw(S.igc1.pts));
-  polys.push(G.rect(S.north.cx, S.north.cz, S.north.w + 18 + 2 * 137, S.north.L + 18, S.north.rot));
-  for (const c of S.conf) polys.push(G.rect(c.cx, c.cz, c.side + 4, c.side + 4, c.rot));
-  for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
+  // 特殊地标被逐栋档案替代（build 时 sp() 不再建）时，占地轮廓也不再登记：否则旧的大矩形（北站 560 m 宽、会议中心、W 酒店地块……）
+  // 仍会让通用建筑/树木让位，诊断里也按“旧楼仍在”统计。档案建筑自己在 dossier.prepare 里登记了排除区。
+  const live = (key) => !isSuperseded(ctx, { key });
+  if (live('tv')) polys.push(G.ccw(S.tv.basePts), G.circle(S.tv.cx, S.tv.cz, 24, 16));
+  if (live('changan')) polys.push(G.rect(S.changan.cx, S.changan.cz, 60, 60, S.changan.rot));
+  if (live('aoti')) {
+    polys.push(G.ccw(Array.from({ length: 48 }, (_, i) => [S.aoti.stadium.cx + Math.cos((i / 48) * Math.PI * 2) * 156, S.aoti.stadium.cz + Math.sin((i / 48) * Math.PI * 2) * 174]).flat()));
+    polys.push(G.circle(S.aoti.arena.cx, S.aoti.arena.cz, S.aoti.arena.r + 4, 24));
+    polys.push(G.rect(S.aoti.aqua.cx, S.aoti.aqua.cz, S.aoti.aqua.w + 6, S.aoti.aqua.d + 6, S.aoti.aqua.rot));
+  }
+  if (live('igc1')) polys.push(G.ccw(S.igc1.pts));
+  if (live('north')) polys.push(G.rect(S.north.cx, S.north.cz, S.north.w + 18 + 2 * 137, S.north.L + 18, S.north.rot));
+  if (live('conf')) for (const c of S.conf) polys.push(G.rect(c.cx, c.cz, c.side + 4, c.side + 4, c.rot));
+  if (live('expo')) for (const p of S.expo) { const o = G.obb(G.ccw(p)); polys.push(G.rect(o.cx, o.cz, o.w + 4, o.d + 4, o.rot)); }
   // 行政中心 SPECIAL.gov 被逐栋档案替代（north.js n-shiwei / n-tcm）时不再登记排除区：原 33 块轮廓里有凤城八路南侧住宅，交还通用建筑
-  if (!isSuperseded(ctx, { key: 'gov' })) for (const p of S.gov) polys.push(G.ccw(p));
-  polys.push(...special2Footprints());
+  if (live('gov')) for (const p of S.gov) polys.push(G.ccw(p));
+  polys.push(...special2Footprints({ w: live('w'), hyatt: live('hyatt') }));
   const special = polys.slice(s0);
   const curated = { names: new Set(towers.map((t) => t.name)), polys: polys.filter((p) => !soft.includes(p)) };
   for (const f of genericFeatures(ctx, curated)) polys.push(G.ccw(f.outer));
@@ -218,12 +223,30 @@ export default {
     LM = null;
     const { polys } = allFootprints(ctx);
     for (const p of polys) ctx.exclusions.add({ points: G.inset(p, -2.5), name: 'skyline' }, { buildings: true, trees: true });
-    // 大型场馆/站房下压平地形
+    // 大型场馆/站房下压平地形（已被逐栋档案替代的不压：档案建筑按自己的落地轮廓处理地形，见 dossier.prepare）
     const S = SPECIAL;
-    ctx.terrain.addFlatten({ points: G.rect(S.north.cx, S.north.cz, S.north.w + 300, S.north.L + 30, S.north.rot), height: null, feather: 40 });
-    ctx.terrain.addFlatten({ points: G.circle(S.aoti.stadium.cx, S.aoti.stadium.cz, 180, 32), height: null, feather: 40 });
-    for (const c of S.conf) ctx.terrain.addFlatten({ points: G.rect(c.cx, c.cz, c.side + 10, c.side + 10, c.rot), height: null, feather: 30 });
-    ctx.terrain.addFlatten({ points: G.rect(S.changan.cx, S.changan.cz, 80, 80, S.changan.rot), height: null, feather: 25 });
+    const live = (key) => !isSuperseded(ctx, { key });
+    if (live('north')) ctx.terrain.addFlatten({ points: G.rect(S.north.cx, S.north.cz, S.north.w + 300, S.north.L + 30, S.north.rot), height: null, feather: 40 });
+    if (live('aoti')) ctx.terrain.addFlatten({ points: G.circle(S.aoti.stadium.cx, S.aoti.stadium.cz, 180, 32), height: null, feather: 40 });
+    if (live('conf')) for (const c of S.conf) ctx.terrain.addFlatten({ points: G.rect(c.cx, c.cz, c.side + 10, c.side + 10, c.rot), height: null, feather: 30 });
+    if (live('changan')) ctx.terrain.addFlatten({ points: G.rect(S.changan.cx, S.changan.cz, 80, 80, S.changan.rot), height: null, feather: 25 });
+    // 批量地标按轮廓最低点落地（groundMin）：坡地或 FABDEM 残留“屋顶地形”处轮廓一圈起伏 > 2.5 m 时，上坡侧会埋进地里
+    // （临潼王府井奥莱埋 8 m、航天城真珠港 7 m）。与档案建筑同一口径（见 dossier.prepare）：整栋按轮廓采样最低点只压低不抬高。
+    for (const s of [...(this.lmRaw?.malls || []), ...(this.lmRaw?.towers || [])]) {
+      if (!(s.pts?.length >= 6) || s.base != null || s.onPodium || isSuperseded(ctx, s)) continue;
+      const p = G.ccw(s.pts);
+      let lo = Infinity, hi = -Infinity;
+      for (let i = 0, n = p.length / 2; i < n; i++) {
+        const j = (i + 1) % n, ax = p[i * 2], az = p[i * 2 + 1], bx = p[j * 2], bz = p[j * 2 + 1];
+        const k = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 6));
+        for (let t = 0; t < k; t++) {
+          const h = ctx.terrain.heightAt(ax + ((bx - ax) * t) / k, az + ((bz - az) * t) / k);
+          if (h < lo) lo = h;
+          if (h > hi) hi = h;
+        }
+      }
+      if (hi - lo > 2.5) ctx.terrain.addFlatten({ points: G.inset(p, -4), height: lo, feather: 12, mode: 'min' });
+    }
   },
 
   async build(ctx) {
