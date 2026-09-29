@@ -1,0 +1,6739 @@
+{
+ "note": "2026-09-29 层数核实：与本地 landuse 住宅多边形名称对上、房天下点位也在多边形 400 m 内，但成交记录/在售房源不足 6 条（多数因房天下成交接口限流未取到），层数未查到，buildings.bin 保持原高度。以后补抓 m.fang.com/chengjiao/xian/?projcode=<id> 后可直接并入 residential.json",
+ "estates": [
+  {
+   "name": "创汇社区(D区)",
+   "district": "高新",
+   "world_xz": [
+    -11040.2,
+    8774.4
+   ],
+   "landuse": "landuse_polygon_centroid(创汇社区-E区、创汇社区-F区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610206444.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "汉城壹号",
+   "district": "莲湖",
+   "world_xz": [
+    -7082.1,
+    -1202.5
+   ],
+   "landuse": "landuse_polygon_centroid(汉城壹号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610918424.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "三民汉风苑",
+   "district": "莲湖",
+   "world_xz": [
+    -8375.2,
+    -2790.8
+   ],
+   "landuse": "landuse_polygon_centroid(三民汉风苑-西区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190128.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天朗大兴郡蔚蓝锦城",
+   "district": "莲湖",
+   "world_xz": [
+    -3421.1,
+    -3149.2
+   ],
+   "landuse": "landuse_polygon_centroid(天朗大兴郡蔚蓝锦城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610933942.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "江林新城",
+   "district": "雁塔",
+   "world_xz": [
+    -3842.0,
+    7794.7
+   ],
+   "landuse": "landuse_polygon_centroid(江林新城-A区、江林新城-B区、江林新城-C区、江林新城-D区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610533382.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海珀兰轩",
+   "district": "经开",
+   "world_xz": [
+    -641.6,
+    -9902.0
+   ],
+   "landuse": "landuse_polygon_centroid(海珀兰轩; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610817420.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "京科花园",
+   "district": "长安",
+   "world_xz": [
+    -3523.6,
+    10608.0
+   ],
+   "landuse": "landuse_polygon_centroid(京科花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611128102.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "君悦华府",
+   "district": "莲湖",
+   "world_xz": [
+    -4317.1,
+    -3549.5
+   ],
+   "landuse": "landuse_polygon_centroid(君悦华府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610900558.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "林隐天下",
+   "district": "高新",
+   "world_xz": [
+    -7536.1,
+    10059.4
+   ],
+   "landuse": "landuse_polygon_centroid(林隐天下; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611045606.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙湖·景粼天序",
+   "district": "经开",
+   "world_xz": [
+    486.2,
+    -8753.5
+   ],
+   "landuse": "landuse_polygon_centroid(龙湖·景粼天序; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190846.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "白桦林团圆",
+   "district": "经开",
+   "world_xz": [
+    -2120.3,
+    -9453.9
+   ],
+   "landuse": "landuse_polygon_centroid(白桦林团圆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191322.html"
+   ],
+   "records": 5,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "易合坊",
+   "district": "浐灞",
+   "world_xz": [
+    12148.9,
+    -2558.9
+   ],
+   "landuse": "landuse_polygon_centroid(易合坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611034446.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金地翔悦天下",
+   "district": "曲江",
+   "world_xz": [
+    6145.7,
+    5987.9
+   ],
+   "landuse": "landuse_polygon_centroid(金地翔悦天下; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611079388.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华旗东郡",
+   "district": "新城",
+   "world_xz": [
+    5562.2,
+    -2617.4
+   ],
+   "landuse": "landuse_polygon_centroid(华旗东郡北区、华旗东郡南区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610928240.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天朗大兴郡蔚蓝春城",
+   "district": "莲湖",
+   "world_xz": [
+    -3930.8,
+    -3135.5
+   ],
+   "landuse": "landuse_polygon_centroid(天朗大兴郡蔚蓝春城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196698.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙城铭园",
+   "district": "高新",
+   "world_xz": [
+    -6950.8,
+    3749.6
+   ],
+   "landuse": "landuse_polygon_centroid(龙城铭园-1期、龙城铭园-二期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610501142.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "绿地诺丁山",
+   "district": "高新",
+   "world_xz": [
+    -6282.3,
+    6919.9
+   ],
+   "landuse": "landuse_polygon_centroid(绿地诺丁山; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610862788.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕安丰登小区",
+   "district": "莲湖",
+   "world_xz": [
+    -4666.7,
+    -696.8
+   ],
+   "landuse": "landuse_polygon_centroid(陕安丰登小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611038612.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤城九号",
+   "district": "经开",
+   "world_xz": [
+    277.7,
+    -9876.4
+   ],
+   "landuse": "landuse_polygon_centroid(凤城九号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610973864.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长安大学本部南院住宅区",
+   "district": "雁塔",
+   "world_xz": [
+    456.8,
+    3434.9
+   ],
+   "landuse": "landuse_polygon_centroid(长安大学本部南院住宅区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204080.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "鸿锦城罗曼尼",
+   "district": "高新",
+   "world_xz": [
+    -9327.6,
+    3332.3
+   ],
+   "landuse": "landuse_polygon_centroid(鸿锦城罗曼尼; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192582.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双威迎宾广场",
+   "district": "经开",
+   "world_xz": [
+    -111.3,
+    -8399.6
+   ],
+   "landuse": "landuse_polygon_centroid(双威迎宾广场; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610382902.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天地源丹轩坊",
+   "district": "高新",
+   "world_xz": [
+    -4730.4,
+    4379.9
+   ],
+   "landuse": "landuse_polygon_centroid(天地源·丹轩坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611049278.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万达天玺",
+   "district": "高新",
+   "world_xz": [
+    -5061.0,
+    5862.8
+   ],
+   "landuse": "landuse_polygon_centroid(万达天玺小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610193762.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双维花溪湾",
+   "district": "雁塔",
+   "world_xz": [
+    -2783.7,
+    6938.1
+   ],
+   "landuse": "landuse_polygon_centroid(双维花溪湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936578.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "半坡国际广场",
+   "district": "灞桥",
+   "world_xz": [
+    9726.3,
+    -1618.8
+   ],
+   "landuse": "landuse_polygon_centroid(半坡国际广场; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611039070.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "莱安逸境",
+   "district": "高新",
+   "world_xz": [
+    -5159.0,
+    1467.2
+   ],
+   "landuse": "landuse_polygon_centroid(莱安逸境; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610717384.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "御笔华庭",
+   "district": "莲湖",
+   "world_xz": [
+    -2801.2,
+    -3088.1
+   ],
+   "landuse": "landuse_polygon_centroid(御笔华庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611172322.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "香榭御澄",
+   "district": "高新",
+   "world_xz": [
+    -4329.4,
+    5837.5
+   ],
+   "landuse": "landuse_polygon_centroid(香榭御澄; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191348.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇公园时光",
+   "district": "高新",
+   "world_xz": [
+    -4769.1,
+    5677.9
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇·公园时光; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610280662.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "雅逸新城",
+   "district": "莲湖",
+   "world_xz": [
+    -5324.4,
+    -2004.3
+   ],
+   "landuse": "landuse_polygon_centroid(雅逸新城、雅逸新城(二期); public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611004426.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金宇蓝苑",
+   "district": "长安",
+   "world_xz": [
+    -6615.2,
+    10299.0
+   ],
+   "landuse": "landuse_polygon_centroid(金宇蓝苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610941430.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "向阳沟小区",
+   "district": "灞桥",
+   "world_xz": [
+    11545.8,
+    2147.6
+   ],
+   "landuse": "landuse_polygon_centroid(向阳沟小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204338.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "林河春天",
+   "district": "灞桥",
+   "world_xz": [
+    11642.0,
+    -768.9
+   ],
+   "landuse": "landuse_polygon_centroid(林河春天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610923092.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫昕花庭",
+   "district": "新城",
+   "world_xz": [
+    4644.6,
+    -2433.5
+   ],
+   "landuse": "landuse_polygon_centroid(紫昕花庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610088525.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇睿纳时代",
+   "district": "长安",
+   "world_xz": [
+    -5406.2,
+    10958.2
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇睿纳时代; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189820.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "乾唐华府",
+   "district": "经开",
+   "world_xz": [
+    -1296.1,
+    -8137.3
+   ],
+   "landuse": "landuse_polygon_centroid(乾唐华府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610710978.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧桂园高新时代",
+   "district": "高新",
+   "world_xz": [
+    -4759.8,
+    7237.7
+   ],
+   "landuse": "landuse_polygon_centroid(碧桂园高新时代; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190604.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华城万象",
+   "district": "雁塔",
+   "world_xz": [
+    -454.5,
+    7299.7
+   ],
+   "landuse": "landuse_polygon_centroid(华城万象一期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610494826.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海荣阳光城福宝园",
+   "district": "经开",
+   "world_xz": [
+    -643.4,
+    -8556.6
+   ],
+   "landuse": "landuse_polygon_centroid(海荣阳光城-福宝园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196974.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中天花园",
+   "district": "高新",
+   "world_xz": [
+    -3770.7,
+    4162.5
+   ],
+   "landuse": "landuse_polygon_centroid(中天花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610108301.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中天雅苑",
+   "district": "莲湖",
+   "world_xz": [
+    -391.6,
+    -3615.3
+   ],
+   "landuse": "landuse_polygon_centroid(中天雅苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610281706.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中国铁建瑞园",
+   "district": "高新",
+   "world_xz": [
+    -6363.7,
+    2002.6
+   ],
+   "landuse": "landuse_polygon_centroid(中国铁建瑞园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610861436.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "祥和雅居",
+   "district": "雁塔",
+   "world_xz": [
+    -1973.9,
+    4174.7
+   ],
+   "landuse": "landuse_polygon_centroid(祥和雅居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610796222.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "浩林方里",
+   "district": "莲湖",
+   "world_xz": [
+    -2440.9,
+    -2609.2
+   ],
+   "landuse": "landuse_polygon_centroid(浩林方里; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610970332.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长安居",
+   "district": "高新",
+   "world_xz": [
+    -5063.2,
+    4567.4
+   ],
+   "landuse": "landuse_polygon_centroid(长安居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950756.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "御笔华府",
+   "district": "雁塔",
+   "world_xz": [
+    -2000.8,
+    4306.5
+   ],
+   "landuse": "landuse_polygon_centroid(御笔华府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610858562.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "省军区一号院",
+   "district": "雁塔",
+   "world_xz": [
+    318.2,
+    4295.9
+   ],
+   "landuse": "landuse_polygon_centroid(省军区一号院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610935232.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海璟新天地",
+   "district": "经开",
+   "world_xz": [
+    -1393.3,
+    -7395.2
+   ],
+   "landuse": "landuse_polygon_centroid(海璟新天地; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610744308.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中南青樾",
+   "district": "莲湖",
+   "world_xz": [
+    -4860.2,
+    -3221.1
+   ],
+   "landuse": "landuse_polygon_centroid(中南青樾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190684.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海亮熙悦",
+   "district": "长安",
+   "world_xz": [
+    -7353.6,
+    11461.1
+   ],
+   "landuse": "landuse_polygon_centroid(海亮熙悦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196850.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中海太华府",
+   "district": "未央",
+   "world_xz": [
+    2922.9,
+    -6820.3
+   ],
+   "landuse": "landuse_polygon_centroid(中海太华府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190374.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "保利双水磨小区",
+   "district": "高新",
+   "world_xz": [
+    -6616.4,
+    5083.8
+   ],
+   "landuse": "landuse_polygon_centroid(保利·双水磨小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192312.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中大国际九号",
+   "district": "高新",
+   "world_xz": [
+    -4620.3,
+    4113.5
+   ],
+   "landuse": "landuse_polygon_centroid(中大国际九号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189708.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "交大三村",
+   "district": "碑林",
+   "world_xz": [
+    4377.6,
+    1449.0
+   ],
+   "landuse": "landuse_polygon_centroid(交大三村; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937186.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "田园公寓",
+   "district": "高新",
+   "world_xz": [
+    -6269.1,
+    9523.6
+   ],
+   "landuse": "landuse_polygon_centroid(田园公寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611037688.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "珑印台",
+   "district": "经开",
+   "world_xz": [
+    534.9,
+    -8521.8
+   ],
+   "landuse": "landuse_polygon_centroid(珑印台; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611089590.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双府新天地",
+   "district": "莲湖",
+   "world_xz": [
+    -5705.3,
+    -1922.7
+   ],
+   "landuse": "landuse_polygon_centroid(双府新天地-北区、双府新天地-南区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611128996.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫韵润园",
+   "district": "经开",
+   "world_xz": [
+    447.2,
+    -8162.3
+   ],
+   "landuse": "landuse_polygon_centroid(枫韵润园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610918656.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中海长安府",
+   "district": "长安",
+   "world_xz": [
+    -7017.1,
+    12097.1
+   ],
+   "landuse": "landuse_polygon_centroid(中海长安府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190956.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海伦春天",
+   "district": "未央",
+   "world_xz": [
+    -9174.1,
+    -1172.7
+   ],
+   "landuse": "landuse_polygon_centroid(海伦春天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611091452.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "菁华名门",
+   "district": "经开",
+   "world_xz": [
+    -998.6,
+    -8079.9
+   ],
+   "landuse": "landuse_polygon_centroid(菁华名门; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087513.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "黄河厂十四街坊",
+   "district": "新城",
+   "world_xz": [
+    6049.7,
+    -972.5
+   ],
+   "landuse": "landuse_polygon_centroid(黄河厂十四街坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611165992.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金泰新理城",
+   "district": "高新",
+   "world_xz": [
+    -7410.8,
+    5723.8
+   ],
+   "landuse": "landuse_polygon_centroid(金泰新理城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611028292.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤锦苑",
+   "district": "未央",
+   "world_xz": [
+    1348.8,
+    -7073.2
+   ],
+   "landuse": "landuse_polygon_centroid(凤锦苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610890798.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长兴园",
+   "district": "新城",
+   "world_xz": [
+    5778.9,
+    -2571.8
+   ],
+   "landuse": "landuse_polygon_centroid(长兴园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611125238.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海棠华府",
+   "district": "灞桥",
+   "world_xz": [
+    11507.1,
+    -1599.6
+   ],
+   "landuse": "landuse_polygon_centroid(海棠华府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610941086.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "小悉尼新都",
+   "district": "雁塔",
+   "world_xz": [
+    -2271.4,
+    3467.0
+   ],
+   "landuse": "landuse_polygon_centroid(小悉尼新都; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610296302.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金色花语城",
+   "district": "莲湖",
+   "world_xz": [
+    -8078.5,
+    -2871.3
+   ],
+   "landuse": "landuse_polygon_centroid(金色花语城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611072914.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "旭景兴园",
+   "district": "经开",
+   "world_xz": [
+    -1849.2,
+    -8420.2
+   ],
+   "landuse": "landuse_polygon_centroid(旭景兴园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610858780.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "翠堤湾",
+   "district": "长安",
+   "world_xz": [
+    -7130.7,
+    10778.5
+   ],
+   "landuse": "landuse_polygon_centroid(翠堤湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610935736.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "府东壹号",
+   "district": "长安",
+   "world_xz": [
+    -3344.2,
+    9966.5
+   ],
+   "landuse": "landuse_polygon_centroid(府东壹号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192256.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "现代花城",
+   "district": "灞桥",
+   "world_xz": [
+    10469.4,
+    -1218.1
+   ],
+   "landuse": "landuse_polygon_centroid(现代花城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610329236.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中登家园",
+   "district": "经开",
+   "world_xz": [
+    -1162.3,
+    -8017.7
+   ],
+   "landuse": "landuse_polygon_centroid(中登家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087528.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "薛家寨社区",
+   "district": "经开",
+   "world_xz": [
+    508.9,
+    -10293.0
+   ],
+   "landuse": "landuse_polygon_centroid(薛家寨; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196322.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长乐新城D区",
+   "district": "新城",
+   "world_xz": [
+    5475.5,
+    -6.2
+   ],
+   "landuse": "landuse_polygon_centroid(长乐新城D区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610208400.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "香樟园",
+   "district": "经开",
+   "world_xz": [
+    -580.6,
+    -5927.9
+   ],
+   "landuse": "landuse_polygon_centroid(香樟园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610718548.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高新第五季",
+   "district": "高新",
+   "world_xz": [
+    -5274.3,
+    8384.3
+   ],
+   "landuse": "landuse_polygon_centroid(高新第五季; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611106450.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曼城国际",
+   "district": "碑林",
+   "world_xz": [
+    2253.4,
+    2847.4
+   ],
+   "landuse": "landuse_polygon_centroid(曼城国际; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610642182.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙天名俊",
+   "district": "高新",
+   "world_xz": [
+    -8375.0,
+    6677.9
+   ],
+   "landuse": "landuse_polygon_centroid(龙天名俊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610816780.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丽苑168",
+   "district": "碑林",
+   "world_xz": [
+    2765.4,
+    -784.4
+   ],
+   "landuse": "landuse_polygon_centroid(丽苑168; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610134862.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "腾业·国王镇",
+   "district": "浐灞",
+   "world_xz": [
+    11784.1,
+    -3892.1
+   ],
+   "landuse": "landuse_polygon_centroid(腾业国王镇; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611078660.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "香山红叶",
+   "district": "雁塔",
+   "world_xz": [
+    -1802.4,
+    4856.6
+   ],
+   "landuse": "landuse_polygon_centroid(香山红叶; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611212312.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西缆劳动路小区",
+   "district": "莲湖",
+   "world_xz": [
+    -3498.6,
+    -905.7
+   ],
+   "landuse": "landuse_polygon_centroid(西缆劳动路小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611074166.html"
+   ],
+   "records": 5,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "鼎新花园",
+   "district": "经开",
+   "world_xz": [
+    1082.0,
+    -6213.9
+   ],
+   "landuse": "landuse_polygon_centroid(鼎新花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610108982.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "梧桐年华",
+   "district": "未央",
+   "world_xz": [
+    -8814.8,
+    -1403.3
+   ],
+   "landuse": "landuse_polygon_centroid(梧桐年华; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611192112.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "保利金香槟",
+   "district": "西咸新区",
+   "world_xz": [
+    -10044.1,
+    -3091.5
+   ],
+   "landuse": "landuse_polygon_centroid(保利金香槟; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611085282.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海璟时代",
+   "district": "经开",
+   "world_xz": [
+    -727.8,
+    -7672.1
+   ],
+   "landuse": "landuse_polygon_centroid(海璟时代小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936024.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海璟国际",
+   "district": "经开",
+   "world_xz": [
+    -731.2,
+    -6360.9
+   ],
+   "landuse": "landuse_polygon_centroid(海璟国际; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610744538.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海璟暖暖的宅",
+   "district": "经开",
+   "world_xz": [
+    -1724.9,
+    -5944.0
+   ],
+   "landuse": "landuse_polygon_centroid(海璟暖暖的宅; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611104094.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东尚蜂鸟",
+   "district": "高新",
+   "world_xz": [
+    -8499.3,
+    8684.3
+   ],
+   "landuse": "landuse_polygon_centroid(东尚·蜂鸟; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610941354.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "后村嘉园",
+   "district": "雁塔",
+   "world_xz": [
+    2057.4,
+    3712.0
+   ],
+   "landuse": "landuse_polygon_centroid(后村嘉园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192238.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣禾城市理想",
+   "district": "雁塔",
+   "world_xz": [
+    -3410.6,
+    5215.3
+   ],
+   "landuse": "landuse_polygon_centroid(荣禾·城市理想; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610813744.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "银池花香丽舍",
+   "district": "经开",
+   "world_xz": [
+    251.6,
+    -8162.7
+   ],
+   "landuse": "landuse_polygon_centroid(银池·花香丽舍; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610939440.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕西交通职业技术学院家属院",
+   "district": "经开",
+   "world_xz": [
+    -539.0,
+    -7344.9
+   ],
+   "landuse": "landuse_polygon_centroid(陕西交通职业技术学院-家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611050270.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "城西人家",
+   "district": "莲湖",
+   "world_xz": [
+    -3072.3,
+    -1496.8
+   ],
+   "landuse": "landuse_polygon_centroid(城西人家; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610089224.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "罗马西西里",
+   "district": "高新",
+   "world_xz": [
+    -8535.6,
+    6215.2
+   ],
+   "landuse": "landuse_polygon_centroid(罗马·西西里; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611040478.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "含光静里",
+   "district": "新城",
+   "world_xz": [
+    5175.8,
+    -2241.3
+   ],
+   "landuse": "landuse_polygon_centroid(含光静里; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610433622.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江会展国际",
+   "district": "曲江",
+   "world_xz": [
+    732.3,
+    6948.3
+   ],
+   "landuse": "landuse_polygon_centroid(曲江会展国际; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087388.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高山流水和城",
+   "district": "高新",
+   "world_xz": [
+    -4787.8,
+    6623.6
+   ],
+   "landuse": "landuse_polygon_centroid(高山流水·和城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610864292.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "和润坊",
+   "district": "新城",
+   "world_xz": [
+    5238.3,
+    -2555.8
+   ],
+   "landuse": "landuse_polygon_centroid(和润坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610194758.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "城市星钻",
+   "district": "经开",
+   "world_xz": [
+    -420.5,
+    -10158.7
+   ],
+   "landuse": "landuse_polygon_centroid(城市星钻; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610687938.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "市政馨苑",
+   "district": "未央",
+   "world_xz": [
+    320.1,
+    -5514.6
+   ],
+   "landuse": "landuse_polygon_centroid(市政·馨苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610422200.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇锦程",
+   "district": "经开",
+   "world_xz": [
+    618.3,
+    -8174.7
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇锦程; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611075758.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海棠花园",
+   "district": "经开",
+   "world_xz": [
+    331.3,
+    -7975.3
+   ],
+   "landuse": "landuse_polygon_centroid(海棠花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610699686.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海棠别馆",
+   "district": "高新",
+   "world_xz": [
+    -8177.1,
+    8647.4
+   ],
+   "landuse": "landuse_polygon_centroid(海棠别馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610741700.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高科朗山",
+   "district": "高新",
+   "world_xz": [
+    -6098.7,
+    5804.3
+   ],
+   "landuse": "landuse_polygon_centroid(高科朗山; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611154718.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东新城市家园",
+   "district": "新城",
+   "world_xz": [
+    5089.5,
+    1316.4
+   ],
+   "landuse": "landuse_polygon_centroid(东新城市家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610422064.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丰乐佳苑",
+   "district": "莲湖",
+   "world_xz": [
+    -4397.3,
+    -1888.0
+   ],
+   "landuse": "landuse_polygon_centroid(丰乐佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610976486.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "蓝天华庭",
+   "district": "未央",
+   "world_xz": [
+    512.3,
+    -5402.9
+   ],
+   "landuse": "landuse_polygon_centroid(蓝天华庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611054766.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "太白新苑",
+   "district": "雁塔",
+   "world_xz": [
+    -2257.2,
+    3948.1
+   ],
+   "landuse": "landuse_polygon_centroid(太白新苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610091090.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西港雅苑",
+   "district": "高新",
+   "world_xz": [
+    -7057.8,
+    7501.2
+   ],
+   "landuse": "landuse_polygon_centroid(西港雅苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610829698.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "和平丽苑",
+   "district": "西咸新区",
+   "world_xz": [
+    -11052.3,
+    462.3
+   ],
+   "landuse": "landuse_polygon_centroid(和平丽苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611271300.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣民宫园学府",
+   "district": "浐灞",
+   "world_xz": [
+    12429.9,
+    -3541.5
+   ],
+   "landuse": "landuse_polygon_centroid(荣民宫园学府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189842.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双桥国际社区",
+   "district": "雁塔",
+   "world_xz": [
+    -2744.3,
+    7220.1
+   ],
+   "landuse": "landuse_polygon_centroid(双桥国际社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611152108.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "融创星美御",
+   "district": "高新",
+   "world_xz": [
+    -7386.3,
+    7509.6
+   ],
+   "landuse": "landuse_polygon_centroid(融创星美御; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190090.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "康桥边的院子",
+   "district": "曲江",
+   "world_xz": [
+    5442.0,
+    3836.2
+   ],
+   "landuse": "landuse_polygon_centroid(康桥边的院子; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610239422.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "八一小区",
+   "district": "曲江",
+   "world_xz": [
+    3509.1,
+    3992.0
+   ],
+   "landuse": "landuse_polygon_centroid(八一小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610972254.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "风度天城",
+   "district": "高新",
+   "world_xz": [
+    -7179.9,
+    2336.9
+   ],
+   "landuse": "landuse_polygon_centroid(风度天城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610678858.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万科金域未央",
+   "district": "经开",
+   "world_xz": [
+    504.4,
+    -10625.3
+   ],
+   "landuse": "landuse_polygon_centroid(万科金域未央; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190102.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天伦佐治公馆",
+   "district": "新城",
+   "world_xz": [
+    4632.0,
+    -2799.9
+   ],
+   "landuse": "landuse_polygon_centroid(天伦·佐治公馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189964.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "永和璞玉",
+   "district": "高新",
+   "world_xz": [
+    -6687.4,
+    4605.1
+   ],
+   "landuse": "landuse_polygon_centroid(永和·璞玉; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611108650.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丈八壹号",
+   "district": "高新",
+   "world_xz": [
+    -7368.9,
+    6476.8
+   ],
+   "landuse": "landuse_polygon_centroid(丈八壹号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611117292.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "就掌灯",
+   "district": "新城",
+   "world_xz": [
+    5106.2,
+    -429.2
+   ],
+   "landuse": "landuse_polygon_centroid(就掌灯; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610090839.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "信号厂家属院",
+   "district": "新城",
+   "world_xz": [
+    4854.4,
+    1414.6
+   ],
+   "landuse": "landuse_polygon_centroid(信号厂社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610939468.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中南·紫云集",
+   "district": "经开",
+   "world_xz": [
+    -3283.5,
+    -14125.0
+   ],
+   "landuse": "landuse_polygon_centroid(中南紫云集; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190446.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫叶苑南区",
+   "district": "高新",
+   "world_xz": [
+    -4584.5,
+    3689.2
+   ],
+   "landuse": "landuse_polygon_centroid(枫叶苑·南区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610882408.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙腾万都汇",
+   "district": "新城",
+   "world_xz": [
+    7857.0,
+    499.5
+   ],
+   "landuse": "landuse_polygon_centroid(龙腾万都汇; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611103632.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "雅荷城市花园",
+   "district": "经开",
+   "world_xz": [
+    490.5,
+    -8958.3
+   ],
+   "landuse": "landuse_polygon_centroid(雅荷城市花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006315.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "省直机关三爻小区F区",
+   "district": "雁塔",
+   "world_xz": [
+    -747.1,
+    8770.9
+   ],
+   "landuse": "landuse_polygon_centroid(省直机关三爻小区-A区、省直机关三爻小区-B区、省直机关三爻小区-C区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610205036.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "上林苑",
+   "district": "未央",
+   "world_xz": [
+    756.2,
+    -5524.1
+   ],
+   "landuse": "landuse_polygon_centroid(上林苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610996064.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "欣心家园优然居",
+   "district": "未央",
+   "world_xz": [
+    3957.9,
+    -5548.2
+   ],
+   "landuse": "landuse_polygon_centroid(欣心家园·优然居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610272702.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "导航家园",
+   "district": "高新",
+   "world_xz": [
+    -3300.4,
+    2930.2
+   ],
+   "landuse": "landuse_polygon_centroid(导航家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611089576.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "宁合世嘉",
+   "district": "莲湖",
+   "world_xz": [
+    -6261.6,
+    -130.6
+   ],
+   "landuse": "landuse_polygon_centroid(宁合世嘉; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610359806.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤城明珠",
+   "district": "经开",
+   "world_xz": [
+    -317.8,
+    -5760.8
+   ],
+   "landuse": "landuse_polygon_centroid(凤城明珠; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610098722.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江唐仁里",
+   "district": "曲江",
+   "world_xz": [
+    2061.7,
+    6640.1
+   ],
+   "landuse": "landuse_polygon_centroid(曲江唐仁里; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610933494.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高新水晶城",
+   "district": "高新",
+   "world_xz": [
+    -4258.1,
+    3949.1
+   ],
+   "landuse": "landuse_polygon_centroid(高新·水晶城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610862982.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤城家园",
+   "district": "经开",
+   "world_xz": [
+    -1101.0,
+    -6155.4
+   ],
+   "landuse": "landuse_polygon_centroid(凤城家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611165724.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "香诗美林",
+   "district": "莲湖",
+   "world_xz": [
+    -6166.9,
+    -1625.8
+   ],
+   "landuse": "landuse_polygon_centroid(香诗美林; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610410862.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "含光香榭丽都",
+   "district": "经开",
+   "world_xz": [
+    -387.6,
+    -6178.9
+   ],
+   "landuse": "landuse_polygon_centroid(含光.香榭丽都; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610882450.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "文景苑小区",
+   "district": "经开",
+   "world_xz": [
+    -436.2,
+    -6923.1
+   ],
+   "landuse": "landuse_polygon_centroid(文景苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087529.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "五一锦苑",
+   "district": "莲湖",
+   "world_xz": [
+    -2526.7,
+    -765.9
+   ],
+   "landuse": "landuse_polygon_centroid(五一锦苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610207060.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "未来家园",
+   "district": "长安",
+   "world_xz": [
+    -8287.6,
+    11830.4
+   ],
+   "landuse": "landuse_polygon_centroid(未来家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190140.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "五一通惠锦苑",
+   "district": "莲湖",
+   "world_xz": [
+    -2751.4,
+    -542.9
+   ],
+   "landuse": "landuse_polygon_centroid(五一通惠锦苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204746.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "美立方",
+   "district": "高新",
+   "world_xz": [
+    -6681.6,
+    1948.8
+   ],
+   "landuse": "landuse_polygon_centroid(美立方小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610582022.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "珑月湾",
+   "district": "灞桥",
+   "world_xz": [
+    10403.8,
+    -1319.2
+   ],
+   "landuse": "landuse_polygon_centroid(珑月湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611271688.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "芊域阳光",
+   "district": "西咸新区",
+   "world_xz": [
+    -11276.8,
+    -8581.5
+   ],
+   "landuse": "landuse_polygon_centroid(芊域阳光; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611049684.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "振业泊公馆",
+   "district": "浐灞",
+   "world_xz": [
+    8552.1,
+    -5557.6
+   ],
+   "landuse": "landuse_polygon_centroid(振业泊公馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611092896.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "蓝箭小区",
+   "district": "经开",
+   "world_xz": [
+    -2135.7,
+    -6324.6
+   ],
+   "landuse": "landuse_polygon_centroid(蓝箭小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936212.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "豪盛时代华城",
+   "district": "雁塔",
+   "world_xz": [
+    -2172.7,
+    4185.6
+   ],
+   "landuse": "landuse_polygon_centroid(豪盛时代·华城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087342.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江林语",
+   "district": "曲江",
+   "world_xz": [
+    6799.3,
+    5915.9
+   ],
+   "landuse": "landuse_polygon_centroid(曲江林语; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611171846.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤城花苑",
+   "district": "莲湖",
+   "world_xz": [
+    -651.8,
+    -3602.4
+   ],
+   "landuse": "landuse_polygon_centroid(凤城花苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610928156.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "泉上花间",
+   "district": "高新",
+   "world_xz": [
+    -7517.9,
+    10542.9
+   ],
+   "landuse": "landuse_polygon_centroid(泉上花间; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611072258.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "杰信花园",
+   "district": "经开",
+   "world_xz": [
+    -283.9,
+    -6166.7
+   ],
+   "landuse": "landuse_polygon_centroid(杰信花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087532.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "腾业南院",
+   "district": "高新",
+   "world_xz": [
+    -8000.8,
+    8647.6
+   ],
+   "landuse": "landuse_polygon_centroid(腾业南院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610494982.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "白鹿花园",
+   "district": "灞桥",
+   "world_xz": [
+    11382.4,
+    -134.6
+   ],
+   "landuse": "landuse_polygon_centroid(白鹿花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610913558.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "银象花园",
+   "district": "经开",
+   "world_xz": [
+    -611.3,
+    -6159.1
+   ],
+   "landuse": "landuse_polygon_centroid(银象花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610896632.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "一品美道",
+   "district": "高新",
+   "world_xz": [
+    -4187.4,
+    3378.3
+   ],
+   "landuse": "landuse_polygon_centroid(一品·美道; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610896770.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "庆祥小区",
+   "district": "莲湖",
+   "world_xz": [
+    -5511.0,
+    -456.0
+   ],
+   "landuse": "landuse_polygon_centroid(庆祥小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192646.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣兴云天",
+   "district": "高新",
+   "world_xz": [
+    -7548.8,
+    10638.9
+   ],
+   "landuse": "landuse_polygon_centroid(荣兴·云天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610657780.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "卡布奇诺公馆",
+   "district": "高新",
+   "world_xz": [
+    -6504.2,
+    1298.0
+   ],
+   "landuse": "landuse_polygon_centroid(卡布奇诺公馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610351144.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "美丽的院子",
+   "district": "雁塔",
+   "world_xz": [
+    -2150.5,
+    4416.5
+   ],
+   "landuse": "landuse_polygon_centroid(美丽的院子; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610268502.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高新未未来",
+   "district": "高新",
+   "world_xz": [
+    -7936.3,
+    10972.9
+   ],
+   "landuse": "landuse_polygon_centroid(高新未未来; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611045556.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "米罗蓝山",
+   "district": "高新",
+   "world_xz": [
+    -6470.4,
+    2553.5
+   ],
+   "landuse": "landuse_polygon_centroid(米罗蓝山; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610115428.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "祯祥宝库",
+   "district": "未央",
+   "world_xz": [
+    -84.2,
+    -3899.5
+   ],
+   "landuse": "landuse_polygon_centroid(祯祥宝库; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610699664.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "都市雅苑",
+   "district": "莲湖",
+   "world_xz": [
+    -250.4,
+    -3406.2
+   ],
+   "landuse": "landuse_polygon_centroid(都市雅苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611003470.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "世纪金园",
+   "district": "莲湖",
+   "world_xz": [
+    -41.5,
+    -3232.4
+   ],
+   "landuse": "landuse_polygon_centroid(世纪金园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070298.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "三星丽座",
+   "district": "长安",
+   "world_xz": [
+    -3863.8,
+    10582.7
+   ],
+   "landuse": "landuse_polygon_centroid(三星丽座; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610816978.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "都市桂苑",
+   "district": "莲湖",
+   "world_xz": [
+    -534.5,
+    -3660.8
+   ],
+   "landuse": "landuse_polygon_centroid(都市桂苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610092531.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "合能十里锦绣(二期)",
+   "district": "灞桥",
+   "world_xz": [
+    9962.9,
+    3829.4
+   ],
+   "landuse": "landuse_polygon_centroid(合能十里锦绣三期、合能十里锦绣二期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610206040.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "启航佳苑",
+   "district": "西咸新区",
+   "world_xz": [
+    -12209.1,
+    -4726.7
+   ],
+   "landuse": "landuse_polygon_centroid(启航佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611172146.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "三丰中心思想",
+   "district": "经开",
+   "world_xz": [
+    1142.0,
+    -8492.3
+   ],
+   "landuse": "landuse_polygon_centroid(三丰中心思想; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611080562.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "惠风壹品",
+   "district": "经开",
+   "world_xz": [
+    1122.9,
+    -8170.7
+   ],
+   "landuse": "landuse_polygon_centroid(惠风壹品; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190292.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西整桃园小区",
+   "district": "莲湖",
+   "world_xz": [
+    -4150.4,
+    -993.9
+   ],
+   "landuse": "landuse_polygon_centroid(西整桃园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611055802.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万景花园",
+   "district": "新城",
+   "world_xz": [
+    1336.3,
+    -767.2
+   ],
+   "landuse": "landuse_polygon_centroid(万景花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006331.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "雅卓花园",
+   "district": "莲湖",
+   "world_xz": [
+    -7128.2,
+    -2098.9
+   ],
+   "landuse": "landuse_polygon_centroid(雅卓花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937570.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "岳旗寨安置楼",
+   "district": "高新",
+   "world_xz": [
+    -12514.4,
+    2418.8
+   ],
+   "landuse": "landuse_polygon_centroid(岳旗寨安置楼; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204104.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "佳馨花园",
+   "district": "经开",
+   "world_xz": [
+    831.5,
+    -6769.4
+   ],
+   "landuse": "landuse_polygon_centroid(佳馨花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936034.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "汇通太古城天后花园",
+   "district": "未央",
+   "world_xz": [
+    84.7,
+    -11146.3
+   ],
+   "landuse": "landuse_polygon_centroid(汇通太古城天后花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610201880.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西安公交鹿苑小区",
+   "district": "浐灞",
+   "world_xz": [
+    10691.0,
+    1600.8
+   ],
+   "landuse": "landuse_polygon_centroid(西安公交鹿苑小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610195882.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "瑞泰卡地亚",
+   "district": "经开",
+   "world_xz": [
+    -1733.9,
+    -7950.2
+   ],
+   "landuse": "landuse_polygon_centroid(瑞泰·卡地亚; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610875712.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海天华庭",
+   "district": "曲江",
+   "world_xz": [
+    3341.4,
+    4208.5
+   ],
+   "landuse": "landuse_polygon_centroid(曲江·海天华庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610777716.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫叶新家园",
+   "district": "高新",
+   "world_xz": [
+    -4924.1,
+    3654.3
+   ],
+   "landuse": "landuse_polygon_centroid(枫叶新家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889446.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长延居会展明珠",
+   "district": "雁塔",
+   "world_xz": [
+    -206.1,
+    6986.2
+   ],
+   "landuse": "landuse_polygon_centroid(长延居会展明珠; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610592222.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "大华阳光曼哈顿",
+   "district": "高新",
+   "world_xz": [
+    -3666.0,
+    5192.8
+   ],
+   "landuse": "landuse_polygon_centroid(大华阳光曼哈顿; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610109864.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕西省委机关联建小区",
+   "district": "雁塔",
+   "world_xz": [
+    2268.9,
+    3152.1
+   ],
+   "landuse": "landuse_polygon_centroid(陕西省委机关联建小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611055604.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万国远鉴名筑",
+   "district": "莲湖",
+   "world_xz": [
+    -8180.3,
+    -2543.9
+   ],
+   "landuse": "landuse_polygon_centroid(万国·远鉴名筑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610277782.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "城南锦绣",
+   "district": "雁塔",
+   "world_xz": [
+    2483.7,
+    3522.1
+   ],
+   "landuse": "landuse_polygon_centroid(城南锦绣; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070013.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧玺华庭",
+   "district": "经开",
+   "world_xz": [
+    -1047.3,
+    -8301.9
+   ],
+   "landuse": "landuse_polygon_centroid(碧玺华庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611072044.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "世新家园",
+   "district": "莲湖",
+   "world_xz": [
+    -3766.8,
+    -458.0
+   ],
+   "landuse": "landuse_polygon_centroid(世新家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610922164.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高新逸品",
+   "district": "高新",
+   "world_xz": [
+    -8372.6,
+    6368.1
+   ],
+   "landuse": "landuse_polygon_centroid(高新逸品; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610890486.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "科创小区",
+   "district": "雁塔",
+   "world_xz": [
+    -2713.2,
+    4205.7
+   ],
+   "landuse": "landuse_polygon_centroid(科创小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610976548.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新西蓝一期",
+   "district": "高新",
+   "world_xz": [
+    -4726.4,
+    2449.4
+   ],
+   "landuse": "landuse_polygon_centroid(新西蓝-二期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087466.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金花公寓",
+   "district": "新城",
+   "world_xz": [
+    4539.2,
+    -1732.7
+   ],
+   "landuse": "landuse_polygon_centroid(金花公寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610924304.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "左岸春天",
+   "district": "高新",
+   "world_xz": [
+    -7187.0,
+    2793.3
+   ],
+   "landuse": "landuse_polygon_centroid(左岸春天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610676786.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "航天佳苑",
+   "district": "雁塔",
+   "world_xz": [
+    5636.4,
+    3691.5
+   ],
+   "landuse": "landuse_polygon_centroid(航天佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611184162.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕钢家属院",
+   "district": "新城",
+   "world_xz": [
+    5297.1,
+    1057.2
+   ],
+   "landuse": "landuse_polygon_centroid(陕钢家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610992274.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "泰和御景豪庭",
+   "district": "未央",
+   "world_xz": [
+    3626.3,
+    -5534.3
+   ],
+   "landuse": "landuse_polygon_centroid(泰和御景豪庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610696938.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丈八家园",
+   "district": "高新",
+   "world_xz": [
+    -7408.6,
+    6638.0
+   ],
+   "landuse": "landuse_polygon_centroid(丈八家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611024962.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "太白花园",
+   "district": "高新",
+   "world_xz": [
+    -3204.8,
+    3636.1
+   ],
+   "landuse": "landuse_polygon_centroid(太白花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006300.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧桂园嘉誉",
+   "district": "经开",
+   "world_xz": [
+    926.2,
+    -10321.6
+   ],
+   "landuse": "landuse_polygon_centroid(碧桂园·嘉誉; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189556.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "唐延九珺",
+   "district": "高新",
+   "world_xz": [
+    -4988.4,
+    6631.9
+   ],
+   "landuse": "landuse_polygon_centroid(唐延·九珺; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191218.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双威温馨花园",
+   "district": "高新",
+   "world_xz": [
+    -3884.2,
+    4029.9
+   ],
+   "landuse": "landuse_polygon_centroid(双威温馨花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087470.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣民捌号",
+   "district": "高新",
+   "world_xz": [
+    -6732.8,
+    3558.9
+   ],
+   "landuse": "landuse_polygon_centroid(荣民捌号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191948.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "北张家园",
+   "district": "新城",
+   "world_xz": [
+    5296.6,
+    -2167.8
+   ],
+   "landuse": "landuse_polygon_centroid(北张家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611081186.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金海湾",
+   "district": "灞桥",
+   "world_xz": [
+    11319.5,
+    -1997.8
+   ],
+   "landuse": "landuse_polygon_centroid(金海湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610710538.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "音乐学院家属院",
+   "district": "雁塔",
+   "world_xz": [
+    -140.5,
+    3484.6
+   ],
+   "landuse": "landuse_polygon_centroid(西安音乐学院-家属区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204190.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "利君花园",
+   "district": "经开",
+   "world_xz": [
+    177.1,
+    -5986.3
+   ],
+   "landuse": "landuse_polygon_centroid(利君花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610940440.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "麟凤沁苑",
+   "district": "经开",
+   "world_xz": [
+    558.2,
+    -8334.4
+   ],
+   "landuse": "landuse_polygon_centroid(麟凤沁苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611179386.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "九鼎城",
+   "district": "高新",
+   "world_xz": [
+    -6688.3,
+    4474.5
+   ],
+   "landuse": "landuse_polygon_centroid(九鼎城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611079408.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "交通北苑",
+   "district": "经开",
+   "world_xz": [
+    -81.7,
+    -10773.7
+   ],
+   "landuse": "landuse_polygon_centroid(交通北苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611120862.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "水晶国际",
+   "district": "高新",
+   "world_xz": [
+    -4128.8,
+    4059.9
+   ],
+   "landuse": "landuse_polygon_centroid(水晶国际; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610111407.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东城国际",
+   "district": "浐灞",
+   "world_xz": [
+    11691.5,
+    -3961.4
+   ],
+   "landuse": "landuse_polygon_centroid(东城国际; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611078380.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西城华庭",
+   "district": "莲湖",
+   "world_xz": [
+    -8179.5,
+    -2099.6
+   ],
+   "landuse": "landuse_polygon_centroid(西城华庭小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611189024.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "添好花园",
+   "district": "未央",
+   "world_xz": [
+    360.6,
+    -5402.3
+   ],
+   "landuse": "landuse_polygon_centroid(添好花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610344982.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "世纪春天",
+   "district": "莲湖",
+   "world_xz": [
+    -4758.3,
+    -87.7
+   ],
+   "landuse": "landuse_polygon_centroid(世纪春天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070316.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "汉杰天赐良苑",
+   "district": "新城",
+   "world_xz": [
+    5061.0,
+    -2069.8
+   ],
+   "landuse": "landuse_polygon_centroid(汉杰·天赐良苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610092666.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "罗曼公社",
+   "district": "雁塔",
+   "world_xz": [
+    -3978.1,
+    5913.5
+   ],
+   "landuse": "landuse_polygon_centroid(罗曼公社; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610321502.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "大唐西市千和郡",
+   "district": "莲湖",
+   "world_xz": [
+    -944.3,
+    -2841.1
+   ],
+   "landuse": "landuse_polygon_centroid(大唐西市千和郡; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611281592.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天朗蔚蓝国际",
+   "district": "莲湖",
+   "world_xz": [
+    -2489.8,
+    -1311.4
+   ],
+   "landuse": "landuse_polygon_centroid(天朗蔚蓝国际-2期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611021970.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "吉祥凤凰",
+   "district": "莲湖",
+   "world_xz": [
+    -52.8,
+    -2264.2
+   ],
+   "landuse": "landuse_polygon_centroid(吉祥凤凰; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610899738.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中圣绿苑",
+   "district": "高新",
+   "world_xz": [
+    -8067.6,
+    10662.8
+   ],
+   "landuse": "landuse_polygon_centroid(中圣绿苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196556.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "四季风景",
+   "district": "高新",
+   "world_xz": [
+    -4904.4,
+    3842.5
+   ],
+   "landuse": "landuse_polygon_centroid(四季风景; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087925.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "含光佳苑",
+   "district": "高新",
+   "world_xz": [
+    -4215.4,
+    3822.3
+   ],
+   "landuse": "landuse_polygon_centroid(含光佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069835.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫景观天下",
+   "district": "高新",
+   "world_xz": [
+    -4871.6,
+    3416.9
+   ],
+   "landuse": "landuse_polygon_centroid(枫景观天下; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189542.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "时代家园",
+   "district": "新城",
+   "world_xz": [
+    236.2,
+    -3220.3
+   ],
+   "landuse": "landuse_polygon_centroid(时代家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611176746.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙首领域",
+   "district": "未央",
+   "world_xz": [
+    -422.9,
+    -3862.6
+   ],
+   "landuse": "landuse_polygon_centroid(龙首领域; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610890778.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西电西容桃园小区",
+   "district": "莲湖",
+   "world_xz": [
+    -4170.1,
+    -590.5
+   ],
+   "landuse": "landuse_polygon_centroid(西电西容桃园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196112.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西变一号高层",
+   "district": "莲湖",
+   "world_xz": [
+    -5009.6,
+    -566.8
+   ],
+   "landuse": "landuse_polygon_centroid(西变一号高层小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196688.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长安易居",
+   "district": "未央",
+   "world_xz": [
+    3626.6,
+    -5327.7
+   ],
+   "landuse": "landuse_polygon_centroid(长安易居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610109001.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "振业泊墅",
+   "district": "浐灞",
+   "world_xz": [
+    8176.5,
+    -5565.5
+   ],
+   "landuse": "landuse_polygon_centroid(振业泊墅; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610977030.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "振业泊岸",
+   "district": "浐灞",
+   "world_xz": [
+    9451.3,
+    -8794.2
+   ],
+   "landuse": "landuse_polygon_centroid(振业泊岸; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189774.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高新花园",
+   "district": "高新",
+   "world_xz": [
+    -9646.4,
+    6610.0
+   ],
+   "landuse": "landuse_polygon_centroid(高新花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611175046.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万科金域蓝湾",
+   "district": "浐灞",
+   "world_xz": [
+    5830.0,
+    -7332.4
+   ],
+   "landuse": "landuse_polygon_centroid(万科金域蓝湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190104.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长安金茂府",
+   "district": "长安",
+   "world_xz": [
+    -6751.0,
+    12005.6
+   ],
+   "landuse": "landuse_polygon_centroid(长安金茂府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190910.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "唐宫尚品",
+   "district": "未央",
+   "world_xz": [
+    519.7,
+    -4161.9
+   ],
+   "landuse": "landuse_polygon_centroid(唐宫尚品; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610896950.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金泰社区",
+   "district": "新城",
+   "world_xz": [
+    4323.5,
+    -1785.0
+   ],
+   "landuse": "landuse_polygon_centroid(金泰社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611089336.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "自在山",
+   "district": "高新",
+   "world_xz": [
+    -4904.0,
+    2865.6
+   ],
+   "landuse": "landuse_polygon_centroid(自在山; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611048478.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西延路生活小区",
+   "district": "雁塔",
+   "world_xz": [
+    2303.7,
+    3342.4
+   ],
+   "landuse": "landuse_polygon_centroid(西延路生活小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611004422.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "泰祥花园",
+   "district": "高新",
+   "world_xz": [
+    -4049.0,
+    3717.3
+   ],
+   "landuse": "landuse_polygon_centroid(泰祥花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610940398.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万华园丽景华都",
+   "district": "经开",
+   "world_xz": [
+    -772.6,
+    -8514.1
+   ],
+   "landuse": "landuse_polygon_centroid(万华园丽景华都; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610101301.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新兴港湾",
+   "district": "莲湖",
+   "world_xz": [
+    -3297.7,
+    -751.3
+   ],
+   "landuse": "landuse_polygon_centroid(新兴·港湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070383.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "联志小区",
+   "district": "新城",
+   "world_xz": [
+    384.1,
+    -2978.6
+   ],
+   "landuse": "landuse_polygon_centroid(联志小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611192472.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "名园新居",
+   "district": "高新",
+   "world_xz": [
+    -3076.1,
+    3738.1
+   ],
+   "landuse": "landuse_polygon_centroid(名园新居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610153702.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高科尚郡",
+   "district": "高新",
+   "world_xz": [
+    -6320.9,
+    5105.3
+   ],
+   "landuse": "landuse_polygon_centroid(高科·尚郡; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611103730.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "群贤花园",
+   "district": "高新",
+   "world_xz": [
+    -3856.1,
+    3929.2
+   ],
+   "landuse": "landuse_polygon_centroid(群贤花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889426.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "瑞源清风",
+   "district": "雁塔",
+   "world_xz": [
+    -2111.8,
+    4320.4
+   ],
+   "landuse": "landuse_polygon_centroid(瑞源清风; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087503.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "圣合家园",
+   "district": "长安",
+   "world_xz": [
+    -1925.2,
+    10869.9
+   ],
+   "landuse": "landuse_polygon_centroid(圣合家园、圣合家园二期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889460.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华山十七街坊",
+   "district": "新城",
+   "world_xz": [
+    5957.5,
+    -258.4
+   ],
+   "landuse": "landuse_polygon_centroid(华山十七街坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611090042.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双府世家花园",
+   "district": "莲湖",
+   "world_xz": [
+    -5732.1,
+    -2213.1
+   ],
+   "landuse": "landuse_polygon_centroid(双府世家花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610995302.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "钻石半岛",
+   "district": "曲江",
+   "world_xz": [
+    2274.7,
+    6278.5
+   ],
+   "landuse": "landuse_polygon_centroid(钻石半岛; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610161910.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "太阳新城",
+   "district": "长安",
+   "world_xz": [
+    -1558.0,
+    10933.0
+   ],
+   "landuse": "landuse_polygon_centroid(太阳新城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070425.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华城泊郡",
+   "district": "雁塔",
+   "world_xz": [
+    -281.2,
+    8606.0
+   ],
+   "landuse": "landuse_polygon_centroid(华城泊郡; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610862940.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫叶苑北区",
+   "district": "高新",
+   "world_xz": [
+    -4328.8,
+    3145.5
+   ],
+   "landuse": "landuse_polygon_centroid(枫叶苑-北区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610996548.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中建开元城",
+   "district": "西咸新区",
+   "world_xz": [
+    -10636.3,
+    -3734.4
+   ],
+   "landuse": "landuse_polygon_centroid(中建开元城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610203824.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "普天小区",
+   "district": "新城",
+   "world_xz": [
+    5058.2,
+    1079.9
+   ],
+   "landuse": "landuse_polygon_centroid(普天小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610928248.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西材新园",
+   "district": "莲湖",
+   "world_xz": [
+    -3728.8,
+    -967.7
+   ],
+   "landuse": "landuse_polygon_centroid(西材新园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611253618.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海亮德文郡",
+   "district": "长安",
+   "world_xz": [
+    -6787.9,
+    11744.2
+   ],
+   "landuse": "landuse_polygon_centroid(海亮德文郡; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190312.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东小区社区",
+   "district": "雁塔",
+   "world_xz": [
+    2113.8,
+    3189.9
+   ],
+   "landuse": "landuse_polygon_centroid(东小区社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611254622.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西北电力建设第四工程公司众华新区",
+   "district": "灞桥",
+   "world_xz": [
+    10466.4,
+    -749.7
+   ],
+   "landuse": "landuse_polygon_centroid(西北电力建设第四工程公司众华新区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196076.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华洲城天峰",
+   "district": "高新",
+   "world_xz": [
+    -9080.4,
+    1691.0
+   ],
+   "landuse": "landuse_polygon_centroid(华洲城天峰; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611210072.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "浩华香颂国际城",
+   "district": "未央",
+   "world_xz": [
+    3722.1,
+    -8210.9
+   ],
+   "landuse": "landuse_polygon_centroid(浩华香颂国际城-北区、浩华香颂国际城-南区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610954644.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "张千户小区",
+   "district": "经开",
+   "world_xz": [
+    502.1,
+    -10501.6
+   ],
+   "landuse": "landuse_polygon_centroid(张千户社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611127842.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "南飞鸿天锦",
+   "district": "高新",
+   "world_xz": [
+    -9168.6,
+    3704.2
+   ],
+   "landuse": "landuse_polygon_centroid(南飞鸿天锦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611080302.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "牡丹庄园",
+   "district": "高新",
+   "world_xz": [
+    -5506.1,
+    987.2
+   ],
+   "landuse": "landuse_polygon_centroid(牡丹庄园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610538040.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江源著",
+   "district": "曲江",
+   "world_xz": [
+    1366.9,
+    5388.8
+   ],
+   "landuse": "landuse_polygon_centroid(曲江源著; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611071374.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长实小区",
+   "district": "经开",
+   "world_xz": [
+    -207.5,
+    -7192.2
+   ],
+   "landuse": "landuse_polygon_centroid(长实小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610995876.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "银河华庭",
+   "district": "经开",
+   "world_xz": [
+    107.8,
+    -7062.6
+   ],
+   "landuse": "landuse_polygon_centroid(银河华庭; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087535.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "怡宝花园",
+   "district": "经开",
+   "world_xz": [
+    -150.9,
+    -6428.7
+   ],
+   "landuse": "landuse_polygon_centroid(怡宝花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611058354.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "经发世纪花园",
+   "district": "经开",
+   "world_xz": [
+    -2250.7,
+    -8522.7
+   ],
+   "landuse": "landuse_polygon_centroid(经发世纪花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611028282.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "泵阀厂家属院",
+   "district": "新城",
+   "world_xz": [
+    4862.5,
+    -2077.6
+   ],
+   "landuse": "landuse_polygon_centroid(泵阀厂家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611114364.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇龙腾新世界",
+   "district": "高新",
+   "world_xz": [
+    -2745.1,
+    3673.1
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇·龙腾新世界; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087462.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "泰德紫玉公馆",
+   "district": "经开",
+   "world_xz": [
+    -692.2,
+    -5895.4
+   ],
+   "landuse": "landuse_polygon_centroid(泰德紫玉公馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610922230.html"
+   ],
+   "records": 3,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "欣景苑",
+   "district": "高新",
+   "world_xz": [
+    -3912.1,
+    4134.3
+   ],
+   "landuse": "landuse_polygon_centroid(欣景苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087469.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "时代明丰苑",
+   "district": "未央",
+   "world_xz": [
+    -61.8,
+    -4128.7
+   ],
+   "landuse": "landuse_polygon_centroid(时代明丰苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610103964.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "农机校家属楼",
+   "district": "长安",
+   "world_xz": [
+    -3801.9,
+    10574.1
+   ],
+   "landuse": "landuse_polygon_centroid(农机校家属楼; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610969156.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "景天佳苑",
+   "district": "曲江",
+   "world_xz": [
+    43.3,
+    6556.3
+   ],
+   "landuse": "landuse_polygon_centroid(景天佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610928186.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西安热力公司家属院",
+   "district": "新城",
+   "world_xz": [
+    3010.6,
+    -991.1
+   ],
+   "landuse": "landuse_polygon_centroid(西安热力公司家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610195910.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "锦业居",
+   "district": "高新",
+   "world_xz": [
+    -7538.7,
+    9354.3
+   ],
+   "landuse": "landuse_polygon_centroid(锦业居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611176748.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "花园印象",
+   "district": "高新",
+   "world_xz": [
+    -4186.8,
+    3302.0
+   ],
+   "landuse": "landuse_polygon_centroid(花园印象; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087450.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "名人居",
+   "district": "雁塔",
+   "world_xz": [
+    -2125.5,
+    3215.4
+   ],
+   "landuse": "landuse_polygon_centroid(名人居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069847.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丽苑山水",
+   "district": "莲湖",
+   "world_xz": [
+    -3538.4,
+    -438.9
+   ],
+   "landuse": "landuse_polygon_centroid(丽苑·山水; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189678.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西电光电缆惠馨苑",
+   "district": "莲湖",
+   "world_xz": [
+    -4095.2,
+    -1036.6
+   ],
+   "landuse": "landuse_polygon_centroid(西电光电缆惠馨苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611139920.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新界花园",
+   "district": "雁塔",
+   "world_xz": [
+    -1938.3,
+    3255.9
+   ],
+   "landuse": "landuse_polygon_centroid(新界花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610939452.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西材东苑小区",
+   "district": "莲湖",
+   "world_xz": [
+    -3521.5,
+    -777.6
+   ],
+   "landuse": "landuse_polygon_centroid(西材东苑小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610924262.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西勘新苑",
+   "district": "曲江",
+   "world_xz": [
+    3361.1,
+    4082.4
+   ],
+   "landuse": "landuse_polygon_centroid(西勘新苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611104394.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "灞桥园丁花苑",
+   "district": "灞桥",
+   "world_xz": [
+    11328.1,
+    -1884.5
+   ],
+   "landuse": "landuse_polygon_centroid(园丁花苑二区、灞桥园丁花苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611108522.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陆港金海岸",
+   "district": "浐灞",
+   "world_xz": [
+    6483.3,
+    -11415.0
+   ],
+   "landuse": "landuse_polygon_centroid(陆港金海岸; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611030850.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西围新嘉园",
+   "district": "西咸新区",
+   "world_xz": [
+    -11897.1,
+    305.8
+   ],
+   "landuse": "landuse_polygon_centroid(西围新嘉园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611177728.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "红星紫御半山",
+   "district": "航天新城",
+   "world_xz": [
+    272.0,
+    11805.2
+   ],
+   "landuse": "landuse_polygon_centroid(红星紫御半山; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190172.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇西棠",
+   "district": "高新",
+   "world_xz": [
+    -10822.2,
+    1849.6
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇西棠; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189788.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "二零四社区",
+   "district": "雁塔",
+   "world_xz": [
+    -2953.5,
+    6675.9
+   ],
+   "landuse": "landuse_polygon_centroid(二零四社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610208398.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "群贤庄",
+   "district": "高新",
+   "world_xz": [
+    -5177.9,
+    1721.7
+   ],
+   "landuse": "landuse_polygon_centroid(群贤庄; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006323.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙湖花千树",
+   "district": "航天新城",
+   "world_xz": [
+    3185.0,
+    12223.3
+   ],
+   "landuse": "landuse_polygon_centroid(龙湖 花千树; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611128508.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "38街坊",
+   "district": "新城",
+   "world_xz": [
+    5376.4,
+    -766.9
+   ],
+   "landuse": "landuse_polygon_centroid(38街坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950884.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "绿港花园",
+   "district": "高新",
+   "world_xz": [
+    -6365.1,
+    4584.3
+   ],
+   "landuse": "landuse_polygon_centroid(绿港花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087472.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新华印刷厂家属院",
+   "district": "莲湖",
+   "world_xz": [
+    -5873.1,
+    -436.4
+   ],
+   "landuse": "landuse_polygon_centroid(新华印刷厂-家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610941162.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "二一二所家属院",
+   "district": "雁塔",
+   "world_xz": [
+    -1765.6,
+    3702.9
+   ],
+   "landuse": "landuse_polygon_centroid(二一二所家属院、二一二所社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610998308.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "铂悦",
+   "district": "高新",
+   "world_xz": [
+    -6676.7,
+    2579.7
+   ],
+   "landuse": "landuse_polygon_centroid(铂悦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611056492.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "斯惟小区",
+   "district": "经开",
+   "world_xz": [
+    232.2,
+    -8015.2
+   ],
+   "landuse": "landuse_polygon_centroid(斯惟小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069815.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "乾唐雁月",
+   "district": "雁塔",
+   "world_xz": [
+    4696.4,
+    2841.5
+   ],
+   "landuse": "landuse_polygon_centroid(乾唐雁月; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610187164.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙岗花园",
+   "district": "经开",
+   "world_xz": [
+    -173.7,
+    -6690.1
+   ],
+   "landuse": "landuse_polygon_centroid(龙岗花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889384.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华豪丽都",
+   "district": "莲湖",
+   "world_xz": [
+    -2841.4,
+    -1253.9
+   ],
+   "landuse": "landuse_polygon_centroid(华豪丽都; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610227182.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "民政小区",
+   "district": "雁塔",
+   "world_xz": [
+    2557.2,
+    3874.3
+   ],
+   "landuse": "landuse_polygon_centroid(民政小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611003494.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "赢园雅筑",
+   "district": "高新",
+   "world_xz": [
+    -6736.0,
+    3397.0
+   ],
+   "landuse": "landuse_polygon_centroid(赢园雅筑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610281902.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "富景园",
+   "district": "莲湖",
+   "world_xz": [
+    308.4,
+    -3052.0
+   ],
+   "landuse": "landuse_polygon_centroid(富景园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189602.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "捷瑞新时代",
+   "district": "高新",
+   "world_xz": [
+    -6900.5,
+    3195.9
+   ],
+   "landuse": "landuse_polygon_centroid(捷瑞新时代; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610861260.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "旗远锦樾",
+   "district": "高新",
+   "world_xz": [
+    -6642.9,
+    7480.2
+   ],
+   "landuse": "landuse_polygon_centroid(旗远·锦樾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610974922.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西海花园",
+   "district": "经开",
+   "world_xz": [
+    -347.6,
+    -6919.0
+   ],
+   "landuse": "landuse_polygon_centroid(西海花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610999868.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "凤城一号",
+   "district": "经开",
+   "world_xz": [
+    -787.1,
+    -6110.8
+   ],
+   "landuse": "landuse_polygon_centroid(凤城一号; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610870072.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "玫瑰印象",
+   "district": "长安",
+   "world_xz": [
+    -7069.3,
+    11161.7
+   ],
+   "landuse": "landuse_polygon_centroid(玫瑰印象; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610922914.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "林凯花园",
+   "district": "高新",
+   "world_xz": [
+    -5124.3,
+    4644.9
+   ],
+   "landuse": "landuse_polygon_centroid(林凯花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610360342.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "文华阁",
+   "district": "高新",
+   "world_xz": [
+    -4959.9,
+    3267.4
+   ],
+   "landuse": "landuse_polygon_centroid(文华阁; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610924196.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万象未央",
+   "district": "未央",
+   "world_xz": [
+    106.4,
+    -5291.8
+   ],
+   "landuse": "landuse_polygon_centroid(万象未央; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611048300.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "爱菊佳园",
+   "district": "莲湖",
+   "world_xz": [
+    -7802.4,
+    -2069.9
+   ],
+   "landuse": "landuse_polygon_centroid(爱菊佳园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610902496.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙祥御苑",
+   "district": "经开",
+   "world_xz": [
+    -1910.5,
+    -5770.9
+   ],
+   "landuse": "landuse_polygon_centroid(龙祥御苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610161864.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "郝佳城市花园",
+   "district": "雁塔",
+   "world_xz": [
+    -1211.7,
+    4513.4
+   ],
+   "landuse": "landuse_polygon_centroid(郝佳城市花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610969126.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "玉祥阁小区",
+   "district": "莲湖",
+   "world_xz": [
+    -2395.0,
+    -1402.0
+   ],
+   "landuse": "landuse_polygon_centroid(玉祥阁小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610920770.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "秦锦苑",
+   "district": "高新",
+   "world_xz": [
+    -3715.6,
+    3406.5
+   ],
+   "landuse": "landuse_polygon_centroid(秦锦苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889360.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "博文园",
+   "district": "高新",
+   "world_xz": [
+    -3661.4,
+    3476.6
+   ],
+   "landuse": "landuse_polygon_centroid(博文园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087468.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "欧锦园",
+   "district": "高新",
+   "world_xz": [
+    -4195.8,
+    3087.8
+   ],
+   "landuse": "landuse_polygon_centroid(欧锦园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006330.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "黄陵矿业小区",
+   "district": "未央",
+   "world_xz": [
+    -68.8,
+    -4946.7
+   ],
+   "landuse": "landuse_polygon_centroid(黄陵矿业小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611064792.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "唐宫北苑",
+   "district": "经开",
+   "world_xz": [
+    998.7,
+    -5747.8
+   ],
+   "landuse": "landuse_polygon_centroid(唐宫北苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610924332.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣民·宫园美寓",
+   "district": "莲湖",
+   "world_xz": [
+    96.6,
+    -3051.2
+   ],
+   "landuse": "landuse_polygon_centroid(荣民宫园美寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189954.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东方雅居",
+   "district": "灞桥",
+   "world_xz": [
+    10453.1,
+    -1083.8
+   ],
+   "landuse": "landuse_polygon_centroid(东方雅居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611031112.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "芳林园",
+   "district": "经开",
+   "world_xz": [
+    -321.0,
+    -6018.0
+   ],
+   "landuse": "landuse_polygon_centroid(芳林园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611002086.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "含光雨露花园",
+   "district": "莲湖",
+   "world_xz": [
+    -185.6,
+    -2564.9
+   ],
+   "landuse": "landuse_polygon_centroid(含光雨露花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087514.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "美佳苑",
+   "district": "灞桥",
+   "world_xz": [
+    10587.6,
+    -1038.6
+   ],
+   "landuse": "landuse_polygon_centroid(美佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611038884.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "恒佳首座",
+   "district": "经开",
+   "world_xz": [
+    81.8,
+    -6289.6
+   ],
+   "landuse": "landuse_polygon_centroid(恒佳首座; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610882426.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "市政百合小区",
+   "district": "未央",
+   "world_xz": [
+    -304.3,
+    -3985.3
+   ],
+   "landuse": "landuse_polygon_centroid(市政百合小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189994.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "秦地雅仕",
+   "district": "新城",
+   "world_xz": [
+    69.8,
+    -2410.9
+   ],
+   "landuse": "landuse_polygon_centroid(秦地·雅仕; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192182.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "庆祥雅居",
+   "district": "莲湖",
+   "world_xz": [
+    -2671.3,
+    -1206.6
+   ],
+   "landuse": "landuse_polygon_centroid(庆祥雅居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610935274.html"
+   ],
+   "records": 5,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "鑫盛公寓",
+   "district": "未央",
+   "world_xz": [
+    325.2,
+    -3741.8
+   ],
+   "landuse": "landuse_polygon_centroid(鑫盛公寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950904.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "恒大国际公寓",
+   "district": "雁塔",
+   "world_xz": [
+    -113.2,
+    6492.9
+   ],
+   "landuse": "landuse_polygon_centroid(恒大国际公寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610922516.html"
+   ],
+   "records": 5,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东辰濠景",
+   "district": "灞桥",
+   "world_xz": [
+    10150.8,
+    -1663.1
+   ],
+   "landuse": "landuse_polygon_centroid(东辰濠景; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611194992.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新希望锦麟天玺",
+   "district": "长安",
+   "world_xz": [
+    -9259.7,
+    12361.1
+   ],
+   "landuse": "landuse_polygon_centroid(新希望·锦麟天玺; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192354.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "天沁园",
+   "district": "航天新城",
+   "world_xz": [
+    1059.8,
+    10239.9
+   ],
+   "landuse": "landuse_polygon_centroid(天沁园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611205270.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣德棕榈阳光",
+   "district": "浐灞",
+   "world_xz": [
+    5276.7,
+    -6693.5
+   ],
+   "landuse": "landuse_polygon_centroid(荣德棕榈阳光; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610928394.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "雅居乐锦城",
+   "district": "未央",
+   "world_xz": [
+    -8932.3,
+    -802.7
+   ],
+   "landuse": "landuse_polygon_centroid(雅居乐锦城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190282.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫林九溪竹韵",
+   "district": "浐灞",
+   "world_xz": [
+    6466.5,
+    -11747.5
+   ],
+   "landuse": "landuse_polygon_centroid(枫林九溪竹韵; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610203844.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中海悦墅",
+   "district": "浐灞",
+   "world_xz": [
+    5889.2,
+    -6546.6
+   ],
+   "landuse": "landuse_polygon_centroid(中海悦墅; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611228010.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "公园上城",
+   "district": "浐灞",
+   "world_xz": [
+    8210.3,
+    4994.2
+   ],
+   "landuse": "landuse_polygon_centroid(公园上城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610197070.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "高科花园二期",
+   "district": "高新",
+   "world_xz": [
+    -4842.9,
+    3015.1
+   ],
+   "landuse": "landuse_polygon_centroid(高科花园-北区、高科花园-南区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611131262.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海亮芳华",
+   "district": "长安",
+   "world_xz": [
+    -6938.5,
+    11744.4
+   ],
+   "landuse": "landuse_polygon_centroid(海亮芳华; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610198900.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "桐芳巷小区",
+   "district": "莲湖",
+   "world_xz": [
+    -2771.0,
+    -3547.7
+   ],
+   "landuse": "landuse_polygon_centroid(桐芳巷小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204858.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中南君启",
+   "district": "未央",
+   "world_xz": [
+    2968.2,
+    -7207.7
+   ],
+   "landuse": "landuse_polygon_centroid(中南君启-一期、中南君启-三期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191416.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "锦业76",
+   "district": "高新",
+   "world_xz": [
+    -8202.0,
+    7389.3
+   ],
+   "landuse": "landuse_polygon_centroid(锦业76; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610611368.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "首府尚苑",
+   "district": "经开",
+   "world_xz": [
+    1130.7,
+    -9701.6
+   ],
+   "landuse": "landuse_polygon_centroid(首府尚苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611018500.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "双龙花园",
+   "district": "未央",
+   "world_xz": [
+    380.0,
+    -4657.7
+   ],
+   "landuse": "landuse_polygon_centroid(双龙花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087521.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "试剂西苑",
+   "district": "雁塔",
+   "world_xz": [
+    -1849.5,
+    4190.8
+   ],
+   "landuse": "landuse_polygon_centroid(试剂西苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611118980.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "皇家花园",
+   "district": "高新",
+   "world_xz": [
+    -3919.9,
+    3437.7
+   ],
+   "landuse": "landuse_polygon_centroid(皇家花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611031458.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "都市春天",
+   "district": "高新",
+   "world_xz": [
+    -6666.0,
+    2888.1
+   ],
+   "landuse": "landuse_polygon_centroid(都市春天; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611040524.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西延铁路小区",
+   "district": "雁塔",
+   "world_xz": [
+    2375.9,
+    3050.9
+   ],
+   "landuse": "landuse_polygon_centroid(西延铁路小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191784.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江汇景新都",
+   "district": "曲江",
+   "world_xz": [
+    666.1,
+    7090.9
+   ],
+   "landuse": "landuse_polygon_centroid(汇景新都; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610089800.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "射击场家属院",
+   "district": "曲江",
+   "world_xz": [
+    1948.3,
+    6762.5
+   ],
+   "landuse": "landuse_polygon_centroid(射击场家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611035232.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "秦文阁",
+   "district": "未央",
+   "world_xz": [
+    205.9,
+    -3775.2
+   ],
+   "landuse": "landuse_polygon_centroid(秦文阁; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069810.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "虹桥雅轩",
+   "district": "莲湖",
+   "world_xz": [
+    -295.0,
+    -3649.7
+   ],
+   "landuse": "landuse_polygon_centroid(虹桥雅轩; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610070450.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "时代佳园",
+   "district": "莲湖",
+   "world_xz": [
+    -3586.9,
+    -452.8
+   ],
+   "landuse": "landuse_polygon_centroid(时代佳园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889346.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "苏宁云著",
+   "district": "高新",
+   "world_xz": [
+    -9922.6,
+    4251.0
+   ],
+   "landuse": "landuse_polygon_centroid(苏宁云著; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191236.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙湖曲江畔",
+   "district": "航天新城",
+   "world_xz": [
+    2779.8,
+    12212.0
+   ],
+   "landuse": "landuse_polygon_centroid(龙湖 曲江畔; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189646.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "清凉山居",
+   "district": "长安",
+   "world_xz": [
+    -868.2,
+    9485.4
+   ],
+   "landuse": "landuse_polygon_centroid(清凉山居; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190100.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "湖滨花园",
+   "district": "曲江",
+   "world_xz": [
+    1957.6,
+    6340.0
+   ],
+   "landuse": "landuse_polygon_centroid(湖滨花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610087382.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中海·学仕里",
+   "district": "高新",
+   "world_xz": [
+    -9355.7,
+    11549.4
+   ],
+   "landuse": "landuse_polygon_centroid(中海学仕里; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610200156.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "香江湾",
+   "district": "浐灞",
+   "world_xz": [
+    10729.4,
+    -5309.7
+   ],
+   "landuse": "landuse_polygon_centroid(香江湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610875016.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金桥四季花园",
+   "district": "雁塔",
+   "world_xz": [
+    -2969.7,
+    6222.4
+   ],
+   "landuse": "landuse_polygon_centroid(金桥四季花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069836.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "蒋家寨小区",
+   "district": "高新",
+   "world_xz": [
+    -3864.4,
+    3528.5
+   ],
+   "landuse": "landuse_polygon_centroid(蒋家寨小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610923530.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "富丽园小区",
+   "district": "经开",
+   "world_xz": [
+    544.6,
+    -6846.5
+   ],
+   "landuse": "landuse_polygon_centroid(富丽园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192144.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万达长安龙胤",
+   "district": "高新",
+   "world_xz": [
+    -4492.9,
+    5855.2
+   ],
+   "landuse": "landuse_polygon_centroid(万达长安龙胤小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192904.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "庆和小区",
+   "district": "莲湖",
+   "world_xz": [
+    -5381.3,
+    -259.6
+   ],
+   "landuse": "landuse_polygon_centroid(庆和小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191888.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "庆安颐秀园",
+   "district": "高新",
+   "world_xz": [
+    -4799.4,
+    3559.4
+   ],
+   "landuse": "landuse_polygon_centroid(庆安颐秀园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610885048.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "梦想城",
+   "district": "雁塔",
+   "world_xz": [
+    -2719.5,
+    7078.8
+   ],
+   "landuse": "landuse_polygon_centroid(梦想城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611105520.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金花苑",
+   "district": "雁塔",
+   "world_xz": [
+    -2445.0,
+    3815.4
+   ],
+   "landuse": "landuse_polygon_centroid(金花苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610091852.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "进出口家属院",
+   "district": "经开",
+   "world_xz": [
+    -159.8,
+    -6263.0
+   ],
+   "landuse": "landuse_polygon_centroid(进出口家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611012420.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "祭台新苑",
+   "district": "雁塔",
+   "world_xz": [
+    2793.0,
+    3173.3
+   ],
+   "landuse": "landuse_polygon_centroid(祭台新苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611114960.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西安宾馆家属院",
+   "district": "雁塔",
+   "world_xz": [
+    -1269.3,
+    3764.3
+   ],
+   "landuse": "landuse_polygon_centroid(西安宾馆家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192030.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "吉祥馨苑",
+   "district": "雁塔",
+   "world_xz": [
+    -1656.4,
+    4001.6
+   ],
+   "landuse": "landuse_polygon_centroid(吉祥馨苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610940444.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "圣都大厦",
+   "district": "雁塔",
+   "world_xz": [
+    -2387.7,
+    5650.3
+   ],
+   "landuse": "landuse_polygon_centroid(圣都大厦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610884976.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "吉祥小区",
+   "district": "雁塔",
+   "world_xz": [
+    -1756.1,
+    4332.2
+   ],
+   "landuse": "landuse_polygon_centroid(吉祥小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610880204.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "海荣小区",
+   "district": "经开",
+   "world_xz": [
+    -458.2,
+    -6761.9
+   ],
+   "landuse": "landuse_polygon_centroid(海荣小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937554.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "美都香域",
+   "district": "经开",
+   "world_xz": [
+    810.1,
+    -5727.4
+   ],
+   "landuse": "landuse_polygon_centroid(美都·香域; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610161824.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕西省纺织品公司家属院",
+   "district": "莲湖",
+   "world_xz": [
+    -276.2,
+    -2477.9
+   ],
+   "landuse": "landuse_polygon_centroid(陕西纺织品公司小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189986.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "新旅城上东",
+   "district": "碑林",
+   "world_xz": [
+    1827.2,
+    2958.9
+   ],
+   "landuse": "landuse_polygon_centroid(新旅城上东; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196262.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西大巷小区",
+   "district": "莲湖",
+   "world_xz": [
+    -80.1,
+    -2159.1
+   ],
+   "landuse": "landuse_polygon_centroid(西大巷小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611232316.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "樱花西苑",
+   "district": "长安",
+   "world_xz": [
+    -7089.5,
+    10994.3
+   ],
+   "landuse": "landuse_polygon_centroid(樱花西苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611165994.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕西银行学校家属区",
+   "district": "雁塔",
+   "world_xz": [
+    -3023.3,
+    4523.0
+   ],
+   "landuse": "landuse_polygon_centroid(陕西银行学校家属区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610195520.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "宁东林业局家属院",
+   "district": "长安",
+   "world_xz": [
+    -47.0,
+    10092.9
+   ],
+   "landuse": "landuse_polygon_centroid(宁东林业局家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611165476.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西光社区37街坊",
+   "district": "新城",
+   "world_xz": [
+    5321.4,
+    -973.8
+   ],
+   "landuse": "landuse_polygon_centroid(西光社区-37街坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610203242.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金牛小区",
+   "district": "新城",
+   "world_xz": [
+    139.8,
+    -2660.6
+   ],
+   "landuse": "landuse_polygon_centroid(金牛小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950924.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "韶雨水韵星城",
+   "district": "灞桥",
+   "world_xz": [
+    11529.0,
+    -2736.0
+   ],
+   "landuse": "landuse_polygon_centroid(韶雨.水韵星城; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611069362.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西开鑫园",
+   "district": "莲湖",
+   "world_xz": [
+    -5004.8,
+    -1029.3
+   ],
+   "landuse": "landuse_polygon_centroid(西开鑫园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189860.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "锦悦府",
+   "district": "高新",
+   "world_xz": [
+    -8308.3,
+    8615.3
+   ],
+   "landuse": "landuse_polygon_centroid(锦悦府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192198.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "世家星苑",
+   "district": "碑林",
+   "world_xz": [
+    64.5,
+    1555.0
+   ],
+   "landuse": "landuse_polygon_centroid(世家星苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610940422.html"
+   ],
+   "records": 4,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "生产资料服务公司家属院",
+   "district": "新城",
+   "world_xz": [
+    3009.5,
+    -929.7
+   ],
+   "landuse": "landuse_polygon_centroid(生产资料服务公司家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610195542.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "皇城西岸",
+   "district": "莲湖",
+   "world_xz": [
+    -2538.6,
+    -303.1
+   ],
+   "landuse": "landuse_polygon_centroid(皇城西岸; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610698378.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "京都苑",
+   "district": "碑林",
+   "world_xz": [
+    -305.0,
+    1491.8
+   ],
+   "landuse": "landuse_polygon_centroid(京都苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192270.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西安歌舞剧院家属院",
+   "district": "雁塔",
+   "world_xz": [
+    -127.1,
+    3713.6
+   ],
+   "landuse": "landuse_polygon_centroid(西安歌舞剧院家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204694.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "财政局家属院",
+   "district": "碑林",
+   "world_xz": [
+    118.2,
+    2117.9
+   ],
+   "landuse": "landuse_polygon_centroid(财政局家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611040322.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西安重型机械研究所家属院",
+   "district": "未央",
+   "world_xz": [
+    4167.0,
+    -5344.4
+   ],
+   "landuse": "landuse_polygon_centroid(西安重型机械研究所社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610204536.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "上水苑",
+   "district": "浐灞",
+   "world_xz": [
+    8371.5,
+    -1802.6
+   ],
+   "landuse": "landuse_polygon_centroid(上水苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611030786.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "东站小区",
+   "district": "经开",
+   "world_xz": [
+    -1645.2,
+    -14061.4
+   ],
+   "landuse": "landuse_polygon_centroid(东站小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610194536.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "乳驾庄社区",
+   "district": "高新",
+   "world_xz": [
+    -10751.6,
+    9505.2
+   ],
+   "landuse": "landuse_polygon_centroid(乳驾庄社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610205280.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万科·璞悦",
+   "district": "浐灞",
+   "world_xz": [
+    5388.6,
+    -9132.3
+   ],
+   "landuse": "landuse_polygon_centroid(万科璞悦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191696.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "百花园",
+   "district": "未央",
+   "world_xz": [
+    2046.6,
+    -7307.5
+   ],
+   "landuse": "landuse_polygon_centroid(百花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610069761.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "一印社区",
+   "district": "灞桥",
+   "world_xz": [
+    10448.4,
+    -1541.7
+   ],
+   "landuse": "landuse_polygon_centroid(一印社区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611045216.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "枫叶别墅苑",
+   "district": "高新",
+   "world_xz": [
+    -4460.7,
+    3403.6
+   ],
+   "landuse": "landuse_polygon_centroid(枫叶别墅苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611043900.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "丰禾小区",
+   "district": "莲湖",
+   "world_xz": [
+    -2759.1,
+    -2233.7
+   ],
+   "landuse": "landuse_polygon_centroid(丰禾小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610878742.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西北电力设计院小区",
+   "district": "新城",
+   "world_xz": [
+    4257.4,
+    -1570.5
+   ],
+   "landuse": "landuse_polygon_centroid(西北电力设计院家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190150.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "南山花园",
+   "district": "长安",
+   "world_xz": [
+    -5901.3,
+    11514.2
+   ],
+   "landuse": "landuse_polygon_centroid(南山花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189638.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "潘家村小区",
+   "district": "莲湖",
+   "world_xz": [
+    -2912.0,
+    -635.0
+   ],
+   "landuse": "landuse_polygon_centroid(潘家村住宅小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610976766.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西铁华清小区",
+   "district": "新城",
+   "world_xz": [
+    3836.7,
+    -2868.7
+   ],
+   "landuse": "landuse_polygon_centroid(西铁华清住宅小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189598.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江皇家花园",
+   "district": "曲江",
+   "world_xz": [
+    1991.6,
+    5039.7
+   ],
+   "landuse": "landuse_polygon_centroid(曲江皇家花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006303.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中粮奥体壹号",
+   "district": "浐灞",
+   "world_xz": [
+    7455.8,
+    -13644.3
+   ],
+   "landuse": "landuse_polygon_centroid(中粮奥体壹号、中粮奥体壹号一期、中粮奥体壹号二期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192506.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "绿地与湖",
+   "district": "雁塔",
+   "world_xz": [
+    8837.8,
+    3194.7
+   ],
+   "landuse": "landuse_polygon_centroid(绿地与湖; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611268120.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华润·悦玺",
+   "district": "曲江",
+   "world_xz": [
+    461.2,
+    7015.9
+   ],
+   "landuse": "landuse_polygon_centroid(华润悦玺; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196794.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "远洋合能枫丹唐悦",
+   "district": "浐灞",
+   "world_xz": [
+    5020.7,
+    -8452.9
+   ],
+   "landuse": "landuse_polygon_centroid(远洋合能枫丹唐悦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190922.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧桂园文景府",
+   "district": "经开",
+   "world_xz": [
+    -961.5,
+    -14410.0
+   ],
+   "landuse": "landuse_polygon_centroid(碧桂园·文景府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191630.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中天新希望·未来印",
+   "district": "高新",
+   "world_xz": [
+    -9624.0,
+    11234.9
+   ],
+   "landuse": "landuse_polygon_centroid(中天新希望未来印; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192844.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "招商臻观府",
+   "district": "高新",
+   "world_xz": [
+    -9837.8,
+    2708.7
+   ],
+   "landuse": "landuse_polygon_centroid(招商臻观府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191684.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "美美佳园",
+   "district": "西咸新区",
+   "world_xz": [
+    -9926.3,
+    -2889.0
+   ],
+   "landuse": "landuse_polygon_centroid(美美佳园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610891958.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "万科悦湾",
+   "district": "浐灞",
+   "world_xz": [
+    5711.7,
+    -9135.2
+   ],
+   "landuse": "landuse_polygon_centroid(万科悦湾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610190998.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "鹿塬温泉小区",
+   "district": "灞桥",
+   "world_xz": [
+    11634.5,
+    -1064.8
+   ],
+   "landuse": "landuse_polygon_centroid(鹿塬温泉小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611039836.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "翠景台",
+   "district": "长安",
+   "world_xz": [
+    -2666.2,
+    10900.8
+   ],
+   "landuse": "landuse_polygon_centroid(翠景台一期; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191398.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西北石油管道小区",
+   "district": "经开",
+   "world_xz": [
+    472.1,
+    -7244.3
+   ],
+   "landuse": "landuse_polygon_centroid(西北石油管道小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611165876.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "玄武花园",
+   "district": "未央",
+   "world_xz": [
+    1060.7,
+    -5201.6
+   ],
+   "landuse": "landuse_polygon_centroid(玄武·花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610316264.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陆港绿城西安全运村芳华苑",
+   "district": "灞桥",
+   "world_xz": [
+    7477.1,
+    -14388.6
+   ],
+   "landuse": "landuse_polygon_centroid(陆港绿城西安全运村芳华苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610203580.html"
+   ],
+   "records": 4,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "聚馨苑",
+   "district": "曲江",
+   "world_xz": [
+    2367.7,
+    6484.1
+   ],
+   "landuse": "landuse_polygon_centroid(曲江聚馨苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611038030.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "航天御苑",
+   "district": "曲江",
+   "world_xz": [
+    2110.6,
+    5675.9
+   ],
+   "landuse": "landuse_polygon_centroid(航天御苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610153542.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "蓝天小区",
+   "district": "浐灞",
+   "world_xz": [
+    8285.7,
+    -1325.6
+   ],
+   "landuse": "landuse_polygon_centroid(蓝天小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610924256.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "华山小区二十街坊",
+   "district": "新城",
+   "world_xz": [
+    5272.6,
+    162.7
+   ],
+   "landuse": "landuse_polygon_centroid(华山小区二十街坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611050286.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "清凉山樾",
+   "district": "雁塔",
+   "world_xz": [
+    -1551.0,
+    8983.1
+   ],
+   "landuse": "landuse_polygon_centroid(清凉山樾; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191548.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "紫薇花园",
+   "district": "雁塔",
+   "world_xz": [
+    -2657.0,
+    4663.8
+   ],
+   "landuse": "landuse_polygon_centroid(紫薇花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610875882.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "荣德荣泽公馆",
+   "district": "雁塔",
+   "world_xz": [
+    8083.8,
+    4640.6
+   ],
+   "landuse": "landuse_polygon_centroid(荣德荣泽公馆; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192162.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "中航工业自控所生活二区",
+   "district": "雁塔",
+   "world_xz": [
+    -2373.4,
+    4866.2
+   ],
+   "landuse": "landuse_polygon_centroid(中航工业自控所生活-一区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196532.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "皇城坊",
+   "district": "新城",
+   "world_xz": [
+    2110.1,
+    -1712.1
+   ],
+   "landuse": "landuse_polygon_centroid(皇城坊; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192240.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧桂园珑悦",
+   "district": "浐灞",
+   "world_xz": [
+    4763.9,
+    -8412.9
+   ],
+   "landuse": "landuse_polygon_centroid(碧桂园珑悦; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191158.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "阳光新城",
+   "district": "未央",
+   "world_xz": [
+    4270.3,
+    -10618.1
+   ],
+   "landuse": "landuse_polygon_centroid(阳光新城小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611195370.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "向荣小区",
+   "district": "新城",
+   "world_xz": [
+    422.4,
+    -2463.7
+   ],
+   "landuse": "landuse_polygon_centroid(向荣小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610977278.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "隆基泰和云玺领峯",
+   "district": "高新",
+   "world_xz": [
+    -11018.8,
+    3316.7
+   ],
+   "landuse": "landuse_polygon_centroid(隆基泰和云玺领峯; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192050.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "航天小区",
+   "district": "航天新城",
+   "world_xz": [
+    497.2,
+    10173.5
+   ],
+   "landuse": "landuse_polygon_centroid(航天小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610882460.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙湖曲江盛景",
+   "district": "曲江",
+   "world_xz": [
+    1368.8,
+    5913.8
+   ],
+   "landuse": "landuse_polygon_centroid(龙湖·曲江盛景; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610316516.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "龙首村西区",
+   "district": "莲湖",
+   "world_xz": [
+    467.3,
+    -3443.4
+   ],
+   "landuse": "landuse_polygon_centroid(龙首村-东区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192156.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "锦绣新苑",
+   "district": "西咸新区",
+   "world_xz": [
+    -10258.1,
+    -2882.0
+   ],
+   "landuse": "landuse_polygon_centroid(锦绣新苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611181410.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西铁浐灞生态苑",
+   "district": "浐灞",
+   "world_xz": [
+    9018.6,
+    -4138.2
+   ],
+   "landuse": "landuse_polygon_centroid(西铁浐灞生态苑住宅小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611046578.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "铭翔花园",
+   "district": "未央",
+   "world_xz": [
+    2964.8,
+    -14301.4
+   ],
+   "landuse": "landuse_polygon_centroid(铭翔花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610699698.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "莲湖生活家",
+   "district": "莲湖",
+   "world_xz": [
+    -3409.9,
+    -2219.7
+   ],
+   "landuse": "landuse_polygon_centroid(莲湖生活家; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610889398.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长安园公寓小区",
+   "district": "高新",
+   "world_xz": [
+    -8070.7,
+    9386.1
+   ],
+   "landuse": "landuse_polygon_centroid(长安园公寓小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937136.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "庆康小区",
+   "district": "莲湖",
+   "world_xz": [
+    -5680.7,
+    -443.2
+   ],
+   "landuse": "landuse_polygon_centroid(庆康小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192668.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "三桥新村",
+   "district": "西咸新区",
+   "world_xz": [
+    -10243.7,
+    -2654.8
+   ],
+   "landuse": "landuse_polygon_centroid(三桥新村; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611069490.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西瓷丰登路小区",
+   "district": "莲湖",
+   "world_xz": [
+    -4639.9,
+    -1013.8
+   ],
+   "landuse": "landuse_polygon_centroid(西瓷丰登路小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611223404.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江凤凰池",
+   "district": "曲江",
+   "world_xz": [
+    3210.1,
+    5834.3
+   ],
+   "landuse": "landuse_polygon_centroid(凤凰池; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611198562.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长乐小区",
+   "district": "浐灞",
+   "world_xz": [
+    7966.9,
+    -1251.1
+   ],
+   "landuse": "landuse_polygon_centroid(长乐小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611120946.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "融创珺庭府",
+   "district": "高新",
+   "world_xz": [
+    -9148.2,
+    9029.7
+   ],
+   "landuse": "landuse_polygon_centroid(融创珺庭府; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191644.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "科研新村家属院",
+   "district": "灞桥",
+   "world_xz": [
+    11233.6,
+    -738.3
+   ],
+   "landuse": "landuse_polygon_centroid(科研新村; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611268716.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "植物园家属院",
+   "district": "曲江",
+   "world_xz": [
+    999.8,
+    5668.2
+   ],
+   "landuse": "landuse_polygon_centroid(西安植物园家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611202456.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西何小区",
+   "district": "雁塔",
+   "world_xz": [
+    -2094.1,
+    3329.0
+   ],
+   "landuse": "landuse_polygon_centroid(西何小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950900.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金裕花园",
+   "district": "雁塔",
+   "world_xz": [
+    2104.4,
+    3879.2
+   ],
+   "landuse": "landuse_polygon_centroid(金裕花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006317.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "陕汽万寿小区",
+   "district": "新城",
+   "world_xz": [
+    6105.9,
+    -2846.9
+   ],
+   "landuse": "landuse_polygon_centroid(陕汽万寿小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610191600.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "老干局小区",
+   "district": "长安",
+   "world_xz": [
+    -206.2,
+    12155.9
+   ],
+   "landuse": "landuse_polygon_centroid(长安老干局小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189608.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "宏府向荣新区",
+   "district": "新城",
+   "world_xz": [
+    230.5,
+    -2541.1
+   ],
+   "landuse": "landuse_polygon_centroid(宏府向荣新区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611042614.html"
+   ],
+   "records": 4,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "刚佳小区",
+   "district": "经开",
+   "world_xz": [
+    432.6,
+    -6410.7
+   ],
+   "landuse": "landuse_polygon_centroid(刚佳小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936088.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "劳动小区北区",
+   "district": "莲湖",
+   "world_xz": [
+    -3693.5,
+    -689.3
+   ],
+   "landuse": "landuse_polygon_centroid(劳动小区(南区); public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610192610.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "鼎盛都市花园",
+   "district": "长安",
+   "world_xz": [
+    -8741.8,
+    11187.3
+   ],
+   "landuse": "landuse_polygon_centroid(鼎盛都市花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611054736.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "和谐军休家园",
+   "district": "未央",
+   "world_xz": [
+    422.0,
+    -4540.1
+   ],
+   "landuse": "landuse_polygon_centroid(和谐军休家园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611277160.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长缨小区",
+   "district": "新城",
+   "world_xz": [
+    5670.2,
+    -2097.9
+   ],
+   "landuse": "landuse_polygon_centroid(长缨小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610950798.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "名仕花园",
+   "district": "雁塔",
+   "world_xz": [
+    -1321.0,
+    5199.5
+   ],
+   "landuse": "landuse_polygon_centroid(名仕花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937564.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "长乐苑小区",
+   "district": "新城",
+   "world_xz": [
+    4076.6,
+    -1018.0
+   ],
+   "landuse": "landuse_polygon_centroid(长乐苑小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196468.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "聚鑫佳苑",
+   "district": "莲湖",
+   "world_xz": [
+    -2465.9,
+    -2293.9
+   ],
+   "landuse": "landuse_polygon_centroid(聚鑫佳苑; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610189908.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "曲江御花园",
+   "district": "曲江",
+   "world_xz": [
+    2027.0,
+    4558.8
+   ],
+   "landuse": "landuse_polygon_centroid(御花园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610991400.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "碧海小区",
+   "district": "经开",
+   "world_xz": [
+    275.6,
+    -6567.9
+   ],
+   "landuse": "landuse_polygon_centroid(碧海小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611151690.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "黄河温泉住宅小区",
+   "district": "新城",
+   "world_xz": [
+    6458.5,
+    -1185.6
+   ],
+   "landuse": "landuse_polygon_centroid(黄河温泉小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610006319.html"
+   ],
+   "records": 5,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "亨通小区",
+   "district": "雁塔",
+   "world_xz": [
+    240.7,
+    4682.9
+   ],
+   "landuse": "landuse_polygon_centroid(亨通小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611262030.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "红星小区",
+   "district": "莲湖",
+   "world_xz": [
+    -420.6,
+    -3086.3
+   ],
+   "landuse": "landuse_polygon_centroid(红星小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610936238.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "亚凯园",
+   "district": "未央",
+   "world_xz": [
+    343.4,
+    -7003.1
+   ],
+   "landuse": "landuse_polygon_centroid(亚凯园; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610937174.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "金龙小区",
+   "district": "莲湖",
+   "world_xz": [
+    -344.8,
+    -3425.4
+   ],
+   "landuse": "landuse_polygon_centroid(金龙小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611045604.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "西北电力建设器材总厂家属院",
+   "district": "灞桥",
+   "world_xz": [
+    10322.0,
+    -1774.7
+   ],
+   "landuse": "landuse_polygon_centroid(西北电力建设器材总厂家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196074.html"
+   ],
+   "records": 3,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "纺织城枣园小区",
+   "district": "灞桥",
+   "world_xz": [
+    11490.3,
+    -95.9
+   ],
+   "landuse": "landuse_polygon_centroid(纺织城枣园小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611281274.html"
+   ],
+   "records": 3,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "迎泽公寓",
+   "district": "雁塔",
+   "world_xz": [
+    -1924.9,
+    3378.4
+   ],
+   "landuse": "landuse_polygon_centroid(迎泽公寓; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610935140.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "化工机械厂家属院",
+   "district": "新城",
+   "world_xz": [
+    4853.5,
+    -2671.1
+   ],
+   "landuse": "landuse_polygon_centroid(西安化工机械厂家属院; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3611087476.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "八仙宫小区",
+   "district": "碑林",
+   "world_xz": [
+    2904.6,
+    -768.1
+   ],
+   "landuse": "landuse_polygon_centroid(八仙宫小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610194332.html"
+   ],
+   "records": 2,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "阳光新村",
+   "district": "新城",
+   "world_xz": [
+    230.8,
+    -2104.4
+   ],
+   "landuse": "landuse_polygon_centroid(阳光新村; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610196354.html"
+   ],
+   "records": 1,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  },
+  {
+   "name": "俭家巷小区",
+   "district": "莲湖",
+   "world_xz": [
+    -199.4,
+    -1666.2
+   ],
+   "landuse": "landuse_polygon_centroid(俭家巷小区; public/data/landuse.json)",
+   "sources": [
+    "https://m.fang.com/xiaoqu/xian/3610194888.html"
+   ],
+   "records": 0,
+   "status": "未查到：房天下成交/在售记录不足 6 条（本轮成交接口限流），保持原高度"
+  }
+ ]
+}
