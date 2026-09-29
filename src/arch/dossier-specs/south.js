@@ -128,7 +128,9 @@ const wanzhong = {
   parts: [
     {
       name: 'podium', // W Five Park 商业裙房（写字楼 1–4 层商业；与 W 酒店 1–4 层连体），轮廓内缩 1.2 m 让出酒店与写字楼立面
-      kind: 'podium', fp: '88b073e6-bd31-488f-a7c1-d5af31301d83', grow: -1.2, base: 0, top: 20,
+      // 底层轮廓（OSM 整个综合体）把 W 酒店两翼 1–4 层（w-xian 的 nwBase/sBase，顶高 20 m）也包在里面：屋面压低到 18.7 m，
+      // 连 1.2 m 女儿墙（19.9 m）一起藏进酒店底座体内，不再与酒店底座屋面共面闪烁、女儿墙也不再从酒店屋面上穿出来
+      kind: 'podium', fp: '88b073e6-bd31-488f-a7c1-d5af31301d83', grow: -1.2, base: 0, top: 18.7,
       style: { pattern: 'retail', tint: '#2f3c47', spd: '#b4b8bc', floorH: 5, colW: 3.2, spandrel: 0.28, mullW: 0.2, lit: 0.85 },
     },
     {

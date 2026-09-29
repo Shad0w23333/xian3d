@@ -142,12 +142,14 @@ export default {
       const hk = hotAt(src[mid], src[mid + 1]);
       for (const [off, jit, w] of sides) paths.push({ f, pts, cum, n, len, off, jit, w: w * hk, lift: c >= 1 && c <= 4 ? 0.14 : 0.04 });
     }
-    // 空间网格：cell → [pathIndex, segIndex, ...]
+    // 空间网格：cell → [pathIndex, segIndex, ...]；道路模块不画的路段（排除区 roads）与地形挖洞处不放人
+    const hidden = (x, z) => !!(terrain.inHole?.(x, z) || ctx.exclusions?.test(x, z, 'roads'));
     const grid = new Map();
     const key = (cx, cz) => cx * 65536 + cz;
     paths.forEach((p, pi) => {
       for (let i = 0; i < p.n - 1; i++) {
         const mx = (p.pts[i * 2] + p.pts[i * 2 + 2]) * 0.5, mz = (p.pts[i * 2 + 1] + p.pts[i * 2 + 3]) * 0.5;
+        if (hidden(mx, mz)) continue;
         const k = key(Math.floor(mx / CELL) + 32768, Math.floor(mz / CELL) + 32768);
         let a = grid.get(k);
         if (!a) grid.set(k, (a = []));
@@ -349,7 +351,11 @@ export default {
             if (s < 0) { s = -s; wDir[i] = 1; } else if (s > p.len) { s = 2 * p.len - s; wDir[i] = -1; }
             wS[i] = s;
             locate(i);
-            if ((frame + i) % 8 === 0) groundY(i);
+            if ((frame + i) % 8 === 0) {
+              groundY(i);
+              // 走到被隐藏的路段（下沉广场坑口、楼体内部等排除区）就掉头，免得悬在坑口上空/走进墙里
+              if (hidden(wX[i], wZ[i])) wDir[i] = -wDir[i];
+            }
           }
           const dx = wX[i] - cp.x, dy = wY[i] - cp.y, dz = wZ[i] - cp.z;
           if (dx * dx + dy * dy + dz * dz > drawD2) continue;

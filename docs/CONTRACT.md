@@ -127,6 +127,9 @@ export default {
 - `THREE`、`renderer`、`scene`、`camera`
 - `geo.project(lon, lat) → {x, z}`，`geo.unproject(x, z) → {lon, lat}`
 - `terrain.heightAt(x, z)`：地面海拔（已含平整区）；`terrain.addFlatten({points:[x,z,...], height, feather})`（仅 prepare 阶段）
+- `terrain.addHole(points)`：地形挖洞（下沉广场等，prepare 阶段）——洞内地形瓦片不绘制、`heightAt` 不变，洞内几何由模块自己补齐；
+  `terrain.holeRimTop(points)` 给出洞口一圈地形渲染面可能达到的最高高度（挡墙/压顶做到它以上就不会露缝）。
+  坑深远大于地形网格间距（4~21 m）时不要用 `addFlatten` 压坑：斜面会爬上挡墙、盖住坑底。
 - `exclusions.add({points:[x,z,...]}, {buildings:true, trees:true, roads:false})`：让通用 OSM 建筑/树木在地标位置让位
 - `data.roads / data.water / data.landuse / data.aeroway / data.pois / data.rail / data.buildings`
 - `uniforms`：全局共享 uniform 对象 `{uTime, uNight, uSunDir, uCameraPos}`（自定义着色器直接引用同一对象即可自动更新）

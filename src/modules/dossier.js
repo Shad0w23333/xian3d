@@ -47,7 +47,32 @@ export default {
           sup.by.push(spec.id);
           ctx.exclusions.add({ points: G.inset(p, -(spec.clearance ?? 2.5)), name: 'dossier:' + spec.id }, { buildings: true, trees: true });
         }
-        if (spec.flatten) for (const p of R.polys) ctx.terrain.addFlatten({ points: G.inset(p, -6), height: null, feather: 20 });
+        // 楼体内部的路段（OSM 路线穿过落地体块：数据错位或未标注的门洞）不画路面；贴墙 1.5 m 以内保留，
+        // 真正的过街门洞（体块架空 base > 0.5，见时代盛典大厦）不受影响
+        for (const P of R.parts) {
+          if (P.base > 0.5) continue;
+          const q = G.inset(P.pts, 1.5);
+          if (G.area(q) > 10) ctx.exclusions.add({ points: q, name: 'dossier:' + spec.id }, { buildings: false, trees: false, pois: false, roads: true });
+        }
+        // 落地体块下的地形：档案建筑以轮廓最低点为底（groundMin）。FABDEM 在大屋面/站房/老厂房处常残留几米到十几米的“屋顶地形”，
+        // 上坡侧地形高出底板就成了埋地（墙脚被地形吞掉、地形从楼里冒出来）。轮廓一圈地形起伏 > 2.5 m 或 spec.flatten 时，
+        // 全栋按同一高度（轮廓采样最低点）只压低不抬高；原先 spec.flatten 按每块轮廓各自的平均高度压平，同一栋的柱子/体块互相不齐。
+        const gp = R.parts.filter((P) => P.base <= 0.5).map((P) => P.pts);
+        if (gp.length) {
+          let lo = Infinity, hi = -Infinity;
+          for (const p of gp)
+            for (let i = 0, n = p.length / 2; i < n; i++) {
+              const j = (i + 1) % n, ax = p[i * 2], az = p[i * 2 + 1], bx = p[j * 2], bz = p[j * 2 + 1];
+              const k = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 6));
+              for (let s = 0; s < k; s++) {
+                const h = ctx.terrain.heightAt(ax + ((bx - ax) * s) / k, az + ((bz - az) * s) / k);
+                if (h < lo) lo = h;
+                if (h > hi) hi = h;
+              }
+            }
+          if (spec.flatten || hi - lo > 2.5)
+            for (const p of gp) if (G.area(p) > 0.1) ctx.terrain.addFlatten({ points: G.inset(p, -4), height: lo, feather: spec.flatten ? 20 : 12, mode: 'min' });
+        }
       } catch (e) {
         console.error('[dossier] 解析失败', spec.id, e);
       }
@@ -111,6 +136,11 @@ export default {
     return {
       stats,
       built,
+      /** 诊断（tools/check_overlap.mjs）：各体块世界轮廓与底/顶高度（R.ground 由 buildDossier 写入） */
+      diag: () =>
+        RESOLVED.filter((R) => Number.isFinite(R.ground)).flatMap((R) =>
+          R.parts.map((P) => ({ id: R.spec.id, name: R.spec.name, part: P.name, pts: P.pts, bot: R.ground + P.base, top: R.ground + P.top, ground: P.base <= 0.5 }))
+        ),
       update() {
         beacons.update(ctx.renderer, ctx.camera);
         for (const l of lod) l.obj.visible = l.box.distanceToPoint(ctx.camera.position) < l.range;

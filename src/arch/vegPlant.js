@@ -323,6 +323,9 @@ export function plantVegetation(input) {
     }
     return inside;
   };
+  // 排除区栅格（只用于树冠收缩的距离探针；树干是否落在排除区仍按多边形精确判断）
+  const EXB = new Bits(GW, GH);
+  for (const it of input.exclusions || []) if (it.p && it.p.length >= 6) fillRings(EXB, [it.p], true);
   const excluded = (x, z) => {
     const list = exGrid.get(Math.floor(x / EXC) * 100003 + Math.floor(z / EXC));
     if (!list) return false;
@@ -382,7 +385,39 @@ export function plantVegetation(input) {
     LAMP = g(LAMP, Uint8Array); YEL = g(YEL, Uint8Array); BR = g(BR, Uint8Array);
   };
   const rnd = mulberry(20260925);
-  const stats = { street: 0, median: 0, wallpark: 0, bank: 0, landuse: 0, hedge: 0 };
+  const stats = { street: 0, median: 0, wallpark: 0, bank: 0, landuse: 0, hedge: 0, shrunk: 0 };
+  // 树冠水平半径（米，缩放 1 时；与 vegSpecies.js 各树种 crownR 一致）：国槐 法桐 雪松 垂柳 银杏 石榴 灌木球
+  const CROWN_R = [4.3, 7.2, 4.6, 4.8, 3.1, 1.9, 0.85];
+  /**
+   * 树干到最近建筑外墙的大致距离（米，探到 maxR 为止）：通用建筑与精建排除区（档案建筑/地标/古建/下沉广场……
+   * 多为楼体外扩 2.5 m）各用 3 m 栅格、16 方向探针逐米外扩。
+   */
+  function crownRoom(x, z, maxR) {
+    let best = maxR;
+    for (let r = 1; r < best; r += 1) {
+      let hit = false;
+      for (let k = 0; k < 16 && !hit; k++) {
+        const a = (k / 16) * Math.PI * 2;
+        hit = !!B.get(ci(x + Math.cos(a) * r), cj(z + Math.sin(a) * r));
+      }
+      if (hit) {
+        best = Math.max(0, r - 1.5); // 命中格中心到格边 1.5 m
+        break;
+      }
+    }
+    for (let r = 1; r < best; r += 1) {
+      let hit = false;
+      for (let k = 0; k < 16 && !hit; k++) {
+        const a = (k / 16) * Math.PI * 2;
+        hit = !!EXB.get(ci(x + Math.cos(a) * r), cj(z + Math.sin(a) * r));
+      }
+      if (hit) {
+        best = r; // 区边在 r-2.1 ~ r 之间，楼体在区边内约 2.5 m：楼距按 r 计（偏保守）
+        break;
+      }
+    }
+    return best;
+  }
   // 树种高度随机范围（相对 vegSpecies 基准几何）
   const SCALE = [
     [0.72, 1.12], // 国槐 7.9~12.3 m
@@ -415,7 +450,13 @@ export function plantVegetation(input) {
   function addTree(x, z, sp, { lamp = 0, sMul = 1, rankMul = 1 } = {}) {
     if (n >= cap) grow();
     const [s0, s1] = SCALE[sp];
-    const s = (s0 + (s1 - s0) * rnd()) * sMul;
+    let s = (s0 + (s1 - s0) * rnd()) * sMul;
+    // 树冠不插进楼：按离最近建筑（通用建筑栅格 / 精建排除区）的距离收小整棵树（最小到本树种下限的 60%）
+    const d = crownRoom(x, z, CROWN_R[sp] * s + 0.5);
+    if (CROWN_R[sp] * s > d + 0.5) {
+      s = Math.max((d + 0.5) / CROWN_R[sp], s0 * 0.6);
+      stats.shrunk++;
+    }
     X[n] = x; Z[n] = z; SPC[n] = sp;
     SC[n] = Math.max(1, Math.min(255, Math.round(s * 127.5)));
     ROT[n] = (rnd() * 256) | 0;

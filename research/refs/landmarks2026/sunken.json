@@ -255,42 +255,46 @@
    ]
   },
   {
-   "name": "南门榴园（永宁门外西翼下沉广场）",
-   "lon": 108.940168,
-   "lat": 34.25104,
-   "x": -200,
-   "z": 1110,
-   "coord_source": "estimated — 南门外护城河南岸映像公园西侧，按\"南门外两翼下沉广场\"描述与护城河位置推定",
+   "name": "南门榴园（永宁门外东翼下沉广场）",
+   "lon": 108.944142,
+   "lat": 34.25227,
+   "x": 165.6,
+   "z": 973.1,
+   "coord_source": "satellite — Google/Esri/Bing 卫星影像 + OSM 步道环量取的不规则九边形坑口质心（见 research/refs/sunken/liuyuan_notes.md）；西安晚报 2014-06-30：榴园位于南门外东侧、紧邻护城河南岸",
    "size_m": [
-    150,
-    40
+    62,
+    47
    ],
    "depth_m": {
-    "value": 6,
+    "value": 5.5,
     "estimated": true
    },
-   "shape": "弧形沿护城河带状下沉庭院，多层退台",
+   "shape": "不规则九边形坑口（约 1800 m²），西北边贯通全宽大台阶，北边 B1 骑楼",
    "features": [
-    "台阶",
+    "大台阶",
+    "休息平台花箱",
     "酒吧外摆",
     "商铺环绕",
-    "石榴主题景观",
-    "可远眺城墙/护城河"
+    "水池木凳",
+    "脸谱壁画",
+    "LED 大屏",
+    "铜质诗词灯柱"
    ],
    "levels": 1,
    "connects": [
-    "永宁门站（2号线）A口",
-    "南门地下隧道",
-    "南门广场（永宁门迎宾广场）"
+    "南门映巷地下商业街（连通松园）",
+    "环城公园护城河南岸步道",
+    "环城南路东段"
    ],
-   "night": "\"夜西安\"地标：酒吧一条街外摆、城墙与护城河倒影、城墙灯光",
+   "night": "暖白基调、黄光点睛：铜灯柱、玻璃栏板灯带、店面暖光、酒吧霓虹招牌与 LED 大屏",
    "sources": [
-    "https://news.qq.com/rain/a/20260210A03X5C00",
-    "https://xa.city8.com/cater/80kho37c5ieibf7e88_address",
-    "https://www.douyin.com/search/西安酒吧一条街榴园夜市",
-    "https://m.winshang.com/news702457.html"
+    "https://www.chinanews.com.cn/sh/2014/06-30/6331532.shtml",
+    "https://blog.sina.com.cn/s/blog_4ee3a4e40102uwe1.html",
+    "https://www.sohu.com/a/168536570_99953056",
+    "https://hk.trip.com/travel-guide/attraction/xian/liu-garden-31673800",
+    "https://blog.sina.com.cn/s/blog_7d95322f0102uwjt.html"
    ],
-   "note": "地址记载为\"南门外护城河畔映像公园榴园\"；坐标为估计"
+   "note": "旧版坐标 (-200,1110) 估在南门外西侧，实为松园方位且落在环城南路以南街区；2026-09-29 按影像改正。模型按精测轮廓专门建造（src/arch/sunken-liuyuan.js），不用此处尺寸"
   },
   {
    "name": "南门合生汇下沉广场（21区BLOCK，东翼）",
