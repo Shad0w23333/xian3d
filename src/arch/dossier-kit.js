@@ -340,6 +340,14 @@ function partPolygon(spec, part, center) {
     topPts = G.area(part.topPts) >= 0 ? part.topPts.slice() : G.ccw(part.topPts);
     if (part.grow) topPts = G.inset(topPts, -part.grow);
     if (topPts.length !== pts.length) throw new Error(`part ${part.name || ''}：topPts 点数 ${topPts.length / 2} ≠ 底面 ${pts.length / 2}`);
+  } else if (part.topInset != null || part.topScale != null || part.topShift) {
+    // 放样简写（2026-09 地标补建）：顶面 = 底面按质心缩放 topScale、再内缩 topInset 米、再平移 topShift:[东,北] 米
+    // （水晶体温室的斜玻璃面、折板屋面、四坡“盝顶”式收进）；轮廓点数不变，可用于任意多边形（含 fp 轮廓）
+    let t = pts;
+    if (part.topScale != null) { const c = G.centroid(t); t = G.scaleAbout(t, c.x, c.z, part.topScale); }
+    if (part.topInset) t = G.inset(t, part.topInset);
+    if (part.topShift) { const [e, n] = part.topShift; t = t.map((v, i) => v + (i % 2 ? -n : e)); }
+    topPts = t;
   }
   return { pts, holes, topPts };
 }
@@ -1401,7 +1409,8 @@ function buildPart(env, R, P) {
     const mat = solidMat(env, part.mat || 'stone');
     // 落地实体向下多挤 2 m 埋进地形；悬空实体（挑檐板、连廊等，base > 0.5）不下挤，并补底面；taper 收分（方尖塔、锥形墩柱）
     const sink = part.sink ?? (P.base <= 0.5 ? 2 : 0);
-    const topPts = part.taper && part.taper !== 1 ? polyAt(P, P.top) : P.pts;
+    // topPts（放样）：实体也可从底面直纹过渡到顶面轮廓——折板屋面 / 棱锥形玻璃体 / 斜面实墙（顶面可收成细长“脊”多边形）
+    const topPts = P.topPts ? P.topPts : part.taper && part.taper !== 1 ? polyAt(P, P.top) : P.pts;
     solid.add(G.wallGeometry(P.pts, topPts, base - sink, base + H), mat, null, { worldUV: 1 });
     solid.add(G.capGeometry(topPts, base + H), mat, null, { worldUV: 1 });
     if (!sink) solid.add(G.capGeometry(P.pts, base, { down: true }), mat, null, { worldUV: 1 });

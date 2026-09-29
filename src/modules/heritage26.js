@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang, yardWall, balustrade } from '../arch/chinese.js';
 import { denseEavePagoda, ruinTerrace, whiteBlock } from '../arch/heritage-parts.js';
+import { isSuperseded } from '../arch/dossier-kit.js';
 
 const HIDE = 9000;
 const NEAR = 900;
@@ -399,6 +400,7 @@ export default {
     for (const s of raw?.heritage || []) {
       if (!s.b?.length) continue;
       if (ctx.exclusions.test(s.x, s.z, 'buildings', 0)) continue; // 已被专门模块占用
+      if (isSuperseded(ctx, { name: s.name, x: s.x, z: s.z })) continue; // 已由逐栋档案精建（src/arch/dossier-specs，按名称或院落中心判定）
       this.sites.push(s);
     }
     // 院落方案（尺寸拟合、落位）在平整地形之前算；陡坡上的建筑把台基范围平整成台地
