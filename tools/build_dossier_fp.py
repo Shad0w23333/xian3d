@@ -41,7 +41,7 @@ UUID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 # 8 位前缀：前后不接十六进制/连字符；前面 40 字内要有“Overture/轮廓/ML/候选/OSM”等字样，避免把图片 URL 里的哈希当成 id
 PREFIX = re.compile(r'(?<![0-9a-zA-Z-])([0-9a-f]{8})(?![0-9a-zA-Z-])')
 PREFIX_CTX = re.compile(r'Overture|overture|轮廓|ML|候选|zenodo|名称轮廓')
-FILES = ['core_south', 'gaoxin', 'north', 'east_west', 'public', 'residential']
+FILES = ['core_south', 'gaoxin', 'north', 'east_west', 'public', 'residential', 'landmarks2']
 
 
 def first_existing(*cands):
