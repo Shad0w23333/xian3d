@@ -5,9 +5,14 @@
 //     把可见小块合并成 ≤ 4 段 drawRange（块级剔除 + 少量 draw call）；外墙共享角点、轮廓简化、无女儿墙。
 //   · 近景 hi：相机附近（离地 < 900 m）的 1 km 小块按需生成：外墙逐边独立 UV（开间避开转角）、女儿墙、
 //     窗洞视差凹进 + 简化室内映射；hi 接管的小块在 lo 顶点着色器里整栋塌缩（uHiRect），两者严格互补。
-//   · 屋顶构件（楼梯间/机房、水箱、空调机组、太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
+//   · 立面附属几何（近景小块内，按画质细节档位 DETAIL）：南向凸阳台叠柱、东西北向凸窗、高层顶部构架、老式多层北向单元入口雨棚、
+//     底商雨棚——只出体块（给轮廓与自阴影），楼层内的栏板/玻璃/楼板线/防盗笼/晾晒/夜间亮灯由立面着色器按构件类型画；
+//     与近景外墙同一网格、同一材质，不增加 draw call。低画质不生成。
+//   · 老旧多层“平改坡”：无小区风貌依据的 80~90 年代板楼按年代概率加红/橙红/灰蓝瓦四坡顶（远近景几何都有）。
+//   · 屋顶构件（楼梯间/机房、水箱、空调机组、成排太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
 //   · 航空障碍灯：高度 ≥ 100 m 的楼顶四角红色闪光灯（Points）。
-//   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的逐窗亮灯。
+//   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的亮灯（住宅按户成组、楼梯间声控灯、单元门灯、雨棚下店铺灯光）；
+//     约 1/3 的高层/写字楼楼顶亮化（顶部泛光 + 轮廓灯带，中画质以上）。
 //   · 小区风貌：public/data/estates_style.json（tools/build_estates.py，按档案与实景照片）——落在有照片依据的小区多边形内的
 //     住宅楼按小区 style 着色与生成细节（墙色/点缀色/窗套/腰线/阳台/坡屋顶/塔冠/构架），参数走一张 RGBA32F 小纹理（uEst），
 //     不新建材质；有照片依据的小区大门合并成一个网格（src/arch/bld-estates.js）。
@@ -28,6 +33,8 @@ const GAP_MERGE = 60000; // 相邻可见段之间的不可见索引数小于此�
 const NEAR_KEEP = 1300; // 相机附近的小块即使不在视锥内也绘制（保证画面外建筑的阴影）
 const FAR_D = [2500, 3200, 4000, 5500]; // 超过此距离的小块改用超远景子集（只画显眼建筑，且不投射阴影）
 const HI_CACHE = 40; // 近景小块缓存上限
+// 立面细节档位（按画质）：0 低 = 不生成立面附属几何、关闭楼顶亮化；1 中 = 凸阳台/凸窗叠柱；2 高/超高 = 再加顶部构架、单元入口雨棚、底商雨棚
+const DETAIL = [0, 1, 2, 2];
 
 // —— 亮灯率曲线（北京时间小时 → 亮灯比例）：傍晚高、午夜后下降 ——
 const LIT_RES = [[0, 0.27], [1, 0.17], [2, 0.1], [4, 0.06], [5.5, 0.08], [6.5, 0.22], [7.5, 0.15], [9, 0.08], [16, 0.08], [17.5, 0.24], [19, 0.42], [20.5, 0.5], [22, 0.45], [23, 0.36], [24, 0.27]];
@@ -362,6 +369,9 @@ export default {
     }
     U.uDrawDist.value = ctx.quality.buildingDistance || 16000;
     let hiRadius = HI_RADIUS[ctx.quality.level ?? 2] || 1200;
+    let detailLvl = DETAIL[ctx.quality.level ?? 2] ?? 2;
+    U.uBDetail.value = detailLvl;
+    let hiGen = 0; // 细节档位变化时递增：旧档位生成中的小块回来后丢弃重建
 
     // —— 远景大块 ——
     const loGroup = new THREE.Group();
@@ -428,6 +438,8 @@ export default {
     let hiShown = new Set();
     let hiRect = null; // [x0, z0, x1, z1]（小块坐标）
     let inflight = 0;
+    let maxInflight = 2; // 近景小块最大并发请求数（慢帧时放宽）
+    let hiPending = 0; // 目标近景小块中尚未就绪的个数（自动截图/性能测试据此等待）
     let layerOn = true;
     let frame = 0;
     const makeHiMesh = (m) => {
@@ -525,12 +537,18 @@ export default {
     };
 
     const requestHi = (key) => {
-      hiCache.set(key, { state: 'loading', used: frame });
+      const g = hiGen;
+      hiCache.set(key, { state: 'loading', used: frame, gen: g });
       inflight++;
-      gen.call({ type: 'hi', key }).then((m) => {
+      gen.call({ type: 'hi', key, detail: detailLvl }).then((m) => {
         inflight--;
         const e = hiCache.get(key);
         if (!e) return;
+        if (e.gen !== g) {
+          // 画质细节档位已变：丢弃，下一轮按新档位重新生成
+          hiCache.delete(key);
+          return;
+        }
         if (!m || m.type !== 'hi' || m.empty || !m.ibuf || !m.ibuf.length) {
           if (!m || m.type !== 'hi') {
             console.warn('[buildings] 近景小块生成失败', key, m && m.message);
@@ -572,22 +590,23 @@ export default {
             if (chunkDir.has(k)) keys.push(k);
           }
       }
-      // 请求缺失的小块（由近及远，最多 2 个并发）
+      // 请求缺失的小块（由近及远，最多 maxInflight 个并发）
       const miss = keys.filter((k) => !hiCache.has(k));
-      if (miss.length && inflight < 2) {
+      if (miss.length && inflight < maxInflight) {
         const d = (k) => {
           const c = chunkDir.get(k);
           return Math.hypot((c.cx + 0.5) * CHUNK - cam.x, (c.cz + 0.5) * CHUNK - cam.z);
         };
         miss.sort((a, b) => d(a) - d(b));
         for (const k of miss) {
-          if (inflight >= 2) break;
+          if (inflight >= maxInflight) break;
           requestHi(k);
         }
       }
       for (const k of keys) hiCache.get(k) && (hiCache.get(k).used = frame);
       // 目标小块全部就绪才切换（避免远/近景交接时出现空洞）
       const ready = keys.every((k) => hiCache.has(k) && hiCache.get(k).state !== 'loading');
+      hiPending = ready ? 0 : keys.filter((k) => !hiCache.has(k) || hiCache.get(k).state === 'loading').length;
       // 任一小块生成失败：整片退回远景（不留空洞）
       if (ready && keys.some((k) => hiCache.get(k).err)) {
         keys.length = 0;
@@ -820,7 +839,8 @@ export default {
       `[buildings] v${init.version} ${N} 栋（排除 ${pre.nEx}，skyline 让位 ${pre.nSky}）；远景 ${blocks.length} 块 ${(stat.loTris / 1e6).toFixed(2)}M 三角形；` +
         `Worker ${stat.ms} ms；主线程预处理 ${tPre.toFixed(0)} ms + 建网格 ${(performance.now() - t1).toFixed(0)} ms；风格 ` +
         STYLE_NAMES.map((s, i) => `${s}${stat.styles[i]}`).join(' ') +
-        (estDoc ? `；小区风貌 ${stat.estNames} 个小区 ${stat.estates} 栋（坡屋面 ${stat.estRoofs}），大门 ${gates ? gates.count : 0} 座` : '')
+        (estDoc ? `；小区风貌 ${stat.estNames} 个小区 ${stat.estates} 栋（坡屋面 ${stat.estRoofs}），大门 ${gates ? gates.count : 0} 座` : '') +
+        `；通用平改坡 ${stat.genRoofs || 0} 栋；立面细节档位 ${detailLvl}`
     );
     updateRuns();
 
@@ -866,6 +886,9 @@ export default {
         farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length, 0),
         hiShown: hiShown.size,
         hiCached: hiCache.size,
+        hiLoading: inflight,
+        hiPending,
+        detail: detailLvl,
         props: propMeshes.map((m) => m.count),
       }),
       update(dt, t) {
@@ -879,7 +902,10 @@ export default {
         const h = ctx.sky ? ctx.sky.hours : 12;
         const nf = ctx.uniforms.uNight.value;
         U.uLit.value.set(curve(LIT_RES, h), curve(LIT_OFF, h), curve(LIT_COM, h), smooth(0.06, 0.5, nf));
-        if (frame % 3 === 0 || frame < 3) manageHi();
+        // 帧很慢时（弱机 / 软件渲染）每帧检查并放宽并发，近景小块更快补齐
+        const slow = dt > 0.066; // dt 在主循环里被钳到 ≤ 0.1 s：低于约 15 fps 即视为慢帧
+        maxInflight = slow ? 6 : 2;
+        if (frame % 3 === 0 || frame < 3 || slow) manageHi();
         updateRuns();
         if (gates && frame % 15 === 0) gates.update(ctx.camera.position);
       },
@@ -892,6 +918,21 @@ export default {
         U.uDrawDist.value = q.buildingDistance || 16000;
         hiRadius = HI_RADIUS[q.level ?? 2] || 1200;
         farD = FAR_D[q.level ?? 2] || 4000;
+        const d = DETAIL[q.level ?? 2] ?? 2;
+        if (d !== detailLvl) {
+          // 细节档位变化：近景小块全部按新档位重建（重建期间由远景补位，不留空洞）
+          detailLvl = d;
+          U.uBDetail.value = d;
+          hiGen++;
+          for (const [k, e] of [...hiCache.entries()]) {
+            if (e.state === 'loading') e.gen = -1;
+            else disposeHi(k);
+          }
+          hiShown = new Set();
+          hiRect = null;
+          U.uHiRect.value.set(1e6, 1e6, -1e6, -1e6);
+          rebuildProps();
+        }
       },
       dispose() {
         gen.dispose();
