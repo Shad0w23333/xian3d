@@ -1,0 +1,938 @@
+[
+ {
+  "name": "陕西历史博物馆秦汉馆",
+  "spec_id": "lm2-qinhan",
+  "category": "culture",
+  "lon": 108.859357,
+  "lat": 34.408945,
+  "world_xz": [
+   -7634.9,
+   -16482.4
+  ],
+  "overture_id": "3ab0b1f2-9d3d-41bc-89d1-c9bddc34977e / 0ffe3fb6-9bfd-4cb4-b3f0-b16975a0392a / 5e72a2c9-beeb-4d2d-8b55-250bc583a138 / cfce68ef-1bc3-430e-b381-85776551c417 / 1110529b-560b-4fa7-b0d4-44dd952bb13d / 922c5fa5-99d1-43f6-b97e-1fba00b86a26 / d87c658b-526b-44bc-b6e5-b39e53bb259f",
+  "height_m": 36,
+  "height_source": "无公开数据；按航拍照片比例（方台 44 m 宽为尺）估算",
+  "floors": null,
+  "year": 2024,
+  "massing": "7 座收分高台（北斗七星布局，6 座 44×44 m + 主殿台 83×63 m，OSM 实测）+ 台上玻璃殿身 + 深灰金属重檐庑殿顶；复道相连；正门一对冀阙",
+  "facade": "米黄色夯土质感石材高台、玻璃殿身、深灰金属屋面",
+  "replaced": "heritage26 通用院落（2 座仿古殿）",
+  "photos": [
+   {
+    "source": "https://sn.cri.cn/n/20240124/3e4fd601-6793-338c-9b8a-7a8a990e72d6.html"
+   },
+   {
+    "source": "https://www.sanqin.com/2023-12/27/content_10513403.html"
+   },
+   {
+    "source": "http://www.sohu.com/a/681394339_100185418"
+   },
+   {
+    "source": "http://www.sohu.com/a/588611507_100185418"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/qinhan/",
+  "sources": [
+   "https://zh.wikipedia.org/zh-hans/陕西历史博物馆秦汉馆",
+   "https://baike.baidu.com/item/陕西历史博物馆秦汉馆/62101249",
+   "https://www.cscec.com.cn/xwzx_new/zqydt_new/202405/3787494.html",
+   "http://www.news.cn/politics/20240518/4a00c0a1e8824758b6c4f2de26b51a02/c.html",
+   "Overture building w1236884774–w1236884780（7 座高台轮廓）；Esri z19 卫星（冀阙落位）"
+  ],
+  "confidence": "high（布局、轮廓）；low（高度，按照片比例估算）",
+  "notes": "7 座高台轮廓用 OSM 实测；殿身尺寸、各段高度无公开数据，按航拍照片比例估算：方台高约 8.5 m、殿身 27 m 见方、重檐庑殿顶（下檐外挑 6.5 m）；主殿高台 11.5 m、三重檐（52×40 → 42×30 → 32×20 m），顶约 36 m。冀阙约 21 m（照片比例）。水面“天汉”由地表影像表现，不另建。"
+ },
+ {
+  "name": "汉城湖大风阁",
+  "spec_id": "lm2-dafengge",
+  "category": "culture",
+  "lon": 108.914297,
+  "lat": 34.300482,
+  "world_xz": [
+   -2580.3,
+   -4394.8
+  ],
+  "overture_id": "9deb2d59-8a05-4bc5-ac88-7ce5f4370ab5",
+  "height_m": 63.3,
+  "height_source": "西安市人民政府网 / 百度百科：主体高 63.3 m，地上 7 层、地下 2 层，建筑面积 9942 m²",
+  "floors": 7,
+  "year": null,
+  "massing": "两层白石高台 + 6 层逐层收分的塔身（每层腰檐 + 平座）+ 顶层重檐庑殿顶",
+  "facade": "汉白玉色高台、深褐红墙身、深灰瓦、红色平座栏杆",
+  "replaced": "landmarks2026 的 63.3 m 玻璃方盒",
+  "photos": [
+   {
+    "source": "http://www.dianping.com/review/649029731"
+   },
+   {
+    "source": "http://tuchong.com/2486988/28962981/"
+   },
+   {
+    "source": "https://tuchong.com/1817474/15640837/"
+   },
+   {
+    "source": "http://souying8.tuchong.com/135517338/"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/dafengge/",
+  "sources": [
+   "http://www.xatrm.com/tzggxasrmzfw/204140.jhtml",
+   "https://baike.baidu.com/item/大风阁/4468043",
+   "https://m.wenda.bendibao.com/tour/87448.shtm",
+   "Overture building w370290098（大风阁，44.5×44.3 m）"
+  ],
+  "confidence": "high（高度、位置、形制）；medium（分层尺寸，按照片比例）",
+  "notes": "总高 63.3 m（顶层庑殿正脊）。高台两层按照片比例取 5.5 m / 11 m；塔身 6 层每层约 6.5–8 m、逐层收分 30→19 m（照片比例）；腰檐外挑 3.2 m（首层 4.5 m）。原 landmarks2026 的 63.3 m 玻璃方盒（通用立面）被替代。"
+ },
+ {
+  "name": "世博园创意馆",
+  "spec_id": "lm2-expo-chuangyi",
+  "category": "culture",
+  "lon": 109.057376,
+  "lat": 34.325693,
+  "world_xz": [
+   10583.6,
+   -7203.1
+  ],
+  "overture_id": "ae1aadde-86b0-4202-85d5-d599114bce2b",
+  "height_m": 19,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": 2011,
+  "massing": "首层玻璃基座 + 三条伸向锦绣湖的平行折板体量（Plasma Studio）",
+  "facade": "混凝土 + 青铜色金属",
+  "replaced": "landmarks2026 26 m 通用盒子",
+  "photos": [
+   {
+    "source": "http://www1.xcar.com.cn/bbs/viewthread.php?tid=26364417"
+   },
+   {
+    "source": "https://m.xa.bendibao.com/tour/133640.shtm"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/chuangyi2/",
+  "sources": [
+   "https://www.e-architect.com/china/flowing-gardens",
+   "https://www.dezeen.com/2011/05/20/the-creativity-pavilion-by-plasma-studio/",
+   "https://world-architects.com/en/plasma-studio-sesto/project/international-horticultural-expo",
+   "Overture building w254608593（创意馆）"
+  ],
+  "confidence": "medium（轮廓、体量走向）；low（高度，按照片比例）",
+  "notes": "三条体量的轴线与宽度按卫星 z19 量取（±2 m）；首层玻璃 7 m、折板屋面屋脊 16–19 m 为照片比例估算。原 landmarks2026 的 26 m 通用盒子被替代。"
+ },
+ {
+  "name": "世博园自然馆",
+  "spec_id": "lm2-expo-ziran",
+  "category": "culture",
+  "lon": 109.057196,
+  "lat": 34.322389,
+  "world_xz": [
+   10567,
+   -6835
+  ],
+  "overture_id": "2f0d3607-a358-4a98-8fc0-e9749f1b2ca8",
+  "height_m": 11,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": 2011,
+  "massing": "马蹄形半埋入式折面玻璃温室（约 4000 m²）",
+  "facade": "玻璃 + 白色细框",
+  "replaced": "landmarks2026 26 m 通用盒子",
+  "photos": [
+   {
+    "source": "http://huaban.com/pins/1473538448/"
+   },
+   {
+    "source": "http://you.ctrip.com/sight/xian7/52671.html"
+   },
+   {
+    "source": "http://k.sina.com.cn/article_2810268711_pa7814c27027009apl.html"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/ziran/",
+  "sources": [
+   "https://www.e-architect.com/china/flowing-gardens",
+   "Overture building w252885707（自然馆）",
+   "Esri z19 卫星（马蹄形外缘）"
+  ],
+  "confidence": "medium（平面）；low（高度）",
+  "notes": "温室为“半埋入山丘”的折面玻璃体，最高处约 11 m（照片比例，南端最高、两臂向北埋入土丘）；模型用 4.5 m 收进的斜玻璃面近似折面。"
+ },
+ {
+  "name": "西安半坡博物馆",
+  "spec_id": "lm2-banpo",
+  "category": "culture",
+  "lon": 109.047773,
+  "lat": 34.274575,
+  "world_xz": [
+   9700,
+   -1510
+  ],
+  "overture_id": "4b1b7f10-d32d-4148-acaa-96c9692d6976 / 9333bdc7-28ba-4532-813c-e6c83ef79308 / a1116402-1059-48b3-8326-6d6b3e35831b",
+  "height_m": 15.5,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": 1958,
+  "massing": "A 字交叉木构大门（两榀）+ 白墙门房 + 毛石遗址保护大厅（弧形屋面）+ 陈列厅",
+  "facade": "粉褐仿木石材、灰色毛石",
+  "replaced": "heritage26 通用院落（3 座仿古建筑）",
+  "photos": [
+   {
+    "source": "https://you.ctrip.com/sight/xian7/1409.html"
+   },
+   {
+    "source": "https://www.meipian.cn/（西安半坡博物馆--李泓广）"
+   },
+   {
+    "source": "http://www.dianping.com/（半坡遗址大厅）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/banpo/",
+  "sources": [
+   "http://xa.bendibao.com/tour/2020810/ly77108.shtm（4A 名单）",
+   "Overture building w1512651327 / w1512651315",
+   "Esri z19 卫星（入口轴线、水池）"
+  ],
+  "confidence": "medium（形制、落位）；low（大门、大厅高度按照片比例）",
+  "notes": "大门位置按卫星入口轴线与路口推定（±5 m）；A 字交叉斜梁顶端约 15.5 m、跨 23 m、两榀间距 7 m（照片比例）。遗址大厅墙高 9.5 m + 弧形屋面 4.5 m（照片比例）。原 heritage26 通用院落（3 座仿古建筑，与实物不符）被替代。"
+ },
+ {
+  "name": "易俗社文化街区",
+  "spec_id": "lm2-yisushe",
+  "category": "culture",
+  "lon": 108.944277,
+  "lat": 34.262809,
+  "world_xz": [
+   178,
+   -200
+  ],
+  "overture_id": "e64e2f24-978a-43e7-a82a-154ba145e340 / cb119cd0-e3ad-4698-9c17-05dc68f690cc / d20e5109-6d94-4a8a-afc9-f303f7415087 / 394c31da-6df3-4843-80fa-78edb780ab2f",
+  "height_m": 13,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": 2021,
+  "massing": "易俗社剧场（3 层，绿琉璃腰檐）+ 百年博物馆 + 露天戏台（歇山）+ 中国秦腔艺术博物馆（白色筒拱屋面）",
+  "facade": "灰砖、绿琉璃、朱红柱、蓝底金字匾",
+  "replaced": "heritage26 通用院落",
+  "photos": [
+   {
+    "source": "https://www.sohu.com/（西安必打卡！易俗社文化街区全攻略）"
+   },
+   {
+    "source": "http://www.vcg.com/（西安｜易俗社文化街区）"
+   },
+   {
+    "source": "https://www.cnwest.com/（古都西安的又一张城市名片——易俗社文化街区）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/yisushe/",
+  "sources": [
+   "https://www.thepaper.cn/newsDetail_forward_21770477",
+   "public/data/pois.json（易俗社剧场、易俗社百年博物馆、中国秦腔艺术博物馆）",
+   "Overture building w1465147164 / w1465147132 / w1465147345 与“戏台”"
+  ],
+  "confidence": "high（轮廓、构成）；medium（高度按照片数层：剧场 3 层约 13 m、戏台檐口 7.5 m）",
+  "notes": "剧场正立面朝北（西一路）。秦腔艺术博物馆东半部屋面按卫星为四条白色筒拱。原 heritage26 通用院落被替代；易俗大剧院保留 core.js 模型。"
+ },
+ {
+  "name": "老钢厂设计创意产业园",
+  "spec_id": "lm2-laogang",
+  "category": "culture",
+  "lon": 109.016252,
+  "lat": 34.248165,
+  "world_xz": [
+   6800,
+   1430
+  ],
+  "overture_id": "c399b392-88ff-4b91-b17e-d126f039691a / e739b18b-5e7d-4e85-b138-3cf4f1e883cf / 3d71c235-a8c9-4d1f-8887-7445320e7746 / 0cc4b6c7-75d9-4ad9-b41b-9dc1ea7ec484 / 677beedd-da0e-415e-af20-af9f2c77d37b / 26da56d0-f2c1-4a7b-bc40-141343c6f633",
+  "height_m": 15.5,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "6 座长条厂房（屋脊气楼 / 双坡顶）",
+  "facade": "灰砖水泥、红砖（入口楼）",
+  "replaced": "通用建筑",
+  "photos": [
+   {
+    "source": "http://www.dianping.com/（老钢厂设计创意产业园，照片 00/02/04/05）"
+   },
+   {
+    "source": "http://www.people.com.cn/（人民日报：聚焦西安老旧厂区改造利用）"
+   },
+   {
+    "source": "https://www.toutiao.com/（老厂房焕发新生机）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/laogang/",
+  "sources": [
+   "https://news.qq.com/rain/a/20250113A0430F00",
+   "https://zhuanlan.zhihu.com/p/245248879",
+   "Overture building（OSM w1270261805 等 6 座厂房，名称“老钢厂设计创意园8号楼”）"
+  ],
+  "confidence": "medium（轮廓、屋面形式）；low（高度、招牌位置）",
+  "notes": "厂房檐口 8–12 m、屋脊气楼 3.5 m 均按照片比例估算；红砖入口楼的确切位置未能在卫星上确认，招牌按园区西侧主入口方向挂在 8 号楼西立面（低可信）。"
+ },
+ {
+  "name": "陕西考古博物馆",
+  "spec_id": "lm2-kaogu",
+  "category": "culture",
+  "lon": 108.878056,
+  "lat": 34.120308,
+  "world_xz": [
+   -5914.5,
+   15650
+  ],
+  "overture_id": null,
+  "height_m": 26,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": 2022,
+  "massing": "米黄石材两层方形基座 + 逐层收进的三重深灰金属屋檐 + 顶部四坡顶",
+  "facade": null,
+  "replaced": "heritage26 通用单体",
+  "photos": [
+   {
+    "source": "http://news.sohu.com/a/538544191_267106"
+   },
+   {
+    "source": "http://www.xiaohongshu.com/discovery/item/62b01c22000000000102ec2d"
+   },
+   {
+    "source": "http://www.douyin.com/note/7336381336485137673"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/kaogu/",
+  "sources": [
+   "public/data/pois.json 陕西考古博物馆 (−5913, 15658)",
+   "Esri World Imagery z18（平面量取）",
+   "research/refs/landmarks2026/heritage.json#陕西考古博物馆"
+  ],
+  "confidence": "medium（平面按卫星）；low（高度按照片比例）",
+  "notes": "无 Overture 轮廓，平面按卫星量取（±3 m）。原 heritage26 通用单体（1 座仿古殿）被替代。"
+ },
+ {
+  "name": "曲江竞技中心",
+  "spec_id": "lm2-dianjing",
+  "category": "sports",
+  "lon": 108.989983,
+  "lat": 34.180064,
+  "world_xz": [
+   4383.2,
+   9006.7
+  ],
+  "overture_id": "d63d68de-f53d-4786-9a19-d8aad6435449",
+  "height_m": 24,
+  "height_source": "无公开数据；按航拍照片比例（檐口约 24 m、穹顶约 33 m）",
+  "floors": null,
+  "year": 2022,
+  "massing": "蛋形平面（188×134 m）：首层玻璃 + 白色弧形“花瓣”金属外壳 + 椭圆穹顶；建筑面积 77650 m²、万人座（gooood / 央广网）",
+  "facade": "白色为主、银金点缀；夹胶玻璃幕墙、铝镁锰屋面、金属装饰翅片",
+  "replaced": "landmarks2026 32 m 通用盒子",
+  "photos": [
+   {
+    "source": "https://www.xiancn.com/content/2022-06/02/content_6571397.htm"
+   },
+   {
+    "source": "http://www.sohu.com/a/630612525_121610241"
+   },
+   {
+    "source": "http://www.sohu.com/a/701434673_121117480"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/dianjing/",
+  "sources": [
+   "https://www.gooood.cn/xian-qujiang-sports-complex-by-aedas.htm",
+   "https://www.cnr.cn/sxpd/c/xty/20230106/t20230106_526116237.shtml",
+   "Overture building w1429172177（曲江竞技中心）"
+  ],
+  "confidence": "high（轮廓、形体、配色）；low（高度按照片比例）",
+  "notes": "首层玻璃 8 m，其上白色金属弧形“花瓣”外壳收分到 24 m（模型用 0.93 收分 + 波浪饰带近似层层花瓣），椭圆穹顶矢高 9 m。夜景（WETES 照片）外壳暖橙泛光。"
+ },
+ {
+  "name": "大唐西市",
+  "spec_id": "lm2-xishi",
+  "category": "culture",
+  "lon": 108.9033,
+  "lat": 34.247949,
+  "world_xz": [
+   -3592,
+   1454
+  ],
+  "overture_id": "f4c72d77-82d2-4d52-a6a3-5f20e708eaea / ba35b40d-d361-43c7-bd74-46677eac2a8e / 96cbe3bd-36d3-4a36-8a68-4a840f339a5b",
+  "height_m": 30,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "金市广场西侧主楼：白石基座 + 唐风重檐主殿 + 双阙楼 + 空中廊桥 + 南北翼楼",
+  "facade": "白墙、朱红木构、深灰瓦，夜间金色轮廓灯",
+  "replaced": "heritage26 通用院落",
+  "photos": [
+   {
+    "source": "http://www.chinanews.com.cn/（2017丝博会西安大唐西市分会场，国际在线）"
+   },
+   {
+    "source": "https://mp.weixin.qq.com/（跟着外教游西安---畅游大唐西市!）"
+   },
+   {
+    "source": "https://you.ctrip.com/（西安大唐西市）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/xishi/",
+  "sources": [
+   "http://xa.bendibao.com/tour/2020810/ly77108.shtm（4A：西安大唐西市文化景区）",
+   "public/data/pois.json 大唐西市 / 大唐西市博物馆",
+   "Overture building w17405494（主楼）/ w1267628564 / w1267628811",
+   "Esri z19 卫星（阙楼、主殿落位）"
+  ],
+  "confidence": "medium（构成、落位）；low（高度按照片比例）",
+  "notes": "只精建金市广场西侧主楼群（主殿 + 双阙 + 廊桥 + 南北翼楼）；大唐西市博物馆（北侧）及周边仿唐商业楼仍由通用建筑承担。原 heritage26 通用院落被替代。"
+ },
+ {
+  "name": "西安国际会展中心",
+  "spec_id": "lm2-expo-hall",
+  "category": "expo",
+  "lon": 109.036908,
+  "lat": 34.340327,
+  "world_xz": [
+   8700.4,
+   -8833.5
+  ],
+  "overture_id": "af8bdf53-15db-4fcc-b171-a8cd11e4c04a",
+  "height_m": 24,
+  "height_source": "无公开数据；按展厅净高 13/16 m（有方 / 国资委）+ 屋架推定",
+  "floors": null,
+  "year": 2020,
+  "massing": "gmp 鱼骨式展厅群：10 个展厅矩形（OSM 梳齿轮廓反算）+ 中央连廊 + 登录厅；屋面为平行弧形条带",
+  "facade": "浅色石材墙身 + 超大门洞",
+  "replaced": "skyline SPECIAL.expo（通用筒拱盒子）",
+  "photos": [
+   {
+    "source": "http://www.sohu.com/（gmp 新作：西安丝路国际会议中心 展览中心）"
+   },
+   {
+    "source": "https://www.vcg.com/（西安丝路国际展览中心——大号会展）"
+   },
+   {
+    "source": "http://ydyl.china.com.cn/2018-08/31/content_61216412.htm"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/expo/",
+  "sources": [
+   "https://www.archiposition.com/items/20200803031222",
+   "http://www.sasac.gov.cn/n2588025/n2641616/c14530534/content.html",
+   "http://m.cnwest.com/xian/a/2020/03/23/18595972.html",
+   "Overture building w808104180（西安国际会展中心展厅）",
+   "Esri z18 卫星（屋面条带方向）"
+  ],
+  "confidence": "high（平面、屋面条带形式）；low（高度）",
+  "notes": "展厅矩形由 OSM 梳齿轮廓角点反算（±2 m）；西北端 H9/H10 与登录厅 lobby 的分界按卫星判读（±8 m）。檐口 19/21/23 m 为按净高推定，屋面条带拱起 2.2 m。"
+ },
+ {
+  "name": "禾盛京广中心",
+  "spec_id": "lm2-hesheng",
+  "category": "office",
+  "lon": 108.886455,
+  "lat": 34.231524,
+  "world_xz": [
+   -5141.8,
+   3282
+  ],
+  "overture_id": "0b974a7e-8018-4108-815b-9ccb119b0e74 / abb05683-2a73-42b1-b9ec-00a0011062f2 / 658c1eb3-1aed-45fd-978b-4eb6f9e56f0a / 978c19a4-f0bb-4f91-8896-a7ada879305e / a3faa7c2-aeb9-4a4e-a415-bec2445c6f7d / 5a84323a-4032-43c2-9130-f957a215ddd7 / 42e46c83-bb32-4531-9b20-3579b67794c3",
+  "height_m": 200,
+  "height_source": "安居客 / 吉屋楼盘资料：1# 约 200 m / 41 层，2# 约 100 m / 24 层，3–5# 约 100 m / 28 层，6# 约 100 m / 26 层；OSM A 座 200 m / 41 层",
+  "floors": 41,
+  "year": null,
+  "massing": "A 座 200 m 超高层 + B–F 座约 100 m + T11 商场裙房",
+  "facade": "纯玻璃幕墙",
+  "replaced": "landmarks2026 两座落位错误的 200 m 通用塔",
+  "photos": [
+   {
+    "source": "https://www.360xzl.com/（禾盛京广中心出租动态效果图）"
+   },
+   {
+    "source": "http://www.dianping.com/（禾盛京广中心 LALA BLOCK 实景）"
+   },
+   {
+    "source": "https://www.sohu.com/（中国人寿收购禾盛京广中心A栋 更名为西安国寿金融中心）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/hesheng/",
+  "sources": [
+   "https://xa.fang.anjuke.com/loupan/251268.html",
+   "https://xa.jiwu.com/loupan/263622.html",
+   "https://baike.baidu.com/item/禾盛京广中心/23014933",
+   "Overture building w988359466–w988359470（A–F 座、T11）"
+  ],
+  "confidence": "high（落位、A 座高度）；medium（B–F 楼号对应与高度）",
+  "notes": "A 座顶部 188 m 以上略收进 + 3.5 m 女儿墙（照片塔顶线脚）；T11 商场裙房 24 m（约 5 层）按照片估计。"
+ },
+ {
+  "name": "西安丽思卡尔顿酒店",
+  "spec_id": "lm2-ritz",
+  "category": "hotel",
+  "lon": 108.892769,
+  "lat": 34.225416,
+  "world_xz": [
+   -4560.9,
+   3961.7
+  ],
+  "overture_id": "d4301028-afd3-421f-be28-831ae31e4628",
+  "height_m": 100,
+  "height_source": "research/refs/landmarks2026/towers.json（100 m）",
+  "floors": null,
+  "year": null,
+  "massing": "板式塔楼：白色方格窗面 + 深色玻璃门框 + 出挑顶盒 + 石材裙楼",
+  "facade": null,
+  "replaced": "landmarks2026 通用塔",
+  "photos": [
+   {
+    "source": "https://hotels.ctrip.com/（西安丽思卡尔顿酒店）"
+   },
+   {
+    "source": "https://www.sohu.com/（凯悦集团…西安W、丽思卡尔顿、君悦）"
+   },
+   {
+    "source": "https://you.ctrip.com/（独家探秘西安丽思卡尔顿酒店的10处惊艳打卡点）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/ritz/",
+  "sources": [
+   "research/refs/landmarks2026/towers.json#西安丽思卡尔顿酒店（100 m）",
+   "Overture building w929222953（西安丽思卡尔顿酒店）"
+  ],
+  "confidence": "medium（形体、招牌）；low（塔楼在轮廓内的准确落位：卫星屋面受倾斜影响）",
+  "notes": "塔楼 50×24 m 按照片比例（正立面约 13 开间）；白色方格窗面 38 m 宽（两侧各 6 m 深色玻璃框），88–100 m 为出挑深色顶盒（照片）。原 landmarks2026 通用塔（占满整片轮廓）被替代。"
+ },
+ {
+  "name": "西安香格里拉大酒店",
+  "spec_id": "lm2-shangrila-gaoxin",
+  "category": "hotel",
+  "lon": 108.892942,
+  "lat": 34.235043,
+  "world_xz": [
+   -4545,
+   2890.4
+  ],
+  "overture_id": "e4efbe4b-7fbf-4883-a0cc-d395cde8e347",
+  "height_m": 75,
+  "height_source": "research/refs/landmarks2026/towers.json（75 m）",
+  "floors": null,
+  "year": null,
+  "massing": "沿东北边的板楼 + 白色石材山墙（竖排店名）+ 唐风裙楼",
+  "facade": null,
+  "replaced": "landmarks2026 把整片轮廓挤成 75 m 方盒",
+  "photos": [
+   {
+    "source": "https://www.shangri-la.com/（西安香格里拉大酒店）"
+   },
+   {
+    "source": "https://www.sohu.com/（国庆假期高新区楼体灯光秀闪亮中国红）"
+   },
+   {
+    "source": "https://hotels.ctrip.com/（西安香格里拉大酒店）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/shangri/",
+  "sources": [
+   "research/refs/landmarks2026/towers.json#西安香格里拉大酒店（高新）（75 m）",
+   "Overture building w28594595（西安香格里拉大酒店）",
+   "Esri z19 卫星"
+  ],
+  "confidence": "medium",
+  "notes": "原 landmarks2026 把整片 124×113 m 轮廓挤成 75 m 方盒，现改为沿东北边的板楼 + 唐风裙楼。"
+ },
+ {
+  "name": "西安高新希尔顿酒店",
+  "spec_id": "lm2-hilton-gaoxin",
+  "category": "hotel",
+  "lon": 108.882725,
+  "lat": 34.222577,
+  "world_xz": [
+   -5484.9,
+   4277.6
+  ],
+  "overture_id": "72eea9e9-006e-43be-8dc3-ba5695a8c89d",
+  "height_m": 90,
+  "height_source": "research/refs/landmarks2026/towers.json（90 m）",
+  "floors": null,
+  "year": null,
+  "massing": "OSM 轮廓整体拉伸 + 顶部发光构架",
+  "facade": null,
+  "replaced": "landmarks2026 通用塔",
+  "photos": [
+   {
+    "source": "https://www.sohu.com/（揭秘高新首家希尔顿）"
+   },
+   {
+    "source": "https://hotels.ctrip.com/（西安高新希尔顿酒店）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/hilton/",
+  "sources": [
+   "research/refs/landmarks2026/towers.json#西安高新希尔顿酒店（90 m）",
+   "Overture building w1417902909（西安高新希尔顿酒店）"
+  ],
+  "confidence": "medium",
+  "notes": "按 OSM 轮廓整体拉伸到 90 m，84 m 以上略收进 + 发光屋顶构架（夜景照片塔顶外框灯）。"
+ },
+ {
+  "name": "曲江海洋极地公园",
+  "spec_id": "lm2-haiyang",
+  "category": "culture",
+  "lon": 108.976091,
+  "lat": 34.216803,
+  "world_xz": [
+   3105,
+   4920
+  ],
+  "overture_id": "528e9787-028a-406d-9ff7-f803618bf307 / 3cfcdec7-f5cb-45e4-900a-4cfa821627a0",
+  "height_m": 31,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "蓝色海洋馆 / 极地馆馆体 + 白色圆楼 + 锥形张拉膜帐篷 + 网壳球顶 + 极地馆弧形屋面",
+  "facade": null,
+  "replaced": "通用建筑",
+  "photos": [
+   {
+    "source": "https://you.ctrip.com/（西安曲江海洋极地公园）"
+   },
+   {
+    "source": "http://www.dianping.com/（曲江海洋极地公园）"
+   },
+   {
+    "source": "https://www.sohu.com/（2023曲江海洋极地公园游玩攻略）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/haiyang/",
+  "sources": [
+   "http://xa.bendibao.com/tour/2020810/ly77108.shtm（4A 名单）",
+   "Overture building w1370069936 / w1370069957",
+   "Esri z19 卫星（圆楼、膜帐篷、球顶落位）"
+  ],
+  "confidence": "medium（落位、构成、配色）；low（高度）",
+  "notes": "原先只有通用楼块；现按轮廓建蓝色馆体 + 白色圆楼 + 锥形膜帐篷（四棱锥近似）+ 球顶。"
+ },
+ {
+  "name": "隋唐圜丘（天坛遗址）",
+  "spec_id": "lm2-tiantan",
+  "category": "heritage",
+  "lon": 108.945346,
+  "lat": 34.202677,
+  "world_xz": [
+   276.4,
+   6491.6
+  ],
+  "overture_id": null,
+  "height_m": 8.12,
+  "height_source": "考古数据（维基百科“圜丘遗址”、丝绸之路遗产数据库）：四层圆台直径 52.45–53.15 / 40.04–40.89 / 28.35–28.48 / 19.74–20.59 m，最高 8.12 m，每层 12 陛",
+  "floors": null,
+  "year": 590,
+  "massing": "四重同心圆夯土台 + 48 陛",
+  "facade": null,
+  "replaced": "heritage26 52.5 m 方形台基",
+  "photos": [
+   {
+    "source": "https://www.whb.cn/zhuzhan/jjl/20180227/190445.html"
+   },
+   {
+    "source": "http://www.silkroads.org.cn/portal.php?mod=view&aid=11888"
+   }
+  ],
+  "photos_local": null,
+  "sources": [
+   "https://zh.wikipedia.org/zh-hans/圜丘遗址",
+   "http://www.silkroads.org.cn/portal.php?mod=view&aid=26252",
+   "https://news.qq.com/rain/a/20211109A016HH00",
+   "Overture building w941637853（圜丘遗址）",
+   "Esri z19 卫星（陛道方向）"
+  ],
+  "confidence": "high（形制与尺寸有考古数据）",
+  "notes": "四层等高 2.03 m（总高 8.12 m）；陛道按每层外侧 2.4 m 长的斜坡楔体近似，午陛宽 3.2 m、其余 1.8 m（宽度按卫星估计）。"
+ },
+ {
+  "name": "麟德殿遗址",
+  "spec_id": "lm2-linde",
+  "category": "heritage",
+  "lon": 108.95343,
+  "lat": 34.296899,
+  "world_xz": [
+   1020.1,
+   -3995.8
+  ],
+  "overture_id": "98f66fe0-03c6-4686-8453-7afcbbe1af4a",
+  "height_m": 4.2,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "遗址展示：两层台基（外圈石铺、内部草坪柱网）+ 夯土墙基条带 + 东西保护棚",
+  "facade": null,
+  "replaced": "此前未建（heritage.js 注明）",
+  "photos": [
+   {
+    "source": "https://gs.ctrip.com/html5/you/sight/xian7/1478176.html"
+   },
+   {
+    "source": "http://baijiahao.baidu.com/s?id=1685677502942844440"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/linde/",
+  "sources": [
+   "Overture building w899099874（麟德殿）",
+   "Esri z19 卫星",
+   "src/modules/heritage.js 注释（麟德殿、太液池、遗址博物馆未建）"
+  ],
+  "confidence": "medium（平面按卫星与 OSM）；low（台高按照片）",
+  "notes": "只表现现状遗址展示（两层台基、草坪柱网区、墙基条带、保护棚），不做复原殿宇。"
+ },
+ {
+  "name": "丝绸之路群雕",
+  "spec_id": "lm2-silkroad-sculpture",
+  "category": "monument",
+  "lon": 108.87705,
+  "lat": 34.27086,
+  "world_xz": [
+   -6007.1,
+   -1096.4
+  ],
+  "overture_id": null,
+  "height_m": 6.8,
+  "height_source": "长 55.9 m、宽 3 m（百度百科）；高度按照片比例约 6.8 m",
+  "floors": null,
+  "year": 1987,
+  "massing": "花岗岩驼队群雕：14 驼 + 骑者 + 步行者（体块近似）",
+  "facade": null,
+  "replaced": "此前未建",
+  "photos": [
+   {
+    "source": "http://www.dianping.com/review/619071010"
+   },
+   {
+    "source": "http://www.dianping.com/review/913698260"
+   },
+   {
+    "source": "https://news.hsw.cn/system/2024/0815/1774872.shtml"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/qunxiao/",
+  "sources": [
+   "https://baike.baidu.com/item/丝绸之路群雕/10686112",
+   "https://lianhu.xiancity.cn/system/2023/08/10/031085227.shtml",
+   "http://travel.sina.com.cn/china/2014-10-31/1619283123_6.shtml",
+   "public/data/pois.json 丝路群雕",
+   "Esri z19 卫星"
+  ],
+  "confidence": "high（位置、长宽）；low（高度与雕像细部，体块近似）",
+  "notes": "14 匹骆驼按等距排布、头朝西；每三匹一名骑者，西端 3 名步行者。狗、马未单独表现。"
+ },
+ {
+  "name": "西安国际港站",
+  "spec_id": "lm2-gangzhan-cranes",
+  "category": "station",
+  "lon": 109.061468,
+  "lat": 34.410538,
+  "world_xz": [
+   10960,
+   -16660
+  ],
+  "overture_id": null,
+  "height_m": 25,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "11 台红色轨道式集装箱龙门吊（位置按卫星逐台判读）",
+  "facade": null,
+  "replaced": "landmarks2026 落在股道上的 275×40 m 通用方盒",
+  "photos": [
+   {
+    "source": "https://www.chinanews.com.cn/（西安国际港站揭牌启用 西安港深度融入亚欧陆海贸易大通道）"
+   },
+   {
+    "source": "https://news.cri.cn/（西安国际港站已成为西北地区最大国际物流枢纽中心站）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/gangzhan/",
+  "sources": [
+   "https://www.chinanews.com.cn/（西安国际港站正式揭牌启用）",
+   "research/refs/landmarks2026/venues.json#西安国际港站",
+   "Esri World Imagery z17（龙门吊逐台判读）"
+  ],
+  "confidence": "medium（龙门吊位置与数量按卫星）；low（尺寸按照片比例）",
+  "notes": "只建龙门吊（红色门架 + 双主梁 + 小车）；股道与集装箱由影像与铁路模块表现。营业大厅楼位置未能确认，不建。"
+ },
+ {
+  "name": "国际港务区站",
+  "spec_id": "lm2-gwq-station",
+  "category": "station",
+  "lon": 109.034328,
+  "lat": 34.362375,
+  "world_xz": [
+   8463,
+   -11290.5
+  ],
+  "overture_id": null,
+  "height_m": 12,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "地铁 3 号线高架站：桥墩 + 站厅层玻璃体 + 拱形站棚 + 天窗条",
+  "facade": null,
+  "replaced": "landmarks2026 误落在车站上的“国际港务区管委会大楼”50 m 方盒",
+  "photos": [
+   {
+    "source": "http://www.sohu.com/a/101922694_401087（西安地铁三号线高架站拱形站棚）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/gwqzhan/",
+  "sources": [
+   "Overture building w982182689（国际港务区）",
+   "public/data/metro.json 国际港务区站（3 号线，d=0 地面/高架）",
+   "Esri z18 卫星"
+  ],
+  "confidence": "medium（位置、平面）；low（高度）",
+  "notes": "拱顶 arch 沿长边（along 默认长边，size 显式给出），中部玻璃天窗条；桥墩 5 对。"
+ },
+ {
+  "name": "陕西奥体中心体育馆",
+  "spec_id": "lm2-shaanxi-oly-gym",
+  "category": "sports",
+  "lon": 108.883,
+  "lat": 34.204877,
+  "world_xz": [
+   -5459.7,
+   6246.8
+  ],
+  "overture_id": "b24cc210-cee2-46eb-9246-5e4527b5e6ad",
+  "height_m": 10,
+  "height_source": "无公开数据；按照片比例（基座 10 m、比赛馆壳顶约 36 m）",
+  "floors": 3,
+  "year": 2020,
+  "massing": "比赛馆 + 训练馆两瓣银色网壳（“丝带”）+ 石材基座；建筑面积 72450 m²、7048 座（凤凰网陕西）",
+  "facade": "干挂石材 + 玻璃幕墙 + 银色金属屋面",
+  "replaced": "landmarks2026 32 m 通用方盒",
+  "photos": [
+   {
+    "source": "http://www.bilibili.com/video/av243736147"
+   },
+   {
+    "source": "https://xian.qinfeng.gov.cn/info/1250/22930.htm"
+   },
+   {
+    "source": "https://news.sina.com.cn/o/2020-08-29/doc-iivhvpwy3804790.shtml"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/shengtiguan/",
+  "sources": [
+   "https://sn.ifeng.com/a/20200701/14378330_0.shtml",
+   "https://archina.com/index.php?a=show&g=works&id=10286&m=index",
+   "Overture building r19396757（陕西奥体中心体育馆）"
+  ],
+  "confidence": "high（轮廓、形体、材质）；low（高度）",
+  "notes": "两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 26 m；训练馆 104×86 m、矢高 18 m），中间连接壳与椭圆开洞按卫星位置。"
+ },
+ {
+  "name": "大明宫遗址博物馆",
+  "spec_id": "lm2-dmg-museum",
+  "category": "culture",
+  "lon": 108.960059,
+  "lat": 34.290471,
+  "world_xz": [
+   1630,
+   -3280
+  ],
+  "overture_id": null,
+  "height_m": 4.2,
+  "height_source": "按照片比例 / 卫星估算（见 notes）",
+  "floors": null,
+  "year": null,
+  "massing": "覆土建筑：只露出下沉坡道院、玻璃天窗、南侧入口廊",
+  "facade": null,
+  "replaced": "heritage26 80×120 m 仿古殿（与实物不符）",
+  "photos": [
+   {
+    "source": "http://m.sohu.com/a/165627789_737902"
+   },
+   {
+    "source": "http://m.sohu.com/a/159968333_796676"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/dmgbwg/",
+  "sources": [
+   "http://m.sohu.com/a/165627789_737902（唐大明宫国家遗址公园博物馆区设计）",
+   "public/data/pois.json 大明宫遗址博物馆展览厅 (1600, −3269)",
+   "Esri z19 卫星"
+  ],
+  "confidence": "medium（地面露出部分的位置）；low（高度）",
+  "notes": "覆土建筑只建地面可见部分；下沉院无法挖地形，用浅灰地坪 + 1.1 m 挡墙表示。"
+ },
+ {
+  "name": "西安西站",
+  "spec_id": "lm2-xian-west-station",
+  "category": "station",
+  "lon": 108.751654,
+  "lat": 34.271288,
+  "world_xz": [
+   -17544,
+   -1144
+  ],
+  "overture_id": null,
+  "height_m": 17,
+  "height_source": "无公开数据；按航拍照片比例（2023-03 由阿房宫站更名为西安西站）",
+  "floors": null,
+  "year": null,
+  "massing": "候车大厅（90×44 m，浅蓝灰盝顶式金属屋面）+ 两端 2 层石材附楼 + 柱廊",
+  "facade": null,
+  "replaced": "landmarks2026 30 m 通用方盒",
+  "photos": [
+   {
+    "source": "https://www.ishaanxi.com/c/2023/0301/2759496.shtml（航拍）"
+   },
+   {
+    "source": "http://news.hsw.cn/system/2023/0130/1580996.shtml（站台）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/xizhan2/",
+  "sources": [
+   "https://www.ishaanxi.com/c/2023/0301/2759496.shtml",
+   "http://news.hsw.cn/system/2023/0130/1580996.shtml",
+   "Esri World Imagery z19（屋面与附楼量取）"
+  ],
+  "confidence": "medium（平面、屋面形式）；low（高度）",
+  "notes": "站房面向东南（站前广场 POI (−17520, −1038)）；柱廊按裙房外 3.2 m、柱距 7.5 m 近似。站台雨棚未建。"
+ },
+ {
+  "name": "西安绿地笔克国际会展中心",
+  "spec_id": "lm2-greenland-pico",
+  "category": "expo",
+  "lon": 108.881897,
+  "lat": 34.193856,
+  "world_xz": [
+   -5561.2,
+   7472.8
+  ],
+  "overture_id": "5f82b1d2-ba8d-4655-b243-824fda2f3051",
+  "height_m": 20,
+  "height_source": "无公开数据；按照片比例（檐口约 20 m + 弧顶 5 m）",
+  "floors": null,
+  "year": null,
+  "massing": "4 个展厅（南北轴向弧形屋面，跨 53 m）+ 东端斜切大会堂",
+  "facade": "通高玻璃 + 竖向金属肋",
+  "replaced": "landmarks2026 26 m 通用盒子",
+  "photos": [
+   {
+    "source": "http://www.pinbang.cn/news/show.php?itemid=3721"
+   },
+   {
+    "source": "https://www.sohu.com/a/194727270_351301（展区平面示意图）"
+   }
+  ],
+  "photos_local": "scratchpad/lm2/photos/lvdibike/",
+  "sources": [
+   "http://www.moxingyun.com/zhanguan/detail-351.html",
+   "Overture building（OSM“西安绿地笔克国际会展中心”）",
+   "Esri z18 卫星（屋面分跨）"
+  ],
+  "confidence": "medium（平面、分跨）；low（高度）",
+  "notes": "四个展厅各一段南北轴向的弧形屋面（跨 53 m、矢高 5 m）；东端斜切的大会堂部分为平屋面。"
+ }
+]
