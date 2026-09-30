@@ -124,7 +124,7 @@ try {
       logs.push('[shot] canvas 读取失败：' + e.message);
     }
     if (!saved) await page.screenshot({ path: path.resolve(root, out), timeout: 180000 });
-    results.push({ out, seconds: +((Date.now() - t0) / 1000).toFixed(1), ...info, logs: logs.slice(0, 30) });
+    results.push({ out, seconds: +((Date.now() - t0) / 1000).toFixed(1), ...info, logs: [...logs.filter((l) => /^\[(pageerror|error)\]/.test(l)), ...logs.filter((l) => !/^\[(pageerror|error)\]/.test(l)).slice(0, 30)] }); // 错误/页面异常全部保留，其余日志只留前 30 条
     await page.close();
   }
 } finally {
