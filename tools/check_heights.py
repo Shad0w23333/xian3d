@@ -560,7 +560,8 @@ def main():
         import estate_floors as EF
         h_est_base = h0          # 起点即原始 CMAB 高度（备份），见上
         elig = (~measured0) & np.isin(src, ['orig', 'sibling_snap', 'bigcap'])
-        asg, est_rep = EF.assign(B, P, h_est_base, elig, dossier=dos_res, log=log)
+        Ofull = Ofull if Ofull is not None else AC.load_overture_buildings(only_named_or_measured=False)
+        asg, est_rep = EF.assign(B, P, h_est_base, elig, dossier=dos_res, log=log, ovt=Ofull, names=names)
         by_est = defaultdict(dict)
         for j, (f, nm, t, how) in asg.items():
             nh = f * RES_FLOOR_H
@@ -579,6 +580,8 @@ def main():
                 r2.update(before_max=float(b.max()), after_max=float(a.max()), before_med=float(np.median(b)), after_med=float(np.median(a)))
             if r.get('note'):
                 r2['note'] = r['note']
+            if r.get('shape_rejected'):
+                r2['shape_rejected'] = r['shape_rejected']
             est_rec.append(r2)
         ESTATES.parent.mkdir(parents=True, exist_ok=True)
         ESTATES.write_text(json.dumps(dict(
@@ -712,7 +715,7 @@ def main():
         md.append(f"- **{r['n']}** → {r['h']} m：" + ('、'.join(f'#{j}（原 {hb:.1f} m）' for j, hb in r['bins']) or '未命中 buildings.bin（另由 landmarks2026 建模）')
                   + f"。{r['why']}")
     md += ['', '## 小区真实层数（房天下成交记录/在售房源“总层数”及频次，research/audit/estate_floors.json）', '',
-           '方法（tools/estate_floors.py 头注释有完整规则）：小区 landuse 多边形内、无实测的住宅/通用楼（面积 ≥ 150 m²，按高层分配的 ≥ 250 m²），'
+           '方法（tools/estate_floors.py 头注释有完整规则）：小区 landuse 多边形内、无实测的住宅/通用楼（面积 ≥ 150 m²，按高层分配的碎块组合计 ≥ 250 m²；学校/商业/工业地块内的楼除外），'
            '按原始 CMAB 高度÷3 m 分档（L 多层 4–7 / M 小高层 8–11 / H 高层 ≥12；≤3 层不动）；某档记录 ≥3 条且 ≥3%（或 ≥10%）才算小区有该档；'
            'M 档楼在无小高层记录、有高层记录的小区按 H 档（CMAB 低估高层）；小高层记录估出的楼栋数不到 CMAB 8–11 层轮廓一半时 M/H 合并；'
            '纯多层小区（≥15 条全 ≤7 层）的 8–9 层楼与 < 400 m² 小轮廓按 L 档；'
@@ -726,6 +729,10 @@ def main():
                       f"{r['up']}/{r['down']} | {r['before_max']:.1f} / {r['before_med']:.1f} | {r['after_max']:.1f} / {r['after_med']:.1f} | "
                       + '；'.join(f"{EF.TIER_CN[t]}：{v}" for t, v in (r.get('tiers') or {}).items()) + ' |')
     md += [''] + [f"- {r['n']}：{r['note']}" for r in est_rec if 'note' in r]
+    rej = [(r['n'], q) for r in est_rec for q in r.get('shape_rejected') or []]
+    if rej:
+        md += ['', f'高层档形状检查未通过、未抬高的大轮廓 {len(rej)} 栋（合并/伪轮廓，等待轮廓重切）：'
+               + '；'.join(f"{n}（{q['x']:.0f},{q['z']:.0f}）{q['a']} m² {q['why']}" for n, q in rej)]
     md += [''] + [f"- {r['n']}：成交记录 {r['nrec']} 条，但没有可对应档位的轮廓（各档：{r.get('tiers')}），未改" for r in est_rec
                   if 'note' not in r and not r.get('assigned')]
     if sanity:

@@ -29,6 +29,13 @@
   · 高度 = 层数 × 3.0 m（住宅层高 2.9–3.0 m；渲染端 bld-gen.js 按 高度÷3 m 还原层数，首层/女儿墙在其内分配）。
     可升可降（例如成交记录全是 6/7 层的老小区，CMAB 估成 4–5 层的楼抬到 6/7 层）。
   · 置信度 low、成交记录 < 6 条的小区不用；多边形找不到的小区跳过并报告。
+  · 2026-09-30 复核补充：
+    - 高层档面积门槛按“碎块组”合计面积判断（间距 < 0.6 m 或同一 Overture/OSM 轮廓内的候选楼并组），同一栋楼被 CMAB 切成
+      两块时不再一半抬高、一半留在原值；组内原始高度与主楼差 ≤ 10 m 的碎块取主楼层数。
+    - 高层档形状检查（名次分配与卫星核对都适用；只查面积 > 1500 m² 或长边 > 110 m 的大轮廓）：充满度 < 0.6、往内收缩 4 m 后分裂成多块、或面积超过所在 OSM 轮廓 1.5 倍的
+      合并/伪轮廓不抬高，列入报告（shape_rejected）等待轮廓重切。
+    - 轮廓 ≥ 50% 落在学校/幼儿园（university）、商业、工业地块里的楼不参与分配（小区里的幼儿园、商业楼不按住宅抬）。
+    - 点位模式另外排除：质心落在其他有名住宅地块或学校/商业/工业地块里的楼、buildings_names 里有名字且名字与本小区无关的楼。
 
 可重复运行：分配只取决于档案与原始 CMAB 高度（备份），与 buildings.bin 当前高度无关。
 """
@@ -48,7 +55,15 @@ sys.path.insert(0, str(HERE))
 
 FLOOR_H = 3.0
 MIN_AREA = 150.0
-MIN_AREA_H = 250.0     # 按高层档分配的最小轮廓面积（西安高层住宅单栋占地一般 ≥ 300 m²）
+MIN_AREA_H = 250.0     # 按高层档分配的最小轮廓面积（西安高层住宅单栋占地一般 ≥ 300 m²）；按“同一栋楼的碎块组”合计面积判断
+JOIN_D = 0.6           # 碎块并组：轮廓间距 < 0.6 m，或质心落在同一个 Overture/OSM 轮廓（≤ 5000 m²）里
+JOIN_DH = 12.5         # 并组的小碎块与组内主楼原始 CMAB 高度差 ≤ 12.5 m（约 4 层）时取主楼层数（同一栋楼被 CMAB 切开的两半）
+JOIN_HK = 0.6          # 原始高度不到组内主楼 0.6 倍的小碎块不借组面积（多为贴建的低层门厅/裙房）
+H_BIG_AREA, H_BIG_LEN = 1500.0, 110.0   # 高层档形状检查只针对大轮廓（面积 > 1500 m² 或长边 > 110 m；普通蝶形/工字形塔楼不查）
+H_FILL_MIN = 0.6       # 高层档形状检查：充满度（面积 ÷ 最小外接矩形）下限
+H_SPLIT_D = 4.0        # 高层档形状检查：往内收缩 4 m 后分裂成多块的，多为跨楼合并轮廓
+H_OSM_RATIO = 1.5      # 高层档形状检查：面积超过所在 OSM 轮廓 1.5 倍的，多为连同阴影/邻楼的合并轮廓
+NONRES_K = ('university', 'commercial', 'industrial')   # 轮廓 ≥ 50% 落在这些地块（学校/幼儿园、商业、工业）里的楼不参与分配
 TIERS = ('L', 'M', 'H')
 TIER_RANGE = {'L': (4, 7), 'M': (8, 11), 'H': (12, 99)}
 TIER_CN = {'L': '多层 4–7', 'M': '小高层 8–11', 'H': '高层 ≥12'}
@@ -157,16 +172,73 @@ def point_members(it, P, cen, cand_ok):
     return idx[:int(fc.get('max_bld', 1))]
 
 
-def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
-    """返回 (asg, rep)：asg {楼下标: (层数, 小区名, 档位, 说明)}；rep 每个小区的分配摘要"""
+GENERIC_NAME = re.compile(r'^[0-9A-Za-z#\-－—·、\s]*(号楼|号|栋|幢|座|楼|单元|区|期)?[0-9A-Za-z#\-\s]*$')
+
+
+def load_overture(ovt=None):
+    """Overture 轮廓（含 OSM 描绘）：碎块并组、OSM 面积比检查用。返回 (geom, is_osm, STRtree)"""
+    import shapely
+    if ovt is None:
+        import audit_common as AC
+        ovt = AC.load_overture_buildings(only_named_or_measured=False)
+    g = np.array([q if q.geom_type == 'Polygon' else max(getattr(q, 'geoms', [shapely.Polygon()]), key=lambda x: x.area) for q in ovt['geom']], dtype=object)
+    return g, np.array([bool(r) for r in ovt['rid']]), shapely.STRtree(g)
+
+
+def shape_bad(Pj, aj, osm_area):
+    """高层档形状检查（只查大轮廓）：返回不合格原因（空串 = 通过）"""
+    import shapely
+    mrr = shapely.minimum_rotated_rectangle(Pj)
+    xy = shapely.get_coordinates(mrr)
+    Lmax = max(np.hypot(*(xy[1] - xy[0])), np.hypot(*(xy[2] - xy[1])))
+    if aj <= H_BIG_AREA and Lmax <= H_BIG_LEN:
+        return ''
+    fill = aj / max(shapely.area(mrr), 1e-6)
+    if fill < H_FILL_MIN:
+        return f'充满度 {fill:.2f} < {H_FILL_MIN}'
+    core = shapely.buffer(Pj, -H_SPLIT_D, join_style='mitre')
+    parts = [q for q in getattr(core, 'geoms', [core]) if not q.is_empty and q.area > 1.0]
+    if len(parts) >= 2:
+        return f'内缩 {H_SPLIT_D:.0f} m 后分裂成 {len(parts)} 块'
+    if osm_area and aj > H_OSM_RATIO * osm_area:
+        return f'面积 {aj:.0f} m² 是所在 OSM 轮廓 {osm_area:.0f} m² 的 {aj / osm_area:.1f} 倍'
+    return ''
+
+
+def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print, ovt=None, names=None):
+    """返回 (asg, rep)：asg {楼下标: (层数, 小区名, 档位, 说明)}；rep 每个小区的分配摘要。
+    ovt：audit_common.load_overture_buildings() 的结果（可选，缺省时自己读）；names：buildings_names.json（可选）"""
     import shapely
     L = json.loads((ROOT / 'public' / 'data' / 'landuse.json').read_text('utf-8'))['polys']
     lu = [(shapely.make_valid(shapely.Polygon(np.array(q['outer']).reshape(-1, 2))), q.get('n') or '')
           for q in L if q['k'] == 'residential' and len(q['outer']) >= 6]
+    nonres = [shapely.make_valid(shapely.Polygon(np.array(q['outer']).reshape(-1, 2)))
+              for q in L if q['k'] in NONRES_K and len(q['outer']) >= 6]
+    nonres_tree = shapely.STRtree(nonres)
+    lu_tree = shapely.STRtree([g for g, _ in lu])
+    if names is None:
+        names = json.loads((ROOT / 'public' / 'data' / 'buildings_names.json').read_text('utf-8'))
+    og, osm, otree = load_overture(ovt)
+    oarea = shapely.area(og)
     area = shapely.area(P)
+    nonres_cache = {}
+
+    def in_nonres(j):
+        """轮廓 ≥ 50% 落在学校/幼儿园、商业、工业地块里"""
+        if j not in nonres_cache:
+            hit = nonres_tree.query(P[j], predicate='intersects')
+            a = sum(shapely.area(shapely.intersection(P[j], nonres[k])) for k in hit) if len(hit) else 0.0
+            nonres_cache[j] = a >= 0.5 * area[j]
+        return nonres_cache[j]
+
+    def outline_of(j, only_osm=False):
+        """质心所在的 Overture（或只取 OSM）轮廓下标（≤ 5000 m² 中最小的），没有返回 -1"""
+        hit = [int(k) for k in otree.query(cen_g[j], predicate='within') if oarea[k] <= 5000 and (osm[k] or not only_osm)]
+        return min(hit, key=lambda k: oarea[k]) if hit else -1
     cen_g = shapely.centroid(P)
     cen = shapely.get_coordinates(cen_g)
     ctree = shapely.STRtree(cen_g)
+    ptree = shapely.STRtree(P)
     kind = B['kind']
     asg, rep = {}, []
     owner = {}
@@ -191,12 +263,29 @@ def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
         pure_mid = 'L' in tv and nrec >= 15 and max(cnt) <= 7
         polys = estate_polys(it, lu)
 
+        # floors_check.exclude_xz：人工核对排除的楼（轮廓内一点，世界坐标；如点位模式取到的相邻小区楼）
+        fc = it.get('floors_check') or {}
+        excl = [shapely.Point(x, z) for x, z in fc.get('exclude_xz') or []]
+
         def ok(j):
-            return bool(eligible[j]) and kind[j] in (0, 1) and area[j] >= MIN_AREA and j not in owner
+            return bool(eligible[j]) and kind[j] in (0, 1) and area[j] >= MIN_AREA and j not in owner and not in_nonres(j) \
+                and not any(P[j].contains(q) for q in excl)
         if point_mode(it):
+            my_names = set(lu_names(it)) | {it['name']}
+            key = re.sub(r'[（(].*?[)）]|[·•\s]', '', it['name'])
+
+            def foreign(j):
+                """点位模式：质心落在别的有名住宅地块里，或 buildings_names 里有与本小区无关的名字"""
+                for k in lu_tree.query(cen_g[j], predicate='within'):
+                    nm = lu[int(k)][1]
+                    if nm and nm not in my_names:
+                        return True
+                nm = names.get(str(j)) or ''
+                return bool(nm) and key not in nm and not GENERIC_NAME.match(nm)
+
             # 档位相容：只取原始 CMAB 估层落在小区成交档位（含 M→H 回退）里的楼
             def ok_pt(j):
-                if not ok(j):
+                if not ok(j) or foreign(j):
                     return False
                 e = int(round(h_base[j] / FLOOR_H))
                 t = 'L' if 4 <= e <= 7 else 'M' if 8 <= e <= 11 else 'H' if e >= 12 else None
@@ -217,16 +306,48 @@ def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
         #   floors_check.sat_high_xz：逐栋列出轮廓内一点（世界坐标）；
         #   floors_check.sat_all_high：{min_area, max_area, exclude_xz}——整个小区在影像上全是高层，面积在范围内、未被排除
         #     （会所/幼儿园/底商/学校等列在 exclude_xz）的轮廓，凡原始 CMAB 估 ≥4 层、而分配结果 <18 层或未分配的，都按高层
-        fc = it.get('floors_check') or {}
         sat = set()
         if 'H' in tv:
             for x, z in fc.get('sat_high_xz') or []:
                 pt = shapely.Point(x, z)
                 sat.update(j for j in cand if P[j].contains(pt))
         sat_all = fc.get('sat_all_high') if 'H' in tv else None
+        # 高层档形状检查（合并/伪轮廓不抬高，列入报告）
+        shape_rej = {}
+
+        def h_shape_ok(j):
+            if j not in shape_rej:
+                ko = outline_of(j, only_osm=True)
+                shape_rej[j] = shape_bad(P[j], area[j], oarea[ko] if ko >= 0 else 0.0)
+            return not shape_rej[j]
+        # 碎块并组（同一栋楼被 CMAB 切成几块）：间距 < JOIN_D，或质心在同一个 Overture/OSM 轮廓里
+        par = {j: j for j in cand}
+
+        def root(j):
+            while par[j] != j:
+                par[j] = par[par[j]]
+                j = par[j]
+            return j
+        cset = set(cand)
+        for j in cand:
+            for k in ptree.query(P[j], predicate='dwithin', distance=JOIN_D):
+                k = int(k)
+                if k in cset and k != j and shapely.distance(P[j], P[k]) < JOIN_D:
+                    par[root(k)] = root(j)
+        by_ol = defaultdict(list)
+        for j in cand:
+            o = outline_of(j)
+            if o >= 0:
+                by_ol[o].append(j)
+        for mem in by_ol.values():
+            for k in mem[1:]:
+                par[root(k)] = root(mem[0])
+        tier_of = {}
         for j in cand:
             e = est[j]
             if j in sat:
+                if not h_shape_ok(j):
+                    sat.discard(j)      # 卫星核对也要过形状检查（跨楼合并轮廓整体抬高会形成一堵高墙）
                 continue            # 不参与名次（CMAB 高度不可信），下面取高层档加权中位层数
             t = 'L' if 4 <= e <= 7 else 'M' if 8 <= e <= 11 else 'H' if e >= 12 else None
             if t is None:
@@ -243,8 +364,23 @@ def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
                     t, how = 'L', f'小轮廓（{area[j]:.0f} m²）CMAB 估 {e} 层、小区成交记录全部 ≤7 层（≥15 条）→ 按多层（别墅/多层区里的高层估值多为错估）'
                 else:
                     continue
-            if t == 'H' and area[j] < MIN_AREA_H:
-                continue        # 高层轮廓 < 250 m²（塔楼切碎的小块或伪轮廓），细高得不合常理：不按高层抬
+            tier_of[j] = (t, how)
+        # 高层档：碎块组合计面积 < 250 m²（塔楼切碎的小块或伪轮廓，细高得不合常理）不按高层抬；形状不合格的不抬
+        grp_area, grp_main = defaultdict(float), {}
+        for j, (t, _) in tier_of.items():
+            if t == 'H':
+                grp_area[root(j)] += area[j]
+                if area[j] >= MIN_AREA_H and (root(j) not in grp_main or area[j] > area[grp_main[root(j)]]):
+                    grp_main[root(j)] = j
+        for j, (t, how) in tier_of.items():
+            if t == 'H':
+                m = grp_main.get(root(j))
+                if area[j] < MIN_AREA_H and (grp_area[root(j)] < MIN_AREA_H or (m is not None and h_base[j] < JOIN_HK * h_base[m])):
+                    continue
+                if not h_shape_ok(j):
+                    continue
+                if area[j] < MIN_AREA_H:
+                    how = (how + '；' if how else '') + f'碎块 {area[j]:.0f} m²，与相邻轮廓并组合计 {grp_area[root(j)]:.0f} m²'
             groups[t].append((j, how))
         # 小高层档“CMAB 轮廓过多”：按成交/在售记录估的小高层楼栋占比 × (M+H 轮廓数) 不到 CMAB 小高层轮廓数的一半时，
         # 说明 CMAB 把大批高层低估成了 8–11 层（例如华著中城：记录里 11 层只占 1%，CMAB 却有 20 栋“9 层”，卫星上全是 30+ 层板楼），
@@ -290,12 +426,24 @@ def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
                     owner[j] = it['name']
                     ch[j] = (float(h_base[j]), f)
                 k = k2 + 1
+        # 并组的小碎块：与组内主楼（≥ 250 m² 中最大者）原始高度差 ≤ 10 m 的取主楼层数（同一栋楼的两半）
+        main_of = {}
+        for j, _ in groups.get('H', []):
+            if j in ch and area[j] >= MIN_AREA_H:
+                r0 = root(j)
+                if r0 not in main_of or area[j] > area[main_of[r0]]:
+                    main_of[r0] = j
+        for j, how in groups.get('H', []):
+            m = main_of.get(root(j))
+            if j in ch and m is not None and m != j and area[j] < MIN_AREA_H and abs(h_base[j] - h_base[m]) <= JOIN_DH and asg[j][0] != asg[m][0]:
+                asg[j] = (asg[m][0], it['name'], 'H', (how + '；' if how else '') + f'与主楼原始高度差 {abs(h_base[j] - h_base[m]):.1f} m → 取主楼 {asg[m][0]} 层')
+                ch[j] = (float(h_base[j]), asg[m][0])
         if sat_all:
             exc = [shapely.Point(x, z) for x, z in sat_all.get('exclude_xz') or []]
             lo_a, hi_a = sat_all.get('min_area', 300), sat_all.get('max_area', 2500)
             for j in cand:
                 if est[j] >= 4 and lo_a <= area[j] <= hi_a and not any(P[j].contains(q) for q in exc) \
-                        and (j not in asg or asg[j][0] < 18):
+                        and (j not in asg or asg[j][0] < 18) and h_shape_ok(j):
                     sat.add(j)
         if sat:
             vals = [q for q in tv['H'] if q[0] >= 18] or tv['H']
@@ -314,6 +462,10 @@ def assign(B, P, h_base, eligible, dossier=DOSSIER, log=print):
         r['skipped_low'] = sum(1 for j in cand if est[j] <= 3)
         r['untouched'] = sum(1 for j in cand if j not in ch and est[j] >= 4)
         r['polys'] = len(polys)
+        rej = [j for j in cand if shape_rej.get(j)]
+        if rej:
+            r['shape_rejected'] = [dict(i=int(j), x=round(float(cen[j][0]), 1), z=round(float(cen[j][1]), 1), a=round(float(area[j])),
+                                        h=round(float(h_base[j]), 1), why=shape_rej[j]) for j in rej]
         rep.append(r)
     return asg, rep
 
