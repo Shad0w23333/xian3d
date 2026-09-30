@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 树木穿楼诊断（无浏览器）：在 Node 里跑各片区模块的 prepare（登记排除区），再用前端同一套种植算法（src/arch/vegPlant.js）
 // 生成全城树木，统计树干落在建筑轮廓内、树冠（按树种冠幅 × 个体缩放）插进建筑外墙的棵数。
-// 建筑：通用建筑（buildings.bin；锚点落在建筑排除区内的视为已让位）+ 逐栋档案建筑落地体块（ctx.superseded.polys）。
+// 建筑：通用建筑（buildings.bin；让位口径同前端 bld-skip.preprocess）+ 逐栋档案建筑落地体块（ctx.superseded.polys）。
 // 用法：node tools/check_trees.mjs [--veg 另一版 vegPlant.js（修复前后对比）] [--json out.json] [--top 10]
 import fs from 'node:fs';
 import path from 'node:path';
@@ -39,25 +39,18 @@ const V = plantVegetation(msg);
 console.error(`[trees] 种植 ${V.n} 棵（${((Date.now() - t1) / 1000).toFixed(1)} s）` + (V.stats.shrunk != null ? `，近楼收冠 ${V.stats.shrunk}` : ''));
 
 // —— 建筑轮廓 ——
+// 通用建筑是否让位与前端同一口径：src/arch/bld-skip.js 的 preprocess（排除区锚点/轮廓比例、skyline 高楼、地标名称）
 const polys = [];
 {
-  const dv = new DataView(buf);
-  const ver = dv.getUint32(4, true), N = dv.getUint32(8, true);
-  let o = 16;
-  const ax = new Float32Array(buf, o, N); o += N * 4;
-  const az = new Float32Array(buf, o, N); o += N * 4;
-  const vs = new Uint32Array(buf, o, N); o += N * 4;
-  const vc = new Uint16Array(buf, o, N); o += N * 2;
-  const hd = new Uint16Array(buf, o, N); o += N * 2;
-  const md = new Uint16Array(buf, o, N); o += N * 2;
-  o += N * 2 + (ver >= 2 ? N : 0);
-  o += (4 - (o % 4)) % 4;
-  const offs = new Int16Array(buf, o);
-  for (let i = 0; i < N; i++) {
-    if (md[i] > 45) continue; // 悬空的 building:part
-    if (ctx.exclusions.test(ax[i], az[i], 'buildings', hd[i] * 0.1)) continue; // 已让位
+  const { parseBuildings } = await import('../src/arch/bld-gen.js');
+  const { preprocess } = await import('../src/arch/bld-skip.js');
+  const P = parseBuildings(buf);
+  for (const id of IDS) ctx.modules[id] ||= {}; // skyline 等模块须为真值，对应的让位规则才生效
+  const B = preprocess(ctx, P);
+  for (let i = 0; i < P.count; i++) {
+    if (B.skip[i] || P.minHeightDm[i] > 450) continue; // 已让位 / 悬空的 building:part
     const p = [];
-    for (let k = vs[i] * 2, e = k + vc[i] * 2; k < e; k += 2) p.push(ax[i] + offs[k] * 0.1, az[i] + offs[k + 1] * 0.1);
+    for (let k = P.vertStart[i] * 2, e = k + P.vertCount[i] * 2; k < e; k += 2) p.push(P.anchorX[i] + P.offs[k] * 0.1, P.anchorZ[i] + P.offs[k + 1] * 0.1);
     if (p.length >= 6) polys.push({ p, src: 'gen', id: i });
   }
 }
