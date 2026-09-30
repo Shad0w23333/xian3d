@@ -45,15 +45,16 @@ export default {
         tris.push([pos.getX(a), -pos.getY(a)], [pos.getX(b), -pos.getY(b)], [pos.getX(cI), -pos.getY(cI)]); // toShape 用 (x, -z)
       }
       g.dispose();
-      // 地形挖洞（下沉广场坑口）处不铺色调面：色调面贴在地面高度，会把坑内的墙和坑底一起染绿；洞口附近细分到 3 m 再剔除
+      // 地形挖洞（下沉广场坑口）处不铺色调面：色调面贴在地面高度，会把坑内的墙和坑底一起染绿；洞口附近细分到 1.5 m 再剔除
       const holes = th.holes || [];
       const nearHole = (a, b, c) => holes.some((h) => Math.max(a[0], b[0], c[0]) > h.bb.x0 && Math.min(a[0], b[0], c[0]) < h.bb.x1 && Math.max(a[1], b[1], c[1]) > h.bb.z0 && Math.min(a[1], b[1], c[1]) < h.bb.z1);
       const emit = (a, b, c, depth) => {
         const la = Math.hypot(a[0] - b[0], a[1] - b[1]), lb = Math.hypot(b[0] - c[0], b[1] - c[1]), lc = Math.hypot(c[0] - a[0], c[1] - a[1]);
         const L = Math.max(la, lb, lc);
         const hole = holes.length && nearHole(a, b, c);
-        if (hole && L <= 3 && th.inHole((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3)) return;
-        if ((L > 60 && depth < 7) || (hole && L > 3 && depth < 18)) {
+        // 近洞细分到 1.5 m；三个顶点或质心任一落进洞就整块丢弃（只看质心会留下伸进坑口 1~2 m 的薄片）
+        if (hole && L <= 1.5 && (th.inHole(a[0], a[1]) || th.inHole(b[0], b[1]) || th.inHole(c[0], c[1]) || th.inHole((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3))) return;
+        if ((L > 60 && depth < 7) || (hole && L > 1.5 && depth < 20)) {
           // 最长边二分
           if (L === la) {
             const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];

@@ -47,6 +47,38 @@ const LY_PAL = {
 };
 export const LY_RIM_FLAT = flat(LY_RIM);
 
+// ───────────── 坑外地面物件（建模与排除区共用同一份常量） ─────────────
+const LY_E = LY_RIM.map((p, i) => edgeFrame(p, LY_RIM[(i + 1) % LY_RIM.length]));
+/** s 沿边，o 沿内法线（正 = 坑内） */
+const lyW = (e, s, o, y) => [e.a[0] + e.ux * s + e.nx * o, y, e.a[1] + e.uz * s + e.nz * o];
+/** 诗词灯柱点位：坑外 1.6 m（J–A 边不布，那里贴着外侧环形步道 23107） */
+const LY_POLES = (() => {
+  const out = [];
+  for (const i of [1, 3]) {
+    const e = LY_E[i];
+    for (let s = 3; s < e.L - 2; s += 9) {
+      const p = lyW(e, s, -1.6, 0);
+      out.push([p[0], p[2]]);
+    }
+  }
+  const p = lyW(LY_E[6], 1.6, -1.6, 0);
+  out.push([p[0], p[2]]);
+  return out;
+})();
+/** “榴园”刻字景石（有向盒：中心、长边方向、半长、半宽） */
+const LY_STONE = { x: 139.5, z: 992.5, ux: 0.85, uz: -0.53, hl: 1.7, hw: 0.7 };
+/** LED 大屏（东侧坑口外，面向西）及其支架占地 */
+const LY_SCREEN = { x: 199.2, zc: 969.5, w: 8 };
+const LY_SCREEN_RECT = [199, LY_SCREEN.zc - LY_SCREEN.w / 2 - 0.4, 199.8, LY_SCREEN.zc + LY_SCREEN.w / 2 + 0.4];
+/** 东南斜边（E[5]）外坡顶小屋：6 开间 × 3.8 m，进深 1.6 m，台基外扩 0.2 m；
+ *  柱网 o∈[-2.4,-0.8]、台基 o∈[-2.6,-0.6]（正好接压顶外沿，不进坑，也不压外侧步道 23106） */
+const LY_HUT = { e: 5, o: -1.6, depthW: 1.6, bays: 6, bayW: 3.8, margin: 0.2 };
+const lyHutRect = () => {
+  const e = LY_E[LY_HUT.e], hs = (LY_HUT.bays * LY_HUT.bayW) / 2 + LY_HUT.margin, ho = LY_HUT.depthW / 2 + LY_HUT.margin;
+  const s0 = e.L / 2 - hs, s1 = e.L / 2 + hs, o0 = LY_HUT.o - ho, o1 = LY_HUT.o + ho;
+  return [[s0, o1], [s1, o1], [s1, o0], [s0, o0]].map(([s, o]) => lyW(e, s, o, 0)).flatMap((p) => [p[0], p[2]]);
+};
+
 // ───────────── 几何累加器：顶点色 + 按面朝向的平面 UV（米） ─────────────
 class Mesher {
   constructor() {
@@ -667,21 +699,11 @@ export function buildLiuyuan(ctx, site) {
     lamp.cyl(x, z, 0.17, y + 2.3, y + 3.0, C('#ffd88a'), 10, C('#f6e8c8'));
     metal.cyl(x, z, 0.2, y + 3.0, y + 3.08, col.brass, 10);
   };
-  // 坑外 1.6 m 一圈（避开漫咖啡外摆、东侧大屏、南侧小殿与东南小屋）
-  for (const i of [1, 3, 8]) {
-    const e = E[i];
-    for (let s = 3; s < e.L - 2; s += 9) {
-      const p = W(e, s, -1.6, 0);
-      poleAt(p[0], p[2]);
-    }
-  }
-  {
-    const p = W(E[6], 1.6, -1.6, 0);
-    poleAt(p[0], p[2]);
-  }
+  // 坑外 1.6 m 一圈（避开漫咖啡外摆、东侧大屏、南侧小殿与东南小屋；J–A 边让给外侧步道）
+  for (const [x, z] of LY_POLES) poleAt(x, z);
   // LED 大屏（东侧坑口外，面向西）
   {
-    const x = 199.2, zc = 969.5, w = 8, y0 = rimH + 0.6, y1 = y0 + 3.2;
+    const { x, zc, w } = LY_SCREEN, y0 = rimH + 0.6, y1 = y0 + 3.2;
     const st = new THREE.MeshStandardMaterial({ map: screenTexture(), emissive: 0xffffff, emissiveMap: null, emissiveIntensity: 0, roughness: 0.4 });
     st.emissiveMap = st.map;
     ctx.night.register(st, { day: 0.55, night: 1.6 });
@@ -698,8 +720,8 @@ export function buildLiuyuan(ctx, site) {
   }
   // “榴园”刻字石（照片：入口景石）
   {
-    const x = 139.5, z = 992.5, y = gy(x, z) - 0.2;
-    plain.obox(x, z, 0.85, -0.53, 1.7, 0.7, y, y + 1.9, C('#b8b2a6'), C('#c8c2b6'));
+    const { x, z, ux, uz, hl, hw } = LY_STONE, y = gy(x, z) - 0.2;
+    plain.obox(x, z, ux, uz, hl, hw, y, y + 1.9, C('#b8b2a6'), C('#c8c2b6'));
     const nx = 0.53, nz = 0.85; // 面向东北（朝坑口/步道）
     signs.place('榴园', new THREE.Vector3(x + nx * (0.72 - 0.45), y + 1.15, z + nz * (0.72 - 0.45)), nx, nz, 0.8, 2.4, { color: '#b22a1e', weight: 700, serif: true });
   }
@@ -744,12 +766,13 @@ export function buildLiuyuan(ctx, site) {
     }
     // 东南斜边外一溜坡顶小屋（影像：沿斜边的双坡屋面），正面朝坑口；进深让开外侧步道
     {
-      const e = E[5];
-      const c = W(e, e.L / 2, -2.2, 0);
+      // 台基外扩显式取 0.2 m（默认按出檐算约 1.6 m，会前伸进坑口、后压外侧步道），出檐 1.0 m
+      const e = E[LY_HUT.e];
+      const c = W(e, e.L / 2, LY_HUT.o, 0);
       const fx = e.nx, fz = e.nz; // 正面朝向 = 坑内法线
-      b.push(c[0], minG([W(e, 2, -0.8, 0), W(e, e.L - 2, -3.6, 0), W(e, 2, -3.6, 0), W(e, e.L - 2, -0.8, 0)].map((p) => [p[0], p[2]])), c[2], Math.atan2(fx, fz));
-      hall(b, { style: 'tang', bays: 6, bayW: 3.8, depthBays: 1, depthW: 2.0, colH: 3.2, roof: 'xuanshan', roofColor: 'darkgray',
-        front: 'tangshop', back: 'wall', sides: 'wall', platform: 'plain', platformH: 0.2, steps: 'none', pal: { ...LY_PAL, wall: 0xa8a39a } });
+      b.push(c[0], minG([W(e, 2, -0.6, 0), W(e, e.L - 2, -2.6, 0), W(e, 2, -2.6, 0), W(e, e.L - 2, -0.6, 0)].map((p) => [p[0], p[2]])), c[2], Math.atan2(fx, fz));
+      hall(b, { style: 'tang', bays: LY_HUT.bays, bayW: LY_HUT.bayW, depthBays: 1, depthW: LY_HUT.depthW, colH: 3.2, roof: 'xuanshan', roofColor: 'darkgray',
+        platformMargin: LY_HUT.margin, overhang: 1.0, front: 'tangshop', back: 'wall', sides: 'wall', platform: 'plain', platformH: 0.2, steps: 'none', pal: { ...LY_PAL, wall: 0xa8a39a } });
       b.pop();
     }
   }, { style: 'tang', detail: 1, name: '榴园地面建筑' });
@@ -799,11 +822,16 @@ export function buildLiuyuan(ctx, site) {
   return { group, lights, label: new THREE.Vector3(172, T0 + 12, 972) };
 }
 
-/** 榴园占地：坑口 + 地面层建筑（排除区 / 挖洞 / 检查工具共用） */
+/** 榴园占地：坑口 + 地面层建筑 + 坑外地面物件（排除区 / 挖洞 / 检查工具共用） */
 export function liuyuanFootprints() {
   const rect = (r) => [r.x0, r.z0, r.x1, r.z0, r.x1, r.z1, r.x0, r.z1];
+  const box = ([x0, z0, x1, z1]) => [x0, z0, x1, z0, x1, z1, x0, z1];
+  const { x, z, ux, uz, hl, hw } = LY_STONE, vx = -uz, vz = ux;
+  const stone = [[-1, -1], [1, -1], [1, 1], [-1, 1]].flatMap(([a, c]) => [x + ux * hl * a + vx * hw * c, z + uz * hl * a + vz * hw * c]);
   return {
     rim: LY_RIM_FLAT.slice(),
-    buildings: [rect(MAAN), rect(SHALL)],
+    buildings: [rect(MAAN), rect(SHALL), lyHutRect()],
+    /** 景石、LED 大屏支架、灯柱（外扩 0.5 m 的小方块）：树木与通用建筑让位 */
+    props: [stone, box(LY_SCREEN_RECT), ...LY_POLES.map(([px, pz]) => box([px - 0.5, pz - 0.5, px + 0.5, pz + 0.5]))],
   };
 }

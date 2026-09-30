@@ -180,6 +180,7 @@ export default {
     const wS = new Float32Array(MAXN), wDir = new Int8Array(MAXN), wSpd = new Float32Array(MAXN), wOff = new Float32Array(MAXN);
     const wPh = new Float32Array(MAXN), wCol = new Uint8Array(MAXN), wScale = new Float32Array(MAXN), wYaw = new Float32Array(MAXN);
     const wY = new Float32Array(MAXN), wX = new Float32Array(MAXN), wZ = new Float32Array(MAXN), wTimer = new Float32Array(MAXN);
+    const wHid = new Uint8Array(MAXN); // 上次检查时是否已在隐藏区内（区分“走进去”与“生成/卡在里面”）
     let N = 0;
 
     // 活动区候选段（按权重×长度的累计分布抽样）
@@ -234,6 +235,8 @@ export default {
         wYaw[i] = rnd() * Math.PI * 2;
         wTimer[i] = stand ? 5 + rnd() * 25 : 20 + rnd() * 60;
         locate(i);
+        // 中点不在隐藏区的路段也可能部分穿进坑口/楼体排除区：落点在区内就重抽，5 次都不行就不补这个人
+        if (hidden(wX[i], wZ[i])) { if (tries < 4) continue; return false; }
         if (anywhere || tries === 4) break;
         // 非初始补人：尽量补在视野外或较远处，避免“凭空出现”
         const d = Math.hypot(wX[i] - cp.x, wZ[i] - cp.z);
@@ -244,6 +247,7 @@ export default {
       wPh[i] = rnd();
       wCol[i] = (rnd() * palette.length) | 0;
       wScale[i] = 0.9 + rnd() * 0.18;
+      wHid[i] = 0;
       groundY(i);
       return true;
     };
@@ -251,7 +255,7 @@ export default {
       const j = --N;
       if (i === j) return;
       wPath[i] = wPath[j]; wSeg[i] = wSeg[j]; wS[i] = wS[j]; wDir[i] = wDir[j]; wSpd[i] = wSpd[j]; wOff[i] = wOff[j];
-      wPh[i] = wPh[j]; wCol[i] = wCol[j]; wScale[i] = wScale[j]; wYaw[i] = wYaw[j]; wY[i] = wY[j]; wX[i] = wX[j]; wZ[i] = wZ[j]; wTimer[i] = wTimer[j];
+      wPh[i] = wPh[j]; wCol[i] = wCol[j]; wScale[i] = wScale[j]; wYaw[i] = wYaw[j]; wY[i] = wY[j]; wX[i] = wX[j]; wZ[i] = wZ[j]; wTimer[i] = wTimer[j]; wHid[i] = wHid[j];
     };
 
     let density = Q.peopleDensity ?? 1;
@@ -353,8 +357,12 @@ export default {
             locate(i);
             if ((frame + i) % 8 === 0) {
               groundY(i);
-              // 走到被隐藏的路段（下沉广场坑口、楼体内部等排除区）就掉头，免得悬在坑口上空/走进墙里
-              if (hidden(wX[i], wZ[i])) wDir[i] = -wDir[i];
+              // 从外面走进被隐藏的路段（下沉广场坑口、楼体内部等排除区）就掉头；
+              // 连续两次检查都在区内（掉头也没走出来）说明卡住了，移除，由补人逻辑重新生成
+              const h = hidden(wX[i], wZ[i]) ? 1 : 0;
+              if (h && wHid[i]) { kill(i); i--; continue; }
+              if (h) wDir[i] = -wDir[i];
+              wHid[i] = h;
             }
           }
           const dx = wX[i] - cp.x, dy = wY[i] - cp.y, dz = wZ[i] - cp.z;

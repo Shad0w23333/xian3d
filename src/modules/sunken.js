@@ -194,8 +194,10 @@ export default {
         const top = T.holeRimTop(fp.rim);
         T.addHole(fp.rim);
         ctx.exclusions.add({ points: G.inset(fp.rim, -2.5), name: 'sunken' }, { buildings: true, trees: true, pois: true });
-        ctx.exclusions.add({ points: G.inset(fp.rim, -1.4), name: 'sunken' }, { buildings: false, trees: false, pois: false, roads: true });
+        // 道路排除区只外扩 0.3 m：坑口内的台阶段步道隐藏，贴着 J–A 边外侧的环形步道 23107 保持连续
+        ctx.exclusions.add({ points: G.inset(fp.rim, -0.3), name: 'sunken' }, { buildings: false, trees: false, pois: false, roads: true });
         for (const b of fp.buildings) ctx.exclusions.add({ points: G.inset(G.ccw(b), -1.5), name: 'sunken' }, { buildings: true, trees: true, pois: false });
+        for (const p of fp.props) ctx.exclusions.add({ points: G.inset(G.ccw(p), -1.0), name: 'sunken' }, { buildings: true, trees: true, pois: false });
         this.sites.push({ ...s, kind: 'liuyuan', rim: fp.rim, top, depth: 5.5 });
         continue;
       }
@@ -375,7 +377,12 @@ export default {
         rejected,
       }),
       update() {},
-      setLayer(layer, v) { if (layer === 'buildings') root.visible = v; },
+      setLayer(layer, v) {
+        if (layer !== 'buildings') return;
+        root.visible = v;
+        // 坑体随“建筑”图层隐藏时，地形洞也要合上，否则坑口透空（目前只有本模块调用 addHole，整体清零安全）
+        ctx.terrain.holeU.n.value = v ? ctx.terrain.holes.length : 0;
+      },
       dispose() { root.traverse((o) => o.geometry?.dispose()); ctx.scene.remove(root); },
     };
   },
