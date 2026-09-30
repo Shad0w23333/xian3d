@@ -42,7 +42,7 @@
    "changed": 73,
    "up": 29,
    "down": 44,
-   "untouched": 60,
+   "untouched": 58,
    "sat_high": 0,
    "by_tier": {
     "M": {
@@ -144,7 +144,7 @@
    "changed": 24,
    "up": 21,
    "down": 3,
-   "untouched": 41,
+   "untouched": 38,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -195,15 +195,15 @@
      25
     ]
    },
-   "assigned": 59,
-   "changed": 59,
-   "up": 47,
+   "assigned": 58,
+   "changed": 58,
+   "up": 46,
    "down": 12,
    "untouched": 0,
    "sat_high": 0,
    "by_tier": {
     "L": {
-     "6": 22,
+     "6": 21,
      "7": 24
     },
     "H": {
@@ -310,9 +310,9 @@
      32
     ]
    },
-   "assigned": 77,
-   "changed": 77,
-   "up": 53,
+   "assigned": 76,
+   "changed": 76,
+   "up": 52,
    "down": 24,
    "untouched": 1,
    "sat_high": 0,
@@ -326,7 +326,7 @@
      "29": 2
     },
     "L": {
-     "6": 35
+     "6": 34
     },
     "M": {
      "11": 8
@@ -374,31 +374,41 @@
      34
     ]
    },
-   "assigned": 69,
-   "changed": 69,
-   "up": 66,
+   "assigned": 71,
+   "changed": 71,
+   "up": 68,
    "down": 3,
-   "untouched": 8,
+   "untouched": 4,
    "sat_high": 0,
    "by_tier": {
     "L": {
-     "6": 32
+     "6": 30
     },
     "H": {
      "22": 6,
      "24": 3,
-     "25": 6,
-     "26": 9,
-     "30": 3,
-     "32": 3,
-     "33": 1,
+     "25": 7,
+     "26": 10,
+     "28": 2,
+     "31": 3,
+     "33": 4,
      "34": 6
     }
    },
    "before_max": 90.0,
    "after_max": 102.0,
    "before_med": 26.3,
-   "after_med": 66.0
+   "after_med": 66.0,
+   "shape_rejected": [
+    {
+     "i": 222508,
+     "x": -7250.5,
+     "z": 5080.2,
+     "a": 2814,
+     "h": 36.7,
+     "why": "充满度 0.30 < 0.6"
+    }
+   ]
   },
   {
    "n": "万科翡翠国宾",
@@ -540,17 +550,18 @@
      33
     ]
    },
-   "assigned": 28,
-   "changed": 28,
-   "up": 28,
+   "assigned": 26,
+   "changed": 26,
+   "up": 26,
    "down": 0,
    "untouched": 4,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "21": 4,
-     "29": 7,
-     "33": 17
+     "21": 3,
+     "22": 1,
+     "29": 6,
+     "33": 16
     }
    },
    "before_max": 86.4,
@@ -599,16 +610,16 @@
      34
     ]
    },
-   "assigned": 35,
-   "changed": 35,
+   "assigned": 34,
+   "changed": 34,
    "up": 26,
-   "down": 9,
+   "down": 8,
    "untouched": 15,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "8": 9,
-     "23": 5,
+     "8": 8,
+     "22": 5,
      "33": 17,
      "34": 4
     }
@@ -818,25 +829,43 @@
      33
     ]
    },
-   "assigned": 43,
-   "changed": 43,
-   "up": 34,
-   "down": 9,
-   "untouched": 26,
+   "assigned": 42,
+   "changed": 42,
+   "up": 28,
+   "down": 14,
+   "untouched": 27,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "12": 9,
-     "16": 8,
-     "18": 9,
-     "27": 6,
+     "12": 6,
+     "16": 11,
+     "18": 8,
+     "24": 6,
      "33": 11
     }
    },
    "before_max": 86.4,
    "after_max": 99.0,
    "before_med": 55.9,
-   "after_med": 54.0
+   "after_med": 54.0,
+   "shape_rejected": [
+    {
+     "i": 218385,
+     "x": -3191.9,
+     "z": 6327.0,
+     "a": 1535,
+     "h": 55.9,
+     "why": "充满度 0.31 < 0.6"
+    },
+    {
+     "i": 218425,
+     "x": -3194.1,
+     "z": 6413.2,
+     "a": 1553,
+     "h": 36.7,
+     "why": "充满度 0.31 < 0.6"
+    }
+   ]
   },
   {
    "n": "太白小区",
@@ -930,7 +959,7 @@
    "changed": 16,
    "up": 16,
    "down": 0,
-   "untouched": 23,
+   "untouched": 21,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -1196,23 +1225,33 @@
      44
     ]
    },
-   "assigned": 14,
-   "changed": 14,
-   "up": 14,
+   "assigned": 13,
+   "changed": 13,
+   "up": 13,
    "down": 0,
-   "untouched": 18,
+   "untouched": 19,
    "sat_high": 2,
    "by_tier": {
     "H": {
-     "25": 5,
-     "32": 5,
+     "30": 5,
+     "32": 4,
      "33": 4
     }
    },
    "before_max": 78.7,
    "after_max": 99.0,
-   "before_med": 29.25,
-   "after_med": 96.0
+   "before_med": 26.3,
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 209632,
+     "x": 1186.3,
+     "z": 6707.5,
+     "a": 1544,
+     "h": 55.9,
+     "why": "充满度 0.50 < 0.6"
+    }
+   ]
   },
   {
    "n": "华侨城·108坊",
@@ -1276,26 +1315,52 @@
      35
     ]
    },
-   "assigned": 33,
-   "changed": 33,
-   "up": 32,
+   "assigned": 30,
+   "changed": 30,
+   "up": 29,
    "down": 1,
-   "untouched": 9,
-   "sat_high": 20,
+   "untouched": 12,
+   "sat_high": 17,
    "by_tier": {
     "M": {
      "11": 4
     },
     "H": {
      "12": 1,
-     "34": 27,
+     "34": 24,
      "35": 1
     }
    },
    "before_max": 86.4,
    "after_max": 105.0,
    "before_med": 26.3,
-   "after_med": 102.0
+   "after_med": 102.0,
+   "shape_rejected": [
+    {
+     "i": 91433,
+     "x": 4929.8,
+     "z": 4809.8,
+     "a": 2188,
+     "h": 14.8,
+     "why": "面积 2188 m² 是所在 OSM 轮廓 1234 m² 的 1.8 倍"
+    },
+    {
+     "i": 91396,
+     "x": 5049.7,
+     "z": 4963.3,
+     "a": 2171,
+     "h": 12.6,
+     "why": "充满度 0.40 < 0.6"
+    },
+    {
+     "i": 91329,
+     "x": 4910.3,
+     "z": 4963.3,
+     "a": 2020,
+     "h": 15.4,
+     "why": "充满度 0.57 < 0.6"
+    }
+   ]
   },
   {
    "n": "中海铂宫",
@@ -1359,11 +1424,11 @@
      18
     ]
    },
-   "assigned": 61,
-   "changed": 61,
-   "up": 56,
+   "assigned": 60,
+   "changed": 60,
+   "up": 55,
    "down": 5,
-   "untouched": 1,
+   "untouched": 2,
    "sat_high": 0,
    "by_tier": {
     "L": {
@@ -1371,14 +1436,24 @@
      "7": 34
     },
     "H": {
-     "15": 8,
+     "15": 7,
      "18": 5
     }
    },
    "before_max": 79.5,
    "after_max": 54.0,
    "before_med": 14.2,
-   "after_med": 21.0
+   "after_med": 21.0,
+   "shape_rejected": [
+    {
+     "i": 209285,
+     "x": 4078.7,
+     "z": 5774.7,
+     "a": 1716,
+     "h": 36.7,
+     "why": "充满度 0.44 < 0.6"
+    }
+   ]
   },
   {
    "n": "曲江紫汀苑",
@@ -1474,23 +1549,49 @@
      34
     ]
    },
-   "assigned": 19,
-   "changed": 19,
-   "up": 19,
+   "assigned": 17,
+   "changed": 17,
+   "up": 17,
    "down": 0,
-   "untouched": 9,
+   "untouched": 11,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "25": 6,
-     "30": 1,
-     "34": 12
+     "29": 4,
+     "25": 3,
+     "34": 10
     }
    },
    "before_max": 86.4,
    "after_max": 102.0,
    "before_med": 55.9,
-   "after_med": 102.0
+   "after_med": 102.0,
+   "shape_rejected": [
+    {
+     "i": 97736,
+     "x": 4050.6,
+     "z": 4557.4,
+     "a": 1530,
+     "h": 55.9,
+     "why": "内缩 4 m 后分裂成 3 块"
+    },
+    {
+     "i": 211112,
+     "x": 3986.6,
+     "z": 4863.6,
+     "a": 1671,
+     "h": 55.9,
+     "why": "面积 1671 m² 是所在 OSM 轮廓 232 m² 的 7.2 倍"
+    },
+    {
+     "i": 97396,
+     "x": 4026.7,
+     "z": 4751.8,
+     "a": 1630,
+     "h": 36.7,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "中海熙岸",
@@ -1599,25 +1700,35 @@
      44
     ]
    },
-   "assigned": 43,
-   "changed": 43,
-   "up": 43,
+   "assigned": 42,
+   "changed": 42,
+   "up": 42,
    "down": 0,
-   "untouched": 38,
-   "sat_high": 12,
+   "untouched": 39,
+   "sat_high": 11,
    "by_tier": {
     "H": {
      "24": 7,
      "25": 3,
      "26": 3,
-     "33": 18,
+     "33": 17,
      "44": 12
     }
    },
    "before_max": 78.7,
    "after_max": 132.0,
-   "before_med": 32.2,
-   "after_med": 99.0
+   "before_med": 34.45,
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 91358,
+     "x": 4930.4,
+     "z": 5216.2,
+     "a": 1736,
+     "h": 14.2,
+     "why": "充满度 0.43 < 0.6"
+    }
+   ]
   },
   {
    "n": "碧桂园云顶",
@@ -1757,18 +1868,18 @@
      34
     ]
    },
-   "assigned": 100,
-   "changed": 100,
-   "up": 100,
+   "assigned": 99,
+   "changed": 99,
+   "up": 99,
    "down": 0,
-   "untouched": 26,
+   "untouched": 27,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "19": 24,
+     "19": 26,
      "27": 2,
-     "30": 14,
-     "32": 30,
+     "30": 12,
+     "32": 29,
      "33": 8,
      "34": 22
     }
@@ -1776,7 +1887,17 @@
    "before_max": 86.4,
    "after_max": 102.0,
    "before_med": 55.9,
-   "after_med": 96.0
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 10463,
+     "x": -4802.2,
+     "z": 10898.4,
+     "a": 1967,
+     "h": 36.7,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "绿地国际生态城",
@@ -2153,11 +2274,11 @@
      31
     ]
    },
-   "assigned": 52,
-   "changed": 52,
-   "up": 21,
+   "assigned": 51,
+   "changed": 51,
+   "up": 20,
    "down": 31,
-   "untouched": 23,
+   "untouched": 22,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -2165,12 +2286,12 @@
      "31": 2
     },
     "M": {
-     "11": 17
+     "11": 16
     }
    },
    "before_max": 86.4,
    "after_max": 93.0,
-   "before_med": 61.650000000000006,
+   "before_med": 67.4,
    "after_med": 54.0
   },
   {
@@ -2355,9 +2476,9 @@
      33
     ]
    },
-   "assigned": 27,
-   "changed": 27,
-   "up": 27,
+   "assigned": 26,
+   "changed": 26,
+   "up": 26,
    "down": 0,
    "untouched": 32,
    "sat_high": 0,
@@ -2365,7 +2486,7 @@
     "H": {
      "26": 5,
      "30": 10,
-     "33": 12
+     "33": 11
     }
    },
    "before_max": 55.9,
@@ -2427,17 +2548,17 @@
      34
     ]
    },
-   "assigned": 34,
-   "changed": 34,
-   "up": 34,
+   "assigned": 35,
+   "changed": 35,
+   "up": 35,
    "down": 0,
-   "untouched": 1,
+   "untouched": 0,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "9": 9,
      "26": 1,
-     "33": 5,
+     "33": 6,
      "34": 6
     },
     "L": {
@@ -2835,16 +2956,17 @@
      34
     ]
    },
-   "assigned": 32,
-   "changed": 32,
-   "up": 32,
+   "assigned": 30,
+   "changed": 30,
+   "up": 30,
    "down": 0,
    "untouched": 6,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "20": 4,
-     "34": 28
+     "20": 3,
+     "32": 1,
+     "34": 26
     }
    },
    "before_max": 86.4,
@@ -2942,16 +3064,17 @@
      27
     ]
    },
-   "assigned": 81,
-   "changed": 81,
-   "up": 35,
-   "down": 46,
-   "untouched": 28,
+   "assigned": 77,
+   "changed": 77,
+   "up": 38,
+   "down": 39,
+   "untouched": 32,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "18": 13,
-     "26": 49,
+     "18": 7,
+     "25": 5,
+     "26": 46,
      "27": 1
     },
     "M": {
@@ -2961,8 +3084,42 @@
    },
    "before_max": 90.0,
    "after_max": 81.0,
-   "before_med": 76.5,
-   "after_med": 78.0
+   "before_med": 78.7,
+   "after_med": 78.0,
+   "shape_rejected": [
+    {
+     "i": 223627,
+     "x": -1041.4,
+     "z": -9517.5,
+     "a": 1334,
+     "h": 78.7,
+     "why": "充满度 0.52 < 0.6"
+    },
+    {
+     "i": 223650,
+     "x": -1040.6,
+     "z": -9450.3,
+     "a": 1407,
+     "h": 55.9,
+     "why": "充满度 0.47 < 0.6"
+    },
+    {
+     "i": 223669,
+     "x": -1045.6,
+     "z": -9353.3,
+     "a": 1606,
+     "h": 76.5,
+     "why": "内缩 4 m 后分裂成 4 块"
+    },
+    {
+     "i": 223585,
+     "x": -1528.6,
+     "z": -9731.9,
+     "a": 1515,
+     "h": 76.5,
+     "why": "充满度 0.52 < 0.6"
+    }
+   ]
   },
   {
    "n": "白桦林间",
@@ -2992,15 +3149,25 @@
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "27": 9,
-     "31": 5,
-     "33": 22
+     "27": 8,
+     "33": 23,
+     "31": 5
     }
    },
    "before_max": 86.4,
    "after_max": 99.0,
    "before_med": 78.7,
-   "after_med": 99.0
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 223656,
+     "x": -1686.7,
+     "z": -9441.5,
+     "a": 1848,
+     "h": 26.3,
+     "why": "充满度 0.55 < 0.6"
+    }
+   ]
   },
   {
    "n": "文景小区",
@@ -3018,15 +3185,15 @@
      30
     ]
    },
-   "assigned": 40,
-   "changed": 40,
-   "up": 38,
+   "assigned": 38,
+   "changed": 38,
+   "up": 36,
    "down": 2,
-   "untouched": 11,
+   "untouched": 13,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "14": 4,
+     "14": 2,
      "29": 30,
      "30": 6
     }
@@ -3034,7 +3201,25 @@
    "before_max": 86.4,
    "after_max": 90.0,
    "before_med": 79.5,
-   "after_med": 87.0
+   "after_med": 87.0,
+   "shape_rejected": [
+    {
+     "i": 223471,
+     "x": -1830.1,
+     "z": -10106.2,
+     "a": 4525,
+     "h": 26.3,
+     "why": "充满度 0.24 < 0.6"
+    },
+    {
+     "i": 223515,
+     "x": -1648.7,
+     "z": -10004.3,
+     "a": 1927,
+     "h": 26.3,
+     "why": "充满度 0.57 < 0.6"
+    }
+   ]
   },
   {
    "n": "天朗御湖",
@@ -3051,23 +3236,33 @@
      34
     ]
    },
-   "assigned": 28,
-   "changed": 28,
-   "up": 28,
+   "assigned": 27,
+   "changed": 27,
+   "up": 27,
    "down": 0,
-   "untouched": 7,
+   "untouched": 8,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "32": 9,
+     "32": 8,
      "33": 15,
      "34": 4
     }
    },
    "before_max": 86.4,
    "after_max": 102.0,
-   "before_med": 72.35,
-   "after_med": 99.0
+   "before_med": 76.5,
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 222542,
+     "x": -1666.3,
+     "z": -8954.1,
+     "a": 1818,
+     "h": 32.2,
+     "why": "充满度 0.39 < 0.6"
+    }
+   ]
   },
   {
    "n": "海璟台北湾",
@@ -3124,15 +3319,15 @@
      33
     ]
    },
-   "assigned": 30,
-   "changed": 30,
-   "up": 14,
-   "down": 16,
-   "untouched": 14,
+   "assigned": 32,
+   "changed": 32,
+   "up": 15,
+   "down": 17,
+   "untouched": 12,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "14": 11,
+     "14": 13,
      "16": 2,
      "18": 9,
      "33": 8
@@ -3223,15 +3418,15 @@
      34
     ]
    },
-   "assigned": 27,
-   "changed": 27,
-   "up": 27,
+   "assigned": 28,
+   "changed": 28,
+   "up": 28,
    "down": 0,
-   "untouched": 15,
+   "untouched": 14,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "15": 6,
+     "15": 7,
      "25": 4,
      "29": 1,
      "32": 2,
@@ -3240,8 +3435,8 @@
    },
    "before_max": 86.4,
    "after_max": 99.0,
-   "before_med": 78.7,
-   "after_med": 99.0
+   "before_med": 73.45,
+   "after_med": 97.5
   },
   {
    "n": "长庆未央湖花园",
@@ -3574,8 +3769,8 @@
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "32": 10,
-     "33": 10,
+     "32": 8,
+     "33": 12,
      "34": 3
     },
     "L": {
@@ -3714,27 +3909,27 @@
      34
     ]
    },
-   "assigned": 83,
-   "changed": 83,
-   "up": 83,
+   "assigned": 90,
+   "changed": 90,
+   "up": 90,
    "down": 0,
-   "untouched": 33,
+   "untouched": 26,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "15": 10,
      "27": 8,
-     "28": 16,
+     "28": 20,
      "29": 4,
      "30": 4,
-     "31": 6,
-     "33": 30,
+     "33": 32,
+     "31": 7,
      "34": 5
     }
    },
    "before_max": 90.0,
    "after_max": 102.0,
-   "before_med": 76.5,
+   "before_med": 72.35,
    "after_med": 90.0
   },
   {
@@ -3772,15 +3967,15 @@
      27
     ]
    },
-   "assigned": 115,
-   "changed": 115,
+   "assigned": 116,
+   "changed": 116,
    "up": 81,
-   "down": 34,
-   "untouched": 1,
+   "down": 35,
+   "untouched": 0,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "15": 5,
+     "15": 6,
      "18": 6,
      "22": 9,
      "24": 13,
@@ -3941,16 +4136,16 @@
      33
     ]
    },
-   "assigned": 18,
-   "changed": 18,
-   "up": 18,
+   "assigned": 19,
+   "changed": 19,
+   "up": 19,
    "down": 0,
-   "untouched": 18,
+   "untouched": 17,
    "sat_high": 0,
    "by_tier": {
     "H": {
+     "32": 9,
      "22": 2,
-     "32": 8,
      "33": 8
     }
    },
@@ -3987,9 +4182,9 @@
      33
     ]
    },
-   "assigned": 30,
-   "changed": 30,
-   "up": 30,
+   "assigned": 29,
+   "changed": 29,
+   "up": 29,
    "down": 0,
    "untouched": 15,
    "sat_high": 0,
@@ -3997,7 +4192,7 @@
     "H": {
      "23": 5,
      "26": 7,
-     "27": 6,
+     "27": 5,
      "29": 9,
      "33": 3
     }
@@ -4005,7 +4200,17 @@
    "before_max": 86.4,
    "after_max": 99.0,
    "before_med": 76.5,
-   "after_med": 81.0
+   "after_med": 81.0,
+   "shape_rejected": [
+    {
+     "i": 190731,
+     "x": 4498.9,
+     "z": -2183.1,
+     "a": 1599,
+     "h": 76.5,
+     "why": "内缩 4 m 后分裂成 3 块"
+    }
+   ]
   },
   {
    "n": "华宇凤凰城",
@@ -4141,15 +4346,15 @@
      32
     ]
    },
-   "assigned": 35,
-   "changed": 35,
-   "up": 35,
+   "assigned": 34,
+   "changed": 34,
+   "up": 34,
    "down": 0,
-   "untouched": 3,
+   "untouched": 4,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "26": 6,
+     "26": 5,
      "27": 3,
      "30": 19,
      "32": 7
@@ -4158,7 +4363,17 @@
    "before_max": 79.5,
    "after_max": 96.0,
    "before_med": 76.5,
-   "after_med": 90.0
+   "after_med": 90.0,
+   "shape_rejected": [
+    {
+     "i": 222795,
+     "x": -2085.3,
+     "z": -7494.6,
+     "a": 1933,
+     "h": 26.3,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "悦美国际",
@@ -4467,25 +4682,26 @@
      32
     ]
    },
-   "assigned": 23,
-   "changed": 23,
-   "up": 23,
+   "assigned": 24,
+   "changed": 24,
+   "up": 24,
    "down": 0,
-   "untouched": 17,
+   "untouched": 16,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "18": 5,
      "23": 3,
+     "24": 1,
      "25": 1,
-     "28": 9,
+     "30": 9,
      "32": 5
     }
    },
    "before_max": 79.5,
    "after_max": 96.0,
    "before_med": 76.5,
-   "after_med": 84.0
+   "after_med": 90.0
   },
   {
    "n": "高科尚都",
@@ -4505,18 +4721,18 @@
      33
     ]
    },
-   "assigned": 26,
-   "changed": 26,
-   "up": 26,
+   "assigned": 24,
+   "changed": 24,
+   "up": 24,
    "down": 0,
    "untouched": 1,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "12": 2,
-     "18": 4,
+     "18": 3,
      "27": 3,
-     "33": 17
+     "33": 16
     }
    },
    "before_max": 86.4,
@@ -4688,21 +4904,31 @@
      33
     ]
    },
-   "assigned": 23,
-   "changed": 23,
-   "up": 23,
+   "assigned": 22,
+   "changed": 22,
+   "up": 22,
    "down": 0,
-   "untouched": 8,
+   "untouched": 9,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "33": 23
+     "33": 22
     }
    },
    "before_max": 86.4,
    "after_max": 99.0,
    "before_med": 76.5,
-   "after_med": 99.0
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 221159,
+     "x": -8866.4,
+     "z": 2947.3,
+     "a": 1774,
+     "h": 26.3,
+     "why": "充满度 0.36 < 0.6"
+    }
+   ]
   },
   {
    "n": "智慧城",
@@ -4727,22 +4953,22 @@
      26
     ]
    },
-   "assigned": 53,
-   "changed": 53,
-   "up": 50,
+   "assigned": 54,
+   "changed": 54,
+   "up": 51,
    "down": 3,
-   "untouched": 2,
+   "untouched": 0,
    "sat_high": 0,
    "by_tier": {
     "L": {
-     "7": 26
+     "7": 25
     },
     "M": {
      "10": 10,
      "11": 4
     },
     "H": {
-     "25": 11,
+     "25": 13,
      "26": 2
     }
    },
@@ -4883,23 +5109,33 @@
      32
     ]
    },
-   "assigned": 24,
-   "changed": 24,
-   "up": 24,
+   "assigned": 23,
+   "changed": 23,
+   "up": 23,
    "down": 0,
-   "untouched": 25,
+   "untouched": 26,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "18": 7,
+     "18": 6,
      "24": 1,
      "32": 16
     }
    },
    "before_max": 79.5,
    "after_max": 96.0,
-   "before_med": 61.650000000000006,
-   "after_med": 96.0
+   "before_med": 67.4,
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 220392,
+     "x": -7675.0,
+     "z": 1338.0,
+     "a": 1523,
+     "h": 26.3,
+     "why": "内缩 4 m 后分裂成 7 块"
+    }
+   ]
   },
   {
    "n": "华府西城港湾",
@@ -4920,16 +5156,16 @@
      32
     ]
    },
-   "assigned": 19,
-   "changed": 19,
-   "up": 17,
+   "assigned": 20,
+   "changed": 20,
+   "up": 18,
    "down": 2,
-   "untouched": 6,
+   "untouched": 5,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "20": 4,
-     "23": 6,
+     "23": 7,
      "28": 3,
      "32": 6
     }
@@ -5090,22 +5326,32 @@
      34
     ]
    },
-   "assigned": 22,
-   "changed": 22,
-   "up": 22,
+   "assigned": 21,
+   "changed": 21,
+   "up": 21,
    "down": 0,
-   "untouched": 7,
+   "untouched": 8,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "24": 5,
-     "34": 17
+     "34": 16
     }
    },
    "before_max": 79.5,
    "after_max": 102.0,
-   "before_med": 71.95,
-   "after_med": 102.0
+   "before_med": 76.5,
+   "after_med": 102.0,
+   "shape_rejected": [
+    {
+     "i": 151000,
+     "x": 281.9,
+     "z": -10574.3,
+     "a": 1686,
+     "h": 67.4,
+     "why": "面积 1686 m² 是所在 OSM 轮廓 758 m² 的 2.2 倍"
+    }
+   ]
   },
   {
    "n": "隆源国际城",
@@ -5273,9 +5519,9 @@
      30
     ]
    },
-   "assigned": 19,
-   "changed": 19,
-   "up": 19,
+   "assigned": 18,
+   "changed": 18,
+   "up": 18,
    "down": 0,
    "untouched": 7,
    "sat_high": 0,
@@ -5283,7 +5529,7 @@
     "H": {
      "23": 2,
      "25": 1,
-     "26": 3,
+     "26": 2,
      "30": 13
     }
    },
@@ -5357,23 +5603,33 @@
      34
     ]
    },
-   "assigned": 20,
-   "changed": 20,
-   "up": 20,
+   "assigned": 19,
+   "changed": 19,
+   "up": 19,
    "down": 0,
-   "untouched": 4,
+   "untouched": 5,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "27": 4,
-     "33": 6,
+     "33": 5,
      "34": 10
     }
    },
    "before_max": 86.4,
    "after_max": 102.0,
-   "before_med": 73.45,
-   "after_med": 100.5
+   "before_med": 78.7,
+   "after_med": 102.0,
+   "shape_rejected": [
+    {
+     "i": 14010,
+     "x": -5587.4,
+     "z": 9192.9,
+     "a": 1644,
+     "h": 36.7,
+     "why": "面积 1644 m² 是所在 OSM 轮廓 1059 m² 的 1.6 倍"
+    }
+   ]
   },
   {
    "n": "西勘小区",
@@ -5419,21 +5675,31 @@
      25
     ]
    },
-   "assigned": 17,
-   "changed": 17,
-   "up": 15,
+   "assigned": 19,
+   "changed": 19,
+   "up": 17,
    "down": 2,
-   "untouched": 11,
+   "untouched": 9,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "25": 17
+     "25": 19
     }
    },
    "before_max": 76.5,
    "after_max": 75.0,
    "before_med": 55.9,
-   "after_med": 75.0
+   "after_med": 75.0,
+   "shape_rejected": [
+    {
+     "i": 139320,
+     "x": 12757.8,
+     "z": -3498.6,
+     "a": 1608,
+     "h": 26.3,
+     "why": "充满度 0.52 < 0.6"
+    }
+   ]
   },
   {
    "n": "西安星雨华府",
@@ -5562,23 +5828,33 @@
      34
     ]
    },
-   "assigned": 18,
-   "changed": 18,
-   "up": 18,
+   "assigned": 17,
+   "changed": 17,
+   "up": 17,
    "down": 0,
-   "untouched": 10,
+   "untouched": 11,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "27": 2,
-     "32": 6,
+     "32": 5,
      "34": 10
     }
    },
    "before_max": 78.7,
    "after_max": 102.0,
    "before_med": 55.9,
-   "after_med": 102.0
+   "after_med": 102.0,
+   "shape_rejected": [
+    {
+     "i": 198078,
+     "x": -8027.5,
+     "z": -573.7,
+     "a": 1673,
+     "h": 32.2,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "大兴九臻",
@@ -5601,24 +5877,34 @@
      32
     ]
    },
-   "assigned": 20,
-   "changed": 20,
-   "up": 20,
+   "assigned": 19,
+   "changed": 19,
+   "up": 19,
    "down": 0,
-   "untouched": 11,
+   "untouched": 12,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "13": 4,
+     "18": 4,
      "22": 2,
-     "24": 4,
+     "24": 3,
      "32": 10
     }
    },
    "before_max": 86.4,
    "after_max": 96.0,
-   "before_med": 66.2,
-   "after_med": 84.0
+   "before_med": 76.5,
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 191959,
+     "x": -4182.8,
+     "z": -2944.5,
+     "a": 1555,
+     "h": 36.7,
+     "why": "充满度 0.49 < 0.6"
+    }
+   ]
   },
   {
    "n": "天琴湾",
@@ -6043,20 +6329,20 @@
      34
     ]
    },
-   "assigned": 18,
-   "changed": 18,
-   "up": 18,
+   "assigned": 17,
+   "changed": 17,
+   "up": 17,
    "down": 0,
    "untouched": 6,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "34": 18
+     "34": 17
     }
    },
    "before_max": 90.0,
    "after_max": 102.0,
-   "before_med": 66.2,
+   "before_med": 76.5,
    "after_med": 102.0
   },
   {
@@ -6204,7 +6490,17 @@
    "before_max": 79.5,
    "after_max": 93.0,
    "before_med": 76.5,
-   "after_med": 93.0
+   "after_med": 93.0,
+   "shape_rejected": [
+    {
+     "i": 24720,
+     "x": -6455.1,
+     "z": 1642.0,
+     "a": 1562,
+     "h": 32.2,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "挚信樱花园",
@@ -6338,16 +6634,16 @@
      33
     ]
    },
-   "assigned": 5,
-   "changed": 5,
-   "up": 5,
+   "assigned": 6,
+   "changed": 6,
+   "up": 6,
    "down": 0,
-   "untouched": 10,
+   "untouched": 9,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "18": 1,
-     "33": 4
+     "33": 5
     }
    },
    "before_max": 26.3,
@@ -6484,16 +6780,16 @@
      33
     ]
    },
-   "assigned": 15,
-   "changed": 15,
-   "up": 15,
+   "assigned": 16,
+   "changed": 16,
+   "up": 16,
    "down": 0,
-   "untouched": 14,
+   "untouched": 13,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "28": 3,
-     "32": 12
+     "32": 13
     }
    },
    "before_max": 90.0,
@@ -6592,23 +6888,33 @@
      35
     ]
    },
-   "assigned": 16,
-   "changed": 16,
-   "up": 16,
+   "assigned": 15,
+   "changed": 15,
+   "up": 15,
    "down": 0,
-   "untouched": 6,
+   "untouched": 7,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "33": 10,
-     "34": 5,
+     "33": 13,
+     "34": 1,
      "35": 1
     }
    },
    "before_max": 79.5,
    "after_max": 105.0,
    "before_med": 55.9,
-   "after_med": 99.0
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 220596,
+     "x": -8322.5,
+     "z": 1762.1,
+     "a": 1506,
+     "h": 31.4,
+     "why": "充满度 0.56 < 0.6"
+    }
+   ]
   },
   {
    "n": "金地褐石公馆",
@@ -6631,24 +6937,34 @@
      34
     ]
    },
-   "assigned": 13,
-   "changed": 13,
-   "up": 13,
+   "assigned": 12,
+   "changed": 12,
+   "up": 12,
    "down": 0,
-   "untouched": 8,
+   "untouched": 9,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "26": 2,
      "32": 1,
-     "33": 4,
+     "33": 3,
      "34": 6
     }
    },
    "before_max": 55.9,
    "after_max": 102.0,
-   "before_med": 32.2,
-   "after_med": 99.0
+   "before_med": 34.45,
+   "after_med": 100.5,
+   "shape_rejected": [
+    {
+     "i": 90222,
+     "x": 4438.9,
+     "z": 7801.1,
+     "a": 1716,
+     "h": 32.2,
+     "why": "充满度 0.54 < 0.6"
+    }
+   ]
   },
   {
    "n": "中海昆明路九号",
@@ -7097,22 +7413,41 @@
      40
     ]
    },
-   "assigned": 11,
-   "changed": 11,
-   "up": 11,
+   "assigned": 9,
+   "changed": 9,
+   "up": 9,
    "down": 0,
-   "untouched": 12,
+   "untouched": 14,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "32": 8,
-     "40": 3
+     "32": 6,
+     "39": 2,
+     "40": 1
     }
    },
    "before_max": 79.5,
    "after_max": 120.0,
    "before_med": 55.9,
-   "after_med": 96.0
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 223629,
+     "x": -2239.7,
+     "z": -9543.2,
+     "a": 1655,
+     "h": 55.9,
+     "why": "充满度 0.47 < 0.6"
+    },
+    {
+     "i": 223621,
+     "x": -2432.1,
+     "z": -9561.9,
+     "a": 1608,
+     "h": 55.9,
+     "why": "充满度 0.54 < 0.6"
+    }
+   ]
   },
   {
    "n": "荣华北经城",
@@ -7129,22 +7464,31 @@
      33
     ]
    },
-   "assigned": 14,
-   "changed": 14,
-   "up": 14,
+   "assigned": 13,
+   "changed": 13,
+   "up": 13,
    "down": 0,
-   "untouched": 4,
+   "untouched": 5,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "31": 7,
-     "33": 7
+     "33": 13
     }
    },
    "before_max": 86.4,
    "after_max": 99.0,
-   "before_med": 31.5,
-   "after_med": 96.0
+   "before_med": 26.3,
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 147489,
+     "x": 1073.5,
+     "z": -8653.1,
+     "a": 1561,
+     "h": 67.4,
+     "why": "充满度 0.58 < 0.6"
+    }
+   ]
   },
   {
    "n": "恒大帝景",
@@ -7209,7 +7553,7 @@
    "changed": 11,
    "up": 11,
    "down": 0,
-   "untouched": 8,
+   "untouched": 7,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -7313,16 +7657,16 @@
      33
     ]
    },
-   "assigned": 12,
-   "changed": 12,
-   "up": 10,
-   "down": 2,
-   "untouched": 5,
+   "assigned": 11,
+   "changed": 11,
+   "up": 8,
+   "down": 3,
+   "untouched": 6,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "18": 2,
-     "25": 2,
+     "25": 1,
      "28": 5
     },
     "M": {
@@ -7331,8 +7675,18 @@
    },
    "before_max": 78.7,
    "after_max": 84.0,
-   "before_med": 71.95,
-   "after_med": 75.0
+   "before_med": 76.5,
+   "after_med": 75.0,
+   "shape_rejected": [
+    {
+     "i": 16221,
+     "x": -3817.7,
+     "z": 5854.1,
+     "a": 1300,
+     "h": 36.7,
+     "why": "内缩 4 m 后分裂成 4 块"
+    }
+   ]
   },
   {
    "n": "晶城秀府",
@@ -7607,7 +7961,17 @@
    "before_max": 86.4,
    "after_max": 99.0,
    "before_med": 76.5,
-   "after_med": 99.0
+   "after_med": 99.0,
+   "shape_rejected": [
+    {
+     "i": 213959,
+     "x": 1161.1,
+     "z": -7177.5,
+     "a": 1570,
+     "h": 36.7,
+     "why": "充满度 0.58 < 0.6"
+    }
+   ]
   },
   {
    "n": "城市锦上",
@@ -7829,9 +8193,9 @@
      33
     ]
    },
-   "assigned": 11,
-   "changed": 11,
-   "up": 11,
+   "assigned": 10,
+   "changed": 10,
+   "up": 10,
    "down": 0,
    "untouched": 7,
    "sat_high": 0,
@@ -7839,13 +8203,13 @@
     "H": {
      "18": 3,
      "32": 2,
-     "33": 6
+     "33": 5
     }
    },
    "before_max": 79.5,
    "after_max": 99.0,
-   "before_med": 76.5,
-   "after_med": 99.0
+   "before_med": 56.6,
+   "after_med": 97.5
   },
   {
    "n": "海荣豪佳花园",
@@ -7937,22 +8301,40 @@
      27
     ]
    },
-   "assigned": 12,
-   "changed": 12,
-   "up": 11,
+   "assigned": 10,
+   "changed": 10,
+   "up": 9,
    "down": 1,
-   "untouched": 2,
+   "untouched": 4,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "25": 3,
+     "25": 1,
      "27": 9
     }
    },
    "before_max": 86.4,
    "after_max": 81.0,
-   "before_med": 34.45,
-   "after_med": 81.0
+   "before_med": 36.7,
+   "after_med": 81.0,
+   "shape_rejected": [
+    {
+     "i": 214573,
+     "x": 868.3,
+     "z": -9748.5,
+     "a": 1701,
+     "h": 26.3,
+     "why": "充满度 0.44 < 0.6"
+    },
+    {
+     "i": 214593,
+     "x": 873.6,
+     "z": -9653.2,
+     "a": 1516,
+     "h": 26.3,
+     "why": "充满度 0.42 < 0.6"
+    }
+   ]
   },
   {
    "n": "名京九合院",
@@ -8001,7 +8383,7 @@
    "changed": 12,
    "up": 12,
    "down": 0,
-   "untouched": 9,
+   "untouched": 8,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -8031,24 +8413,34 @@
      33
     ]
    },
-   "assigned": 11,
-   "changed": 11,
-   "up": 11,
+   "assigned": 10,
+   "changed": 10,
+   "up": 10,
    "down": 0,
-   "untouched": 2,
+   "untouched": 3,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "24": 3,
      "28": 2,
-     "30": 3,
+     "30": 2,
      "33": 3
     }
    },
    "before_max": 87.7,
    "after_max": 99.0,
-   "before_med": 36.7,
-   "after_med": 90.0
+   "before_med": 34.45,
+   "after_med": 87.0,
+   "shape_rejected": [
+    {
+     "i": 213396,
+     "x": -299.8,
+     "z": -10020.0,
+     "a": 1521,
+     "h": 55.9,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "海伦国际",
@@ -8080,7 +8472,17 @@
    "before_max": 78.7,
    "after_max": 99.0,
    "before_med": 29.25,
-   "after_med": 97.5
+   "after_med": 97.5,
+   "shape_rejected": [
+    {
+     "i": 93522,
+     "x": 5051.5,
+     "z": 3063.6,
+     "a": 1566,
+     "h": 26.3,
+     "why": "充满度 0.57 < 0.6"
+    }
+   ]
   },
   {
    "n": "美寓华庭",
@@ -8135,22 +8537,32 @@
      28
     ]
    },
-   "assigned": 9,
-   "changed": 9,
-   "up": 8,
+   "assigned": 8,
+   "changed": 8,
+   "up": 7,
    "down": 1,
-   "untouched": 0,
+   "untouched": 1,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "17": 3,
+     "17": 2,
      "28": 6
     }
    },
    "before_max": 76.5,
    "after_max": 84.0,
    "before_med": 76.5,
-   "after_med": 84.0
+   "after_med": 84.0,
+   "shape_rejected": [
+    {
+     "i": 148527,
+     "x": 461.3,
+     "z": -8254.5,
+     "a": 1846,
+     "h": 26.3,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "裕昌太阳城",
@@ -8214,22 +8626,32 @@
      33
     ]
    },
-   "assigned": 8,
-   "changed": 8,
-   "up": 8,
+   "assigned": 7,
+   "changed": 7,
+   "up": 7,
    "down": 0,
-   "untouched": 13,
+   "untouched": 14,
    "sat_high": 0,
    "by_tier": {
     "H": {
      "32": 4,
-     "33": 4
+     "33": 3
     }
    },
    "before_max": 55.9,
    "after_max": 99.0,
-   "before_med": 31.5,
-   "after_med": 97.5
+   "before_med": 26.3,
+   "after_med": 96.0,
+   "shape_rejected": [
+    {
+     "i": 214758,
+     "x": 861.1,
+     "z": -8783.5,
+     "a": 1681,
+     "h": 36.7,
+     "why": "充满度 0.46 < 0.6"
+    }
+   ]
   },
   {
    "n": "绿地海珀紫庭",
@@ -8672,11 +9094,11 @@
      32
     ]
    },
-   "assigned": 56,
-   "changed": 56,
-   "up": 56,
+   "assigned": 54,
+   "changed": 54,
+   "up": 54,
    "down": 0,
-   "untouched": 0,
+   "untouched": 1,
    "sat_high": 0,
    "by_tier": {
     "L": {
@@ -8685,13 +9107,23 @@
     },
     "H": {
      "18": 1,
-     "32": 6
+     "32": 4
     }
    },
    "before_max": 76.5,
    "after_max": 96.0,
    "before_med": 14.2,
-   "after_med": 18.0
+   "after_med": 18.0,
+   "shape_rejected": [
+    {
+     "i": 218266,
+     "x": -3100.8,
+     "z": 5818.8,
+     "a": 1650,
+     "h": 55.9,
+     "why": "内缩 4 m 后分裂成 2 块"
+    }
+   ]
   },
   {
    "n": "尚品美地城",
@@ -8784,22 +9216,32 @@
      28
     ]
    },
-   "assigned": 5,
-   "changed": 5,
-   "up": 2,
+   "assigned": 4,
+   "changed": 4,
+   "up": 1,
    "down": 3,
-   "untouched": 6,
+   "untouched": 7,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "22": 2,
+     "22": 1,
      "25": 3
     }
    },
    "before_max": 76.5,
    "after_max": 75.0,
    "before_med": 76.5,
-   "after_med": 75.0
+   "after_med": 75.0,
+   "shape_rejected": [
+    {
+     "i": 212467,
+     "x": -1234.1,
+     "z": -5795.6,
+     "a": 1516,
+     "h": 36.7,
+     "why": "内缩 4 m 后分裂成 3 块"
+    }
+   ]
   },
   {
    "n": "绿地峰辉",
@@ -8888,9 +9330,9 @@
      28
     ]
    },
-   "assigned": 33,
-   "changed": 33,
-   "up": 31,
+   "assigned": 31,
+   "changed": 31,
+   "up": 29,
    "down": 2,
    "untouched": 0,
    "sat_high": 0,
@@ -8900,7 +9342,7 @@
     },
     "L": {
      "5": 1,
-     "6": 20,
+     "6": 18,
      "7": 5
     }
    },
@@ -10011,7 +10453,7 @@
    "changed": 2,
    "up": 2,
    "down": 0,
-   "untouched": 4,
+   "untouched": 3,
    "sat_high": 0,
    "by_tier": {
     "H": {
@@ -10917,6 +11359,39 @@
    "after_med": 21.0
   },
   {
+   "n": "蓝溪都市花园",
+   "nrec": 7,
+   "counts": {
+    "7": 1,
+    "13": 4,
+    "15": 2
+   },
+   "tiers": {
+    "L": [
+     7
+    ],
+    "H": [
+     13,
+     15
+    ]
+   },
+   "assigned": 5,
+   "changed": 5,
+   "up": 5,
+   "down": 0,
+   "untouched": 0,
+   "sat_high": 0,
+   "by_tier": {
+    "L": {
+     "7": 5
+    }
+   },
+   "before_max": 16.0,
+   "after_max": 21.0,
+   "before_med": 15.4,
+   "after_med": 21.0
+  },
+  {
    "n": "华城国际",
    "nrec": 28,
    "counts": {
@@ -11004,21 +11479,23 @@
      32
     ]
    },
-   "assigned": 1,
-   "changed": 1,
-   "up": 1,
+   "assigned": 0,
+   "changed": 0,
+   "up": 0,
    "down": 0,
-   "untouched": 0,
+   "untouched": 1,
    "sat_high": 0,
-   "by_tier": {
-    "H": {
-     "32": 1
+   "by_tier": {},
+   "shape_rejected": [
+    {
+     "i": 210223,
+     "x": -348.4,
+     "z": 7205.6,
+     "a": 1608,
+     "h": 55.9,
+     "why": "内缩 4 m 后分裂成 2 块"
     }
-   },
-   "before_max": 55.9,
-   "after_max": 96.0,
-   "before_med": 55.9,
-   "after_med": 96.0
+   ]
   },
   {
    "n": "壹又贰分之壹",
@@ -11033,21 +11510,13 @@
      30
     ]
    },
-   "assigned": 1,
-   "changed": 1,
-   "up": 1,
+   "assigned": 0,
+   "changed": 0,
+   "up": 0,
    "down": 0,
    "untouched": 0,
    "sat_high": 0,
-   "by_tier": {
-    "H": {
-     "20": 1
-    }
-   },
-   "before_max": 32.2,
-   "after_max": 60.0,
-   "before_med": 32.2,
-   "after_med": 60.0
+   "by_tier": {}
   },
   {
    "n": "阳阳国际广场",
@@ -11067,39 +11536,6 @@
    "untouched": 0,
    "sat_high": 0,
    "by_tier": {}
-  },
-  {
-   "n": "蓝溪都市花园",
-   "nrec": 7,
-   "counts": {
-    "7": 1,
-    "13": 4,
-    "15": 2
-   },
-   "tiers": {
-    "L": [
-     7
-    ],
-    "H": [
-     13,
-     15
-    ]
-   },
-   "assigned": 6,
-   "changed": 6,
-   "up": 6,
-   "down": 0,
-   "untouched": 0,
-   "sat_high": 0,
-   "by_tier": {
-    "L": {
-     "7": 6
-    }
-   },
-   "before_max": 16.0,
-   "after_max": 21.0,
-   "before_med": 13.399999999999999,
-   "after_med": 21.0
   },
   {
    "n": "双鱼花园广场",
@@ -11152,21 +11588,13 @@
      30
     ]
    },
-   "assigned": 1,
-   "changed": 1,
-   "up": 1,
+   "assigned": 0,
+   "changed": 0,
+   "up": 0,
    "down": 0,
    "untouched": 0,
    "sat_high": 0,
-   "by_tier": {
-    "H": {
-     "30": 1
-    }
-   },
-   "before_max": 26.3,
-   "after_max": 90.0,
-   "before_med": 26.3,
-   "after_med": 90.0
+   "by_tier": {}
   },
   {
    "n": "华豪丽晶",
@@ -11271,16 +11699,16 @@
      32
     ]
    },
-   "assigned": 6,
-   "changed": 6,
-   "up": 6,
+   "assigned": 2,
+   "changed": 2,
+   "up": 2,
    "down": 0,
    "untouched": 0,
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "30": 3,
-     "32": 3
+     "30": 1,
+     "32": 1
     }
    },
    "before_max": 55.9,
@@ -11311,13 +11739,14 @@
    "sat_high": 0,
    "by_tier": {
     "H": {
-     "31": 3
+     "27": 2,
+     "33": 1
     }
    },
-   "before_max": 26.3,
-   "after_max": 93.0,
+   "before_max": 78.7,
+   "after_max": 99.0,
    "before_med": 26.3,
-   "after_med": 93.0
+   "after_med": 81.0
   },
   {
    "n": "泰华世纪新城",
