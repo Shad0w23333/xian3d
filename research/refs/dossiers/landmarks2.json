@@ -283,9 +283,9 @@
    15650
   ],
   "overture_id": null,
-  "height_m": 26,
-  "height_source": "按照片比例 / 卫星估算（见 notes）",
-  "floors": null,
+  "height_m": 36,
+  "height_source": "中文维基“陕西考古博物馆”：地上四层，框剪结构，高度为 36 米；设计单位中建西北院（archina.com works id=16840）",
+  "floors": 4,
   "year": 2022,
   "massing": "米黄石材两层方形基座 + 逐层收进的三重深灰金属屋檐 + 顶部四坡顶",
   "facade": null,
@@ -305,10 +305,12 @@
   "sources": [
    "public/data/pois.json 陕西考古博物馆 (−5913, 15658)",
    "Esri World Imagery z18（平面量取）",
-   "research/refs/landmarks2026/heritage.json#陕西考古博物馆"
+   "research/refs/landmarks2026/heritage.json#陕西考古博物馆",
+   "https://zh.wikipedia.org/wiki/陕西考古博物馆",
+   "https://www.archina.com/index.php?g=works&m=index&a=show&id=16840"
   ],
-  "confidence": "medium（平面按卫星）；low（高度按照片比例）",
-  "notes": "无 Overture 轮廓，平面按卫星量取（±3 m）。原 heritage26 通用单体（1 座仿古殿）被替代。"
+  "confidence": "medium（平面按卫星）；high（总高、层数）；medium（分层高度按照片比例）",
+  "notes": "无 Overture 轮廓，平面按卫星量取（±3 m）。总高 36 m：基座 12 m，屋檐约 18 / 24 m，顶部四坡顶屋脊 36 m。原 heritage26 通用单体（1 座仿古殿）被替代。"
  },
  {
   "name": "曲江竞技中心",
@@ -359,7 +361,7 @@
    1454
   ],
   "overture_id": "f4c72d77-82d2-4d52-a6a3-5f20e708eaea / ba35b40d-d361-43c7-bd74-46677eac2a8e / 96cbe3bd-36d3-4a36-8a68-4a840f339a5b",
-  "height_m": 30,
+  "height_m": 35,
   "height_source": "按照片比例 / 卫星估算（见 notes）",
   "floors": null,
   "year": null,
@@ -399,7 +401,7 @@
   ],
   "overture_id": "af8bdf53-15db-4fcc-b171-a8cd11e4c04a",
   "height_m": 24,
-  "height_source": "无公开数据；按展厅净高 13/16 m（有方 / 国资委）+ 屋架推定",
+  "height_source": "展厅：无公开数据，按净高 13/16 m（有方 / 国资委）+ 屋架推定；登录厅：十字柱高 30 m（gmp 项目页）",
   "floors": null,
   "year": 2020,
   "massing": "gmp 鱼骨式展厅群：10 个展厅矩形（OSM 梳齿轮廓反算）+ 中央连廊 + 登录厅；屋面为平行弧形条带",
@@ -418,6 +420,7 @@
   ],
   "photos_local": "scratchpad/lm2/photos/expo/",
   "sources": [
+   "https://www.gmp.de/cn/projects/9499/silk-road-international-exhibition-center",
    "https://www.archiposition.com/items/20200803031222",
    "http://www.sasac.gov.cn/n2588025/n2641616/c14530534/content.html",
    "http://m.cnwest.com/xian/a/2020/03/23/18595972.html",
@@ -425,7 +428,7 @@
    "Esri z18 卫星（屋面条带方向）"
   ],
   "confidence": "high（平面、屋面条带形式）；low（高度）",
-  "notes": "展厅矩形由 OSM 梳齿轮廓角点反算（±2 m）；西北端 H9/H10 与登录厅 lobby 的分界按卫星判读（±8 m）。檐口 19/21/23 m 为按净高推定，屋面条带拱起 2.2 m。"
+  "notes": "展厅矩形由 OSM 梳齿轮廓角点反算（±2 m）；西北端 H9/H10 与登录厅 lobby 的分界按卫星判读（±8 m）。檐口 19/21/23 m 为按净高推定，屋面条带拱起 2.2 m。登录厅屋面顶约 30.5 m（gmp：十字柱高 30 m），挑檐 9 m；gmp 页面称有两个入口大厅，第二个待卫星确认后再补。旧 skyline 展馆中未被新体块覆盖的部分（CMAB 155117、154923、154997–154999）按 CMAB 轮廓补建。"
  },
  {
   "name": "禾盛京广中心",
@@ -464,7 +467,7 @@
    "Overture building w988359466–w988359470（A–F 座、T11）"
   ],
   "confidence": "high（落位、A 座高度）；medium（B–F 楼号对应与高度）",
-  "notes": "A 座顶部 188 m 以上略收进 + 3.5 m 女儿墙（照片塔顶线脚）；T11 商场裙房 24 m（约 5 层）按照片估计。"
+  "notes": "A 座总高 200 m（196.5 m 屋面 + 3.5 m 女儿墙）；层数 41（安居客 / 吉屋 / OSM），另有来源写 42 层。顶部 188 m 以上略收进（照片塔顶线脚）；T11 商场裙房 24 m（约 5 层）按照片估计。"
  },
  {
   "name": "西安丽思卡尔顿酒店",
@@ -803,11 +806,11 @@
    6246.8
   ],
   "overture_id": "b24cc210-cee2-46eb-9246-5e4527b5e6ad",
-  "height_m": 10,
-  "height_source": "无公开数据；按照片比例（基座 10 m、比赛馆壳顶约 36 m）",
+  "height_m": 40,
+  "height_source": "陕西省建筑业协会项目页 https://www.sxjzy.org/h-nd-29961.html：建筑高度 40 米，地下 1 层、地上 3 层，观众总座椅 6954 个",
   "floors": 3,
   "year": 2020,
-  "massing": "比赛馆 + 训练馆两瓣银色网壳（“丝带”）+ 石材基座；建筑面积 72450 m²、7048 座（凤凰网陕西）",
+  "massing": "比赛馆 + 训练馆两瓣银色网壳（“丝带”）+ 石材基座；建筑面积 72450 m²，座位 6954（协会页）/ 7048（凤凰网陕西）",
   "facade": "干挂石材 + 玻璃幕墙 + 银色金属屋面",
   "replaced": "landmarks2026 32 m 通用方盒",
   "photos": [
@@ -823,12 +826,13 @@
   ],
   "photos_local": "scratchpad/lm2/photos/shengtiguan/",
   "sources": [
+   "https://www.sxjzy.org/h-nd-29961.html",
    "https://sn.ifeng.com/a/20200701/14378330_0.shtml",
    "https://archina.com/index.php?a=show&g=works&id=10286&m=index",
    "Overture building r19396757（陕西奥体中心体育馆）"
   ],
-  "confidence": "high（轮廓、形体、材质）；low（高度）",
-  "notes": "两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 26 m；训练馆 104×86 m、矢高 18 m），中间连接壳与椭圆开洞按卫星位置。"
+  "confidence": "high（轮廓、形体、材质、总高）；medium（两瓣分高按照片比例）",
+  "notes": "两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 30 m，壳顶 40 m 与协会页一致；训练馆 104×86 m、矢高 21 m），中间连接壳与椭圆开洞按卫星位置。"
  },
  {
   "name": "大明宫遗址博物馆",

@@ -373,7 +373,8 @@ export function resolveSpec(spec) {
     return { part, i, name: part.name ?? String(i), pts, holes, topPts, base: part.base ?? 0, top: part.top };
   });
   for (const p of parts) if (!(p.top > p.base)) throw new Error(`part ${p.name} 的 top 必须大于 base`);
-  const polys = parts.filter((p) => p.base <= 0.5 || p.part.footprint).map((p) => p.pts);
+  // footprint:false 对落地体块同样有效（细构件不产生排除区、不登记替代轮廓）
+  const polys = parts.filter((p) => p.part.footprint !== false && (p.base <= 0.5 || p.part.footprint)).map((p) => p.pts);
   for (const s of [].concat(spec.site || [])) polys.push(G.ccw(typeof s === 'string' ? footprint(s) : s));
   return { spec, center, parts, polys };
 }
@@ -1356,6 +1357,11 @@ function buildColumns(env, R) {
         }
       }
     }
+    // skipInside：落在这些体块轮廓内（外扩柱半径）的柱位不建（如柱廊短边被附楼占住，柱子会穿出附楼屋面）
+    if (cl.skipInside) {
+      const blk = [].concat(cl.skipInside).map((nm) => G.inset(findPart(R, nm).pts, -r));
+      pts = pts.filter(([x, z]) => !blk.some((q) => G.pointIn(x, z, q)));
+    }
     for (const [x, z] of pts) env.solid.add(G.cyl(x, y0, z, r, rt, y1 - y0, seg), mat);
   }
 }
@@ -1411,7 +1417,11 @@ function buildPart(env, R, P) {
     const sink = part.sink ?? (P.base <= 0.5 ? 2 : 0);
     // topPts（放样）：实体也可从底面直纹过渡到顶面轮廓——折板屋面 / 棱锥形玻璃体 / 斜面实墙（顶面可收成细长“脊”多边形）
     const topPts = P.topPts ? P.topPts : part.taper && part.taper !== 1 ? polyAt(P, P.top) : P.pts;
-    solid.add(G.wallGeometry(P.pts, topPts, base - sink, base + H), mat, null, { worldUV: 1 });
+    // 有放样/收分且下挤时：埋地段竖直挤出，从地面起才放样（否则地面处的截面已走了 sink/(H+sink) 的进度，落脚偏离设计）
+    if (sink > 0 && topPts !== P.pts) {
+      solid.add(G.wallGeometry(P.pts, P.pts, base - sink, base), mat, null, { worldUV: 1 });
+      solid.add(G.wallGeometry(P.pts, topPts, base, base + H), mat, null, { worldUV: 1 });
+    } else solid.add(G.wallGeometry(P.pts, topPts, base - sink, base + H), mat, null, { worldUV: 1 });
     solid.add(G.capGeometry(topPts, base + H), mat, null, { worldUV: 1 });
     if (!sink) solid.add(G.capGeometry(P.pts, base, { down: true }), mat, null, { worldUV: 1 });
   } else if (kind === 'facade') {
