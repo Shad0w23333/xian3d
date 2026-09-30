@@ -99,7 +99,7 @@
   roofMat: '#6f8a5b',               // kind:'podium' 的屋面材质（绿色屋面、深色屋面等）
   crown: 'flat' | {type,...} | [ {type,...}, ... ], // 塔冠，见 3.6
   seed: 12,                         // 立面随机种子（不写自动递增）
-  footprint: true,                  // base>0 的体块默认不参与排除区；需要时置 true
+  footprint: true,                  // base>0 的体块默认不参与排除区；需要时置 true。落地体块（base≤0.5）也可写 false：不产生排除区、不登记替代轮廓（细构件用）
 }
 ```
 
@@ -244,7 +244,7 @@ columns: [
   { part: 'west', at: [[5483, -13290], [5483, -13270]], r: 0.8, rTop: 3.2, from: 0, to: 19 },   // 直接给柱位；rTop > r 即郁金香/喇叭口柱
 ]
 ```
-- `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。
+- `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。`skipInside:['wingNE', …]`：落在这些体块轮廓内的柱位不建（柱廊被附楼占住的一段）。
 - 柱子进 `solid`（投影），`from/to` 为离地米（默认体块 base/top）。
 | `pubHip` | `h`（矢高，默认 0.3×宽）、`eave`（挑檐，默认 1.5）、`ridge`（正脊占长度比例，默认四坡等坡；取大近似歇山，1 = 双坡）、`top:[长,宽]`（平顶四坡 / 盝顶 / 行政楼“大挑檐帽”，给了就不做正脊；`topMat` 单给平顶材质，如“平屋面 + 一圈琉璃挑檐”）、`size:[长,宽]`+`at`/`offset`+`rot`（默认取体块外接矩形，`along:'short'` 换向）、`mat`（默认 `roofTile` 深灰瓦）、`eaveMat`、`eaveH`、`ridgeH` | 坡屋顶：公建仿古大屋顶、屋顶亭阁（两个 `pubHip` 叠放 = 重檐）、礼堂双坡 |
 | `sphere` | `r`、`cy`（球心离地，默认 `r` 即球底落地）、`at`/`offset`、`mat`、`ribs`（经线杆数，`false` 不建）、`ribMat`、`ribW` | 整球：球幕影院、网壳球体 |

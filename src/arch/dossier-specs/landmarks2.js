@@ -135,7 +135,7 @@ const dafengge = {
       style: { ...DF_WALL, floorH: t - b, seed: 700 + i }, roof: { mech: false },
       crown: i < DF_STOREYS.length - 1
         ? [{ ...DF_EAVE, ov: i === 0 ? 4.5 : 3.2, depth: (w - DF_STOREYS[i + 1][0]) / 2 + 0.6 }]
-        : [{ type: 'tangRoof', eave: 3.2, h: 8.8, curve: 0.45, lift: 1.0, base: 1.2, mat: ROOF_TILE, ridgeMat: '#2e2a27', double: { gap: 2.2, out: 3.6, h: 1.6 }, glow: '#ffc35a', strength: 2.2 }],
+        : [{ type: 'tangRoof', eave: 3.2, h: 10.1, curve: 0.45, lift: 1.0, base: 1.2, mat: ROOF_TILE, ridgeMat: '#2e2a27', double: { gap: 2.2, out: 3.6, h: 1.6 }, glow: '#ffc35a', strength: 2.2 }],
     })),
   ],
   // 平座栏杆（红色）：每层底部一圈
@@ -382,7 +382,7 @@ const laogang = {
 // 全国首座以考古学为主题的博物馆。照片（小红书 / 抖音 / 百度，见 meta.photos）：米黄石材两层方形基座、正中入口上方金字“陕西考古博物馆”，
 // 其上为逐层收进的三重深灰金属屋檐（最上为四坡顶 + 脊饰），檐间玻璃带窗；前有长桥（跨水面）与广场。
 // 位置：Overture 覆盖范围外，Esri z18 卫星量取：基座约 86×89 m，中心 (−5914.5, 15650)，三重屋面依次约 67×72、46、32 m 见方。
-// 高度无公开数据：按照片比例，基座 11 m、各层屋檐约 17 / 22.5 m，顶部屋脊约 33 m。
+// 高度：中文维基“地上四层，框剪结构，高度为 36 米”（中建西北院设计）；基座 12 m，各层屋檐约 18 / 24 m，顶部屋脊 36 m。
 const KG = [-5914.5, 15650];
 const KG_STONE = { pattern: 'stoneWindows', spd: '#dccfb3', tint: '#3a4248', floorH: 5.5, colW: 3.4, spandrel: 0.55, mullW: 1.4, lit: 0.5 };
 const KG_GLASS = { pattern: 'curtain', tint: '#3d5566', spd: '#d8ccb2', floorH: 5.5, colW: 2.6, spandrel: 0.18, mullW: 0.5, lit: 0.55 };
@@ -392,13 +392,13 @@ const kaogu = {
   name: '陕西考古博物馆',
   center: KG,
   parts: [
-    { name: 'plinth', shape: 'rect', size: [86, 89], at: KG, base: 0, top: 11, style: KG_STONE, roof: { mech: false, parapet: 1.0 } },
-    { name: 'mid', shape: 'rect', size: [62, 64], at: KG, base: 11, top: 16.5, footprint: false, style: KG_GLASS, roof: { mech: false },
+    { name: 'plinth', shape: 'rect', size: [86, 89], at: KG, base: 0, top: 12, style: KG_STONE, roof: { mech: false, parapet: 1.0 } },
+    { name: 'mid', shape: 'rect', size: [62, 64], at: KG, base: 12, top: 18, footprint: false, style: KG_GLASS, roof: { mech: false },
       crown: [{ ...KG_EAVE, ov: 4, depth: 7.5 }] },
-    { name: 'up', shape: 'rect', size: [46, 46], at: KG, base: 16.5, top: 22, footprint: false, style: KG_GLASS, roof: { mech: false },
+    { name: 'up', shape: 'rect', size: [46, 46], at: KG, base: 18, top: 24, footprint: false, style: KG_GLASS, roof: { mech: false },
       crown: [{ ...KG_EAVE, ov: 4, depth: 8 }] },
-    { name: 'top', shape: 'rect', size: [30, 30], at: KG, base: 22, top: 26, footprint: false, style: KG_GLASS, roof: { mech: false },
-      crown: [{ type: 'tangRoof', eave: 4, h: 6.2, ridge: 0.25, curve: 0.2, lift: 0.4, base: 0.8, mat: ROOF_GRAY, ridgeMat: '#2f3337' }] },
+    { name: 'top', shape: 'rect', size: [30, 30], at: KG, base: 24, top: 28, footprint: false, style: KG_GLASS, roof: { mech: false },
+      crown: [{ type: 'tangRoof', eave: 4, h: 7.2, ridge: 0.25, curve: 0.2, lift: 0.4, base: 0.8, mat: ROOF_GRAY, ridgeMat: '#2f3337' }] },
   ],
   signs: [{ text: '陕西考古博物馆', part: 'plinth', face: 'S', y: 8.6, h: 2.0, color: '#b38a3e', serif: true }],
   night: { floodlight: [{ part: 'plinth', color: '#ffe2b8', strength: 0.35 }] },
@@ -406,10 +406,11 @@ const kaogu = {
   meta: {
     category: 'culture',
     dossier: 'landmarks2.json#陕西考古博物馆',
-    sources: ['public/data/pois.json 陕西考古博物馆 (−5913, 15658)', 'Esri World Imagery z18（平面量取）', 'research/refs/landmarks2026/heritage.json#陕西考古博物馆'],
+    sources: ['public/data/pois.json 陕西考古博物馆 (−5913, 15658)', 'Esri World Imagery z18（平面量取）', 'research/refs/landmarks2026/heritage.json#陕西考古博物馆',
+      'https://zh.wikipedia.org/wiki/陕西考古博物馆（地上四层，高度 36 米）', 'https://www.archina.com/index.php?g=works&m=index&a=show&id=16840（中建西北院）'],
     photos: ['http://news.sohu.com/a/538544191_267106', 'http://www.xiaohongshu.com/discovery/item/62b01c22000000000102ec2d', 'http://www.douyin.com/note/7336381336485137673'],
-    confidence: 'medium（平面按卫星）；low（高度按照片比例）',
-    notes: '无 Overture 轮廓，平面按卫星量取（±3 m）。原 heritage26 通用单体（1 座仿古殿）被替代。',
+    confidence: 'medium（平面按卫星）；high（总高、层数）；medium（分层高度按照片比例）',
+    notes: '无 Overture 轮廓，平面按卫星量取（±3 m）。总高 36 m（维基）：基座 12 m，屋檐约 18 / 24 m，顶部四坡顶屋脊 36 m。原 heritage26 通用单体（1 座仿古殿）被替代。',
   },
 };
 
@@ -457,7 +458,7 @@ const xishi = {
   center: XS_C,
   parts: [
     { name: 'main', kind: 'podium', fp: 'f4c72d77-82d2-4d52-a6a3-5f20e708eaea', base: 0, top: 12, style: XS_WALL, roofMat: { color: '#9a958d', roughness: 0.9 } },
-    { name: 'hall', shape: 'rect', size: [30, 32], at: XS_C, base: 12, top: 21, footprint: false, style: XS_RED, roof: { mech: false },
+    { name: 'hall', shape: 'rect', size: [30, 32], at: XS_C, base: 12, top: 26, footprint: false, style: XS_RED, roof: { mech: false }, // 主殿重檐屋脊 26 + 1 + 8 = 35 m（与文件头照片估算一致）
       crown: [{ type: 'tangRoof', eave: 3, h: 8, curve: 0.45, lift: 1.0, base: 1.0, double: { gap: 3, out: 4, h: 1.8 }, glow: '#ffc35a', strength: 2 }] },
     ...[[-3566, 1428], [-3566, 1481]].map((at, i) => ({ name: 'que' + i, shape: 'rect', size: [14, 14], at, base: 0, top: 30, style: XS_WALL, roof: { mech: false },
       crown: [{ type: 'eave', y: 13, ov: 1.8, depth: 1.2, h: 1.1, mat: ROOF_TILE }, { type: 'eave', y: 21.5, ov: 1.6, depth: 1.2, h: 1.0, mat: ROOF_TILE }, // 阙楼逐层腰檐（照片）
@@ -506,6 +507,16 @@ const expoHalls = EX_HALLS.flatMap(([n, c, Lu, Lv, h]) => {
       mat: { color: '#e6e6e2', roughness: 0.45, metalness: 0.35 } })),
   }];
 });
+// 补建：supersede.keys:['expo'] 取消了 skyline SPECIAL.expo 的全部旧展馆，但上面的展厅/连廊/登录厅没有盖住全部旧轮廓——
+// 西南一座约 1.3 万 m² 的展馆（CMAB 155117 = sky-footprints FP.expo[4]）整栋、以及 FP.expo[0]/[1] 一带的几块会被通用建筑让位后空掉。
+// 这里按 CMAB 轮廓减去新体块（外扩 0.3 m，免得共面闪烁）补建，檐口：西南展馆按标准厅 19 m，其余按 CMAB 高度。
+const EX_FILL = [ // [名, 檐口, 轮廓（世界坐标）]
+  ['fillN', 16, [8424.0, -8435.8, 8424.0, -8443.6, 8470.6, -8410.7, 8506.6, -8461.6, 8547.0, -8432.5, 8547.0, -8429.8, 8541.1, -8429.2, 8547.0, -8425.0, 8547.0, -8391.6, 8446.9, -8391.3, 8449.2, -8390.4, 8448.7, -8381.7, 8452.1, -8381.1, 8452.6, -8377.5, 8456.6, -8375.2, 8456.8, -8369.8, 8466.9, -8363.5, 8472.1, -8356.9, 8475.8, -8357.2, 8477.0, -8359.3, 8491.6, -8358.1, 8491.8, -8360.2, 8495.0, -8360.2, 8497.2, -8362.6, 8514.7, -8363.5, 8523.1, -8355.7, 8530.3, -8356.0, 8537.2, -8353.7, 8546.6, -8354.9, 8547.0, -8315.1, 8543.1, -8308.9, 8537.4, -8308.6, 8546.6, -8301.7, 8546.3, -8293.9, 8537.4, -8292.4, 8525.3, -8301.4, 8525.3, -8308.0, 8528.3, -8310.4, 8534.7, -8310.7, 8529.3, -8314.8, 8528.8, -8320.2, 8525.6, -8320.2, 8525.3, -8330.1, 8521.9, -8336.3, 8508.1, -8339.9, 8501.2, -8335.4, 8497.5, -8326.8, 8490.1, -8326.2, 8456.8, -8349.2, 8450.9, -8350.1, 8446.9, -8355.7, 8424.0, -8370.7, 8424.0, -8390.1, 8425.0, -8391.3, 8424.0, -8391.6, 8424.0, -8428.6, 8429.7, -8428.6, 8446.2, -8416.7, 8448.2, -8416.7, 8449.2, -8418.8, 8446.2, -8419.1, 8443.0, -8423.5, 8433.1, -8428.0, 8430.4, -8431.9]], // CMAB 154923（22089 m²）未被新体块覆盖的部分
+  ['fillE2', 14.8, [8659.0, -8632.9, 8659.0, -8626.1, 8614.2, -8657.0, 8616.4, -8661.8, 8618.1, -8660.7, 8618.3, -8658.6, 8622.3, -8658.0]], // CMAB 154997（315 m²）未被新体块覆盖的部分
+  ['fillE1', 14.8, [8627.3, -8611.4, 8601.5, -8628.8, 8610.1, -8647.9, 8665.5, -8609.7, 8665.7, -8608.4, 8670.6, -8605.7, 8670.6, -8583.0, 8668.9, -8583.1, 8640.4, -8602.5, 8637.6, -8605.4, 8637.6, -8608.7, 8634.9, -8613.8, 8632.9, -8611.4]], // CMAB 154998（1805 m²）未被新体块覆盖的部分
+  ['fillC', 14.8, [8647.4, -8546.3, 8644.4, -8546.8, 8603.5, -8575.8, 8596.6, -8566.1, 8565.5, -8586.9, 8594.5, -8616.9, 8596.3, -8619.6, 8597.2, -8619.0, 8592.4, -8611.8, 8670.6, -8557.6, 8670.6, -8549.0, 8665.2, -8549.0, 8660.0, -8552.3, 8658.5, -8548.4, 8650.1, -8548.4]], // CMAB 154999（6698 m²）未被新体块覆盖的部分
+  ['hallW', 19, [8300.6, -8540.6, 8352.8, -8540.6, 8360.7, -8532.9, 8362.9, -8534.1, 8363.9, -8537.3, 8369.4, -8537.3, 8368.9, -8524.2, 8362.0, -8524.2, 8359.7, -8517.0, 8357.5, -8515.5, 8368.6, -8508.4, 8370.1, -8505.4, 8369.8, -8496.7, 8372.1, -8487.2, 8377.0, -8489.0, 8386.1, -8499.7, 8393.0, -8510.5, 8393.0, -8513.8, 8396.0, -8515.2, 8399.4, -8520.0, 8399.9, -8524.2, 8404.0, -8526.8, 8421.1, -8514.6, 8421.1, -8505.8, 8392.8, -8465.8, 8421.1, -8445.7, 8421.1, -8440.6, 8414.0, -8443.0, 8404.1, -8451.9, 8390.6, -8459.7, 8381.2, -8461.5, 8421.1, -8433.7, 8421.1, -8391.6, 8388.6, -8391.6, 8387.6, -8395.2, 8384.6, -8398.2, 8371.1, -8406.9, 8362.0, -8407.2, 8361.5, -8413.4, 8356.8, -8417.6, 8300.6, -8455.5]], // CMAB 155117（13450 m²）未被新体块覆盖的部分
+];
 const expo = {
   id: 'lm2-expo-hall',
   name: '西安国际会展中心',
@@ -514,8 +525,10 @@ const expo = {
     { name: 'spine', kind: 'podium', fp: 'af8bdf53-15db-4fcc-b171-a8cd11e4c04a', grow: -1.5, base: 0, top: 12, // 内缩 1.5 m：避免与展厅外墙共面闪烁
       style: { pattern: 'curtain', tint: '#3e5a6a', spd: '#dcdcd8', floorH: 6, colW: 3, spandrel: 0.15, mullW: 0.3, lit: 0.7 }, roofMat: { color: '#b9b8b3', roughness: 0.8 } },
     ...expoHalls,
-    { name: 'lobby', shape: 'rect', size: [94.7, 61.1], at: [8449.5, -8463.4], rot: EX_U, base: 0, top: 24, roof: { mech: true },
-      style: { pattern: 'curtain', tint: '#3e5a6a', spd: '#c9cbcb', floorH: 6, colW: 3.2, spandrel: 0.1, mullW: 0.3, lit: 0.7 }, crown: [{ type: 'slab', ov: 3, h: 1.2, mat: '#a7a9aa' }] },
+    // 登录厅：gmp 项目页“登录厅屋顶由高达 30 米的十字柱支撑”、大跨度出挑——屋面顶约 30.5 m，挑檐 9 m
+    { name: 'lobby', shape: 'rect', size: [94.7, 61.1], at: [8449.5, -8463.4], rot: EX_U, base: 0, top: 29, roof: { mech: true },
+      style: { pattern: 'curtain', tint: '#3e5a6a', spd: '#c9cbcb', floorH: 6, colW: 3.2, spandrel: 0.1, mullW: 0.3, lit: 0.7 }, crown: [{ type: 'slab', ov: 9, h: 1.5, mat: '#a7a9aa' }] },
+    ...EX_FILL.map(([name, top, pts]) => ({ name, pts, base: 0, top, style: EX_WALL, roof: { mech: false, parapet: 0.4 } })),
   ],
   signs: [{ text: '西安国际会展中心', part: 'H8', face: 'SW', y: 18, h: 3.2, color: '#5b6b78' }],
   night: { floodlight: [{ part: 'spine', color: '#dfeeff', strength: 0.35 }, ...['H1', 'H8'].map((p) => ({ part: p, color: '#fff2dc', strength: 0.25 }))] },
@@ -524,10 +537,12 @@ const expo = {
     category: 'expo',
     dossier: 'landmarks2.json#西安国际会展中心',
     sources: ['https://www.archiposition.com/items/20200803031222', 'http://www.sasac.gov.cn/n2588025/n2641616/c14530534/content.html',
+      'https://www.gmp.de/cn/projects/9499/silk-road-international-exhibition-center（登录厅十字柱高 30 m、两个入口大厅）',
       'http://m.cnwest.com/xian/a/2020/03/23/18595972.html', 'Overture building w808104180（西安国际会展中心展厅）', 'Esri z18 卫星（屋面条带方向）'],
     photos: ['http://www.sohu.com/（gmp 新作：西安丝路国际会议中心 展览中心）', 'https://www.vcg.com/（西安丝路国际展览中心——大号会展）', 'http://ydyl.china.com.cn/2018-08/31/content_61216412.htm'],
     confidence: 'high（平面、屋面条带形式）；low（高度）',
-    notes: '展厅矩形由 OSM 梳齿轮廓角点反算（±2 m）；西北端 H9/H10 与登录厅 lobby 的分界按卫星判读（±8 m）。檐口 19/21/23 m 为按净高推定，屋面条带拱起 2.2 m。',
+    notes: '展厅矩形由 OSM 梳齿轮廓角点反算（±2 m）；西北端 H9/H10 与登录厅 lobby 的分界按卫星判读（±8 m）。檐口 19/21/23 m 为按净高推定，屋面条带拱起 2.2 m。'
+      + '登录厅屋面顶约 30.5 m（gmp：十字柱高 30 m），挑檐 9 m；gmp 称有两个入口大厅，第二个待卫星确认后再补。旧 skyline 展馆中未被新体块覆盖的部分（CMAB 155117、154923、154997–154999）按 CMAB 轮廓补建（EX_FILL）。',
   },
 };
 
@@ -546,7 +561,7 @@ const hesheng = {
   parts: [
     { name: 'mall', kind: 'podium', fp: '0b974a7e-8018-4108-815b-9ccb119b0e74', base: 0, top: 24,
       style: { pattern: 'retail', tint: '#3a5566', spd: '#d8d6d0', floorH: 4.8, colW: 3.2, spandrel: 0.3, mullW: 0.3, lit: 0.8 }, roofMat: { color: '#9a9b98', roughness: 0.85 } },
-    { name: 'A', fp: 'abb05683-2a73-42b1-b9ec-00a0011062f2', base: 0, top: 200, style: HS_GLASS, setbacks: [{ at: 188, inset: 1.8 }], crown: [{ type: 'parapet', h: 3.5 }] },
+    { name: 'A', fp: 'abb05683-2a73-42b1-b9ec-00a0011062f2', base: 0, top: 196.5, style: HS_GLASS, setbacks: [{ at: 188, inset: 1.8 }], crown: [{ type: 'parapet', h: 3.5 }] }, // + 女儿墙 3.5 = 200 m
     { name: 'B', fp: '658c1eb3-1aed-45fd-978b-4eb6f9e56f0a', base: 0, top: 100, style: HS_GLASS2, crown: [{ type: 'parapet', h: 2.5 }] },
     { name: 'C', fp: '978c19a4-f0bb-4f91-8896-a7ada879305e', base: 0, top: 100, style: { ...HS_GLASS2, seed: 31 }, crown: [{ type: 'parapet', h: 2.5 }] },
     { name: 'D', fp: 'a3faa7c2-aeb9-4a4e-a415-bec2445c6f7d', base: 0, top: 100, style: { ...HS_GLASS2, seed: 32 }, crown: [{ type: 'parapet', h: 2.5 }] },
@@ -563,7 +578,7 @@ const hesheng = {
       'Overture building w988359466–w988359470（A–F 座、T11）'],
     photos: ['https://www.360xzl.com/（禾盛京广中心出租动态效果图）', 'http://www.dianping.com/（禾盛京广中心 LALA BLOCK 实景）', 'https://www.sohu.com/（中国人寿收购禾盛京广中心A栋 更名为西安国寿金融中心）'],
     confidence: 'high（落位、A 座高度）；medium（B–F 楼号对应与高度）',
-    notes: 'A 座顶部 188 m 以上略收进 + 3.5 m 女儿墙（照片塔顶线脚）；T11 商场裙房 24 m（约 5 层）按照片估计。',
+    notes: 'A 座总高 200 m（196.5 m 屋面 + 3.5 m 女儿墙；层数 41，另有来源写 42 层）；顶部 188 m 以上略收进（照片塔顶线脚）；T11 商场裙房 24 m（约 5 层）按照片估计。',
   },
 };
 
@@ -676,7 +691,7 @@ const haiyang = {
     { name: 'domeW', kind: 'solid', shape: 'circle', size: [18, 18], at: [3033.4, 4880.5], base: 0, top: 3, mat: '#dfe3e6',
       crown: [{ type: 'dome', r: 9, h: 8, mat: { color: '#3a78c8', roughness: 0.35, metalness: 0.2 }, ring: false }] },
     { name: 'polar', kind: 'podium', fp: '3cfcdec7-f5cb-45e4-900a-4cfa821627a0', base: 0, top: 17, style: HY_BLUE, roofMat: { color: '#c9ccce', roughness: 0.7 },
-      crown: [{ type: 'arch', size: [110, 60], at: [3140, 4955], rot: 94.5, h: 8, mat: { color: '#c9cdd0', roughness: 0.45, metalness: 0.4 } }] },
+      crown: [{ type: 'arch', size: [90, 50], at: [3160, 4970], rot: 94.5, h: 8, mat: { color: '#c9cdd0', roughness: 0.45, metalness: 0.4 } }] },
     tent('tentP', [3098.9, 4958.3], 30, 17, 14),
   ],
   signs: [{ text: '曲江海洋极地公园', part: 'ocean', face: 'W', y: 10, h: 2.2, color: '#ffffff', bg: '#1f5fae' }],
@@ -832,7 +847,7 @@ const gangzhan = {
   center: [10960, -16660],
   parts: gantryParts,
   label: { text: '西安国际港站', y: 32 },
-  night: { floodlight: [{ part: 'g1girder0', color: '#ffffff', strength: 0.3, from: 0, to: 25 }] },
+  night: { floodlight: [{ part: 'g1girder0', color: '#ffffff', strength: 0.3, from: 19.5, to: 22.5 }] }, // 只洗主梁一带，不从地面立光墙
   supersede: { names: ['西安国际港站'] },
   meta: {
     category: 'station',
@@ -858,7 +873,7 @@ const gwStation = {
       base: 0, top: 6, mat: '#cfcfcb', footprint: false }))),
     { name: 'hall', shape: 'rect', size: [118, 24], at: GW, rot: 82.8, base: 6, top: 12, footprint: false, roof: { mech: false, parapet: 0.3 },
       style: { pattern: 'curtain', tint: '#3d5563', spd: '#dcdcd8', floorH: 6, colW: 2.4, spandrel: 0.35, mullW: 0.2, lit: 0.8 },
-      crown: [{ type: 'arch', along: 'short', size: [118, 26], at: GW, rot: 82.8, h: 7, mat: { color: '#ebe8df', roughness: 0.5, metalness: 0.2 } },
+      crown: [{ type: 'arch', size: [118, 26], at: GW, rot: 82.8, h: 7, mat: { color: '#ebe8df', roughness: 0.5, metalness: 0.2 } },
         { type: 'arch', size: [104, 4], at: GW, rot: 82.8, h: 1.2, y: 18.6, mat: 'glassRoof' }] },
   ],
   label: false,
@@ -875,10 +890,10 @@ const gwStation = {
 };
 
 // ═════════════════════════ 22. 陕西奥体中心体育馆（高新唐延路南段，十四运场馆） ═════════════════════════
-// 2018-06 开工、历时两年建成：建筑面积 72450 m²，地下 1 层、地上 3 层，观众席 7048 座；比赛馆 + 训练馆两部分，
+// 2018-06 开工、历时两年建成：建筑面积 72450 m²，地下 1 层、地上 3 层，观众席 6954 座（陕西省建筑业协会项目页）/ 7048 座（凤凰网）；比赛馆 + 训练馆两部分，
 // “银色屋面融合曲线平台”，钢结构双层 / 单层网壳；外形取意“丝绸之路起点上徐徐展开的丝带”；干挂石材（黄土高原气息）+ 玻璃幕墙（凤凰网陕西）。
 // 轮廓：OSM r19396757“陕西奥体中心体育馆”（250×129 m，两个椭圆瓣：东为比赛馆、西为训练馆，中间连接处有椭圆开洞）。
-// 高度无公开数据：按照片比例，石材基座约 10 m，比赛馆壳顶约 36 m、训练馆约 28 m。原 landmarks2026 为 32 m 通用方盒。
+// 建筑高度 40 m（陕西省建筑业协会 sxjzy.org/h-nd-29961.html）：石材基座约 10 m，比赛馆壳顶 40 m、训练馆按照片比例约 31 m。原 landmarks2026 为 32 m 通用方盒。
 const STG_SILVER = { color: '#d9dcdf', roughness: 0.32, metalness: 0.6 };
 const shengtiguan = {
   id: 'lm2-shaanxi-oly-gym',
@@ -890,8 +905,8 @@ const shengtiguan = {
       crown: [
         { type: 'dome', at: [-5470, 6236], r: [44, 38], h: 12, mat: STG_SILVER, ring: false },
         { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 13.2, mat: { color: '#28323a', roughness: 0.2, metalness: 0.5 }, ring: false }, // 中部椭圆开洞（深色，略高出连接壳以便可见）
-        { type: 'dome', at: [-5398, 6253], r: [52, 64], h: 26, mat: STG_SILVER, ring: false },
-        { type: 'dome', at: [-5545, 6246], r: [52, 43], h: 18, mat: STG_SILVER, ring: false },
+        { type: 'dome', at: [-5398, 6253], r: [52, 64], h: 30, mat: STG_SILVER, ring: false }, // 10 + 30 = 40 m（协会页建筑高度）
+        { type: 'dome', at: [-5545, 6246], r: [52, 43], h: 21, mat: STG_SILVER, ring: false },
       ] },
   ],
   bands: [{ part: 'plinth', levels: [9.4], h: 0.6, depth: 0.8, color: '#e6e8ea', glow: '#bfe0ff', strength: 1.2 }],
@@ -901,10 +916,10 @@ const shengtiguan = {
   meta: {
     category: 'sports',
     dossier: 'landmarks2.json#陕西奥体中心体育馆',
-    sources: ['https://sn.ifeng.com/a/20200701/14378330_0.shtml', 'https://archina.com/index.php?a=show&g=works&id=10286&m=index', 'Overture building r19396757（陕西奥体中心体育馆）'],
+    sources: ['https://www.sxjzy.org/h-nd-29961.html（建筑高度 40 米、6954 座）', 'https://sn.ifeng.com/a/20200701/14378330_0.shtml', 'https://archina.com/index.php?a=show&g=works&id=10286&m=index', 'Overture building r19396757（陕西奥体中心体育馆）'],
     photos: ['http://www.bilibili.com/video/av243736147', 'https://xian.qinfeng.gov.cn/info/1250/22930.htm', 'https://news.sina.com.cn/o/2020-08-29/doc-iivhvpwy3804790.shtml'],
-    confidence: 'high（轮廓、形体、材质）；low（高度）',
-    notes: '两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 26 m；训练馆 104×86 m、矢高 18 m），中间连接壳与椭圆开洞按卫星位置。',
+    confidence: 'high（轮廓、形体、材质、总高）；medium（两瓣分高按照片比例）',
+    notes: '两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 30 m，壳顶 40 m 与协会页一致；训练馆 104×86 m、矢高 21 m），中间连接壳与椭圆开洞按卫星位置。',
   },
 };
 
@@ -954,7 +969,7 @@ const xizhan = {
     { name: 'wingNE', shape: 'rect', size: [32, 28], at: along(XZ_C, 52, 60, 4), rot: 52, base: 0, top: 10, style: XZ_STONE, roof: { mech: true } },
     { name: 'wingSW', shape: 'rect', size: [30, 28], at: along(XZ_C, 52, -52, 5), rot: 52, base: 0, top: 10, style: XZ_STONE, roof: { mech: true } },
   ],
-  columns: [{ part: 'hall', out: 3.2, step: 7.5, r: 0.55, from: 0, to: 12, mat: '#e4dccb' }],
+  columns: [{ part: 'hall', out: 3.2, step: 7.5, r: 0.55, from: 0, to: 12, mat: '#e4dccb', skipInside: ['wingNE', 'wingSW'] }], // 短边被附楼占住的柱位不建（柱顶 12 m 高于附楼屋面 10 m）
   signs: [{ text: '西安西站', part: 'hall', face: 'SE', y: 15, h: 2.6, color: '#c8102e' }],
   night: { floodlight: [{ part: 'hall', color: '#ffe6c0', strength: 0.35 }] },
   supersede: { names: ['西安西站（原阿房宫站）', '西安西站'] },
