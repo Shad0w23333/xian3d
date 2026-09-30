@@ -473,7 +473,8 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     // 老式多层北向单元入口（与 bld-gen.js facadeParts 的入口雨棚同一规则）：首层单元门，以上楼梯间半层窗
     bool entBay = false;
 #ifdef BLD_HI
-    entBay = st == 1 && !estF && Nh.z < -0.4 && !eStreet && nb >= 4.0 && (bi % 4) == 1 + (variant & 1) && bPart == 0;
+    entBay = st == 1 && !estF && Nh.z < -0.4 && !eStreet && nb >= 4.0 && (bi % 4) == 1 + (variant & 1) && bPart == 0
+      && H >= 6.0 && gf >= 2.7 && (roofV - gf) / fh >= 1.6 && uBDetail > 0.5;
 #endif
 
     // ===== 近景附属构件（体块由 bld-gen.js facadeParts 生成，这里画楼层内细节） =====
@@ -484,10 +485,14 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       bool pSide = bPart == 2 || bPart == 7, pBay = bPart >= 6;
       float fLen = vFac.y;
       float x0 = pSide ? 0.0 : (pBay ? 0.45 : 0.1), x1 = pSide ? fLen : bw - x0;
-      float sx = pSide ? u : bx;
-      // 侧面：用面起点（世界坐标，整面恒定）做户哈希
-      vec2 fs0 = vWPos.xz - Tt.xz * u;
-      int kS = pSide ? (fi * 131 + int(floor(dot(fs0, vec2(0.37, 0.71)) + 0.5)) + 997 * eIdx) : kHouse;
+      // 侧面的 u 由几何写成 10×(开间号+1) + 面内距离（bld-gen.js obox 的 sideU）：整面恒定的开间号直接取整得到，
+      // 户哈希与前脸 kHouse 同一公式（同一户前脸与两侧一起亮灭、窗帘同色）；不再由世界坐标反推（量化误差会把一面切成两半）
+      float hb = floor((u + 0.5) / 10.0);
+      float su = u - hb * 10.0;
+      int bS = max(int(hb) - 1, 0);
+      int kSide = (litCls == 0 && (st == 0 || st == 1 || st == 5)) ? ((bS >> 1) + 997 * eIdx) * 131 + fi : (bS + 997 * eIdx) * 131 + fi;
+      float sx = pSide ? su : bx;
+      int kS = pSide ? kSide : kHouse;
       float rP = bRand(sd, 81, 1), rh = bRand(sd, kS, 83);
       vec3 trimC = st == 0 ? mix(accC * 1.1, vec3(0.6), 0.35) : vec3(0.55, 0.54, 0.51);
       vec3 panelC = rP < 0.4 ? alb : rP < 0.7 ? mix(accC, alb, 0.25) * (0.95 + 0.1 * wn) : vec3(0.6, 0.6, 0.58) * (0.94 + 0.1 * wn);
