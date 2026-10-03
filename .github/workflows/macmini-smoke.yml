@@ -1,0 +1,54 @@
+name: Mac mini infrastructure check
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: macmini-smoke-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash -e -o pipefail {0}
+jobs:
+  connectivity:
+    runs-on:
+    - self-hosted
+    - macOS
+    - ARM64
+    - macmini
+    timeout-minutes: 5
+    steps:
+    - name: Check this is still the latest eligible commit
+      run: python3 /Volumes/StrataData/github-ci/bin/check_fresh.py
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - name: Verify SSD, architecture and single execution slot
+      run: 'test "$(uname -m)" = arm64
+
+        case "$RUNNER_TEMP" in /Volumes/StrataData/github-ci/*) ;; *) echo ''Temporary
+        data is not on the SSD''; exit 1;; esac
+
+        case "$GITHUB_WORKSPACE" in /Volumes/StrataData/github-ci/*) ;; *) echo ''Checkout
+        is not on the SSD''; exit 1;; esac
+
+        workers=$(python3 -c ''import subprocess; print(sum(line.strip().endswith("/Runner.Worker")
+        for line in subprocess.check_output(["/bin/ps","-axo","comm="],text=True).splitlines()))'')
+
+        test "$workers" -eq 1
+
+        python3 --version
+
+        node --version
+
+        go version
+
+        rustc --version
+
+        printf ''repo=%s sha=%s workspace=%s temp=%s workers=%s\n'' "$GITHUB_REPOSITORY"
+        "$GITHUB_SHA" "$GITHUB_WORKSPACE" "$RUNNER_TEMP" "$workers"
+
+        sleep 3
+
+        '
+      if: ${{ env.MACMINI_FRESH == 'true' }}
+    if: ${{ github.actor == github.repository_owner }}

@@ -1,0 +1,38 @@
+name: Mac mini CI
+'on':
+  push:
+    branches:
+    - '**'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: macmini-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash -e -o pipefail {0}
+jobs:
+  check:
+    name: Build and checks on Mac mini
+    runs-on:
+    - self-hosted
+    - macOS
+    - ARM64
+    - macmini
+    timeout-minutes: 120
+    steps:
+    - name: Check this is still the latest eligible commit
+      run: python3 /Volumes/StrataData/github-ci/bin/check_fresh.py
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - uses: actions/checkout@v4
+      if: ${{ env.MACMINI_FRESH == 'true' }}
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+      if: ${{ env.MACMINI_FRESH == 'true' }}
+    - name: Project build and checks
+      run: bash .github/scripts/macmini-build.sh
+      if: ${{ env.MACMINI_FRESH == 'true' }}
+    if: ${{ github.actor == github.repository_owner }}
