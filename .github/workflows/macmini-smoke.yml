@@ -2,6 +2,7 @@ name: Mac mini infrastructure check
 'on':
   workflow_dispatch: {}
 permissions:
+  actions: read
   contents: read
 concurrency:
   group: macmini-smoke-${{ github.ref }}
