@@ -5,6 +5,7 @@ name: Mac mini CI
     - '**'
   workflow_dispatch: {}
 permissions:
+  actions: read
   contents: read
 concurrency:
   group: macmini-${{ github.workflow }}-${{ github.ref }}
