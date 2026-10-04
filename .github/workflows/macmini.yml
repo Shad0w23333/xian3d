@@ -29,10 +29,9 @@ jobs:
         GH_TOKEN: ${{ github.token }}
     - uses: actions/checkout@v4
       if: ${{ env.MACMINI_FRESH == 'true' }}
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-      if: ${{ env.MACMINI_FRESH == 'true' }}
+    - if: ${{ env.MACMINI_FRESH == 'true' }}
+      name: Use SSD Python 3.12
+      run: bash /Volumes/StrataData/github-ci/bin/setup-python.sh 3.12
     - name: Project build and checks
       run: bash .github/scripts/macmini-build.sh
       if: ${{ env.MACMINI_FRESH == 'true' }}
