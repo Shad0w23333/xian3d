@@ -26,7 +26,7 @@ export {
  * o: {detail(0/1/2，默认 2), style, instancing, flood（泛光配置，见 floodlit）, castShadow, name}
  */
 export function buildArch(ctx, fn, o = {}) {
-  const b = new ArchBuilder(ctx, { detail: o.detail ?? 2, style: o.style || 'ming', instancing: o.instancing, name: o.name });
+  const b = new ArchBuilder(ctx, { detail: o.detail ?? 2, style: o.style || 'ming', instancing: o.instancing, minInstances: o.minInstances, name: o.name });
   const info = fn(b) || {};
   const g = b.build({ flood: o.flood, castShadow: o.castShadow, name: o.name });
   g.userData.info = info;
