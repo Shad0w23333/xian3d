@@ -838,6 +838,8 @@ def main():
     n_bld_total = 0
     for e in dossiers:
         name = e['name']
+        if e.get('batch') and not e.get('photos') and name not in S:
+            continue   # 层数核实批次（2026-09-29）只调研了层数，没有照片/立面观察，不写进风貌数据（运行时也会跳过无规则的小区）
         f = e.get('facade') or {}
         polys = estate_polys(e, R)
         rec = dict(name=name, district=e.get('district'), year=e.get('year'), confidence=e.get('confidence'),

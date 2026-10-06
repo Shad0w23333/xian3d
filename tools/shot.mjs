@@ -68,13 +68,19 @@ try {
       const fatal = await page.evaluate(() => window.xian.fatal);
       if (fatal) throw new Error('fatal: ' + fatal);
       const startFrame = await page.evaluate(() => window.xian.frame);
-      // 等待：至少 N 帧 + 影像队列清空持续 1.5 秒（或超时）
+      // 等待：至少 N 帧 + 影像队列清空、通用建筑近景小块集合不再变化，持续 1.5 秒（或超时）
       const deadline = Date.now() + opt.wait * 1000;
-      let settledSince = 0;
+      let settledSince = 0, lastHi = '';
       while (Date.now() < deadline) {
-        const s = await page.evaluate(() => ({ f: window.xian.frame, ok: window.xian.settled() }));
+        const s = await page.evaluate(() => {
+          const b = window.xian.ctx && window.xian.ctx.modules && window.xian.ctx.modules.buildings;
+          const st = b && b.stats ? b.stats() : null;
+          return { f: window.xian.frame, ok: window.xian.settled(), hi: st ? `${st.hiShown}/${st.hiCached}` : '', busy: st ? st.hiLoading > 0 || st.hiPending > 0 : false };
+        });
+        const hiStable = s.hi === lastHi && !s.busy;
+        lastHi = s.hi;
         if (s.f - startFrame >= opt.frames) {
-          if (s.ok) {
+          if (s.ok && hiStable) {
             settledSince ||= Date.now();
             if (Date.now() - settledSince > 1500) break;
           } else settledSince = 0;
@@ -95,6 +101,7 @@ try {
           hours: +window.xian.sky.hours.toFixed(2),
           tiles: window.xian.terrain.visibleCount,
           reversedDepth: window.xian.reversedDepth,
+          buildings: window.xian.ctx?.modules?.buildings?.stats?.() || null,
         };
       });
     } catch (e) {
@@ -117,7 +124,7 @@ try {
       logs.push('[shot] canvas 读取失败：' + e.message);
     }
     if (!saved) await page.screenshot({ path: path.resolve(root, out), timeout: 180000 });
-    results.push({ out, seconds: +((Date.now() - t0) / 1000).toFixed(1), ...info, logs: logs.slice(0, 30) });
+    results.push({ out, seconds: +((Date.now() - t0) / 1000).toFixed(1), ...info, logs: [...logs.filter((l) => /^\[(pageerror|error)\]/.test(l)), ...logs.filter((l) => !/^\[(pageerror|error)\]/.test(l)).slice(0, 30)] }); // 错误/页面异常全部保留，其余日志只留前 30 条
     await page.close();
   }
 } finally {

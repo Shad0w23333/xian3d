@@ -110,10 +110,44 @@ class FlattenZone {
   }
 }
 
-// ---------- 地形瓦片着色器补丁：自定义 UV 变换 + 近处细节 ----------
-function patchTileMaterial(mat, uvXform) {
+// ---------- 地形挖洞（下沉广场等）：瓦片着色器里丢弃洞内片元，洞内由模块自己的坑底/挡墙几何补齐 ----------
+// 为什么不用平整区压低：地形网格间距 4~21 m（随 LOD），压低的坑与地面之间只能是一两格宽的斜面，
+// 斜面会爬上挡墙、盖住坑底商铺；而外扩压低范围又会把坑外的道路、步道一起拉下去。挖洞后地形在坑外保持原样，
+// 坑的形状完全由模块几何决定（heightAt 不受影响，坑外道路/树木/建筑取到的仍是地面高度）。
+// 数据放在一张 RGBA32F 小纹理里（不占 uniform 向量）：第 0 行每洞 2 个像素 = 包围盒 (x0,z0,x1,z1)、(起点, 点数)；
+// 第 1 行起每像素一个顶点 (x, z)。
+const HOLE_TW = 256, HOLE_TH = 8, MAX_HOLES = 64, MAX_HOLE_PTS = HOLE_TW * (HOLE_TH - 1);
+const HOLE_GLSL = `
+uniform highp sampler2D uHoleTex;
+uniform int uHoleN;
+bool terrInHole(vec2 p) {
+  for (int h = 0; h < ${MAX_HOLES}; h++) {
+    if (h >= uHoleN) break;
+    vec4 bb = texelFetch(uHoleTex, ivec2(h * 2, 0), 0);
+    if (p.x < bb.x || p.x > bb.z || p.y < bb.y || p.y > bb.w) continue;
+    vec4 rg = texelFetch(uHoleTex, ivec2(h * 2 + 1, 0), 0);
+    int s = int(rg.x + 0.5), n = int(rg.y + 0.5);
+    bool c = false;
+    vec2 b = texelFetch(uHoleTex, ivec2((s + n - 1) % ${HOLE_TW}, 1 + (s + n - 1) / ${HOLE_TW}), 0).xy;
+    for (int i = 0; i < 1024; i++) {
+      if (i >= n) break;
+      int k = s + i;
+      vec2 a = texelFetch(uHoleTex, ivec2(k % ${HOLE_TW}, 1 + k / ${HOLE_TW}), 0).xy;
+      if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) c = !c;
+      b = a;
+    }
+    if (c) return true;
+  }
+  return false;
+}
+`;
+
+// ---------- 地形瓦片着色器补丁：自定义 UV 变换 + 近处细节 + 挖洞 ----------
+function patchTileMaterial(mat, uvXform, holes) {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uUvXform = uvXform;
+    shader.uniforms.uHoleTex = holes.tex;
+    shader.uniforms.uHoleN = holes.n;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nuniform vec4 uUvXform;\nvarying vec3 vTerrWorld;')
       .replace(
@@ -122,7 +156,8 @@ function patchTileMaterial(mat, uvXform) {
       )
       .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vTerrWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vTerrWorld;\n' + NOISE_GLSL)
+      .replace('#include <common>', '#include <common>\nvarying vec3 vTerrWorld;\n' + NOISE_GLSL + HOLE_GLSL)
+      .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n  if (uHoleN > 0 && terrInHole(vTerrWorld.xz)) discard;')
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
@@ -143,7 +178,7 @@ function patchTileMaterial(mat, uvXform) {
         }`
       );
   };
-  mat.customProgramCacheKey = () => 'xian-terrain-v2';
+  mat.customProgramCacheKey = () => 'xian-terrain-v3';
 }
 
 const NOISE_GLSL = `
@@ -180,6 +215,72 @@ export class Terrain {
     this.zoneGrid = new Map();
     this.cell = 1000;
     this.ready = false;
+    // 挖洞：多边形列表 + 着色器数据纹理（所有瓦片材质共用同一组 uniform 对象）
+    this.holes = [];
+    const tex = new THREE.DataTexture(new Float32Array(HOLE_TW * HOLE_TH * 4), HOLE_TW, HOLE_TH, THREE.RGBAFormat, THREE.FloatType);
+    tex.minFilter = tex.magFilter = THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    tex.needsUpdate = true;
+    this.holeU = { tex: { value: tex }, n: { value: 0 } };
+  }
+
+  /**
+   * 挖洞：points [x,z,...]（世界坐标，简单多边形）内的地形瓦片不绘制。只影响渲染，不改 heightAt。
+   * 调用方负责用自己的几何把洞补齐（坑底、挡墙、台阶……），挡墙顶至少高出洞口一圈地形（见 holeRimTop）。
+   * 返回洞编号；超出容量返回 -1。
+   */
+  addHole(points) {
+    const n = points.length >> 1;
+    const used = this.holes.reduce((s, h) => s + h.n, 0);
+    if (n < 3 || this.holes.length >= MAX_HOLES || used + n > MAX_HOLE_PTS) {
+      console.warn('[terrain] 挖洞容量不足，忽略', n);
+      return -1;
+    }
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < n; i++) {
+      x0 = Math.min(x0, points[i * 2]); x1 = Math.max(x1, points[i * 2]);
+      z0 = Math.min(z0, points[i * 2 + 1]); z1 = Math.max(z1, points[i * 2 + 1]);
+    }
+    const h = { p: Float64Array.from(points), n, start: used, bb: { x0, x1, z0, z1 } };
+    this.holes.push(h);
+    const tex = this.holeU.tex.value, d = tex.image.data, k = this.holes.length - 1;
+    d.set([x0, z0, x1, z1], k * 2 * 4);
+    d.set([h.start, n, 0, 0], (k * 2 + 1) * 4);
+    for (let i = 0; i < n; i++) d.set([points[i * 2], points[i * 2 + 1], 0, 0], (HOLE_TW + h.start + i) * 4);
+    tex.needsUpdate = true;
+    this.holeU.n.value = this.holes.length;
+    return k;
+  }
+
+  /** 点是否在某个洞内（与着色器同一射线法） */
+  inHole(x, z) {
+    for (const h of this.holes) {
+      const b = h.bb;
+      if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+      let c = false;
+      const p = h.p;
+      for (let i = 0, j = h.n - 1; i < h.n; j = i++) {
+        const xi = p[i * 2], zi = p[i * 2 + 1], xj = p[j * 2], zj = p[j * 2 + 1];
+        if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+      }
+      if (c) return true;
+    }
+    return false;
+  }
+
+  /**
+   * 洞口一圈地形渲染面可能达到的最高高度：沿轮廓每 ≤ step 米取 heightAt，再加上瓦片网格线性插值的误差余量。
+   * 挡墙/压顶做到这个高度以上，洞口边缘就不会露缝（地形面在洞外、挡墙顶在洞口）。
+   */
+  holeRimTop(points, step = 3, margin = 0.25) {
+    let hi = -Infinity;
+    const n = points.length >> 1;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, ax = points[i * 2], az = points[i * 2 + 1], bx = points[j * 2], bz = points[j * 2 + 1];
+      const k = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / step));
+      for (let s = 0; s < k; s++) hi = Math.max(hi, this.heightAt(ax + ((bx - ax) * s) / k, az + ((bz - az) * s) / k));
+    }
+    return hi + margin;
   }
 
   async load(meta) {
@@ -536,7 +637,7 @@ export class Terrain {
     const uvXform = { value: new THREE.Vector4(0, 0, 1, 1) };
     const mat = new THREE.MeshStandardMaterial({ roughness: 0.93, metalness: 0.0, color: 0xffffff });
     mat.userData.uvXform = uvXform;
-    patchTileMaterial(mat, uvXform);
+    patchTileMaterial(mat, uvXform, this.holeU);
     const mesh = new THREE.Mesh(g, mat);
     mesh.position.set(n.cx, 0, n.cz);
     mesh.receiveShadow = true;

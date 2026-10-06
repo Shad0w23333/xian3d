@@ -324,6 +324,28 @@ export default {
     ground.children.forEach((m) => (m.renderOrder = 1));
     root.add(ground);
 
+    // 逐栋档案建筑（曲江银泰城、威斯汀大酒店……按真实轮廓精建，见 src/arch/dossier-specs）占用的地块不再摆程序化唐风建筑，
+    // 否则两套建筑叠在一起（dossier 先于本模块 prepare，ctx.superseded.polys 为其落地轮廓）
+    const dos = (ctx.superseded?.polys || []).filter((p) => {
+      for (let i = 0; i < p.length; i += 2) if (p[i] > 1380 && p[i] < 1760 && p[i + 1] > 4850 && p[i + 1] < 6250) return true;
+      return false;
+    });
+    const pip = (x, z, p) => {
+      let c = false;
+      for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2)
+        if (p[i + 1] > z !== p[j + 1] > z && x < ((p[j] - p[i]) * (z - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) c = !c;
+      return c;
+    };
+    const taken = (xa, xb, za, zb) => {
+      const x0 = Math.min(xa, xb) - 1, x1 = Math.max(xa, xb) + 1, z0 = Math.min(za, zb) - 1, z1 = Math.max(za, zb) + 1;
+      for (const p of dos) {
+        for (let i = 0; i < p.length; i += 2) if (p[i] > x0 && p[i] < x1 && p[i + 1] > z0 && p[i + 1] < z1) return true;
+        for (let a = 0; a <= 8; a++) for (let c = 0; c <= 8; c++) if (pip(x0 + ((x1 - x0) * a) / 8, z0 + ((z1 - z0) * c) / 8, p)) return true;
+      }
+      return false;
+    };
+    let nTaken = 0;
+
     // ───── 2. 沿街唐风建筑 ─────
     const used = new Set();
     // 每段每侧一个 LOD 块：近处 detail 1（斗拱/门窗/匾额/幌子），远处 detail 0
@@ -332,7 +354,12 @@ export default {
       const [za, zb] = SEGS[si];
       const baseY = H(AX, (za + zb) / 2);
       for (const side of [-1, 1]) {
-        const specs = shopSpecs(side, za, zb, r, used);
+        const specs = shopSpecs(side, za, zb, r, used).filter((s) => {
+          const PD = s.depthBays * s.depthW + 3.2, hw = (s.bays * s.bayW) / 2 + 1.6;
+          const hit = taken(AX + side * HW, AX + side * (HW + PD + 0.4), s.zc - hw, s.zc + hw);
+          if (hit) nTaken++;
+          return !hit;
+        });
         const o = [AX + side * (HW + 9), H(AX + side * (HW + 9), (za + zb) / 2), (za + zb) / 2];
         const lod = new THREE.LOD();
         lod.name = '不夜城商铺' + si + (side < 0 ? '西' : '东');
@@ -361,9 +388,13 @@ export default {
             const D = depthBays * dw + 3;
             const cx = AX + side * (HW + 19 + D / 2 + 1);
             const zc = z + W / 2;
-            b.push(cx, H(cx, zc) - 0.05, zc, side < 0 ? Math.PI / 2 : -Math.PI / 2);
-            hall(b, { style: 'tang', bays, bayW: bw, depthBays, depthW: dw, colH: 6 + r() * 1.5, eaves: r() < 0.45 ? 2 : 1, roof: r() < 0.5 ? 'wudian' : 'xieshan', roofColor: 'darkgray', front: 'tang', sides: 'wall', back: 'wall', platform: 'plain', platformH: 0.6, platformMargin: 1.5, eaveLights: { width: 0.1 } });
-            b.pop();
+            const hOpt = { style: 'tang', bays, bayW: bw, depthBays, depthW: dw, colH: 6 + r() * 1.5, eaves: r() < 0.45 ? 2 : 1, roof: r() < 0.5 ? 'wudian' : 'xieshan', roofColor: 'darkgray', front: 'tang', sides: 'wall', back: 'wall', platform: 'plain', platformH: 0.6, platformMargin: 1.5, eaveLights: { width: 0.1 } };
+            if (taken(cx - D / 2 - 1.5, cx + D / 2 + 1.5, z - 1.5, z + W + 1.5)) nTaken++;
+            else {
+              b.push(cx, H(cx, zc) - 0.05, zc, side < 0 ? Math.PI / 2 : -Math.PI / 2);
+              hall(b, hOpt);
+              b.pop();
+            }
             z += W + 6 + r() * 6;
           }
         }
@@ -381,6 +412,7 @@ export default {
       for (const [d, dist] of lvl >= 2 ? [[1, 0], [0, 650]] : [[0, 0]]) {
         const b = new ArchBuilder(ctx, { detail: d, style: 'tang', name: '贞观广场建筑' });
         const put = (x, z, yaw, fn) => {
+          if (taken(x - 12, x + 12, z - 12, z + 12)) return; // 该处已有逐栋档案建筑
           b.push(x - O[0], H(x, z) - 0.05 - O[1], z - O[2], yaw);
           fn();
           b.pop();
@@ -768,11 +800,13 @@ export default {
       return `${c.name}:${d}/${(t / 1000).toFixed(0)}k`;
     });
     console.warn('[datang] ' + brk.join(' '));
-    console.warn(`[datang] build ${(performance.now() - t0).toFixed(0)} ms, meshes ${draws}, tris ${(tris / 1e6).toFixed(2)} M, lamps ${lamps.length}, trees ${trees.length}, lanterns ${lant.length}, people ${nNight}`);
+    console.warn(`[datang] build ${(performance.now() - t0).toFixed(0)} ms, meshes ${draws}, tris ${(tris / 1e6).toFixed(2)} M, lamps ${lamps.length}, trees ${trees.length}, lanterns ${lant.length}, people ${nNight}，让位档案建筑 ${nTaken} 处`);
 
     const crowds = [modern, hanfu];
     const totals = [nM, nH];
     return {
+      /** 诊断（tools/check_overlap*.mjs）：程序化唐风建筑已给逐栋档案建筑让位（沿街区排除区不再代表“这里有唐风楼”） */
+      diag: () => ({ yieldToDossier: true, taken: nTaken }),
       update() {
         const k = ctx.sky ? ctx.sky.night ?? 0 : 0;
         const f = 0.4 + 0.6 * k;
