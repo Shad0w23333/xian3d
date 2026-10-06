@@ -20,17 +20,15 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Check this is still the latest eligible commit
-      run: python3 /Users/server/Documents/Codex/ci-macmini/bin/check_fresh.py
+      run: python3 /Users/Shared/macmini-ci/bin/check_fresh.py
       env:
         GH_TOKEN: ${{ github.token }}
     - name: Verify SSD, architecture and single execution slot
       run: 'test "$(uname -m)" = arm64
 
-        case "$RUNNER_TEMP" in /Users/server/Documents/Codex/ci-macmini/*) ;; *) echo ''Temporary data is not on the SSD'';
-        exit 1;; esac
+        case "$RUNNER_TEMP" in /Users/Shared/macmini-ci/*) ;; *) echo ''Temporary data is not on the SSD''; exit 1;; esac
 
-        case "$GITHUB_WORKSPACE" in /Users/server/Documents/Codex/ci-macmini/*) ;; *) echo ''Checkout is not on the SSD'';
-        exit 1;; esac
+        case "$GITHUB_WORKSPACE" in /Users/Shared/macmini-ci/*) ;; *) echo ''Checkout is not on the SSD''; exit 1;; esac
 
         workers=$(python3 -c ''import subprocess; print(sum(line.strip().endswith("/Runner.Worker") for line in subprocess.check_output(["/bin/ps","-axo","comm="],text=True).splitlines()))'')
 
@@ -53,7 +51,7 @@ jobs:
       if: ${{ env.MACMINI_FRESH == 'true' }}
     - name: Collect CI outputs
       if: ${{ always() && env.MACMINI_FRESH == 'true' }}
-      run: python3 /Users/server/Documents/Codex/ci-macmini/bin/collect-artifacts.py
+      run: python3 /Users/Shared/macmini-ci/bin/collect-artifacts.py
     - name: Upload CI outputs
       if: ${{ always() && env.MACMINI_FRESH == 'true' }}
       uses: actions/upload-artifact@v4
