@@ -185,11 +185,17 @@ if ( uNight > 0.02 ) {
   float wid = 0.12 + 0.3 * r2;
   float s = ( 1.0 - smoothstep( 0.0, wid, abs( fl - 0.5 ) ) ) * on;
   float along = length( vd );
-  float rip = 0.45 + 0.55 * sin( along * 1.3 + wN.x * 60.0 + uTime * 1.1 + r2 * 40.0 );
+  // 相位先取模再求正弦：along 在十几公里外达上万弧度（uTime 久了也一样），Metal fast-math 的 sin 对大参数会吐出
+  // 无穷大/垃圾值，远处水面会冒出孤立的超亮像素，被泛光放大成地平线上一团团“假太阳”
+  float ripPh = mod( along * 1.3 + wN.x * 60.0 + uTime * 1.1 + r2 * 40.0, 6.2831853 );
+  float rip = clamp( 0.45 + 0.55 * sin( ripPh ), 0.0, 1.0 );
   float shore = 0.35 + 0.65 * exp( -wD / 45.0 );
   vec3 lc = mix( vec3( 1.0, 0.6, 0.26 ), vec3( 0.8, 0.88, 1.0 ), step( 0.72, r2 ) );
   lc = mix( lc, vec3( 1.0, 0.25, 0.18 ), step( 0.93, r1 ) );
-  em += lc * s * max( rip, 0.0 ) * ( 0.5 + 1.7 * r2 ) * shore * ( 0.35 + 0.65 * wFres ) * ( 1.0 - wFar * 0.5 ) * urban;
+  em += lc * s * rip * ( 0.5 + 1.7 * r2 ) * shore * ( 0.35 + 0.65 * wFres ) * ( 1.0 - wFar * 0.5 ) * urban;
+  // 远处（> 2 km）倒影减弱：掠射角下 wFres→1，远处河湖整片亮到 1 以上会在地平线上结成亮线；并给发光封顶兜底
+  em *= 1.0 - 0.8 * smoothstep( 2000.0, 7000.0, wDist );
+  em = min( em, vec3( 3.0 ) );
   totalEmissiveRadiance += em * uNight;
 }`
       )
@@ -201,7 +207,7 @@ if ( uNight > 0.02 ) {
 #endif`
       );
   };
-  mat.customProgramCacheKey = () => 'xian-water-v1-' + level;
+  mat.customProgramCacheKey = () => 'xian-water-v2-' + level;
   ctx.overlay(mat, 0.00018);
   return mat;
 }
