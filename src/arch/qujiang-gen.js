@@ -301,36 +301,182 @@ function reflMaterial(ctx, kind, lake) {
         gl_FragColor = vec4( rc, 1.0 );`);
   };
   m.customProgramCacheKey = () => 'qj-refl-' + kind;
+  // 加色混合与绘制顺序无关：关掉 three 对“透明 + 双面”材质的背面/正面两遍绘制（否则每个网格 2 次 draw call）
+  m.forceSinglePass = true;
   reflCache.set(key, m);
   return m;
 }
-/** 为 obj（建筑组）生成倒影网格，加入 parent。lake: {id, y, tex, mb} */
-export function addReflection(ctx, parent, obj, lake, { solids = true } = {}) {
+const _rm = new THREE.Matrix4(), _rv = new THREE.Vector3(), _rc = new THREE.Color();
+/**
+ * 收集 obj 树里的古建网格（含 InstancedMesh，实例逐个展开）为世界坐标的顶点/颜色/索引块，按倒影种类归类。
+ * out: {solid: [], emit: [], glow: []}，每块 {pos: Float32Array, col: Float32Array, idx: Uint32Array}
+ */
+function collectReflChunks(obj, solids, out) {
   obj.updateMatrixWorld(true);
-  let n = 0;
   obj.traverse((m) => {
     if (!m.isMesh || !m.material || Array.isArray(m.material)) return;
     const nm = m.material.name || '';
     if (!nm.startsWith('arch.') || nm === 'arch.lattice') return;
     const kind = nm === 'arch.led' || nm === 'arch.emit' ? 'emit' : nm === 'arch.glow' ? 'glow' : 'solid';
     if (kind === 'solid' && !solids) return;
-    const mat = reflMaterial(ctx, kind, lake);
-    let r;
-    if (m.isInstancedMesh) {
-      r = new THREE.InstancedMesh(m.geometry, mat, m.count);
-      r.instanceMatrix = m.instanceMatrix;
-      if (m.instanceColor) r.instanceColor = m.instanceColor;
-    } else r = new THREE.Mesh(m.geometry, mat);
-    r.matrixAutoUpdate = false;
-    r.matrix.copy(m.matrixWorld);
-    r.matrixWorld.copy(m.matrixWorld);
-    r.frustumCulled = false;
+    const g = m.geometry;
+    const pa = g.attributes.position, ca = g.attributes.color;
+    const nV = pa.count;
+    const ind = g.index ? g.index.array : null;
+    const nI = ind ? g.index.count : nV;
+    const nInst = m.isInstancedMesh ? m.count : 1;
+    for (let k = 0; k < nInst; k++) {
+      if (m.isInstancedMesh) _rm.fromArray(m.instanceMatrix.array, k * 16).premultiply(m.matrixWorld);
+      else _rm.copy(m.matrixWorld);
+      let tr = 1, tg = 1, tb = 1;
+      if (m.isInstancedMesh && m.instanceColor) { m.getColorAt(k, _rc); tr = _rc.r; tg = _rc.g; tb = _rc.b; }
+      const pos = new Float32Array(nV * 3), col = new Float32Array(nV * 3);
+      for (let i = 0; i < nV; i++) {
+        _rv.fromBufferAttribute(pa, i).applyMatrix4(_rm);
+        pos[i * 3] = _rv.x; pos[i * 3 + 1] = _rv.y; pos[i * 3 + 2] = _rv.z;
+        if (ca) { col[i * 3] = ca.getX(i) * tr; col[i * 3 + 1] = ca.getY(i) * tg; col[i * 3 + 2] = ca.getZ(i) * tb; }
+        else { col[i * 3] = tr; col[i * 3 + 1] = tg; col[i * 3 + 2] = tb; }
+      }
+      const idx = new Uint32Array(nI);
+      if (ind) idx.set(ind.subarray(0, nI)); else for (let i = 0; i < nI; i++) idx[i] = i;
+      out[kind].push({ pos, col, idx });
+    }
+  });
+}
+/**
+ * 为一个湖生成合并倒影：sources = [{obj, solids}]（obj 为建筑组/LOD 某级；solids=false 只取发光部分），
+ * 所有来源按种类（solid/emit/glow）各合成 1 个网格（≤ 3 个 draw call），加入 parent。lake: {id, y, tex, mb}。
+ * 几何复制为世界坐标（来源可以不在场景里，例如远景簇的临时 Group）。返回 {meshes, tris}。
+ */
+export function mergeReflections(ctx, parent, lake, sources) {
+  const chunks = { solid: [], emit: [], glow: [] };
+  for (const s of sources) collectReflChunks(s.obj, s.solids !== false, chunks);
+  let meshes = 0, tris = 0;
+  for (const kind of ['solid', 'emit', 'glow']) {
+    const list = chunks[kind];
+    if (!list.length) continue;
+    let nV = 0, nI = 0;
+    for (const c of list) { nV += c.pos.length / 3; nI += c.idx.length; }
+    const pos = new Float32Array(nV * 3), col = new Float32Array(nV * 3), idx = new Uint32Array(nI);
+    let vo = 0, io = 0;
+    for (const c of list) {
+      pos.set(c.pos, vo * 3); col.set(c.col, vo * 3);
+      for (let i = 0; i < c.idx.length; i++) idx[io + i] = c.idx[i] + vo;
+      vo += c.pos.length / 3; io += c.idx.length;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    geo.setIndex(new THREE.BufferAttribute(idx, 1));
+    const r = new THREE.Mesh(geo, reflMaterial(ctx, kind, lake));
+    r.name = 'refl:' + lake.id + ':' + kind;
+    r.frustumCulled = false; // 顶点在着色器里被镜像并投影到水面，包围球无意义；由模块按距离整体显隐
     r.castShadow = r.receiveShadow = false;
     r.renderOrder = 2;
     parent.add(r);
-    n++;
-  });
-  return n;
+    meshes++; tris += nI / 3;
+  }
+  return { meshes, tris: Math.round(tris) };
+}
+
+// ───────────── 远景簇合并集 ─────────────
+/**
+ * 把多个簇的远景（detail 0）输出合并为“每种材质 1 个网格”，并保留每簇的索引段：
+ * 近景簇（显示 detail 1 的）或超出显示距离的簇通过重建索引剔除，不必为每簇各留一套网格。
+ *   parts: [{group（ArchBuilder.build() 输出，instancing=false，group.position 已设为簇原点）}]
+ *   setMask(Uint8Array)：1 = 剔除该簇；只在掩码变化时重建索引（bufferSubData 一次）。
+ */
+export class ClusterFarSet {
+  constructor(parts, { name = '园林建筑-远景' } = {}) {
+    this.group = new THREE.Group();
+    this.group.name = name;
+    this.n = parts.length;
+    this.mask = new Uint8Array(parts.length);
+    this.entries = [];
+    const byMat = new Map();
+    parts.forEach((p, pi) => {
+      p.group.updateMatrixWorld(true);
+      p.group.traverse((m) => {
+        if (!m.isMesh || m.isInstancedMesh) return;
+        let e = byMat.get(m.material);
+        if (!e) { e = { material: m.material, castShadow: m.castShadow, chunks: [] }; byMat.set(m.material, e); }
+        e.chunks.push({ pi, mesh: m });
+      });
+    });
+    const nm3 = new THREE.Matrix3();
+    for (const e of byMat.values()) {
+      let nV = 0, nI = 0;
+      for (const c of e.chunks) { const g = c.mesh.geometry; nV += g.attributes.position.count; nI += g.index ? g.index.count : g.attributes.position.count; }
+      const pos = new Float32Array(nV * 3), nor = new Float32Array(nV * 3), uv = new Float32Array(nV * 2), col = new Float32Array(nV * 3);
+      const partIdx = parts.map(() => []);
+      let vo = 0;
+      for (const c of e.chunks) {
+        const g = c.mesh.geometry, mw = c.mesh.matrixWorld;
+        nm3.getNormalMatrix(mw);
+        const pa = g.attributes.position, na = g.attributes.normal, ta = g.attributes.uv, ca = g.attributes.color;
+        const n = pa.count;
+        for (let i = 0; i < n; i++) {
+          _rv.fromBufferAttribute(pa, i).applyMatrix4(mw);
+          pos[(vo + i) * 3] = _rv.x; pos[(vo + i) * 3 + 1] = _rv.y; pos[(vo + i) * 3 + 2] = _rv.z;
+          if (na) { _rv.fromBufferAttribute(na, i).applyMatrix3(nm3).normalize(); nor[(vo + i) * 3] = _rv.x; nor[(vo + i) * 3 + 1] = _rv.y; nor[(vo + i) * 3 + 2] = _rv.z; }
+          else nor[(vo + i) * 3 + 1] = 1;
+          if (ta) { uv[(vo + i) * 2] = ta.getX(i); uv[(vo + i) * 2 + 1] = ta.getY(i); }
+          if (ca) { col[(vo + i) * 3] = ca.getX(i); col[(vo + i) * 3 + 1] = ca.getY(i); col[(vo + i) * 3 + 2] = ca.getZ(i); }
+          else { col[(vo + i) * 3] = col[(vo + i) * 3 + 1] = col[(vo + i) * 3 + 2] = 1; }
+        }
+        const ind = g.index ? g.index.array : null, ni = ind ? g.index.count : n;
+        const arr = new Uint32Array(ni);
+        for (let i = 0; i < ni; i++) arr[i] = (ind ? ind[i] : i) + vo;
+        partIdx[c.pi].push(arr);
+        vo += n;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+      geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const idx = new THREE.BufferAttribute(new Uint32Array(nI), 1);
+      idx.setUsage(THREE.DynamicDrawUsage);
+      geo.setIndex(idx);
+      geo.computeBoundingSphere(); // 全集包围球（超集），索引重建后不必重算
+      geo.computeBoundingBox();
+      const mesh = new THREE.Mesh(geo, e.material);
+      mesh.name = (e.material.name || 'arch').replace('arch.', '');
+      mesh.castShadow = e.castShadow;
+      mesh.receiveShadow = true;
+      this.group.add(mesh);
+      this.entries.push({ mesh, geo, partIdx, total: nI, tris: nI / 3 });
+    }
+    this._rebuild();
+  }
+  /** 剔除掩码（每簇 1 字节，1 = 不画）；变化时重建索引，返回是否重建 */
+  setMask(mask) {
+    let same = true;
+    for (let i = 0; i < this.n; i++) if (mask[i] !== this.mask[i]) { same = false; break; }
+    if (same) return false;
+    this.mask.set(mask);
+    this._rebuild();
+    return true;
+  }
+  _rebuild() {
+    for (const e of this.entries) {
+      const idx = e.geo.index;
+      let o = 0;
+      for (let pi = 0; pi < this.n; pi++) {
+        if (this.mask[pi]) continue;
+        for (const arr of e.partIdx[pi]) { idx.array.set(arr, o); o += arr.length; }
+      }
+      e.geo.setDrawRange(0, o);
+      e.mesh.visible = o > 0; // 绘制范围为 0 时 three 仍会发一次空 draw call，直接隐藏
+      idx.needsUpdate = true;
+    }
+  }
+  /** 当前实际绘制的三角形数（自测用） */
+  get drawnTris() {
+    let t = 0;
+    for (const e of this.entries) t += e.geo.drawRange.count / 3;
+    return Math.round(t);
+  }
 }
 
 // ───────────── 水幕电影 + 喷泉 + 激光 ─────────────
