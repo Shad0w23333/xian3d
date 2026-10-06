@@ -153,6 +153,10 @@ const PALETTE_HUIMIN = [
 export function districtOf(x, z) {
   if (x > -760 && x < 20 && z > -680 && z < -60) return 'huimin';
   if (x > -2000 && x < 2150 && z > -1650 && z < 1350) return 'wall';
+  // 用户点名的“街景级”片区走廊（streetscape 模块覆盖区）：临街门头更密
+  if ((x > -450 && x < 1250 && z > -8760 && z < -8560) || (x > -80 && x < 120 && z > -9330 && z < -7700)) return 'street'; // 凤城七路 / 未央路
+  if (x > 3690 && x < 4720 && z > 6080 && z < 7440) return 'street'; // 曲江池东路 / 曲江池南路 / 新开门南路
+  if (x > 5200 && x < 7200 && z > -8600 && z < -7400) return 'street'; // 浐灞欧亚大道两岸
   return 'city';
 }
 

@@ -865,7 +865,8 @@ if (sTex) {
           const r = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 26, this.acceptFill, E.tx, E.tz, 0.8);
           if (!r || r.d > (this.mainCls.has(r.c) ? 32 : 18)) continue;
           // 临街主次干道两侧更密（东大街、解放路、长安路式的连续门头）
-          const pe = Math.min(0.97, prob + (this.mainCls.has(r.c) ? (dist === 'wall' ? 0.45 : 0.3) : 0) + (dist !== 'city' ? 0.12 : 0));
+          // 片区覆盖：用户点名片区（未央/凤城七路、曲江、浐灞）的临街门头密度再 +0.25（街景级打磨）
+          const pe = Math.min(0.97, prob + (this.mainCls.has(r.c) ? (dist === 'wall' ? 0.45 : 0.3) : 0) + (dist !== 'city' ? 0.12 : 0) + (dist === 'street' ? 0.25 : 0));
           const g0 = this.ctx.terrain.heightAt(mx, mz);
           let a = 0.35, si = 0;
           const hb = strHash(`${b}:${e}`);
