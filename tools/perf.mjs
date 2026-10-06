@@ -3,6 +3,7 @@
 // 用法：node tools/perf.mjs [--q 2] [--w 1600 --h 900] [--views 1,2,3,4,5,6,7,8,9,0] [--night]
 //        [--cams "x,离地高,z,tx,目标离地高,tz;..."]（自定义视角，世界坐标，代替 --views）
 //        [--frames 180]（每个视角统计的帧数；Linux 软件渲染很慢，建议 3~10）[--warm 5]（计时前空跑的帧数，避开着色器编译）
+//        [--skip a,b] [--modules a,b]（透传给页面：差分归因，看去掉某模块后帧时间/三角形的变化）
 // macOS 用 Metal GPU；Linux/云端无 GPU 时自动用 SwiftShader 软件渲染（帧率只作相对比较，draw calls / 三角形数可直接对比）。
 // 近景建筑小块按需生成：每个视角先等建筑近景小块就绪、影像队列清空再计时。
 import { chromium } from 'playwright';
@@ -20,6 +21,8 @@ const WARM = +get('--warm', 5);
 const cams = get('--cams', '') ? get('--cams', '').split(';').map((s) => s.split(',').map(Number)) : null;
 const views = cams ? cams.map((_, i) => 'cam' + (i + 1)) : get('--views', '1,2,3,4,5,6,7,8,9,0').split(',');
 const night = a.includes('--night');
+// --skip a,b / --modules a,b：透传给页面（差分归因：去掉某模块看帧时间变化）
+const extra = (get('--skip', '') ? `&skip=${get('--skip', '')}` : '') + (get('--modules', '') ? `&modules=${get('--modules', '')}` : '');
 const mac = process.platform === 'darwin' && !process.env.SWIFTSHADER;
 
 const server = await createServer({ root, logLevel: 'error', server: { port: 0, host: '127.0.0.1' } });
@@ -38,7 +41,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
 const t0 = Date.now();
 const first = cams ? `cam=${cams[0].join(',')}` : `view=${views[0]}`;
-await page.goto(`http://127.0.0.1:${port}/?ui=0&labels=0&mini=0&online=0&q=${q}&${first}${night ? '&time=21' : '&time=15'}`);
+await page.goto(`http://127.0.0.1:${port}/?ui=0&labels=0&mini=0&online=0&q=${q}&${first}${night ? '&time=21' : '&time=15'}${extra}`);
 await page.waitForFunction(() => window.xian && (window.xian.ready || window.xian.fatal), null, { timeout: 300000 });
 console.log(`加载 ${((Date.now() - t0) / 1000).toFixed(1)} s；模块错误：`, await page.evaluate(() => window.xian.errors));
 const rows = [];

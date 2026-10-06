@@ -190,6 +190,37 @@ export function lampGeometries() {
   return out;
 }
 
+/**
+ * 远景低模灯型（几百米外用）：一根 5 边形灯杆 + 每个灯头位置一个发光小盒（颜色/发光与完整灯型一致），
+ * 每盏约 22~46 个三角形（完整灯型 120~500 个）。入参为 lampGeometries() 的结果，返回 {type: geometry}。
+ */
+export function lampGeometriesLow(full) {
+  const out = {};
+  const H = { [LAMP.SINGLE]: 10, [LAMP.DOUBLE]: 11.5, [LAMP.KNOT]: 9.5, [LAMP.PALACE]: 7.3, [LAMP.LANTERN]: 10 };
+  const HEADCOL = {
+    [LAMP.SINGLE]: [[0.9, 0.9, 0.85], E_LED, 4.5], [LAMP.DOUBLE]: [[0.9, 0.9, 0.85], E_LED, 4.5], [LAMP.KNOT]: [[0.95, 0.9, 0.8], E_LED, 5],
+    [LAMP.PALACE]: [[0.95, 0.8, 0.55], E_WARM, 5], [LAMP.LANTERN]: [[0.9, 0.9, 0.85], E_LED, 4.5],
+  };
+  for (const k in full) {
+    const t = +k;
+    const p = [];
+    const poleCol = t === LAMP.PALACE ? C_BRONZE : t === LAMP.KNOT ? [0.3, 0.3, 0.32] : C_POLE;
+    const g = new THREE.CylinderGeometry(0.07, 0.12, H[t] || 10, 5, 1, true);
+    g.translate(0, (H[t] || 10) / 2, 0);
+    p.push(prep(g, poleCol));
+    full[k].head.forEach(([hx, hy, hz], i) => {
+      // 中国结 / 红灯笼的附加灯头是红色
+      const red = (t === LAMP.KNOT && i === 2) || (t === LAMP.LANTERN && i > 0);
+      const [c, e, s] = red ? [C_RED, E_RED, 2.6] : HEADCOL[t];
+      const big = t === LAMP.PALACE || red;
+      p.push(box(big ? 0.55 : 0.4, big ? 0.6 : 0.16, big ? 0.55 : 0.8, hx, hy, hz, c, e, s));
+    });
+    out[k] = mergeGeometries(p);
+    out[k].computeBoundingSphere();
+  }
+  return out;
+}
+
 /** 路灯材质：顶点色 + aEmi（夜间自发光） */
 export function lampMaterial(ctx) {
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.45, metalness: 0.55 });
