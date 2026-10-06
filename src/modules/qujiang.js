@@ -11,7 +11,7 @@
 //   · 曲江池遗址公园：南湖水面、岛屿、阅江楼（南岸，三层唐风楼阁）、畅观楼等；唐城墙遗址公园为东西向带状夯土城墙残段。
 import * as THREE from 'three';
 import { ArchBuilder, buildLOD, multiStoreyTower, hall, pavilion, paifang, platform, steps, balustrade, lantern, getKit } from '../arch/chinese.js';
-import { readBuildings, tangFromFootprint, lakeMask, addReflection, waterShow, signedArea } from '../arch/qujiang-gen.js';
+import { readBuildings, tangFromFootprint, lakeMask, mergeReflections, ClusterFarSet, waterShow, signedArea } from '../arch/qujiang-gen.js';
 import { pointInPoly, polyCentroid } from '../core/util.js';
 
 const PARK_NAMES = ['大唐芙蓉园', '曲江池遗址公园', '曲江寒窑遗址公园'];
@@ -21,6 +21,9 @@ const YUEJIANG = { x: 3510, z: 7093 }; // 阅江楼
 const YUEJIANG_ZONE = [3485, 7062, 3537, 7122];
 const FACE = { 大唐芙蓉园: [2470, 5030], 曲江池遗址公园: [3450, 6620], 曲江寒窑遗址公园: null };
 const CELL = 320;
+// 园内建筑簇 LOD 距离（与原 THREE.LOD 的 [detail1@0, detail0@420, 空@6500] 一致）：
+// < NEAR_D 显示该簇的近景组（detail 1）并从远景合并集剔除；≥ FAR_D 也从远景合并集剔除
+const NEAR_D = 420, FAR_D = 6500;
 
 const inZone = (x, z, r) => x > r[0] && x < r[2] && z > r[1] && z < r[3];
 const state = { parks: [], fps: [], ziyunH: null };
@@ -85,24 +88,26 @@ export default {
     const reflRoot = new THREE.Group();
     reflRoot.name = '湖面倒影';
     root.add(reflRoot);
-    const lodObjs = [];
     const t0 = performance.now();
 
     // ───── 1. 紫云楼 ─────
+    // minInstances 48：少量重复的构件直接烘焙进材质桶，近景（detail 2）网格数 26 → 约 18
     const zyY = ground(ZIYUN.x, ZIYUN.z);
     const ziyun = buildLOD(ctx, (b) => buildZiyun(b), {
-      style: 'tang', instancing: true, name: '紫云楼', levels: [[2, 0], [1, 260], [0, 800]],
+      style: 'tang', instancing: true, minInstances: 48, name: '紫云楼', levels: [[2, 0], [1, 260], [0, 800]],
       flood: { color: 0xffc47a, strength: 1.5, baseY: zyY + 3, height: 42, top: 0.45 },
     });
     ziyun.position.set(ZIYUN.x, zyY, ZIYUN.z);
     ziyun.rotation.y = Math.PI; // 坐南朝北
     root.add(ziyun);
-    lodObjs.push(ziyun);
     const zyTop = ziyun.userData.info?.topY ?? 40;
     ctx.labels.add('紫云楼', new THREE.Vector3(ZIYUN.x, zyY + zyTop + 6, ZIYUN.z), { category: 'landmark', minDist: 120, maxDist: 5000, priority: 2 });
     for (const dx of [-30, 30]) ctx.lights.add({ position: new THREE.Vector3(ZIYUN.x + dx, zyY + 8, ZIYUN.z - 30), color: 0xffc47a, intensity: 900, distance: 70, nightOnly: true, priority: 1.8 });
 
     // ───── 2. 园内唐风建筑（按足迹、按格网分簇、两级 LOD） ─────
+    // 近景（detail 1）：每簇一个 Group，只在 NEAR_D 内显示（最多同时几簇）；
+    // 远景（detail 0）：全部簇合并为一套网格（每种材质 1 个，约 8 个 draw call），近景簇/超远簇按索引段剔除（ClusterFarSet）。
+    // 原先每簇一个 THREE.LOD、每级十几个网格，25 簇远景就要 250 次左右 draw call。
     const clusters = new Map();
     for (const fp of state.fps) {
       const k = Math.floor(fp.x / CELL) + ',' + Math.floor(fp.z / CELL);
@@ -110,35 +115,37 @@ export default {
       clusters.get(k).push(fp);
     }
     let nBuild = 0;
-    const farGroups = { fr: [], qj: [] };
+    const parts = []; // {x, y, z, park, near(Group), group(远景临时 Group，只供合并与倒影)}
     for (const [, list] of clusters) {
       const cx = list.reduce((a, f) => a + f.x, 0) / list.length, cz = list.reduce((a, f) => a + f.z, 0) / list.length;
       const origin = { x: cx, y: ground(cx, cz), z: cz };
-      const lod = new THREE.LOD();
-      lod.name = '园林建筑簇';
-      lod.position.set(origin.x, origin.y, origin.z);
+      const part = { x: origin.x, y: origin.y, z: origin.z, park: list[0].park, near: null, group: null };
       for (const detail of [1, 0]) {
-        const b = new ArchBuilder(ctx, { detail, style: 'tang', instancing: true, name: '唐风建筑' });
+        // 远景级烘焙（instancing=false）：输出只有普通网格，便于跨簇合并；近景级保留实例化（重复构件多）
+        const b = new ArchBuilder(ctx, { detail, style: 'tang', instancing: detail === 1, minInstances: 24, name: '唐风建筑' });
         for (const fp of list) {
           tangFromFootprint(b, fp, origin, ground, FACE[fp.park] ? [FACE[fp.park][0] - fp.x, FACE[fp.park][1] - fp.z] : [0, 1], { lanterns: detail >= 1 });
           if (detail === 1) nBuild++;
         }
         const g = b.build({ name: '唐风建筑-' + detail });
-        lod.addLevel(g, detail === 1 ? 0 : 420);
-        if (detail === 0) {
-          const pk = list[0].park;
-          if (pk === '大唐芙蓉园') farGroups.fr.push(g);
-          else if (pk === '曲江池遗址公园') farGroups.qj.push(g);
-        }
+        g.position.set(origin.x, origin.y, origin.z);
+        if (detail === 1) {
+          g.name = '园林建筑簇-近景';
+          g.visible = false;
+          root.add(g);
+          part.near = g;
+        } else part.group = g;
       }
-      lod.addLevel(new THREE.Group(), 6500);
-      root.add(lod);
-      lodObjs.push(lod);
+      parts.push(part);
       await new Promise((r) => setTimeout(r, 0));
     }
+    const farSet = new ClusterFarSet(parts, { name: '园林建筑-远景' });
+    root.add(farSet.group);
+    const mask = new Uint8Array(parts.length);
 
     // ───── 3. 园门、阅江楼、岛亭、唐城墙、寒窑 ─────
-    const misc = new ArchBuilder(ctx, { detail: 2, style: 'tang', instancing: true, name: '曲江园林小品' });
+    // 不实例化（全部烘焙）：22 个网格（11 个 InstancedMesh）→ 11 个
+    const misc = new ArchBuilder(ctx, { detail: 2, style: 'tang', instancing: false, name: '曲江园林小品' });
     const O = { x: 2900, y: ground(2900, 5900), z: 5900 };
     const put = (x, z, yaw, fn) => { misc.push(x - O.x, ground(x, z) - O.y, z - O.z, yaw); fn(misc); misc.pop(); };
     // 芙蓉园西门（御苑门外牌楼）、南门
@@ -164,11 +171,10 @@ export default {
     const yue = buildLOD(ctx, (b) => multiStoreyTower(b, {
       style: 'tang', floors: 3, bays: 5, depthBays: 5, bayW: 4.6, depthW: 4.6, colH: 4.8, shrink: 1.0, roof: 'xieshan', topEaves: 2,
       platformH: 2.2, platform: 'brick', railing: true, steps: 'front', roofColor: 'darkgray', plaque: '閱江樓', lanterns: true, eaveLights: { color: 0xffc56a, width: 0.09 },
-    }), { style: 'tang', instancing: true, name: '阅江楼', levels: [[2, 0], [1, 220], [0, 700]], flood: { color: 0xffc47a, strength: 1.3, baseY: yjY + 2, height: 30, top: 0.4 } });
+    }), { style: 'tang', instancing: false, name: '阅江楼', levels: [[2, 0], [1, 220], [0, 700]], flood: { color: 0xffc47a, strength: 1.3, baseY: yjY + 2, height: 30, top: 0.4 } });
     yue.position.set(YUEJIANG.x, yjY, YUEJIANG.z);
     yue.rotation.y = Math.PI;
     root.add(yue);
-    lodObjs.push(yue);
     ctx.lights.add({ position: new THREE.Vector3(YUEJIANG.x, yjY + 6, YUEJIANG.z - 26), color: 0xffc47a, intensity: 600, distance: 55, nightOnly: true, priority: 1.5 });
 
     // ───── 4. 驳岸 + 湖畔宫灯 ─────
@@ -178,19 +184,22 @@ export default {
     shoreG.position.set(O.x, O.y, O.z);
     root.add(shoreG);
 
-    // ───── 5. 湖面倒影 ─────
+    // ───── 5. 湖面倒影（每湖按 solid/emit/glow 合并成 ≤ 3 个网格；原先逐网格复制共 269 个） ─────
+    // 先把 root 下所有世界矩阵算一遍：倒影按世界坐标复制几何（LOD 子级的父矩阵在首帧渲染前尚未更新）
+    root.updateMatrixWorld(true);
+    const farOf = (park) => parts.filter((p) => p.park === park).map((p) => ({ obj: p.group }));
+    const reflStats = {};
     if (lakes.fr) {
-      addReflection(ctx, reflRoot, ziyun.levels[1].object, lakes.fr);
-      for (const g of farGroups.fr) addReflection(ctx, reflRoot, g, lakes.fr);
-      addReflection(ctx, reflRoot, miscG, lakes.fr, { solids: false });
+      reflStats.fr = mergeReflections(ctx, reflRoot, lakes.fr, [
+        { obj: ziyun.levels[1].object }, ...farOf('大唐芙蓉园'), { obj: miscG, solids: false }, { obj: shoreG, solids: false },
+      ]);
     }
     if (lakes.qj) {
-      addReflection(ctx, reflRoot, yue.levels[1].object, lakes.qj);
-      for (const g of farGroups.qj) addReflection(ctx, reflRoot, g, lakes.qj);
-      addReflection(ctx, reflRoot, miscG, lakes.qj);
-      addReflection(ctx, reflRoot, shoreG, lakes.qj, { solids: false });
+      reflStats.qj = mergeReflections(ctx, reflRoot, lakes.qj, [
+        { obj: yue.levels[1].object }, ...farOf('曲江池遗址公园'), { obj: miscG }, { obj: shoreG, solids: false },
+      ]);
     }
-    if (lakes.fr) addReflection(ctx, reflRoot, shoreG, lakes.fr, { solids: false });
+    for (const p of parts) p.group = null; // 远景临时 Group 已合并、已复制进倒影，释放
 
     // ───── 6. 水幕电影 / 喷泉 / 激光秀（紫云楼前湖面） ─────
     let show = null;
@@ -211,8 +220,8 @@ export default {
     ctx.labels.add('唐城墙遗址公园', new THREE.Vector3(2100, ground(2100, 6112) + 25, 6112), { category: 'district', minDist: 250, maxDist: 6000, priority: 1.2 });
 
     const buildMs = performance.now() - t0;
-    root.userData.stats = { buildMs: Math.round(buildMs), buildings: nBuild };
-    console.warn('[qujiang] 构建', Math.round(buildMs), 'ms，园林建筑', nBuild, '栋');
+    root.userData.stats = { buildMs: Math.round(buildMs), buildings: nBuild, clusters: parts.length, farMeshes: farSet.group.children.length, refl: reflStats };
+    console.warn('[qujiang] 构建', Math.round(buildMs), 'ms，园林建筑', nBuild, '栋，簇', parts.length, '，远景网格', farSet.group.children.length, '，倒影网格', reflRoot.children.length);
 
     const cam = ctx.camera;
     let reflOn = true;
@@ -224,7 +233,18 @@ export default {
         const d = Math.hypot(p.x - 2900, p.z - 5900);
         reflRoot.visible = reflOn && d < 4200 && p.y < 2600;
         if (show) show.group.visible = d < 6000;
+        // 园内建筑簇 LOD（替代 THREE.LOD）：近景簇显示 detail 1 并从远景合并集剔除
+        for (let i = 0; i < parts.length; i++) {
+          const c = parts[i];
+          const dc = Math.hypot(p.x - c.x, p.y - c.y, p.z - c.z);
+          const near = dc < NEAR_D;
+          if (c.near.visible !== near) c.near.visible = near;
+          mask[i] = near || dc >= FAR_D ? 1 : 0;
+        }
+        farSet.setMask(mask);
       },
+      /** 自测用：当前远景合并集实际绘制的三角形数、近景簇数 */
+      stats() { let near = 0; for (const c of parts) if (c.near.visible) near++; return { farTris: farSet.drawnTris, nearClusters: near, refl: reflStats }; },
       setLayer(layer, visible) { if (layer === 'landmarks') root.visible = visible; },
       setQuality(q) { reflOn = (q?.level ?? 2) >= 1; },
       dispose() { root.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); ctx.scene.remove(root); },
