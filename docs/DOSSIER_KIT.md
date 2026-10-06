@@ -13,6 +13,7 @@
 | `src/modules/skyline.js` | `isSuperseded(ctx, s)`：跳过被档案替代的 sky-data / sky-data2 / landmarks2026 / skyline.json 通用高层 / SPECIAL(2) |
 | `research/refs/dossiers/model_log.md` | 每栋建完后的“照片 vs 模型”对照差异记录 |
 | `src/arch/dossier-specs/demo.js` | 示范：陕西信息大厦、西安SKP、大明宫万达（读这三个就能上手） |
+| `src/arch/dossier-specs/landmarks2.js` | 地标补建第二批（26 处：秦汉馆、大风阁、世博园、半坡、易俗社、老钢厂、考古博物馆、电竞中心、大唐西市、国际会展中心、禾盛京广、天坛、麟德殿、丝路群雕、国际港站、招商局丝路中心等），档案 `research/refs/dossiers/landmarks2.json`，对照 `model_log_landmarks2.md` |
 
 ---
 
@@ -75,8 +76,10 @@
   kind: 'tower',                    // 'tower'（默认，buildTower：幕墙+女儿墙+屋面设备+障碍灯）| 'podium'（buildPodium：裙房/商场，支持内院）
                                     // | 'solid'（实体挤出：石材端墙、环带、实墙体量）| 'facade'（只有立面的直筒，如首层橱窗罩面）
                                     // | 'lattice'（斜交网格钢构：门洞桁架、外骨架，见 3.7）
-  topPts: [x, z, ...],              // 可选：放样顶面轮廓（世界坐标，与底面同点数、同起点同绕向）。tower/facade 在底面与顶面之间直纹过渡
-                                    // （逐层变大的切角、不等比收分），见 3.7；不能与 roundCorners 同用
+  topPts: [x, z, ...],              // 可选：放样顶面轮廓（世界坐标，与底面同点数、同起点同绕向）。tower/facade/solid 在底面与顶面之间直纹过渡
+                                    // （逐层变大的切角、不等比收分；solid 用于折板屋面、斜梁、棱锥膜顶），见 3.7；不能与 roundCorners 同用
+  topScale: 0.9, topInset: 4, topShift: [东, 北], // 放样简写（2026-09 地标补建）：顶面 = 底面按质心缩放 → 内缩（米）→ 平移（米），
+                                    // 点数不变，适用于任意轮廓（含 fp）：斜玻璃面温室、收分外壳、四棱锥膜帐篷（topScale 很小）、斜伸的雕塑体块
   // —— 轮廓（三选一）——
   fp: '<overture_id 或 8 位前缀>',   // Overture 实测轮廓
   pts: [x, z, ...],                 // 世界坐标轮廓
@@ -96,7 +99,7 @@
   roofMat: '#6f8a5b',               // kind:'podium' 的屋面材质（绿色屋面、深色屋面等）
   crown: 'flat' | {type,...} | [ {type,...}, ... ], // 塔冠，见 3.6
   seed: 12,                         // 立面随机种子（不写自动递增）
-  footprint: true,                  // base>0 的体块默认不参与排除区；需要时置 true
+  footprint: true,                  // base>0 的体块默认不参与排除区；需要时置 true。落地体块（base≤0.5）也可写 false：不产生排除区、不登记替代轮廓（细构件用）
 }
 ```
 
@@ -241,7 +244,7 @@ columns: [
   { part: 'west', at: [[5483, -13290], [5483, -13270]], r: 0.8, rTop: 3.2, from: 0, to: 19 },   // 直接给柱位；rTop > r 即郁金香/喇叭口柱
 ]
 ```
-- `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。
+- `out`：离体块轮廓的外扩距离（负数内缩）；`step` 柱距；`margin` 离转角距离（默认 0，转角柱只放一次）；`seg` 柱截面分段。`skipInside:['wingNE', …]`：落在这些体块轮廓内的柱位不建（柱廊被附楼占住的一段）。
 - 柱子进 `solid`（投影），`from/to` 为离地米（默认体块 base/top）。
 | `pubHip` | `h`（矢高，默认 0.3×宽）、`eave`（挑檐，默认 1.5）、`ridge`（正脊占长度比例，默认四坡等坡；取大近似歇山，1 = 双坡）、`top:[长,宽]`（平顶四坡 / 盝顶 / 行政楼“大挑檐帽”，给了就不做正脊；`topMat` 单给平顶材质，如“平屋面 + 一圈琉璃挑檐”）、`size:[长,宽]`+`at`/`offset`+`rot`（默认取体块外接矩形，`along:'short'` 换向）、`mat`（默认 `roofTile` 深灰瓦）、`eaveMat`、`eaveH`、`ridgeH` | 坡屋顶：公建仿古大屋顶、屋顶亭阁（两个 `pubHip` 叠放 = 重檐）、礼堂双坡 |
 | `sphere` | `r`、`cy`（球心离地，默认 `r` 即球底落地）、`at`/`offset`、`mat`、`ribs`（经线杆数，`false` 不建）、`ribMat`、`ribW` | 整球：球幕影院、网壳球体 |
@@ -318,6 +321,7 @@ ctx.superseded = { names: Set, keys: Set, polys: [落地体块与 site 轮廓…
 - 通用建筑（buildings.bin）靠排除区让位：质心落在档案轮廓外扩 2.5 m 内的通用楼块都不再生成。若档案只建了综合体的一部分，
   其余部分要么也写成 part，要么别让排除区盖住（`clearance` 调小、不写 `site`）。
 - 其他模块（heritage、qujiang 等）要支持替代，可 `import { isSuperseded } from '../arch/dossier-kit.js'` 在自己的 prepare/build 里过滤。
+  heritage26 已接入（2026-09）：院落按名称或院落中心 (x,z) 判定被档案替代时整座院落不建（半坡、易俗社、大唐西市、秦汉馆、考古博物馆、天坛、大明宫遗址博物馆等由 `landmarks2.js` 精建）。
 
 ---
 

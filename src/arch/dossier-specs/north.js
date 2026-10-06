@@ -839,7 +839,8 @@ for (const s of [-1, 1]) for (let k = 0; k < 9; k++) {
 // 两侧站台雨棚（高约 14 m，11 跨，每跨一道筒拱玻璃采光带）+ 支柱
 for (const s of [-1, 1]) {
   const [x, z] = bzAt(s * 169, 0);
-  bzParts.push({ name: 'canopy' + (s > 0 ? 'E' : 'W'), kind: 'solid', mat: { color: '#dcdedf', roughness: 0.6, metalness: 0.2 }, shape: 'rect', size: [493, 128], rot: BZ.rot, at: [x, z], base: 13, top: 14.4,
+  // footprint：雨棚下是站台与股道，通用建筑（CMAB 把雨棚识别成的“楼”）与树木要让位
+  bzParts.push({ name: 'canopy' + (s > 0 ? 'E' : 'W'), kind: 'solid', mat: { color: '#dcdedf', roughness: 0.6, metalness: 0.2 }, shape: 'rect', size: [493, 128], rot: BZ.rot, at: [x, z], base: 13, top: 14.4, footprint: true,
     crown: Array.from({ length: 11 }, (_, k) => ({ type: 'arch', at: bzAt(s * 169, -493 / 2 + (k + 0.5) * (493 / 11)), size: [120, 22], rot: 16.8, h: 2.2, mat: { color: '#9fb4c2', metalness: 0.55, roughness: 0.15 } })) });
   for (let k = 0; k < 11; k++) for (const du of [-42, 0, 42]) {
     const [cx, cz] = bzAt(s * 169 + du, -493 / 2 + (k + 0.5) * (493 / 11));

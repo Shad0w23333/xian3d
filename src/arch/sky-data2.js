@@ -180,10 +180,14 @@ export const SPECIAL2 = {
 };
 
 /** SPECIAL2 占地多边形（prepare 排除区） */
-export function special2Footprints() {
-  const S = SPECIAL2, out = [G.ccw(S.w.site)];
-  for (const t of S.w.towers) out.push(G.ccw(t.pts));
+/** 特殊地标占地（排除区用）；live.w / live.hyatt = false 表示该地标已被逐栋档案替代、不再建 */
+export function special2Footprints(live = {}) {
+  const S = SPECIAL2, out = [];
+  if (live.w !== false) {
+    out.push(G.ccw(S.w.site));
+    for (const t of S.w.towers) out.push(G.ccw(t.pts));
+  }
   const H = S.hyatt;
-  out.push(G.rect(H.cx + H.podium.dx, H.cz + H.podium.dz, H.podium.w + 6, H.podium.d + 6, H.podium.rot * D));
+  if (live.hyatt !== false) out.push(G.rect(H.cx + H.podium.dx, H.cz + H.podium.dz, H.podium.w + 6, H.podium.d + 6, H.podium.rot * D));
   return out;
 }

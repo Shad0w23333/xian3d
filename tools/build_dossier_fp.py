@@ -41,7 +41,18 @@ UUID = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 # 8 位前缀：前后不接十六进制/连字符；前面 40 字内要有“Overture/轮廓/ML/候选/OSM”等字样，避免把图片 URL 里的哈希当成 id
 PREFIX = re.compile(r'(?<![0-9a-zA-Z-])([0-9a-f]{8})(?![0-9a-zA-Z-])')
 PREFIX_CTX = re.compile(r'Overture|overture|轮廓|ML|候选|zenodo|名称轮廓')
-FILES = ['core_south', 'gaoxin', 'north', 'east_west', 'public', 'residential']
+
+
+def in_url(txt, i):
+    """位置 i 的匹配是否在一个 URL 里（照片/新闻链接中的哈希不是轮廓引用）"""
+    if i > 0 and txt[i - 1] == '/':
+        return True
+    pre = txt[max(0, i - 120):i]
+    k = pre.rfind('http')
+    return k >= 0 and not re.search(r'[\s\'",]', pre[k:])
+
+
+FILES = ['core_south', 'gaoxin', 'north', 'east_west', 'public', 'residential', 'landmarks2']
 
 
 def first_existing(*cands):
@@ -80,7 +91,8 @@ def collect_ids(ddir):
         txt = p.read_text(encoding='utf-8')
         walk(json.loads(txt), f)
         for m in UUID.finditer(txt):
-            note(full, m.group(0), f + '（正文）')
+            if not in_url(txt, m.start()):
+                note(full, m.group(0), f + '（正文）')
         for m in PREFIX.finditer(txt):
             ctx = txt[max(0, m.start() - 40):m.start()]
             if PREFIX_CTX.search(ctx):
@@ -90,7 +102,8 @@ def collect_ids(ddir):
         if p.exists():
             txt = p.read_text(encoding='utf-8')
             for m in UUID.finditer(txt):
-                note(full, m.group(0), f + '_notes')
+                if not in_url(txt, m.start()):
+                    note(full, m.group(0), f + '_notes')
             for m in PREFIX.finditer(txt):
                 ctx = txt[max(0, m.start() - 40):m.start()]
                 if PREFIX_CTX.search(ctx):
@@ -100,7 +113,8 @@ def collect_ids(ddir):
     for p in sorted(sdir.glob('*.js')) if sdir.exists() else []:
         txt = p.read_text(encoding='utf-8')
         for m in UUID.finditer(txt):
-            note(full, m.group(0), 'spec:' + p.name)
+            if not in_url(txt, m.start()):
+                note(full, m.group(0), 'spec:' + p.name)
         for m in re.finditer(r"fp:\s*'([0-9a-f]{8})'", txt):
             note(pref, m.group(1), 'spec:' + p.name)
     return full, pref

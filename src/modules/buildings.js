@@ -5,9 +5,14 @@
 //     把可见小块合并成 ≤ 4 段 drawRange（块级剔除 + 少量 draw call）；外墙共享角点、轮廓简化、无女儿墙。
 //   · 近景 hi：相机附近（离地 < 900 m）的 1 km 小块按需生成：外墙逐边独立 UV（开间避开转角）、女儿墙、
 //     窗洞视差凹进 + 简化室内映射；hi 接管的小块在 lo 顶点着色器里整栋塌缩（uHiRect），两者严格互补。
-//   · 屋顶构件（楼梯间/机房、水箱、空调机组、太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
+//   · 立面附属几何（近景小块内，按画质细节档位 DETAIL）：南向凸阳台叠柱、东西北向凸窗、高层顶部构架、老式多层北向单元入口雨棚、
+//     底商雨棚——只出体块（给轮廓与自阴影），楼层内的栏板/玻璃/楼板线/防盗笼/晾晒/夜间亮灯由立面着色器按构件类型画；
+//     与近景外墙同一网格、同一材质，不增加 draw call。低画质不生成。
+//   · 老旧多层“平改坡”：无小区风貌依据的 80~90 年代板楼按年代概率加红/橙红/灰蓝瓦四坡顶（远近景几何都有）。
+//   · 屋顶构件（楼梯间/机房、水箱、空调机组、成排太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
 //   · 航空障碍灯：高度 ≥ 100 m 的楼顶四角红色闪光灯（Points）。
-//   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的逐窗亮灯。
+//   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的亮灯（住宅按户成组、楼梯间声控灯、单元门灯、雨棚下店铺灯光）；
+//     约 1/3 的高层/写字楼楼顶亮化（顶部泛光 + 轮廓灯带，中画质以上）。
 //   · 小区风貌：public/data/estates_style.json（tools/build_estates.py，按档案与实景照片）——落在有照片依据的小区多边形内的
 //     住宅楼按小区 style 着色与生成细节（墙色/点缀色/窗套/腰线/阳台/坡屋顶/塔冠/构架），参数走一张 RGBA32F 小纹理（uEst），
 //     不新建材质；有照片依据的小区大门合并成一个网格（src/arch/bld-estates.js）。
@@ -18,6 +23,7 @@ import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, S
 import { createFacadeMaterials, createDataTexture, createClassTexture, createEstateTexture } from '../arch/bld-shader.js';
 import { buildEstateGates } from '../arch/bld-estates.js';
 import { loadJSON } from '../core/data.js';
+import { preprocess } from '../arch/bld-skip.js';
 import { classifyBuildings, classTextureData, BLD_CLASSES } from '../arch/bld-class.js';
 import BldWorker from '../arch/bld-worker.js?worker&inline';
 
@@ -28,6 +34,8 @@ const GAP_MERGE = 60000; // 相邻可见段之间的不可见索引数小于此�
 const NEAR_KEEP = 1300; // 相机附近的小块即使不在视锥内也绘制（保证画面外建筑的阴影）
 const FAR_D = [2500, 3200, 4000, 5500]; // 超过此距离的小块改用超远景子集（只画显眼建筑，且不投射阴影）
 const HI_CACHE = 40; // 近景小块缓存上限
+// 立面细节档位（按画质）：0 低 = 不生成立面附属几何、关闭楼顶亮化与单元门；1 中 = 凸阳台/凸窗叠柱、单元入口雨棚（着色器同时画单元门）；2 高/超高 = 再加顶部构架、底商雨棚
+const DETAIL = [0, 1, 2, 2];
 
 // —— 亮灯率曲线（北京时间小时 → 亮灯比例）：傍晚高、午夜后下降 ——
 const LIT_RES = [[0, 0.27], [1, 0.17], [2, 0.1], [4, 0.06], [5.5, 0.08], [6.5, 0.22], [7.5, 0.15], [9, 0.08], [16, 0.08], [17.5, 0.24], [19, 0.42], [20.5, 0.5], [22, 0.45], [23, 0.36], [24, 0.27]];
@@ -109,125 +117,6 @@ class GenClient {
   }
 }
 
-// 兜底：地标模块已加载时，与其同名的 OSM 建筑让位（正常情况下地标模块会在 prepare 里注册排除区）
-const LANDMARK_NAMES = [
-  ['belltower', /^(西安)?(钟楼|鼓楼)$/],
-  ['pagoda', /^(大雁塔|大慈恩寺.{0,6})$/],
-  ['heritage', /^(小雁塔|荐福寺.{0,6}|西安博物院)$/],
-  ['citywall', /(城墙|箭楼|闸楼|角楼|敌楼|魁星楼|^(永宁|安定|长乐|安远|朱雀|含光|勿幕|玉祥|尚武|尚德|解放|中山|文昌|和平|建国|朝阳|小南)门(城楼)?$)/],
-];
-
-const EX_FRAC = 0.3; // 轮廓落入排除区的比例 ≥ 此值则让位
-const EX_AREA = 100; // 或落入比例 ≥ 10% 且估算落入面积 ≥ 此值（m²）：大楼的一角插进精建楼/古建院落
-/** 轮廓内 6×6 网格取样，落入排除区（buildings）的比例 */
-function exFrac(ex, offs, s, e, ax, az, X0, X1, Z0, Z1, h) {
-  let n = 0, hit = 0;
-  for (let gx = 0; gx < 6; gx++)
-    for (let gz = 0; gz < 6; gz++) {
-      const x = X0 + ((gx + 0.5) / 6) * (X1 - X0), z = Z0 + ((gz + 0.5) / 6) * (Z1 - Z0);
-      let c = false;
-      for (let k = s, j = e - 2; k < e; j = k, k += 2) {
-        const xi = ax + offs[k] * 0.1, zi = az + offs[k + 1] * 0.1, xj = ax + offs[j] * 0.1, zj = az + offs[j + 1] * 0.1;
-        if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
-      }
-      if (!c) continue;
-      n++;
-      if (ex.test(x, z, 'buildings', h)) hit++;
-    }
-  return n ? hit / n : 0;
-}
-
-// ———— 主线程预处理：地面高程、底部高程、排除标记、包围盒 ————
-function preprocess(ctx, P) {
-  const N = P.count, offs = P.offs, T = ctx.terrain, ex = ctx.exclusions;
-  const ga = new Float32Array(N), base = new Float32Array(N), skip = new Uint8Array(N), bb = new Float32Array(N * 4);
-  // skyline 模块渲染的已调研高楼（h ≥ 34 m）：带 flags bit3 且与其轮廓对应的通用建筑让位
-  const sky = ctx.modules && ctx.modules.skyline
-    ? (ctx.data.skyline?.features || []).filter((f) => f.outer?.length >= 6 && f.h >= 34 && Math.hypot(f.x, f.z) < 47000)
-    : [];
-  const inPoly = (x, z, p) => {
-    let c = false;
-    for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
-      if (p[i + 1] > z !== p[j + 1] > z && x < ((p[j] - p[i]) * (z - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) c = !c;
-    }
-    return c;
-  };
-  const names = ctx.data.buildingNames || {};
-  const lmRe = LANDMARK_NAMES.filter(([id]) => ctx.modules && ctx.modules[id]).map((x) => x[1]);
-  let nEx = 0, nSky = 0;
-  for (let i = 0; i < N; i++) {
-    const ax = P.anchorX[i], az = P.anchorZ[i];
-    const s = P.vertStart[i] * 2, e = s + P.vertCount[i] * 2;
-    let x0 = 32767, x1 = -32768, z0 = 32767, z1 = -32768;
-    for (let k = s; k < e; k += 2) {
-      const dx = offs[k], dz = offs[k + 1];
-      if (dx < x0) x0 = dx;
-      if (dx > x1) x1 = dx;
-      if (dz < z0) z0 = dz;
-      if (dz > z1) z1 = dz;
-    }
-    const X0 = ax + x0 * 0.1, X1 = ax + x1 * 0.1, Z0 = az + z0 * 0.1, Z1 = az + z1 * 0.1;
-    bb[i * 4] = X0;
-    bb[i * 4 + 1] = Z0;
-    bb[i * 4 + 2] = X1;
-    bb[i * 4 + 3] = Z1;
-    if (sky.length && P.flags[i] & 8) {
-      for (const f of sky) {
-        if (Math.abs(f.x - ax) < 150 && Math.abs(f.z - az) < 150 && (Math.hypot(f.x - ax, f.z - az) < 45 || inPoly(ax, az, f.outer))) {
-          skip[i] = 1;
-          nSky++;
-          break;
-        }
-      }
-    }
-    if (!skip[i] && ex && ex.test(ax, az, 'buildings', P.heightDm[i] * 0.1)) {
-      skip[i] = 1;
-      nEx++;
-    }
-    // 锚点（质心）在排除区外、但轮廓有相当一部分伸进排除区（精建地标/片区的边缘）：只测锚点会漏掉，
-    // 结果通用楼一半插在精建楼里。先测顶点，有顶点落入再用轮廓内网格取样估算落入比例，≥ EX_FRAC 让位
-    if (!skip[i] && ex && ex.items.length) {
-      const hm = P.heightDm[i] * 0.1;
-      let any = false;
-      for (let k = s; k < e && !any; k += 2) any = ex.test(ax + offs[k] * 0.1, az + offs[k + 1] * 0.1, 'buildings', hm);
-      if (any) {
-        const f = exFrac(ex, offs, s, e, ax, az, X0, X1, Z0, Z1, hm);
-        let A = 0;
-        for (let k = s, j = e - 2; k < e; j = k, k += 2) A += offs[j] * offs[k + 1] - offs[k] * offs[j + 1];
-        A = Math.abs(A) * 0.005; // 分米² → m²（×0.01 / 2）
-        if (f >= EX_FRAC || (f >= 0.1 && f * A >= EX_AREA)) {
-          skip[i] = 1;
-          nEx++;
-        }
-      }
-    }
-    if (!skip[i] && lmRe.length && P.flags[i] & 2) {
-      const nm = names[i];
-      if (nm && lmRe.some((re) => re.test(nm))) {
-        skip[i] = 1;
-        nEx++;
-      }
-    }
-    const h0 = T.heightAt(ax, az);
-    ga[i] = h0;
-    // 底高 = 轮廓各顶点（长边再加中点）地面最低处：原先小楼只取质心、大楼取包围盒四角，
-    // 坡地上小楼一侧悬空、L 形大楼取到轮廓外的低点而整体埋深
-    let b = h0, top = h0;
-    for (let k = s; k < e; k += 2) {
-      const vx = ax + offs[k] * 0.1, vz = az + offs[k + 1] * 0.1;
-      const hv = T.heightAt(vx, vz);
-      b = Math.min(b, hv);
-      top = Math.max(top, hv);
-      const k2 = k + 2 < e ? k + 2 : s, wx = ax + offs[k2] * 0.1, wz = az + offs[k2 + 1] * 0.1;
-      if (Math.abs(wx - vx) + Math.abs(wz - vz) > 24) b = Math.min(b, T.heightAt((vx + wx) * 0.5, (vz + wz) * 0.5));
-    }
-    base[i] = b;
-    // 陡坡/崖边：楼顶（锚点地面 + 楼高）低于轮廓上坡侧地面时整栋被埋进山体；把顶面参考抬到上坡地面以上 3 m
-    const H = Math.max(3, P.heightDm[i] * 0.1);
-    if (P.minHeightDm[i] === 0 && top > h0 + H - 3) ga[i] = top - H + 3;
-  }
-  return { ga, base, skip, bb, nEx, nSky };
-}
 
 /** 临街判定用道路（主干道 + 支路 + 步行街） */
 function packRoads(roads) {
@@ -362,6 +251,9 @@ export default {
     }
     U.uDrawDist.value = ctx.quality.buildingDistance || 16000;
     let hiRadius = HI_RADIUS[ctx.quality.level ?? 2] || 1200;
+    let detailLvl = DETAIL[ctx.quality.level ?? 2] ?? 2;
+    U.uBDetail.value = detailLvl;
+    let hiGen = 0; // 细节档位变化时递增：旧档位生成中的小块回来后丢弃重建
 
     // —— 远景大块 ——
     const loGroup = new THREE.Group();
@@ -428,6 +320,8 @@ export default {
     let hiShown = new Set();
     let hiRect = null; // [x0, z0, x1, z1]（小块坐标）
     let inflight = 0;
+    let maxInflight = 2; // 近景小块最大并发请求数（慢帧时放宽）
+    let hiPending = 0; // 目标近景小块中尚未就绪的个数（自动截图/性能测试据此等待）
     let layerOn = true;
     let frame = 0;
     const makeHiMesh = (m) => {
@@ -525,12 +419,18 @@ export default {
     };
 
     const requestHi = (key) => {
-      hiCache.set(key, { state: 'loading', used: frame });
+      const g = hiGen;
+      hiCache.set(key, { state: 'loading', used: frame, gen: g });
       inflight++;
-      gen.call({ type: 'hi', key }).then((m) => {
+      gen.call({ type: 'hi', key, detail: detailLvl }).then((m) => {
         inflight--;
         const e = hiCache.get(key);
         if (!e) return;
+        if (e.gen !== g) {
+          // 画质细节档位已变：丢弃，下一轮按新档位重新生成
+          hiCache.delete(key);
+          return;
+        }
         if (!m || m.type !== 'hi' || m.empty || !m.ibuf || !m.ibuf.length) {
           if (!m || m.type !== 'hi') {
             console.warn('[buildings] 近景小块生成失败', key, m && m.message);
@@ -572,22 +472,23 @@ export default {
             if (chunkDir.has(k)) keys.push(k);
           }
       }
-      // 请求缺失的小块（由近及远，最多 2 个并发）
+      // 请求缺失的小块（由近及远，最多 maxInflight 个并发）
       const miss = keys.filter((k) => !hiCache.has(k));
-      if (miss.length && inflight < 2) {
+      if (miss.length && inflight < maxInflight) {
         const d = (k) => {
           const c = chunkDir.get(k);
           return Math.hypot((c.cx + 0.5) * CHUNK - cam.x, (c.cz + 0.5) * CHUNK - cam.z);
         };
         miss.sort((a, b) => d(a) - d(b));
         for (const k of miss) {
-          if (inflight >= 2) break;
+          if (inflight >= maxInflight) break;
           requestHi(k);
         }
       }
       for (const k of keys) hiCache.get(k) && (hiCache.get(k).used = frame);
       // 目标小块全部就绪才切换（避免远/近景交接时出现空洞）
       const ready = keys.every((k) => hiCache.has(k) && hiCache.get(k).state !== 'loading');
+      hiPending = ready ? 0 : keys.filter((k) => !hiCache.has(k) || hiCache.get(k).state === 'loading').length;
       // 任一小块生成失败：整片退回远景（不留空洞）
       if (ready && keys.some((k) => hiCache.get(k).err)) {
         keys.length = 0;
@@ -820,7 +721,8 @@ export default {
       `[buildings] v${init.version} ${N} 栋（排除 ${pre.nEx}，skyline 让位 ${pre.nSky}）；远景 ${blocks.length} 块 ${(stat.loTris / 1e6).toFixed(2)}M 三角形；` +
         `Worker ${stat.ms} ms；主线程预处理 ${tPre.toFixed(0)} ms + 建网格 ${(performance.now() - t1).toFixed(0)} ms；风格 ` +
         STYLE_NAMES.map((s, i) => `${s}${stat.styles[i]}`).join(' ') +
-        (estDoc ? `；小区风貌 ${stat.estNames} 个小区 ${stat.estates} 栋（坡屋面 ${stat.estRoofs}），大门 ${gates ? gates.count : 0} 座` : '')
+        (estDoc ? `；小区风貌 ${stat.estNames} 个小区 ${stat.estates} 栋（坡屋面 ${stat.estRoofs}），大门 ${gates ? gates.count : 0} 座` : '') +
+        `；通用平改坡 ${stat.genRoofs || 0} 栋；立面细节档位 ${detailLvl}`
     );
     updateRuns();
 
@@ -866,6 +768,9 @@ export default {
         farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length, 0),
         hiShown: hiShown.size,
         hiCached: hiCache.size,
+        hiLoading: inflight,
+        hiPending,
+        detail: detailLvl,
         props: propMeshes.map((m) => m.count),
       }),
       update(dt, t) {
@@ -879,7 +784,10 @@ export default {
         const h = ctx.sky ? ctx.sky.hours : 12;
         const nf = ctx.uniforms.uNight.value;
         U.uLit.value.set(curve(LIT_RES, h), curve(LIT_OFF, h), curve(LIT_COM, h), smooth(0.06, 0.5, nf));
-        if (frame % 3 === 0 || frame < 3) manageHi();
+        // 帧很慢时（弱机 / 软件渲染）每帧检查并放宽并发，近景小块更快补齐
+        const slow = dt > 0.066; // dt 在主循环里被钳到 ≤ 0.1 s：低于约 15 fps 即视为慢帧
+        maxInflight = slow ? 6 : 2;
+        if (frame % 3 === 0 || frame < 3 || slow) manageHi();
         updateRuns();
         if (gates && frame % 15 === 0) gates.update(ctx.camera.position);
       },
@@ -892,6 +800,21 @@ export default {
         U.uDrawDist.value = q.buildingDistance || 16000;
         hiRadius = HI_RADIUS[q.level ?? 2] || 1200;
         farD = FAR_D[q.level ?? 2] || 4000;
+        const d = DETAIL[q.level ?? 2] ?? 2;
+        if (d !== detailLvl) {
+          // 细节档位变化：近景小块全部按新档位重建（重建期间由远景补位，不留空洞）
+          detailLvl = d;
+          U.uBDetail.value = d;
+          hiGen++;
+          for (const [k, e] of [...hiCache.entries()]) {
+            if (e.state === 'loading') e.gen = -1;
+            else disposeHi(k);
+          }
+          hiShown = new Set();
+          hiRect = null;
+          U.uHiRect.value.set(1e6, 1e6, -1e6, -1e6);
+          rebuildProps();
+        }
       },
       dispose() {
         gen.dispose();
