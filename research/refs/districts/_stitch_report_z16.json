@@ -1,0 +1,107 @@
+{
+ "weiyang": {
+  "tiles": "12/12",
+  "used": {
+   "google": 12
+  },
+  "size": [
+   768,
+   1024
+  ],
+  "world": [
+   -681,
+   -9685,
+   835,
+   -7664
+  ],
+  "out": "research/refs/districts/weiyang_z16.jpg"
+ },
+ "fengcheng7": {
+  "tiles": "8/8",
+  "used": {
+   "google": 8
+  },
+  "size": [
+   1024,
+   512
+  ],
+  "world": [
+   -681,
+   -9180,
+   1340,
+   -8169
+  ],
+  "out": "research/refs/districts/fengcheng7_z16.jpg"
+ },
+ "qujiang": {
+  "tiles": "9/9",
+  "used": {
+   "best_52d74083": 4,
+   "google": 5
+  },
+  "size": [
+   768,
+   768
+  ],
+  "world": [
+   3362,
+   6487,
+   4878,
+   8003
+  ],
+  "out": "research/refs/districts/qujiang_z16.jpg"
+ },
+ "chanba_houhai": {
+  "tiles": "16/16",
+  "used": {
+   "best_52d74083": 4,
+   "google": 12
+  },
+  "size": [
+   1024,
+   1024
+  ],
+  "world": [
+   5383,
+   -9685,
+   7405,
+   -7664
+  ],
+  "out": "research/refs/districts/chanba_houhai_z16.jpg"
+ },
+ "chanba_ouya": {
+  "tiles": "16/16",
+  "used": {
+   "google": 16
+  },
+  "size": [
+   1024,
+   1024
+  ],
+  "world": [
+   5383,
+   -8675,
+   7405,
+   -6653
+  ],
+  "out": "research/refs/districts/chanba_ouya_z16.jpg"
+ },
+ "huimin": {
+  "tiles": "16/16",
+  "used": {
+   "best_52d74083": 13,
+   "google": 3
+  },
+  "size": [
+   1024,
+   1024
+  ],
+  "world": [
+   -1692,
+   -1599,
+   329,
+   422
+  ],
+  "out": "research/refs/districts/huimin_z16.jpg"
+ }
+}
