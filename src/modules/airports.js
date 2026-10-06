@@ -680,7 +680,7 @@ export default {
       s.pl = ctx.lights.add({ position: new THREE.Vector3(0, -9999, 0), color: 0xfff4e0, intensity: 2500, distance: 220, priority: 3 });
       slotLights.push(s);
     }
-    const dynPts = lightPoints(ctx, DL, { dayVisible: 0.55 });
+    const dynPts = lightPoints(ctx, DL, { dayVisible: 0.55, fade: [9000, 16000] }); // 飞机灯稀疏，比助航灯晚衰减
     dynPts.name = '飞机灯光';
     root.add(dynPts);
     const staticPts = lightPoints(ctx, L);

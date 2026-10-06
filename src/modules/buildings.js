@@ -195,13 +195,17 @@ function makeObstacleLights(ctx, arr) {
         'gl_PointSize = size;',
         `float bph = fract(uTime / 1.5 + aPhase);
         vBlink = smoothstep(0.0, 0.05, bph) * (1.0 - smoothstep(0.3, 0.42, bph)) * mix(0.04, 1.0, smoothstep(0.1, 0.6, uNight));
-        gl_PointSize = size * clamp(1.5 - length(mvPosition.xyz) / 8000.0, 0.6, 1.5);`
+        // 远距离衰减：从低机位远看，成片高楼的障碍灯会压到地平线上叠成红色光团再被泛光放大，3 km 起减弱、9 km 外不可见
+        float obD = length(mvPosition.xyz);
+        float obFade = 1.0 - smoothstep(3000.0, 9000.0, obD);
+        vBlink *= obFade * obFade;
+        gl_PointSize = size * clamp(1.5 - obD / 8000.0, 0.6, 1.5);`
       );
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vBlink;')
       .replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.a *= smoothstep(0.5, 0.15, length(gl_PointCoord - 0.5)) * vBlink;');
   };
-  m.customProgramCacheKey = () => 'xian-bld-obstacle-v1';
+  m.customProgramCacheKey = () => 'xian-bld-obstacle-v2';
   const pts = new THREE.Points(g, m);
   pts.name = '航空障碍灯';
   pts.renderOrder = 5;
