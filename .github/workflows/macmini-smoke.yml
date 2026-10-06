@@ -20,20 +20,19 @@ jobs:
     timeout-minutes: 5
     steps:
     - name: Check this is still the latest eligible commit
-      run: python3 /Volumes/StrataData/github-ci/bin/check_fresh.py
+      run: python3 /Users/server/Documents/Codex/ci-macmini/bin/check_fresh.py
       env:
         GH_TOKEN: ${{ github.token }}
     - name: Verify SSD, architecture and single execution slot
       run: 'test "$(uname -m)" = arm64
 
-        case "$RUNNER_TEMP" in /Volumes/StrataData/github-ci/*) ;; *) echo ''Temporary
-        data is not on the SSD''; exit 1;; esac
+        case "$RUNNER_TEMP" in /Users/server/Documents/Codex/ci-macmini/*) ;; *) echo ''Temporary data is not on the SSD'';
+        exit 1;; esac
 
-        case "$GITHUB_WORKSPACE" in /Volumes/StrataData/github-ci/*) ;; *) echo ''Checkout
-        is not on the SSD''; exit 1;; esac
+        case "$GITHUB_WORKSPACE" in /Users/server/Documents/Codex/ci-macmini/*) ;; *) echo ''Checkout is not on the SSD'';
+        exit 1;; esac
 
-        workers=$(python3 -c ''import subprocess; print(sum(line.strip().endswith("/Runner.Worker")
-        for line in subprocess.check_output(["/bin/ps","-axo","comm="],text=True).splitlines()))'')
+        workers=$(python3 -c ''import subprocess; print(sum(line.strip().endswith("/Runner.Worker") for line in subprocess.check_output(["/bin/ps","-axo","comm="],text=True).splitlines()))'')
 
         test "$workers" -eq 1
 
@@ -45,11 +44,23 @@ jobs:
 
         rustc --version
 
-        printf ''repo=%s sha=%s workspace=%s temp=%s workers=%s\n'' "$GITHUB_REPOSITORY"
-        "$GITHUB_SHA" "$GITHUB_WORKSPACE" "$RUNNER_TEMP" "$workers"
+        printf ''repo=%s sha=%s workspace=%s temp=%s workers=%s\n'' "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_WORKSPACE"
+        "$RUNNER_TEMP" "$workers"
 
         sleep 3
 
         '
       if: ${{ env.MACMINI_FRESH == 'true' }}
-    if: ${{ github.actor == github.repository_owner }}
+    - name: Collect CI outputs
+      if: ${{ always() && env.MACMINI_FRESH == 'true' }}
+      run: python3 /Users/server/Documents/Codex/ci-macmini/bin/collect-artifacts.py
+    - name: Upload CI outputs
+      if: ${{ always() && env.MACMINI_FRESH == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: macmini-${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ runner.temp }}/ci-artifacts/
+        retention-days: 7
+        if-no-files-found: error
+    if: ${{ (github.actor == github.repository_owner) && github.actor == github.repository_owner && (github.event_name 
+      == 'push' || github.event_name == 'workflow_dispatch') }}
