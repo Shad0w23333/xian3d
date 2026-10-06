@@ -53,8 +53,26 @@ function makeSkyMaterial() {
       uniform float uNight;
       uniform vec3 uMoonDir;
       uniform float uStarRot;
+      uniform vec2 uSkyKnee;
+      uniform float uSkyGain;
       float shash(vec3 p){ p = fract(p*0.3183099+vec3(0.1,0.2,0.3)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }`
     )
+    .replace(
+      'vec3 texColor = ( Lin + L0 ) * 0.04 + sundiscColor + vec3( 0.0, 0.0003, 0.00075 );',
+      `vec3 skyLin = ( Lin + L0 ) * 0.04 * uSkyGain;
+      {
+        // 晴天压缩：three 的 Preetham 在太阳高时天顶 ~0.6、低仰角飙到 3~6，经 ACES 后蓝色通道先饱和，
+        // 整片天空发白。先按太阳高度整体降增益（uSkyGain，天顶回到真实的深蓝区间），再对超过 uSkyKnee.x
+        // 的亮度做 Reinhard 软肩（斜率 uSkyKnee.y）并保持色相，让地平线成为淡蓝而不是白；
+        // 太阳圆盘在之后相加，不受压缩，泛光仍正常。
+        float skyY = dot( skyLin, vec3( 0.2126, 0.7152, 0.0722 ) );
+        float over = max( skyY - uSkyKnee.x, 0.0 );
+        float skyC = skyY - over + over / ( 1.0 + over * uSkyKnee.y );
+        skyLin *= skyC / max( skyY, 1e-5 );
+      }
+      vec3 texColor = skyLin + sundiscColor + vec3( 0.0, 0.0003, 0.00075 );`
+    )
+    .replace('cloudColor *= max( dayFactor, 0.03 );', 'cloudColor *= max( dayFactor, 0.03 ) * uSkyGain;')
     .replace(
       'gl_FragColor = vec4( texColor, 1.0 );',
       `{
@@ -90,6 +108,8 @@ function makeSkyMaterial() {
   uniforms.uNight = { value: 0 };
   uniforms.uMoonDir = { value: new THREE.Vector3(0, 1, 0) };
   uniforms.uStarRot = { value: 0 };
+  uniforms.uSkyKnee = { value: new THREE.Vector2(0.3, 1.5) }; // (软肩起点亮度, 压缩斜率)；y=0 即关闭
+  uniforms.uSkyGain = { value: 1 }; // 白天整体增益（update 中按太阳高度设置）
   return new THREE.ShaderMaterial({
     name: 'XianSky',
     uniforms,
@@ -103,14 +123,15 @@ function makeSkyMaterial() {
 
 const C = (hex) => new THREE.Color(hex);
 // 按太阳高度角（度）插值的颜色表
+// 白天的雾色取天空地平线颜色的 ~0.7 倍（亮度略低于地平线天空、偏淡蓝），远景向它收敛时呈薄霾而不是发白
 const FOG_KEYS = [
-  [-18, C('#06080d')], [-8, C('#0a0e17')], [-3, C('#343a52')], [1, C('#8c7b78')], [6, C('#b9a592')], [15, C('#aeb8c2')], [35, C('#a3b5c8')], [90, C('#9fb3c9')],
+  [-18, C('#06080d')], [-8, C('#0a0e17')], [-3, C('#343a52')], [1, C('#8c7b78')], [6, C('#b9a592')], [15, C('#afbccb')], [35, C('#b2c6dc')], [90, C('#b6c9de')],
 ];
-// 太阳色（sRGB）与强度
+// 太阳色（sRGB）与强度。白天天空整体增益压到 ~0.4 后，太阳直射需相应抬高，使直射:天光 ≈ 3~4:1（晴天的阴影对比）
 const SUN_KEYS = [
-  [-4, C('#ff6a3a'), 0], [0, C('#ff8248'), 0.9], [4, C('#ffa262'), 2.4], [10, C('#ffcf9a'), 3.6], [25, C('#ffefd8'), 4.4], [60, C('#fff7ee'), 4.8],
+  [-4, C('#ff6a3a'), 0], [0, C('#ff8248'), 0.9], [4, C('#ffa262'), 2.4], [10, C('#ffd4a4'), 3.9], [25, C('#ffeacc'), 6.0], [60, C('#fff3e4'), 6.8],
 ];
-const HEMI_SKY = [[-10, C('#2a3656')], [0, C('#6f7ea6')], [10, C('#a9bddb')], [40, C('#c2d5ee')]];
+const HEMI_SKY = [[-10, C('#2a3656')], [0, C('#6f7ea6')], [10, C('#a9bddb')], [40, C('#c9d6e6')]];
 
 function lerpKeys(keys, x, out) {
   if (x <= keys[0][0]) return out.copy(keys[0][1]);
@@ -154,10 +175,11 @@ export class SkySystem {
 
     this.skyMat = makeSkyMaterial();
     const u = this.skyMat.uniforms;
-    u.turbidity.value = 3.2;
-    u.rayleigh.value = 1.35;
-    u.mieCoefficient.value = 0.0042;
-    u.mieDirectionalG.value = 0.82;
+    // 晴天大气：浑浊度低、瑞利散射强一些（天顶更蓝）、米氏散射弱（地平线不发白）
+    u.turbidity.value = 2.4;
+    u.rayleigh.value = 2.0;
+    u.mieCoefficient.value = 0.0035;
+    u.mieDirectionalG.value = 0.8;
     u.cloudCoverage.value = 0.2;
     u.cloudDensity.value = 0.28;
     u.cloudElevation.value = 0.55;
@@ -278,8 +300,16 @@ export class SkySystem {
     u.uMoonDir.value.copy(md);
     u.uStarRot.value = (this.hours / 24) * Math.PI * 2;
     u.time.value += dt;
+    // 太阳高度因子 hi：高太阳（≥40°）=1，低太阳（≤8°）=0，黄昏/清晨的色彩与亮度基本保持原样
+    const hi = smooth(8, 40, el);
+    // 白天天空增益：太阳高时 0.4（天顶回到深蓝、天光不压过直射光），低太阳回到 1
+    u.uSkyGain.value = 1 - 0.6 * hi;
+    // 软肩起点：高太阳 0.3（压住发白的地平线），低太阳 0.6（傍晚地平线的暖亮不被压暗）
+    u.uSkyKnee.value.x = 0.6 - 0.3 * hi;
     const eu = this.envSky.material.uniforms;
     eu.sunPosition.value.copy(u.sunPosition.value);
+    eu.uSkyGain.value = u.uSkyGain.value;
+    eu.uSkyKnee.value.copy(u.uSkyKnee.value);
     eu.uNight.value = this.night;
     eu.uMoonDir.value.copy(md);
     eu.cloudCoverage.value = u.cloudCoverage.value;
@@ -301,7 +331,8 @@ export class SkySystem {
     }
     this.hemi.color.copy(lerpKeys(HEMI_SKY, el, this._tmpC));
     this.hemi.groundColor.set(0x5d5446).lerp(C('#141210'), this.night);
-    this.hemi.intensity = 0.22 + 0.62 * (1 - this.night) + (this.envEnabled ? 0 : 0.3 * (1 - this.night) + 0.04);
+    // 半球光：高太阳时减到 0.64（晴天直射为主、阴影有层次），低太阳时保持原来的 0.84
+    this.hemi.intensity = 0.22 + (0.62 - 0.2 * hi) * (1 - this.night) + (this.envEnabled ? 0 : 0.3 * (1 - this.night) + 0.04);
     this.scene.environmentIntensity = 0.3 + 0.55 * (1 - this.night);
 
     // 雾（高度雾，见 core/fog.js）：颜色随太阳高度，并在朝向太阳时偏暖

@@ -105,7 +105,8 @@ export class Post {
     if (!this.bloom) return;
     this.bloom.strength = (0.12 + night * 0.75) * this.bloomScale;
     this.bloom.radius = 0.45 + night * 0.25;
-    this.bloom.threshold = 0.95 - night * 0.25;
+    // 白天阈值抬到 1.3：天空经软肩后 ≤1、向阳白墙 ~1.3，只让太阳盘/高光泛光，避免地平线与屋顶糊成白雾；夜里仍为 0.7
+    this.bloom.threshold = 1.3 - night * 0.6;
   }
 
   render(dt) {

@@ -172,13 +172,13 @@ function patchTileMaterial(mat, uvXform, holes) {
           // 卫星图自带的阴影与过曝：轻微压缩动态范围
           vec3 tc = diffuseColor.rgb;
           float tl = dot(tc, vec3(0.2126, 0.7152, 0.0722));
-          tc = mix(vec3(tl), tc, 1.22);            // 饱和度
-          tc = pow(max(tc, 0.0), vec3(1.1)) * 1.08; // 对比度
+          tc = mix(vec3(tl), tc, 1.3);             // 饱和度（冬季影像偏灰，略提）
+          tc = pow(max(tc, 0.0), vec3(1.12)) * 1.1; // 对比度
           diffuseColor.rgb = tc;
         }`
       );
   };
-  mat.customProgramCacheKey = () => 'xian-terrain-v3';
+  mat.customProgramCacheKey = () => 'xian-terrain-v4';
 }
 
 const NOISE_GLSL = `
