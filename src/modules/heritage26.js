@@ -16,6 +16,7 @@ import { loadJSON } from '../core/data.js';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang, yardWall, balustrade } from '../arch/chinese.js';
 import { denseEavePagoda, ruinTerrace, whiteBlock } from '../arch/heritage-parts.js';
 import { isSuperseded } from '../arch/dossier-kit.js';
+import { shadowReach } from '../arch/perf-lod.js';
 
 const HIDE = 9000;
 const NEAR = 900;
@@ -437,17 +438,27 @@ export default {
     ctx.scene.add(root);
     const items = [];
     let n = 0;
+    // 绘制负担：detail 0 的院落一处仍有几万三角形，9 km 内全显示时一个视角要画二三十处（2M 三角形）。
+    // 按体量定隐藏距离（大体量/高塔 9 km，中等 5 km，小院落 2.8 km，再乘画质系数）；升级到 detail 2 后 detail 0 保留为中景级；
+    // 只有相机附近 SHADOW_R 内的院落投射阴影
+    const qk = [0.6, 0.8, 1, 1.25][ctx.quality.level ?? 2] ?? 1;
+    const hideDistOf = (s) => {
+      const area = s.b.reduce((a, q) => a + (q.w || 0) * (q.d || 0), 0);
+      const hmax = Math.max(0, ...s.b.map((q) => q.h || 0));
+      return (area >= 8000 || hmax >= 25 ? HIDE : area >= 2500 || hmax >= 16 ? 5000 : 2800) * qk;
+    };
+    const MID = 1300 * qk, SHADOW_R = 1100 * qk, NEAR2 = 380 * qk; // NEAR（900 m）内 detail 1，NEAR2 内 detail 2
     for (const s of this.sites || []) {
       try {
         const plan = sitePlan(ctx, s);
         const lod = new THREE.LOD();
         lod.addLevel(buildSite(ctx, s, 0), 0);
-        lod.addLevel(new THREE.Object3D(), HIDE);
+        lod.addLevel(new THREE.Object3D(), hideDistOf(s));
         lod.position.set(s.x, plan.h0, s.z);
         lod.rotation.y = s.rot || 0;
         lod.name = 'heritage26:' + s.name;
         root.add(lod);
-        items.push({ s, lod, hi: false });
+        items.push({ s, lod, det: 0, sh: true });
         const top = Math.max(12, ...s.b.map((q) => (q.h || 10)));
         const yTop = Math.max(...plan.items.map((it) => it.y)) + top + 10;
         ctx.labels.add(s.name.replace(/（.*?）|\(.*?\)/g, ''), new THREE.Vector3(s.x, yTop, s.z), { category: 'landmark', priority: 1.8, minDist: 80, maxDist: 7000 });
@@ -457,26 +468,40 @@ export default {
       }
     }
     console.warn(`[heritage26] ${n} 处院落/遗址`);
+    let frame = 0;
     return {
       update() {
-        // 近景升级：每帧最多一个
+        frame++;
         const cp = ctx.camera.position;
-        for (const it of items) {
-          if (it.hi) continue;
-          if (Math.hypot(it.s.x - cp.x, it.s.z - cp.z) < NEAR) {
-            try {
-              const g = buildSite(ctx, it.s, 2);
-              const old = it.lod.levels[0].object;
-              it.lod.remove(old);
-              it.lod.levels[0].object = g;
-              it.lod.add(g);
-              old.traverse((o) => o.geometry?.dispose());
-            } catch (e) {
-              console.error('[heritage26] 近景构建失败 ' + it.s.name, e);
+        // 阴影：只给相机附近的院落（每 15 帧刷新一次；半径还随阴影贴图实际覆盖范围收缩）
+        if (frame % 15 === 1) {
+          const sr = shadowReach(ctx, SHADOW_R, 25);
+          for (const it of items) {
+            const sh = Math.hypot(it.s.x - cp.x, it.s.z - cp.z) < sr;
+            if (sh !== it.sh) {
+              it.sh = sh;
+              it.lod.traverse((o) => { if (o.isMesh) o.castShadow = sh; });
             }
-            it.hi = true;
-            break;
           }
+        }
+        // 近景升级：每帧最多一个。NEAR 内先建 detail 1（斗拱/门窗），NEAR2 内再建 detail 2；
+        // 旧级别保留为更远的 LOD 级（detail 1 用到 NEAR2，detail 0 用到 MID），飞远后不再用近景级画整个院落
+        for (const it of items) {
+          if (it.det >= 2) continue;
+          const d = Math.hypot(it.s.x - cp.x, it.s.z - cp.z);
+          const want = d < NEAR2 ? 2 : d < NEAR ? 1 : 0;
+          if (want <= it.det) continue;
+          const det = it.det + 1; // 逐级升（detail 0 → 1 → 2）
+          try {
+            const g = buildSite(ctx, it.s, det);
+            g.traverse((o) => { if (o.isMesh) o.castShadow = it.sh; });
+            it.lod.levels[0].distance = det === 1 ? MID : NEAR2;
+            it.lod.addLevel(g, 0);
+          } catch (e) {
+            console.error('[heritage26] 近景构建失败 ' + it.s.name, e);
+          }
+          it.det = det;
+          break;
         }
       },
       setLayer(layer, v) {

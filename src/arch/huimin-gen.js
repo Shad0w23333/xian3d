@@ -6,6 +6,7 @@
 //   · 招牌（黑底金字木匾 / 蓝底白字灯箱 / 红绿 LED 竖招）合成一张图集；红灯笼实例化
 // 资料：research/refs/huimin/notes.md（2026-09 调研：层数、街宽、色板、店名）
 import * as THREE from 'three';
+import earcut from 'three/src/extras/lib/earcut.js';
 import { SignAtlas } from './sky-towers.js';
 import { inset as insetPoly } from './sky-geom.js';
 
@@ -589,6 +590,7 @@ export function buildHuimin(ctx, data) {
   // —— 输出 ——
   const group = new THREE.Group();
   group.name = '回民街·洒金桥';
+  const houseMeshes = [];
   for (const [k, a] of acc) {
     if (!a.p.length) continue;
     const m = new THREE.Mesh(a.geometry(), M[k]);
@@ -596,6 +598,7 @@ export function buildHuimin(ctx, data) {
     m.receiveShadow = true;
     m.name = k;
     group.add(m);
+    houseMeshes.push(m);
   }
   const detail = new THREE.Group();
   detail.name = '回民街细部';
@@ -604,9 +607,10 @@ export function buildHuimin(ctx, data) {
     sm.name = '回民街招牌';
     detail.add(sm);
   }
-  if (lanternPos.length) detail.add(lanterns(ctx, lanternPos));
+  let lanternMesh = null;
+  if (lanternPos.length) detail.add((lanternMesh = lanterns(ctx, lanternPos)));
   group.add(detail);
-  return { group, detail, stats: { signs: nSigns, trad: nTrad, temple: nTemple, lanterns: lanternPos.length / 3 } };
+  return { group, detail, lanternMesh, houseMeshes, stats: { signs: nSigns, trad: nTrad, temple: nTemple, lanterns: lanternPos.length / 3 } };
 }
 
 function longestFront(p, fr) {
@@ -635,11 +639,12 @@ function boxAt(acc, x, y, z, L, H, W, ux, uz) {
 
 /** 红灯笼（实例化）：椭球灯身 + 上下木托 */
 function lanterns(ctx, pos) {
-  const body = new THREE.SphereGeometry(0.26, 10, 7);
+  // 灯笼直径半米、数以千计：低面数即可（原 10×7 球 + 8 边木托约 220 三角形/盏，现约 110）
+  const body = new THREE.SphereGeometry(0.26, 8, 5);
   body.scale(1, 1.25, 1);
-  const cap = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 8);
+  const cap = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 6, 1, true);
   const top = cap.clone().translate(0, 0.33, 0), bot = cap.clone().translate(0, -0.33, 0);
-  const tassel = new THREE.CylinderGeometry(0.02, 0.05, 0.28, 5).translate(0, -0.5, 0);
+  const tassel = new THREE.CylinderGeometry(0.02, 0.05, 0.28, 4, 1, true).translate(0, -0.5, 0);
   const g = mergeSimple([body, top, bot, tassel]);
   const mat = new THREE.MeshStandardMaterial({ color: 0xd42a1f, roughness: 0.6, emissive: 0xff4a1a, emissiveIntensity: 0 });
   ctx.night.register(mat, { day: 0.1, night: 1.7 });
@@ -654,6 +659,70 @@ function lanterns(ctx, pos) {
   im.computeBoundingSphere();
   im.name = '红灯笼';
   return im;
+}
+
+/**
+ * 远景低模：逐户轮廓拉伸成平顶体块（墙面米黄、屋顶深灰顶点色），全街区一个网格（约 7500 栋 → 十几万三角形），
+ * 由 huimin 模块在离街区 FAR_R 以外代替精细街区显示。
+ */
+export function buildHuiminFar(ctx, data) {
+  const T = ctx.terrain;
+  const pos = [], col = [], idx = [];
+  // 颜色压暗 + 逐栋明暗变化：远看要与精细街区（青砖、灰瓦、少量白墙）的整体色调一致，否则全城俯视时街区成一块平板亮斑
+  const WALL = [0.24, 0.22, 0.2], ROOF = [0.12, 0.12, 0.13];
+  let base = 0;
+  for (const b of data.b) {
+    const p = b.p;
+    const n = p.length / 2;
+    if (n < 3 || !(b.h > 0)) continue;
+    let cx = 0, cz = 0;
+    for (let i = 0; i < n; i++) { cx += p[i * 2]; cz += p[i * 2 + 1]; }
+    cx /= n; cz /= n;
+    const hv = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1; // 逐栋哈希
+    const kw = 0.75 + hv * 0.6, kr = 0.8 + ((hv * 7.31) % 1) * 0.5;
+    const WALL_C = [WALL[0] * kw, WALL[1] * kw, WALL[2] * kw], ROOF_C = [ROOF[0] * kr, ROOF[1] * kr, ROOF[2] * kr];
+    let ground = T.heightAt(cx, cz);
+    for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 4))) ground = Math.min(ground, T.heightAt(p[i * 2], p[i * 2 + 1]));
+    const y0 = ground - 0.4, y1 = ground + b.h;
+    // 外环方向（保证墙面法线朝外：这里不写法线，着色器用 flat 顶点色即可，用 computeVertexNormals）
+    let a2 = 0;
+    for (let i = 0; i < n; i++) { const j = (i + 1) % n; a2 += p[i * 2] * p[j * 2 + 1] - p[j * 2] * p[i * 2 + 1]; }
+    const ccw = a2 < 0; // 世界 Z 向南：shoelace < 0 表示从上方看逆时针
+    // 墙：每边两个三角形（顶点不共享，便于平直着色）
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const ax = p[i * 2], az = p[i * 2 + 1], bx = p[j * 2], bz = p[j * 2 + 1];
+      pos.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y1, az);
+      for (let k = 0; k < 4; k++) col.push(WALL_C[0], WALL_C[1], WALL_C[2]);
+      if (ccw) idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+      else idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+      base += 4;
+    }
+    // 屋顶
+    const flat = [];
+    for (let i = 0; i < n; i++) flat.push(p[i * 2] - cx, p[i * 2 + 1] - cz);
+    const tri = earcut(flat, null, 2);
+    for (let i = 0; i < n; i++) { pos.push(p[i * 2], y1, p[i * 2 + 1]); col.push(ROOF_C[0], ROOF_C[1], ROOF_C[2]); }
+    for (let k = 0; k < tri.length; k += 3) {
+      const a = tri[k], bq = tri[k + 1], c = tri[k + 2];
+      const x1 = flat[bq * 2] - flat[a * 2], z1 = flat[bq * 2 + 1] - flat[a * 2 + 1], x2 = flat[c * 2] - flat[a * 2], z2 = flat[c * 2 + 1] - flat[a * 2 + 1];
+      if (z1 * x2 - x1 * z2 >= 0) idx.push(base + a, base + bq, base + c);
+      else idx.push(base + a, base + c, base + bq);
+    }
+    base += n;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
+  // 双面：轮廓环方向不一，远景低模不值得逐栋判向；环境反射压低，平屋顶不要被天空照成淡蓝色
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.25 }));
+  m.name = '回民街远景低模';
+  m.castShadow = false;
+  m.receiveShadow = true;
+  return m;
 }
 
 function mergeSimple(geos) {

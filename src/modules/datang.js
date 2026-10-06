@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang } from '../arch/chinese.js';
 import { Batcher, ribbon } from '../core/util.js';
 import { floodlit } from '../arch/chinese-core.js';
+import { shadowReach } from '../arch/perf-lod.js';
 import {
   personGeometry, crowdMesh, treeMeshes, lampMeshes, lanternInstances, lightPools, lightBeams,
   figureGeometry, riderGeometry, camelGeometry, plinthGeometry,
@@ -295,6 +296,10 @@ export default {
     const H = (x, z) => ctx.terrain.heightAt(x, z);
     const q = ctx.quality || { level: 2 };
     const lvl = q.level ?? 2;
+    // 绘制负担控制（按画质）：离街区超过 FAR_HIDE 时隐藏商铺/后街/雕塑/灯柱/树/灯笼/人流（几公里外都是亚像素，
+    // 夜里由地面灯带、光柱、贞观广场大建筑表现）；超过 SHADOW_D 时整片不投射阴影；人流数量随距离线性减少
+    const FAR_HIDE = [3000, 4500, 6500, 9000][lvl] ?? 6500;
+    const SHADOW_D = [600, 1200, 2200, 3200][lvl] ?? 2200;
     const r = rng(20260925);
     const yMid = H(AX, (ZN + ZS) / 2);
     const tick = () => new Promise((res) => setTimeout(res, 0));
@@ -371,10 +376,12 @@ export default {
           for (const s of specs) placeShop(b, H, side, s.zc, s, rr, o);
           lod.addLevel(b.build({ flood: { color: 0xffc27a, strength: 0.7, baseY: baseY - 0.5, height: 15, top: 0.45, upDim: 0.95 }, name: lod.name + 'd' + d }), dist);
         }
+        lod.addLevel(new THREE.Object3D(), FAR_HIDE); // 远处整段隐藏
         root.add(lod);
         await tick();
       }
     }
+    let backStreet = null;
     // 后排：街区纵深的大体量唐风建筑（酒店/商业综合体），低细节
     {
       const b = new ArchBuilder(ctx, { detail: 0, style: 'tang', name: '不夜城后街' });
@@ -400,6 +407,7 @@ export default {
         }
       const g = b.build({ flood: { color: 0xffc27a, strength: 0.55, baseY: yMid - 1, height: 18, top: 0.4, upDim: 0.95 }, name: '不夜城后街' });
       root.add(g);
+      backStreet = g;
       await tick();
     }
 
@@ -433,6 +441,7 @@ export default {
 
         lod.addLevel(b.build({ flood: { color: 0xffc47a, strength: 0.85, baseY: H(AX, 5450) - 0.5, height: 26, top: 0.4, upDim: 0.95 }, name: '贞观广场建筑d' + d }), dist);
       }
+      lod.addLevel(new THREE.Object3D(), FAR_HIDE * 1.8); // 大体量建筑保留得更远
       root.add(lod);
       await tick();
     }
@@ -681,10 +690,26 @@ export default {
     }
     const lanternMat = new THREE.MeshStandardMaterial({ color: 0xb52a1a, emissive: 0xff4a1c, emissiveIntensity: 0, roughness: 0.55 });
     ctx.night.register(lanternMat, { day: 0.12, night: 3.6 });
-    for (const m of lampMeshes(ctx, lamps, lampMats)) root.add(m);
-    for (const m of treeMeshes(ctx, trees)) root.add(m);
-    root.add(lanternInstances(lant, lanternMat, { r: 0.28 }));
-    root.add(lightPools(ctx, pools, { color: 0xffa24a, night: 0.16 }));
+    // 远处隐藏的对象集合（见 FAR_HIDE）；灯柱与灯笼不投射阴影（细小构件，阴影不可辨但三角形翻倍）
+    const farItems = [sculpt, tg, ground, backStreet].filter(Boolean);
+    for (const m of lampMeshes(ctx, lamps, lampMats)) {
+      m.castShadow = false;
+      root.add(m);
+      farItems.push(m);
+    }
+    for (const m of treeMeshes(ctx, trees)) {
+      root.add(m);
+      farItems.push(m);
+    }
+    {
+      const li = lanternInstances(lant, lanternMat, { r: 0.28 });
+      li.castShadow = false;
+      root.add(li);
+      farItems.push(li);
+      const lp = lightPools(ctx, pools, { color: 0xffa24a, night: 0.16 });
+      root.add(lp);
+      farItems.push(lp);
+    }
     // 地面灯带：步行道边线 + 沿街台基前沿
     {
       const lb = new Batcher();
@@ -804,12 +829,37 @@ export default {
 
     const crowds = [modern, hanfu];
     const totals = [nM, nH];
+    farItems.push(modern, hanfu);
+    // 阴影开关：建成时投射阴影的网格（整片按距离切换）
+    const casters = [];
+    root.traverse((o) => { if (o.isMesh && o.castShadow) casters.push(o); });
+    let farOn = true, shadowOn = true, frame = 0;
     return {
       /** 诊断（tools/check_overlap*.mjs）：程序化唐风建筑已给逐栋档案建筑让位（沿街区排除区不再代表“这里有唐风楼”） */
       diag: () => ({ yieldToDossier: true, taken: nTaken }),
       update() {
+        frame++;
+        const cp = ctx.camera.position;
+        // 相机到步行街轴线矩形（AX±HW，ZN..ZS）的水平距离 + 离地高
+        const dx = Math.max(0, Math.abs(cp.x - AX) - HW), dz = Math.max(0, ZN - cp.z, cp.z - ZS);
+        const d = Math.hypot(dx, dz, Math.max(0, cp.y - yMid));
+        const near = d < FAR_HIDE;
+        if (near !== farOn) {
+          farOn = near;
+          for (const o of farItems) o.visible = near;
+        }
+        if (frame % 10 === 1) {
+          const sh = d < shadowReach(ctx, SHADOW_D, 30);
+          if (sh !== shadowOn) {
+            shadowOn = sh;
+            for (const o of casters) o.castShadow = sh;
+          }
+        }
+        if (!near) return;
         const k = ctx.sky ? ctx.sky.night ?? 0 : 0;
-        const f = 0.4 + 0.6 * k;
+        // 人流：夜多昼少 × 随距离减少（500 m 内全量，到 FAR_HIDE 的 1/3 处降到 1/4）
+        const dk = 1 - 0.75 * Math.min(1, Math.max(0, (d - 500) / Math.max(1, FAR_HIDE / 3 - 500)));
+        const f = (0.4 + 0.6 * k) * dk;
         crowds.forEach((m, i) => (m.count = Math.max(1, Math.floor(totals[i] * f))));
       },
       setLayer(layer, visible) {

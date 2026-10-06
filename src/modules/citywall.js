@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { ArchBuilder, buildArch, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, cityPlatform } from '../arch/chinese.js';
 import { MeshBuf, wallMaterial, merlonGeometry, merlonLedGeometry, lampPostGeometry, outlineLines } from '../arch/citywall-kit.js';
 import { pointInPoly } from '../core/util.js';
+import { shadowReach } from '../arch/perf-lod.js';
 
 // 城墙中心线（data-src/landmarks_historic/wall_centerline.json 的 polygon，自西北角顺时针）
 const CENTERLINE = [[-1993.2, -1796.8], [-230.9, -1825.6], [-39.3, -1827.5], [-36.6, -1824.5], [-14.0, -1824.5], [64.4, -1831.9], [64.4, -1834.9], [98.4, -1835.7], [2228.6, -1863.1], [2221.8, -1123.4], [2221.2, -546.1], [2221.2, -543.2], [2217.1, -543.1], [2217.5, -519.6], [2221.7, -519.5], [2222.0, -24.9], [2219.9, -3.9], [2224.0, 55.5], [2225.0, 792.3], [1031.3, 848.1], [751.7, 842.6], [28.1, 841.9], [-293.9, 845.6], [-1282.7, 848.0], [-1297.7, 847.9], [-1300.9, 845.0], [-1390.7, 845.0], [-1392.2, 848.7], [-1480.1, 849.6], [-1981.8, 849.6], [-1985.0, 76.8], [-1982.7, 38.3], [-1987.5, -117.2], [-1984.4, -1066.2], [-1986.7, -1080.1]];
@@ -1206,7 +1207,9 @@ export default {
       const dWall = Math.hypot(edge, Math.max(0, p.y - 420));
       smallGroup.visible = dWall < 1400;
       leds.visible = dWall < 2200;
-      merlons.visible = dWall < 6000;
+      // 垛口（1 m 高）几公里外亚像素（按画质 1.6~3.6 km）；阴影只在阴影贴图覆盖范围内投射
+      merlons.visible = dWall < ([1600, 2400, 3000, 3600][ctx.quality.level ?? 2] ?? 3000);
+      merlons.castShadow = dWall < shadowReach(ctx, 1500, 12);
       outline.visible = ctx.uniforms.uNight.value > 0.02;
     };
     update();

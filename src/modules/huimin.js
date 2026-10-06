@@ -3,8 +3,9 @@
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 import { pointInPoly } from '../core/util.js';
-import { buildHuimin } from '../arch/huimin-gen.js';
+import { buildHuimin, buildHuiminFar } from '../arch/huimin-gen.js';
 import { buildArch, paifang } from '../arch/chinese.js';
+import { shadowReach } from '../arch/perf-lod.js';
 
 /** 点到多边形（扁平数组）的距离；点在内部为 0 */
 function polyDist(x, z, p) {
@@ -67,8 +68,25 @@ export default {
     const data = this.data;
     if (!data) return {};
     const t0 = performance.now();
-    const { group, detail, stats } = buildHuimin(ctx, data);
+    const { group, detail, lanternMesh, houseMeshes, stats } = buildHuimin(ctx, data);
     ctx.scene.add(group);
+    // 阴影：整个街区离相机超过 SHADOW_R 时不投射（7500 栋小房子的阴影在远处不可辨，却让三角形翻倍）
+    const casters = [];
+    group.traverse((o) => { if (o.isMesh && o.castShadow) casters.push(o); });
+    let shadowOn = true;
+    const qk = [0.6, 0.8, 1, 1.2][ctx.quality.level ?? 2] ?? 1;
+    const SHADOW_R = 1400 * qk, LANTERN_R = 800 * qk, DETAIL_R = 1800 * qk;
+    const FAR_R = [900, 2400, 3200, 4000][ctx.quality.level ?? 2] ?? 3200; // 超过此距离用远景低模
+    // 远景低模：逐户轮廓直接拉伸成体块（平顶、顶点色），FAR_R 以外代替 0.6M 三角形的精细街区（它在 10 km 外也常驻）
+    let farMesh = null;
+    try {
+      farMesh = buildHuiminFar(ctx, data);
+      farMesh.visible = false;
+      group.add(farMesh);
+    } catch (e) {
+      console.warn('[huimin] 远景低模构建失败', e);
+    }
+    let farOn = false;
     // 北院门北口白色花岗岩牌楼（1993 年建，四柱三间；调研 §2.2，尺寸为推测值）
     try {
       const px = -300, pz = -548;
@@ -92,10 +110,27 @@ export default {
     ctx.labels.add('洒金桥', new THREE.Vector3(-1320, c.y + 25, -760), { category: 'district', priority: 1.2, minDist: 80, maxDist: 4000 });
     console.warn(`[huimin] ${data.b.length} 栋，${JSON.stringify({ ...stats, ownPois: this.nOwnPois })}，${(performance.now() - t0).toFixed(0)} ms`);
     const tmp = new THREE.Vector3();
+    let frame = 0;
     return {
       update() {
+        frame++;
         tmp.copy(ctx.camera.position);
-        detail.visible = Math.hypot(tmp.x - c.x, tmp.z - c.z) < 1800 && tmp.y - c.y < 1200;
+        const d = Math.hypot(tmp.x - c.x, tmp.z - c.z, Math.max(0, tmp.y - c.y - 300));
+        detail.visible = d < DETAIL_R && tmp.y - c.y < 1200;
+        if (lanternMesh) lanternMesh.visible = d < LANTERN_R && tmp.y - c.y < 600;
+        const far = !!farMesh && d > FAR_R;
+        if (far !== farOn) {
+          farOn = far;
+          farMesh.visible = far;
+          for (const m of houseMeshes) m.visible = !far;
+        }
+        if (frame % 10 === 1) {
+          const sh = d < shadowReach(ctx, SHADOW_R, 15);
+          if (sh !== shadowOn) {
+            shadowOn = sh;
+            for (const o of casters) o.castShadow = sh;
+          }
+        }
       },
       setLayer(layer, v) {
         if (layer === 'buildings') group.visible = v;
