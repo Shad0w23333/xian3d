@@ -237,3 +237,5 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 **影像源评测（`imagery_pack.py bench`，清晰度=拉普拉斯方差，雪=高亮低饱和像素比例）**：Google 各片区雪 0~3%（浐灞 11%，疑为水面/白色屋顶），esri_clarity 全部 0% 但清晰度最低，esri 雪 2~6%，bing 最糊。
 
 **修复分工（5 个独立工作树代理）**：夜景远距光斑 / 曲江绘制调用（含 `tools/check_drawcalls.mjs` 与 `docs/PERF_DRAWCALLS.md`）/ 白天大气调校 / 三角形 LOD（含 `docs/PERF_TRIANGLES.md`）/ 用户点名片区的街景级打磨（未央商圈、凤城七路、曲江周边道路、浐灞后海、回民街洒金桥；可能新增 `src/modules/streetscape.js`）。合并后需再跑一遍 13 视角体检。
+
+**影像包结论（2026-10-06 本机生成）**：最终用 **Google 单源**（`python tools/imagery_pack.py all --source google --plan ultra --workers 16`），`tiles/` 共 1.35 GB、108664 张（z11~z20，核心片区 z20），下载约 55 分钟。曾试过 `--source google,esri_clarity --pick sharp`：择优块里 Esri Clarity 色调偏青绿，在全城俯视里呈现成片矩形色差，比少量雪斑更碍眼，故弃用。`tiles/` 不入库，换机器需重新生成；瓦片缓存在 `data-src/tiles_hd/google/`（约 2.7 GB）。
