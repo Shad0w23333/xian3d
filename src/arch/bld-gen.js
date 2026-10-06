@@ -900,7 +900,7 @@ export function createGenerator() {
     const transfer = [];
     for (const b of blocks.values()) {
       const ox = b.bx * BLOCK - LO_MARGIN, oz = b.bz * BLOCK - LO_MARGIN;
-      const V = new Grow(Uint16Array, 1 << 14), I = new Grow(Uint32Array, 1 << 14), IF = new Grow(Uint32Array, 1 << 13);
+      const V = new Grow(Uint16Array, 1 << 14), I = new Grow(Uint32Array, 1 << 14), IF = new Grow(Uint32Array, 1 << 13), IF2 = new Grow(Uint32Array, 1 << 12);
       // 小块按块内 Morton（Z 序）排列
       const mort = (cl) => {
         const lx = cl.cx - b.bx * BLOCK_N, lz = cl.cz - b.bz * BLOCK_N;
@@ -911,22 +911,23 @@ export function createGenerator() {
       b.chunks.sort((a, c) => mort(a) - mort(c));
       const chunks = [];
       for (const cl of b.chunks) {
-        const i0 = I.n, f0 = IF.n;
+        const i0 = I.n, f0 = IF.n, f20 = IF2.n;
         const bb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
-        for (const i of cl.list) writeLo(i, V, I, ox, oz, bb, IF);
+        for (const i of cl.list) writeLo(i, V, I, ox, oz, bb, IF, IF2);
         if (I.n > i0)
           chunks.push({
             cx: cl.cx, cz: cl.cz, slot: (cl.cx - b.bx * BLOCK_N) + (cl.cz - b.bz * BLOCK_N) * BLOCK_N,
-            start: i0, count: I.n - i0, fstart: f0, fcount: IF.n - f0, bounds: bb, n: cl.list.length,
+            start: i0, count: I.n - i0, fstart: f0, fcount: IF.n - f0, f2start: f20, f2count: IF2.n - f20, bounds: bb, n: cl.list.length,
           });
       }
       if (!I.n) continue;
-      const vb = V.out(), ib = I.out(), fb = IF.out();
+      const vb = V.out(), ib = I.out(), fb = IF.out(), fb2 = IF2.out();
       stat.loVerts += vb.length / LO_STRIDE;
       stat.loTris += ib.length / 3;
       stat.farTris = (stat.farTris || 0) + fb.length / 3;
-      transfer.push(vb.buffer, ib.buffer, fb.buffer);
-      blockOut.push({ bx: b.bx, bz: b.bz, ox, oz, vbuf: vb, ibuf: ib, fibuf: fb, chunks });
+      stat.far2Tris = (stat.far2Tris || 0) + fb2.length / 3;
+      transfer.push(vb.buffer, ib.buffer, fb.buffer, fb2.buffer);
+      blockOut.push({ bx: b.bx, bz: b.bz, ox, oz, vbuf: vb, ibuf: ib, fibuf: fb, fibuf2: fb2, chunks });
     }
     stat.estNames = stat.estNames.size;
     stat.ms = Math.round(performance.now() - t0);
@@ -947,13 +948,16 @@ export function createGenerator() {
    * 远景：外墙共享角点（2(n+1) 顶点），屋面用顶环。
    * IF：超远景索引子集——只含“显眼”的建筑（高 ≥ 15 m 或占地 ≥ 600 m²），更远处小房子由卫星影像表现。
    */
-  function writeLo(i, V, I, ox, oz, bb, IF) {
+  function writeLo(i, V, I, ox, oz, bb, IF, IF2) {
     if (skip[i]) return;
     let n = decodeRing(P, i, SX, SZ);
     if (n < 3) return;
     n = simplifyRing(SX, SZ, n, hA[i] > 40 ? 2 : 6);
     const iStart = I.n;
-    const major = hA[i] >= 15 || ringArea(SX, SZ, n) >= 600;
+    const area = ringArea(SX, SZ, n);
+    const major = hA[i] >= 15 || area >= 600;
+    // IF2：超远景精简子集（更远处只画高楼与大体量建筑）
+    const major2 = hA[i] >= 40 || area >= 3000;
     const yb = bottomY(i), yt = ga[i] + hA[i];
     const id = i;
     const lo = id & 0xffff, hi = id >>> 16;
@@ -999,6 +1003,12 @@ export function createGenerator() {
       IF.reserve(k);
       IF.a.set(I.a.subarray(iStart, I.n), IF.n);
       IF.n += k;
+    }
+    if (IF2 && major2) {
+      const k = I.n - iStart;
+      IF2.reserve(k);
+      IF2.a.set(I.a.subarray(iStart, I.n), IF2.n);
+      IF2.n += k;
     }
   }
 

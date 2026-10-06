@@ -29,6 +29,7 @@ const LOD_BY_LEVEL = [
 ];
 const BAND = 16; // 近↔中 交叉淡化带（米）
 const FARBAND = 60; // 中↔远 交叉淡化带（米）
+const FAR_CELL = 1500; // 远景 impostor 分格尺寸（米）：整格做视锥 + 距离剔除
 
 // 本模块自己的让位区（地标内部的铺装广场 / 大唐不夜城步行街轴线由对应模块自行布置树木）
 function localExclusions(ctx) {
@@ -225,7 +226,7 @@ export default {
     // —— 等待种植结果 ——
     let dirty = true;
     let D = null;
-    let farMesh = null;
+    let farCells = null; // [{mesh, box, n, rc}]
     const plant = this._plant || startPlanting(ctx);
     const onData = (r) => {
       const t0 = performance.now();
@@ -247,12 +248,33 @@ export default {
           if (hy[i] < cy0[c]) cy0[c] = hy[i];
           if (hy[i] > cy1[c]) cy1[c] = hy[i];
         }
-      // 远景：按 rank 升序（密度调低时只画前缀）
+      // 远景 impostor：按 FAR_CELL 米分格，格内按 rank 升序（密度调低时只画前缀）；每格一个实例化网格，
+      // 每帧按视锥 + 距离整格剔除（此前全城 65 万棵一个网格常驻，每个视角 2.35M 三角形，远处的在着色器里塌缩但仍计入绘制）
+      const R0 = r.region, CF = FAR_CELL;
+      const ncfx = Math.max(1, Math.ceil((R0.x1 - R0.x0) / CF)), ncfz = Math.max(1, Math.ceil((R0.z1 - R0.z0) / CF));
+      const cellOf = new Int32Array(n);
+      const cellN = new Uint32Array(ncfx * ncfz + 1);
+      for (let i = 0; i < n; i++) {
+        const cx = Math.min(ncfx - 1, Math.max(0, Math.floor((r.x[i] - R0.x0) / CF)));
+        const cz = Math.min(ncfz - 1, Math.max(0, Math.floor((r.z[i] - R0.z0) / CF)));
+        cellOf[i] = cz * ncfx + cx;
+        cellN[cellOf[i] + 1]++;
+      }
+      for (let c = 0; c < ncfx * ncfz; c++) cellN[c + 1] += cellN[c];
+      // 格内按 rank 排序：先按 (格, rank) 计数排序
       const order = new Uint32Array(n);
-      const cnt = new Uint32Array(257);
-      for (let i = 0; i < n; i++) cnt[r.rank[i] + 1]++;
-      for (let k = 0; k < 256; k++) cnt[k + 1] += cnt[k];
-      for (let i = 0; i < n; i++) order[cnt[r.rank[i]]++] = i;
+      {
+        const tmp = new Uint32Array(n);
+        const cnt = new Uint32Array(257);
+        for (let i = 0; i < n; i++) cnt[r.rank[i] + 1]++;
+        for (let k = 0; k < 256; k++) cnt[k + 1] += cnt[k];
+        for (let i = 0; i < n; i++) tmp[cnt[r.rank[i]]++] = i; // 全局按 rank 升序
+        const w = cellN.slice(0, ncfx * ncfz);
+        for (let k = 0; k < n; k++) {
+          const i = tmp[k];
+          order[w[cellOf[i]]++] = i; // 稳定分配到各格 → 格内仍按 rank 升序
+        }
+      }
       const pos = new Float32Array(n * 3), dat = new Uint8Array(n * 4);
       for (let k = 0; k < n; k++) {
         const i = order[k];
@@ -264,16 +286,44 @@ export default {
         dat[k * 4 + 2] = r.rank[i];
         dat[k * 4 + 3] = r.lamp[i];
       }
-      const fg = makeFarGeometry(n);
-      fg.setAttribute('aPos', new THREE.InstancedBufferAttribute(pos, 3));
-      fg.setAttribute('aData', new THREE.InstancedBufferAttribute(dat, 4, false));
-      farMesh = new THREE.Mesh(fg, farMat);
-      farMesh.frustumCulled = false;
-      farMesh.name = '植被远景-impostor';
-      farMesh.castShadow = false;
-      farMesh.receiveShadow = false;
-      root.add(farMesh);
-      D = { ...r, y, cy0, cy1, hy, rankSorted: cnt };
+      const tpl = makeFarGeometry(1); // 公共顶点属性（四角 + 索引）在各格几何间共享
+      farCells = [];
+      for (let c = 0; c < ncfx * ncfz; c++) {
+        const a = cellN[c], b = cellN[c + 1];
+        if (b <= a) continue;
+        const g = new THREE.InstancedBufferGeometry();
+        g.setAttribute('position', tpl.attributes.position);
+        g.setAttribute('aCorner', tpl.attributes.aCorner);
+        g.setAttribute('uv', tpl.attributes.uv);
+        g.setIndex(tpl.index);
+        g.setAttribute('aPos', new THREE.InstancedBufferAttribute(pos.subarray(a * 3, b * 3), 3));
+        g.setAttribute('aData', new THREE.InstancedBufferAttribute(dat.subarray(a * 4, b * 4), 4, false));
+        g.instanceCount = b - a;
+        const m = new THREE.Mesh(g, farMat);
+        m.frustumCulled = false; // 由 assign() 按格剔除
+        m.name = '植被远景-impostor';
+        m.castShadow = false;
+        m.receiveShadow = false;
+        m.visible = false;
+        root.add(m);
+        // 格内 rank 前缀计数（密度调节用）与包围盒
+        const rc = new Uint32Array(257);
+        let y0 = 1e9, y1 = -1e9;
+        for (let k = a; k < b; k++) {
+          rc[dat[k * 4 + 2] + 1]++;
+          const yy = pos[k * 3 + 1];
+          if (yy < y0) y0 = yy;
+          if (yy > y1) y1 = yy;
+        }
+        for (let k = 0; k < 256; k++) rc[k + 1] += rc[k];
+        const cx = c % ncfx, cz = (c / ncfx) | 0;
+        const box = new THREE.Box3(
+          new THREE.Vector3(R0.x0 + cx * CF - 14, y0 - 2, R0.z0 + cz * CF - 14),
+          new THREE.Vector3(R0.x0 + (cx + 1) * CF + 14, y1 + 26, R0.z0 + (cz + 1) * CF + 14)
+        );
+        farCells.push({ mesh: m, box, n: b - a, rc });
+      }
+      D = { ...r, y, cy0, cy1, hy };
       applyDensity();
       console.warn(`[vegetation] 树木 ${n}（行道树 ${r.stats.street}、分隔带 ${r.stats.median}、环城公园 ${r.stats.wallpark}、水岸 ${r.stats.bank}、用地 ${r.stats.landuse}），绿篱 ${r.hedgeN} 段；种植 ${r.stats.ms} ms，装配 ${(performance.now() - t0).toFixed(0)} ms`);
     };
@@ -281,11 +331,9 @@ export default {
     const applyDensity = () => {
       const k = Math.max(0.04, Math.min(1, density / 1.3));
       rankMax.value = Math.round(256 * k);
-      if (farMesh && D) {
-        // rank 升序：前缀计数
-        let c = 0;
-        for (let i = 0; i < D.n; i++) if (D.rank[i] < rankMax.value) c++;
-        farMesh.geometry.instanceCount = Math.max(1, c);
+      if (farCells) {
+        // 每格按 rank 升序：实例数取前缀计数
+        for (const c of farCells) c.mesh.geometry.instanceCount = Math.max(1, c.rc[Math.min(256, rankMax.value)]);
       }
       dirty = true;
     };
@@ -379,6 +427,15 @@ export default {
       const nr2 = nearR * nearR, fr2 = farR * farR, sr2 = shrubR * shrubR, hr2 = hedgeR * hedgeR;
       const midIn2 = (nearR - BAND) * (nearR - BAND);
       const rk = rankMax.value;
+      // 远景 impostor：整格剔除（格到相机距离 < 远景最远 + 淡出带，且在视锥内）
+      if (farCells) {
+        const fm = farMax + 40;
+        for (const c of farCells) {
+          const bx = c.box;
+          const dx = Math.max(bx.min.x - cp.x, 0, cp.x - bx.max.x), dy = Math.max(bx.min.y - cp.y, 0, cp.y - bx.max.y), dz = Math.max(bx.min.z - cp.z, 0, cp.z - bx.max.z);
+          c.mesh.visible = dx * dx + dy * dy + dz * dz < fm * fm && frustum.intersectsBox(bx);
+        }
+      }
       const X = D.x, Y = D.y, Z = D.z, SPA = D.sp, RK = D.rank;
       for (let cz = cz0; cz <= cz1; cz++)
         for (let cx = cx0; cx <= cx1; cx++) {
@@ -487,7 +544,9 @@ export default {
         ctx.scene.remove(root);
       },
       stats() {
-        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => s.n), hedge: hedgeSlot.n } : null;
+        const far = farCells ? farCells.reduce((s, c) => (c.mesh.visible ? s + c.mesh.geometry.instanceCount : s), 0) : 0;
+        const farCellsVis = farCells ? farCells.filter((c) => c.mesh.visible).length : 0;
+        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => s.n), hedge: hedgeSlot.n, far, farCells: farCellsVis } : null;
       },
       get ready() {
         return dataReady;

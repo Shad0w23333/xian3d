@@ -175,6 +175,8 @@ export default {
     }
     lodS.position.set(CX, H_T, TZ);
     root.add(lodS);
+    // 近景级的斗拱/椽头等实例化小构件不投射阴影：它们本就处在屋檐投下的阴影里，却占阴影通道一半以上的三角形（约 0.65M）
+    lodS.levels[0].object.traverse((o) => { if (o.isMesh && /^inst:/.test(o.name)) o.castShadow = false; });
 
     // ───── 广场小品 + 玄奘像 ─────
     const pb = new ArchBuilder(ctx, { detail: 2, name: '广场小品', instancing: true });

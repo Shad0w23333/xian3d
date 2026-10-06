@@ -25,6 +25,7 @@ import { buildEstateGates } from '../arch/bld-estates.js';
 import { loadJSON } from '../core/data.js';
 import { preprocess } from '../arch/bld-skip.js';
 import { classifyBuildings, classTextureData, BLD_CLASSES } from '../arch/bld-class.js';
+import { shadowReach } from '../arch/perf-lod.js';
 import BldWorker from '../arch/bld-worker.js?worker&inline';
 
 const HI_AGL = 900; // 相机离地高于此值不使用近景小块
@@ -33,6 +34,11 @@ const MAX_RUNS = 4; // 每个远景大块最多几段 drawRange
 const GAP_MERGE = 60000; // 相邻可见段之间的不可见索引数小于此值时合并（少一次 draw call）
 const NEAR_KEEP = 1300; // 相机附近的小块即使不在视锥内也绘制（保证画面外建筑的阴影）
 const FAR_D = [2500, 3200, 4000, 5500]; // 超过此距离的小块改用超远景子集（只画显眼建筑，且不投射阴影）
+// 远景全集里只有离相机此距离内的小块投射阴影（阴影贴图只覆盖相机周围几百米到一两公里，更远的块进阴影通道纯属浪费）：
+// 同一套索引分成“投影段 / 不投影段”两组网格，各自 ≤ MAX_RUNS 段
+const SHADOW_D = [900, 1400, 2000, 2800];
+// 超过此距离改用“超远景·精简子集”（只有高 ≥ 40 m 或占地 ≥ 3000 m² 的楼；地面视角下几公里外的小楼亚像素且多被近楼遮挡）
+const FAR2_D = [4500, 6000, 8000, 11000];
 const HI_CACHE = 40; // 近景小块缓存上限
 // 立面细节档位（按画质）：0 低 = 不生成立面附属几何、关闭楼顶亮化与单元门；1 中 = 凸阳台/凸窗叠柱、单元入口雨棚（着色器同时画单元门）；2 高/超高 = 再加顶部构架、底商雨棚
 const DETAIL = [0, 1, 2, 2];
@@ -271,12 +277,13 @@ export default {
         ox: b.ox, oz: b.oz,
         pos: new THREE.InterleavedBufferAttribute(ib, 3, 0),
         dat: new THREE.InterleavedBufferAttribute(ib, 3, 3),
-        idx: [new THREE.BufferAttribute(b.ibuf, 1), new THREE.BufferAttribute(b.fibuf, 1)],
-        chunks: [], pool: [[], []], box: new THREE.Box3(), localBox: null, localSphere: null, tris: b.ibuf.length / 3,
+        // 索引集：0 远景全集（set 0 投影 / set 2 不投影共用）、1 超远景子集、3 超远景精简子集
+        idx: [new THREE.BufferAttribute(b.ibuf, 1), new THREE.BufferAttribute(b.fibuf, 1), null, new THREE.BufferAttribute(b.fibuf2 || b.fibuf, 1)],
+        chunks: [], pool: [[], [], [], []], box: new THREE.Box3(), localBox: null, localSphere: null, tris: b.ibuf.length / 3,
       };
       for (const c of b.chunks) {
         const box = new THREE.Box3(new THREE.Vector3(c.bounds[0], c.bounds[1], c.bounds[2]), new THREE.Vector3(c.bounds[3], c.bounds[4], c.bounds[5]));
-        const ch = { cx: c.cx, cz: c.cz, r: [c.start, c.fstart], c: [c.count, c.fcount], box, n: c.n };
+        const ch = { cx: c.cx, cz: c.cz, r: [c.start, c.fstart, c.start, c.f2start ?? c.fstart], c: [c.count, c.fcount, c.count, c.f2count ?? c.fcount], box, n: c.n };
         blk.chunks.push(ch);
         blk.box.union(box);
         chunkDir.set(c.cx + ',' + c.cz, ch);
@@ -289,14 +296,15 @@ export default {
       blk.localSphere = blk.localBox.getBoundingSphere(new THREE.Sphere());
       blocks.push(blk);
     }
-    // set 0：远景全集（投射阴影）；set 1：超远景子集
+    // set 0：远景全集·近处（投射阴影）；set 2：远景全集·较远（同一套索引，不投射阴影）；set 1：超远景子集
     const blockMesh = (blk, set, k) => {
       const pool = blk.pool[set];
       if (pool[k]) return pool[k];
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', blk.pos);
       g.setAttribute('aData', blk.dat);
-      g.setIndex(blk.idx[set]);
+      g.setIndex(blk.idx[set === 2 ? 0 : set]);
+      if (!g.index) return null;
       g.boundingBox = blk.localBox;
       g.boundingSphere = blk.localSphere;
       const m = new THREE.Mesh(g, mats.lo);
@@ -308,13 +316,15 @@ export default {
       m.castShadow = set === 0;
       m.receiveShadow = true;
       m.visible = false;
-      m.name = `建筑${set ? '超远景' : '远景'} ${blk.ox},${blk.oz} #${k}`;
+      m.name = `建筑${set === 1 ? '超远景' : set === 3 ? '超远景精简' : set === 2 ? '远景无影' : '远景'} ${blk.ox},${blk.oz} #${k}`;
       loGroup.add(m);
       pool[k] = m;
       return m;
     };
     for (const blk of blocks) blockMesh(blk, 0, 0).visible = true; // 预热：保证 compileAsync 编译到远景材质
     let farD = FAR_D[ctx.quality.level ?? 2] || 4000;
+    let far2D = FAR2_D[ctx.quality.level ?? 2] || 8000;
+    let shadowDCap = SHADOW_D[ctx.quality.level ?? 2] || 2000;
 
     // —— 近景小块 ——
     const hiGroup = new THREE.Group();
@@ -528,7 +538,7 @@ export default {
       for (let i = 0; i < 64; i++) r.push({ s: 0, e: 0, gap: 0 });
       return { runs: r, n: 0, cur: null, gap: 0 };
     };
-    const RS = [mkRuns(), mkRuns()];
+    const RS = [mkRuns(), mkRuns(), mkRuns(), mkRuns()];
     const distXZ = (box, x, z) => {
       const dx = Math.max(box.min.x - x, 0, x - box.max.x), dz = Math.max(box.min.z - z, 0, z - box.max.z);
       return Math.hypot(dx, dz);
@@ -561,6 +571,7 @@ export default {
       }
       for (let k = 0; k < R.n; k++) {
         const m = blockMesh(blk, set, k);
+        if (!m) continue;
         m.geometry.drawRange.start = runs[k].s;
         m.geometry.drawRange.count = runs[k].e - runs[k].s;
         m.visible = true;
@@ -575,6 +586,8 @@ export default {
       const cx = cam.position.x, cz = cam.position.z;
       const dd = U.uDrawDist.value;
       const hr = hiRect;
+      // 投影距离随阴影贴图实际覆盖范围（离地高、太阳高度角）收缩
+      const shadowD = shadowReach(ctx, shadowDCap, 120);
       for (const blk of blocks) {
         for (const R of RS) (R.n = 0), (R.cur = null), (R.gap = 0);
         const bd = distXZ(blk.box, cx, cz);
@@ -584,20 +597,12 @@ export default {
             let vis = false;
             const d = distXZ(c.box, cx, cz);
             if (!inHi) vis = d <= dd && (d < NEAR_KEEP || frustum.intersectsBox(c.box));
-            if (vis && d < farD) {
-              runPush(RS[0], c, 0);
-              runGap(RS[1], c, 1);
-            } else if (vis) {
-              runGap(RS[0], c, 0);
-              runPush(RS[1], c, 1);
-            } else {
-              runGap(RS[0], c, 0);
-              runGap(RS[1], c, 1);
-            }
+            // 四组：0 近处投影 / 2 较远不投影（同一索引缓冲）/ 1 超远景子集 / 3 超远景精简子集
+            const want = !vis ? -1 : d < farD ? (d < shadowD ? 0 : 2) : d < far2D ? 1 : 3;
+            for (let s = 0; s < 4; s++) if (s === want) runPush(RS[s], c, s); else runGap(RS[s], c, s);
           }
         }
-        runFinish(RS[0], blk, 0);
-        runFinish(RS[1], blk, 1);
+        for (let s = 0; s < 4; s++) runFinish(RS[s], blk, s);
       }
     };
 
@@ -768,8 +773,9 @@ export default {
       diag: { skip: pre.skip, base: pre.base, ga: pre.ga },
       stats: () => ({
         blocks: blocks.length,
-        loVisible: blocks.reduce((s, b) => s + b.pool[0].filter((m) => m && m.visible).length, 0),
-        farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length, 0),
+        loVisible: blocks.reduce((s, b) => s + b.pool[0].filter((m) => m && m.visible).length + b.pool[2].filter((m) => m && m.visible).length, 0),
+        loShadow: blocks.reduce((s, b) => s + b.pool[0].filter((m) => m && m.visible).length, 0),
+        farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length + b.pool[3].filter((m) => m && m.visible).length, 0),
         hiShown: hiShown.size,
         hiCached: hiCache.size,
         hiLoading: inflight,
@@ -804,6 +810,8 @@ export default {
         U.uDrawDist.value = q.buildingDistance || 16000;
         hiRadius = HI_RADIUS[q.level ?? 2] || 1200;
         farD = FAR_D[q.level ?? 2] || 4000;
+        far2D = FAR2_D[q.level ?? 2] || 8000;
+        shadowDCap = SHADOW_D[q.level ?? 2] || 2000;
         const d = DETAIL[q.level ?? 2] ?? 2;
         if (d !== detailLvl) {
           // 细节档位变化：近景小块全部按新档位重建（重建期间由远景补位，不留空洞）
