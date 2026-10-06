@@ -330,7 +330,9 @@ const GLSL_SURFACE = /* glsl */ `
     rough = mix(rough, 0.35, rail);
   } else if (kind == 5) {
     // ===== 钢轨：轨顶磨亮，轨腰锈 =====
-    float top = vUV.x;
+    // vUV.x 必须钳到 [0,1]：个别轨段的 UV 异常（远大于 1）会让金属度/反照率算出上百的值，
+    // 夜里把月光反射成一个过曝像素，经泛光放大成全城俯视里一团蓝白“假太阳”
+    float top = clamp(vUV.x, 0.0, 1.0);
     col = mix(vec3(0.16, 0.095, 0.06), vec3(0.62, 0.62, 0.64), top);
     metal = mix(0.3, 0.95, top);
     rough = mix(0.8, 0.22, top);
@@ -396,8 +398,9 @@ vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>\n${GLSL_COMMON}\nfloat rRoadRough; float rRoadMetal; float rRoadPool;`)
       .replace('#include <map_fragment>', GLSL_SURFACE)
-      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = rRoadRough;')
-      .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = rRoadMetal;')
+      // 兜底钳位：粗糙度/金属度越界（NaN 或 >1）会产生超亮高光像素
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = clamp(rRoadRough, 0.05, 1.0);')
+      .replace('#include <metalnessmap_fragment>', 'float metalnessFactor = clamp(rRoadMetal, 0.0, 1.0);')
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
@@ -405,7 +408,7 @@ vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`
 totalEmissiveRadiance += (min(diffuseColor.rgb, vec3(0.28)) + vec3(0.01)) * vec3(1.0, 0.6, 0.27) * rRoadPool * uNight * uLampGain;`
       );
   };
-  mat.customProgramCacheKey = () => name + '|v3';
+  mat.customProgramCacheKey = () => name + '|v4';
   return mat;
 }
 

@@ -251,7 +251,12 @@ export function lampPointsMaterial(ctx) {
       }`,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    // 取最大值混合（WebGL2 原生 MAX）：同一像素里叠多少盏灯只取最亮的一盏。全城俯视时成百盏灯头压进同一像素，
+    // 加色混合会叠成一团过曝白光再被泛光放大；稀疏灯点的观感与加色混合一致（背景暗时 max≈add）
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.MaxEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
   });
   return mat;
 }

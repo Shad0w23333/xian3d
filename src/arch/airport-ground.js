@@ -212,14 +212,23 @@ export class LightList {
 export const LC = {
   white: [3.2, 3.0, 2.6], yellow: [3.4, 2.4, 0.5], green: [0.4, 3.4, 1.2], red: [3.6, 0.35, 0.2], blue: [0.35, 0.7, 3.6],
   amber: [3.2, 2.0, 0.6], mast: [3.4, 3.0, 2.3], strobe: [5, 5, 5], land: [6, 5.6, 5],
+  // 高光强灯具（进近灯排灯/横排灯、入口灯、末端灯）：灯点改为取最大值混合后密排灯不再靠叠加增亮，按真实光强等级单独提亮
+  als: [5.6, 5.3, 4.7], alsRed: [5.4, 0.5, 0.3], thr: [0.6, 5.2, 1.9], end: [5.0, 0.5, 0.3],
 };
 
 /**
  * 点精灵着色器：mode 0 常亮 1 顺序闪光 2 交替闪（跑道警戒灯）3 红色防撞灯 4 白频闪 5 白天也亮（飞机灯）
  * 方向灯：prm.zw 非零时只朝该方向可见。
+ * 远距离处理（消除夜景地平线上的“假太阳”）：
+ *   · 混合方式改为取最大值（WebGL2 原生 MAX 混合）：同一像素里叠多少盏灯都只取最亮的一盏。机场上千个亚像素灯点从低机位
+ *     远看会压到地平线上同几个像素里，加色混合会无限加亮，再经泛光糊成一大团；单盏灯的亮度与光晕和原来几乎一样（背景暗时 max≈add）。
+ *   · fade = [起始, 截止]（米）：亮度随相机距离平滑归零（平方曲线），点尺寸同步缩小。助航灯默认 6 km 起减弱、12 km 外不可见；
+ *     飞机灯稀疏，放宽到 9~16 km。
  */
-export function lightMaterial(ctx, { dayVisible = 0.0 } = {}) {
-  const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uScale: { value: 700 }, uDay: { value: dayVisible } }]);
+export function lightMaterial(ctx, { dayVisible = 0.0, fade = [6000, 12000] } = {}) {
+  const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
+    uScale: { value: 700 }, uDay: { value: dayVisible }, uFade: { value: new THREE.Vector2(fade[0], fade[1]) },
+  }]);
   uniforms.uTime = ctx.uniforms.uTime;
   uniforms.uNight = ctx.uniforms.uNight;
   return new THREE.ShaderMaterial({
@@ -227,10 +236,14 @@ export function lightMaterial(ctx, { dayVisible = 0.0 } = {}) {
     fog: true,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.MaxEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
     vertexShader: /* glsl */ `
       attribute vec3 color; attribute float size; attribute vec4 prm;
       uniform float uTime, uNight, uScale, uDay;
+      uniform vec2 uFade;
       varying vec3 vCol; varying float vI;
       #include <common>
       #include <fog_pars_vertex>
@@ -253,10 +266,12 @@ export function lightMaterial(ctx, { dayVisible = 0.0 } = {}) {
         I *= vis;
         float px = size * uScale / dist;
         float ps = max(px, 2.2);
-        I *= min(1.0, pow(px / 2.2, 0.55) + 0.12);
-        I *= 1.0 - smoothstep(22000.0, 40000.0, dist);
+        // 远距离衰减：亮度随 uFade 区间平滑归零，亚像素“保底亮度”也一起收掉；点尺寸同步缩小
+        float fade = 1.0 - smoothstep(uFade.x, uFade.y, dist);
+        I *= min(1.0, pow(px / 2.2, 0.55) + 0.12 * fade);
+        I *= fade * fade;
         vCol = color; vI = I;
-        gl_PointSize = I > 0.003 ? min(ps * 2.6, 96.0) : 0.0;
+        gl_PointSize = I > 0.003 ? min(ps * 2.6 * mix(0.5, 1.0, fade), 96.0) : 0.0;
         gl_Position = projectionMatrix * mvPosition;
         #include <logdepthbuf_vertex>
         #include <fog_vertex>
@@ -341,8 +356,8 @@ export function runwayLights(L, hf, R, { approach = true, center = true } = {}) 
     // 入口灯（绿，朝进近方向）+ 翼排灯；末端灯（红，朝跑道内）
     for (let o = -hw - 10; o <= hw + 10.01; o += 3) {
       const [x, y, z] = P(S(-1), o, 0.3);
-      L.add(x, y, z, LC.green, 0.7, 0, 0, out[0], out[1]);
-      if (Math.abs(o) <= hw) { const q = P(S(1), o, 0.3); L.add(q[0], q[1], q[2], LC.red, 0.6, 0, 0, -out[0], -out[1]); }
+      L.add(x, y, z, LC.thr, 0.7, 0, 0, out[0], out[1]);
+      if (Math.abs(o) <= hw) { const q = P(S(1), o, 0.3); L.add(q[0], q[1], q[2], LC.end, 0.6, 0, 0, -out[0], -out[1]); }
     }
     if (!approach) continue;
     // 接地带灯
@@ -359,7 +374,7 @@ export function runwayLights(L, hf, R, { approach = true, center = true } = {}) 
     for (let d = 30; d <= 900; d += 30) {
       for (let k = -2; k <= 2; k++) {
         const [x, y, z] = P(S(-d), k * 1.05, 0.8 + d * 0.004);
-        L.add(x, y, z, LC.white, 0.8, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.als, 0.8, 0, 0, out[0], out[1]);
       }
       if (d >= 300) {
         const [x, y, z] = P(S(-d), 0, 1.8 + d * 0.004);
@@ -367,14 +382,14 @@ export function runwayLights(L, hf, R, { approach = true, center = true } = {}) 
       }
       if (d <= 270) for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) {
         const [x, y, z] = P(S(-d), sd * (9 + k * 1.5), 0.8);
-        L.add(x, y, z, LC.red, 0.7, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.alsRed, 0.7, 0, 0, out[0], out[1]);
       }
     }
     for (const [d, half] of [[150, 9], [300, 15], [450, 18], [600, 21], [750, 24]]) {
       for (let o = -half; o <= half + 0.01; o += 2.7) {
         if (Math.abs(o) < 3) continue;
         const [x, y, z] = P(S(-d), o, 0.8 + d * 0.004);
-        L.add(x, y, z, LC.white, 0.8, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.als, 0.8, 0, 0, out[0], out[1]);
       }
     }
   }
