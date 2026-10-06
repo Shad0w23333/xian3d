@@ -117,7 +117,12 @@ export class Beacons {
           vCol = kind > 1.5 ? vec3(1.0, 0.95, 0.9) : vec3(1.0, 0.06, 0.03);
           float day = 1.0 - uNight;
           vA = on * mix(1.0, 0.35, day) * (kind > 0.5 && kind < 1.5 ? 0.7 : 1.0);
-          float sz = aInfo.z * uScale / max(1.0, -mv.z);
+          float dist = max(1.0, -mv.z);
+          float sz = aInfo.z * uScale / dist;
+          // 远距离衰减：亚像素灯点按 (像素尺寸/2.2)^0.6 减亮，6 km 起整体减弱、14 km 外不可见——
+          // 否则从低机位远看，成片塔楼的障碍灯会在地平线上叠成红色光团再被泛光放大
+          float fade = 1.0 - smoothstep(6000.0, 14000.0, dist);
+          vA *= fade * fade * min(1.0, pow(max(sz, 0.01) / 2.2, 0.6) + 0.1);
           gl_PointSize = clamp(sz, 2.2, 40.0) * (0.6 + 0.4 * uNight);
           #include <logdepthbuf_vertex>
         }`,
@@ -132,7 +137,9 @@ export class Beacons {
           if (a < 0.01) discard;
           gl_FragColor = vec4(vCol * (core * 7.0 + halo * 1.2), a);
         }`,
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      // 取最大值混合（WebGL2 原生 MAX）：同一像素里叠多少盏灯只取最亮的一盏，不会越叠越亮；单盏灯的观感与加色混合一致
+      transparent: true, depthWrite: false,
+      blending: THREE.CustomBlending, blendEquation: THREE.MaxEquation, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor,
     });
     const pts = new THREE.Points(g, mat);
     pts.frustumCulled = false;
