@@ -21,7 +21,7 @@ class SBatcher extends Batcher {
   }
 }
 
-const CELL = 3000; // 合批分组：3 km 网格
+const CELL = 6000; // 合批分组：6 km 网格（原 3 km：全城俯视时 187 栋档案建筑要 420 多个 draw call，改为 6 km 后约减半）
 let RESOLVED = [];
 
 /** 登记替代信息（其他模块也可在自己的 prepare 里读 ctx.superseded） */

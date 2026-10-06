@@ -5,20 +5,38 @@
 // （prepareRoadProfiles：桥链按里程平滑 + 最大坡度约束 + 两端顺接地面、立交按层保证净空、地面路取不入土的包络），
 // 路面/人行道/桥面断面与纵断面节点对齐（profileStepFn）；被抬高的地面路段（引桥路堤）两侧加挡土墙。
 // 分块：主要道路按 5 km 网格合并（视锥裁剪），支路按 2.5 km 网格合并并只在相机附近显示，核心区外只画高等级道路（粗采样）。
+// 绘制负担（2026-10 优化）：桥梁/高架结构按 2.5 km 分块（视锥裁剪 + 只有相机附近的块投射阴影，此前是一整块 1.9M 三角形
+//   全城常驻且每帧进阴影通道）；路面断面去掉冗余中点（着色器里横向 UV 线性插值，宽路三角形减半）；路灯分近/远两级实例
+//   （远处只画杆 + 灯头盒）；桥墩分近（投影）/远（低模、不投影）两组。
 import * as THREE from 'three';
 import { LIFT, roadY, bridgeLift, prepareRoadProfiles, profileStepFn } from '../core/roadheight.js';
 import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, F, KIND, LAMP } from '../arch/roads_net.js';
 import { SurfWriter, StructWriter, sampleSections } from '../arch/roads_mesh.js';
 import { createSurfaceMaterial, createStructMaterial } from '../arch/roads_shader.js';
-import { lampGeometries, lampMaterial, lampPointsMaterial } from '../arch/roads_lamps.js';
+import { lampGeometries, lampGeometriesLow, lampMaterial, lampPointsMaterial } from '../arch/roads_lamps.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { shadowReach } from '../arch/perf-lod.js';
 
 const LAMPL = 2048, LAMPR = 4096, LAMPM = 8192;
 const KIND_SLAB = 6, KIND_MEDIAN = 3;
-const T_MAJOR = 5000, T_MINOR = 5000, T_FAR = 30000;
+const T_MAJOR = 5000, T_MINOR = 5000, T_FAR = 10000; // 核心区外路面 10 km 分块（原 30 km：从任何视角都整块在视锥内）
+const T_STRUCT = 2500; // 桥梁/高架结构分块
+const T_SUB = 2500; // 人行道/路缘石/分隔带/钢轨（细小附属，只在相机附近显示）分块
+const SUB_R = [1100, 1700, 2600, 3600]; // 附属分块显示半径（按画质）
 const G0 = -30000; // 网格原点（足够西北）
 const URBAN_R = 11500; // 高速/快速路布灯半径（三环附近）
 const FAR_SECONDARY_R = 17000; // 核心区外次干道显示半径
+// 按画质档位（低/中/高/超高）的距离参数
+const LAMP_R = [450, 750, 1200, 1600]; // 路灯实例显示半径
+const LAMP_NEAR_R = [200, 280, 380, 480]; // 此半径内用完整灯型几何，更远用低模（杆 + 灯头盒）
+const MINOR_R = [1500, 2000, 2500, 3500]; // 支路分块显示半径
+const PIER_R = [2000, 3000, 4500, 7000]; // 桥墩显示半径
+const PIER_SHADOW_R = [500, 800, 1200, 1600]; // 此半径内的桥墩投射阴影（完整几何），更远用低模不投影
+const MAST_R = [900, 1400, 2200, 2500]; // 接触网支柱显示半径
+const STRUCT_SHADOW_R = [900, 1500, 2600, 4000]; // 桥梁结构块到相机的距离小于此值才投射阴影
+const STRUCT_R = [6000, 12000, 40000, 40000]; // 桥梁结构块显示半径（三维距离；远处高架由影像/雾表现）
+const FAR_TILE_R = [9000, 20000, 1e9, 1e9]; // 核心区外路面分块显示半径（三维距离；低/中画质远郊公路由影像表现）
+const MAJOR_TILE_R = [5000, 14000, 1e9, 1e9]; // 核心区主要道路分块显示半径（三维距离；低画质远处/高空俯视时路网由影像表现）
 
 export default {
   id: 'roads',
@@ -68,7 +86,24 @@ export default {
       }
       return t.w;
     };
-    const SW = new StructWriter(32768);
+    /** 附属分块（人行道/路缘石/分隔带/钢轨）：2.5 km 网格，只在相机附近显示 */
+    const subTileAt = (x, z) => getTile(tileKey(x, z, T_SUB, 'w'), T_SUB, x, z, 'sub');
+    const lvl = Math.max(0, Math.min(3, ctx.quality.level ?? 2));
+    // 结构物分块写入（桥面/箱梁/挡土墙/铁路梁）：核心区 2.5 km，核心区外 12.5 km（控制 draw call 数：全城俯视时所有块都在视锥内）
+    const sTiles = new Map(); // key -> {w: StructWriter, cx, cz}
+    const swAt = (x, z) => {
+      const T = inCore(x, z) ? T_STRUCT : T_STRUCT * 5;
+      const i = Math.floor((x - G0) / T), j = Math.floor((z - G0) / T);
+      const key = (T === T_STRUCT ? 'c' : 'o') + i + ':' + j;
+      let t = sTiles.get(key);
+      if (!t) {
+        t = { w: new StructWriter(8192), cx: G0 + (i + 0.5) * T, cz: G0 + (j + 0.5) * T };
+        sTiles.set(key, t);
+      }
+      return t.w;
+    };
+    const structTris = () => { let n = 0; for (const t of sTiles.values()) n += t.w.ni / 3; return n; };
+    const kindTris = {}; // 路面各类别三角形统计（调试日志）
     const piers = []; // {x, y, z, h, yaw, sx, sz, cap:[w, h, d]}
     const pierHash = new Map();
     const PH = 10;
@@ -95,6 +130,7 @@ export default {
     function band(W, secs, iA, iB, ys, pts, nrm, attr, E) {
       const np = pts.length;
       W.ensure((iB - iA + 1) * np, (iB - iA) * (np - 1) * 6);
+      kindTris[attr[0]] = (kindTris[attr[0]] || 0) + (iB - iA) * (np - 1) * 2;
       let prev = -1;
       const no = nrm[0], ny = nrm[1];
       for (let i = iA; i <= iB; i++) {
@@ -222,11 +258,8 @@ export default {
       attr[1] = lanes | ((lb ? S : 0) << 4) | (lvl << 10);
       attr[2] = (E.flags | lb) & 0xffff;
       attr[3] = Math.round(W * 100);
-      const pts = cfg.paving
-        ? [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: W }]
-        : W > 14
-          ? [{ o: hw, dy: 0, u: 0 }, { o: 0, dy: 0, u: 0.5 }, { o: -hw, dy: 0, u: 1 }]
-          : [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: 1 }];
+      // 断面只要左右两点：横向 UV 与世界坐标在着色器里都是线性插值，宽路中点纯属冗余（去掉后宽路三角形减半）
+      const pts = cfg.paving ? [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: W }] : [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: 1 }];
       runs(secs, valid, T, tag, (key, kx, kz, iA, iB) => {
         band(getTile(key, T, kx, kz, minor), secs, iA, iB, ys, pts, TOP, attr, E);
       });
@@ -251,8 +284,8 @@ export default {
           const curb = side === 1 ? [{ o: -hw, dy: 0, u: 0 }, { o: -hw, dy: H, u: 0 }] : [{ o: hw, dy: H, u: 0 }, { o: hw, dy: 0, u: 0 }];
           const top = side === 1 ? [{ o: -hw, dy: H, u: 0 }, { o: -hw - sw, dy: H, u: sw }] : [{ o: hw + sw, dy: H, u: sw }, { o: hw, dy: H, u: 0 }];
           const cn = side === 1 ? [1, 0] : [-1, 0];
-          runs(s2, y2.valid, T, tag, (key, kx, kz, iA, iB) => {
-            const w = getTile(key, T, kx, kz, false);
+          runs(s2, y2.valid, T_SUB, 'w', (key, kx, kz, iA, iB) => {
+            const w = getTile(key, T_SUB, kx, kz, 'sub');
             attrS[0] = KIND.CURB;
             band(w, s2, iA, iB, y2.ys, curb, cn, attrS, E);
             attrS[0] = KIND.SIDEWALK;
@@ -275,8 +308,8 @@ export default {
             attrS[1] = (lb & LAMPL ? S << 4 : 0) | (lvl << 10);
             attrS[2] = lb & LAMPL;
             attrS[3] = Math.round(E.gap * 100);
-            runs(s2, y2.valid, T, tag, (key, kx, kz, iA, iB) => {
-              const w = getTile(key, T, kx, kz, false);
+            runs(s2, y2.valid, T_SUB, 'w', (key, kx, kz, iA, iB) => {
+              const w = getTile(key, T_SUB, kx, kz, 'sub');
               attrS[0] = KIND_MEDIAN;
               band(w, s2, iA, iB, y2.ys, top, TOP, attrS, E);
               attrS[0] = KIND.CURB;
@@ -288,10 +321,10 @@ export default {
       // —— 桥梁：桥面板 + 护栏 + 箱梁 + 桥墩 ——
       if (isBridge) buildBridgeDeck(E, f, ch, tot, secs, ys, valid, core);
       // —— 被纵断面抬高的地面路段（引桥路堤/匝道）：两侧挡土墙，避免路面悬空露缝 ——
-      else embankWalls(E, secs, ys, valid, cfg);
+      else embankWalls(E, secs, ys, valid, cfg, swAt(mx, mz));
     }
 
-    function embankWalls(E, secs, ys, valid, cfg) {
+    function embankWalls(E, secs, ys, valid, cfg, SW) {
       const n = secs.n;
       const ground = new Float32Array(n);
       let any = false;
@@ -347,36 +380,39 @@ export default {
       const n = prof.length;
       const ground = new Float32Array(secs.n);
       for (let i = 0; i < secs.n; i++) ground[i] = terrain.heightAt(secs.x[i], secs.z[i]) + 0.02;
-      let prevBase = -1;
-      SW.ensure(secs.n * (n - 1) * 2, secs.n * (n - 1) * 6);
-      for (let i = 0; i < secs.n; i++) {
-        if (!valid[i]) { prevBase = -1; continue; }
-        const cx = secs.x[i], cz = secs.z[i], rx = secs.rx[i], rz = secs.rz[i];
-        const rl = Math.hypot(rx, rz) || 1;
-        const ux = -rx / rl, uz = -rz / rl; // 左方向
-        const lift = ys[i] - ground[i];
-        const glow = core && lift > 4 ? 90 : 0;
-        const base = SW.n;
-        for (let k = 0; k < n - 1; k++) {
-          const [o0, d0] = prof[k], [o1, d1] = prof[k + 1];
-          const y0 = Math.max(ys[i] + d0, d0 < 0 ? ground[i] : -1e9), y1 = Math.max(ys[i] + d1, d1 < 0 ? ground[i] : -1e9);
-          const to = o1 - o0, ty = d1 - d0;
-          const L = Math.hypot(to, ty) || 1;
-          const no = ty / L, nyv = -to / L;
-          const under = d0 < -0.3 && d1 < -0.3;
-          const shade = under ? 150 : k === 0 || k === n - 2 ? 190 : 205;
-          const col = [shade, shade - 2, shade - 6, glowSeg.has(k) ? glow : 0];
-          SW.v(cx - rx * o0, y0, cz - rz * o0, ux * no, nyv, uz * no, secs.s[i], d0 + o0, col);
-          SW.v(cx - rx * o1, y1, cz - rz * o1, ux * no, nyv, uz * no, secs.s[i], d1 + o1, col);
-        }
-        if (prevBase >= 0)
+      // 按 2.5 km 结构分块逐段写入（块内断面连续）
+      runs(secs, valid, T_STRUCT, 's', (key, kx, kz, iA, iB) => {
+        const SW = swAt(kx, kz);
+        let prevBase = -1;
+        SW.ensure((iB - iA + 1) * (n - 1) * 2, (iB - iA) * (n - 1) * 6);
+        for (let i = iA; i <= iB; i++) {
+          const cx = secs.x[i], cz = secs.z[i], rx = secs.rx[i], rz = secs.rz[i];
+          const rl = Math.hypot(rx, rz) || 1;
+          const ux = -rx / rl, uz = -rz / rl; // 左方向
+          const lift = ys[i] - ground[i];
+          const glow = core && lift > 4 ? 90 : 0;
+          const base = SW.n;
           for (let k = 0; k < n - 1; k++) {
-            const a0 = prevBase + k * 2, a1 = a0 + 1, b0 = base + k * 2, b1 = b0 + 1;
-            SW.tri(a0, a1, b0);
-            SW.tri(a1, b1, b0);
+            const [o0, d0] = prof[k], [o1, d1] = prof[k + 1];
+            const y0 = Math.max(ys[i] + d0, d0 < 0 ? ground[i] : -1e9), y1 = Math.max(ys[i] + d1, d1 < 0 ? ground[i] : -1e9);
+            const to = o1 - o0, ty = d1 - d0;
+            const L = Math.hypot(to, ty) || 1;
+            const no = ty / L, nyv = -to / L;
+            const under = d0 < -0.3 && d1 < -0.3;
+            const shade = under ? 150 : k === 0 || k === n - 2 ? 190 : 205;
+            const col = [shade, shade - 2, shade - 6, glowSeg.has(k) ? glow : 0];
+            SW.v(cx - rx * o0, y0, cz - rz * o0, ux * no, nyv, uz * no, secs.s[i], d0 + o0, col);
+            SW.v(cx - rx * o1, y1, cz - rz * o1, ux * no, nyv, uz * no, secs.s[i], d1 + o1, col);
           }
-        prevBase = base;
-      }
+          if (prevBase >= 0)
+            for (let k = 0; k < n - 1; k++) {
+              const a0 = prevBase + k * 2, a1 = a0 + 1, b0 = base + k * 2, b1 = b0 + 1;
+              SW.tri(a0, a1, b0);
+              SW.tri(a1, b1, b0);
+            }
+          prevBase = base;
+        }
+      });
       // 桥墩：按全要素里程统一相位（跨径 30 m），净空不足不设
       const SP = 30;
       const k0 = Math.ceil(E.s0 / SP - 0.5);
@@ -405,7 +441,7 @@ export default {
     // ================= 铁路 =================
     console.warn('[roads] secs ' + JSON.stringify(DS) + ' km ' + JSON.stringify(DL));
     const T2 = performance.now();
-    const dbg = { roadStruct: SW.ni / 3, roadPiers: piers.length / 10 };
+    const dbg = { roadStruct: structTris(), roadPiers: piers.length / 10 };
     const rail = buildRailNet(ctx.data.rail);
     const masts = [];
     const mastHash = new Set();
@@ -461,7 +497,7 @@ export default {
         const drop = -0.55 - lm;
         attr[0] = KIND.BALLAST; attr[1] = 0; attr[2] = 0; attr[3] = 360;
         band(w, secs, iA, iB, ys, [{ o: toe, dy: drop, u: toe }, { o: 1.75, dy: 0, u: 1.75 }, { o: -1.75, dy: 0, u: -1.75 }, { o: -toe, dy: drop, u: -toe }], TOP, attr, null);
-        if (core) railsBand(w, secs, iA, iB, ys, 0.02);
+        if (core) railsBand(subTileAt(kx, kz), secs, iA, iB, ys, 0.02);
       });
       // —— 高架：箱梁/U 梁 + 轨道板 + 桥墩 ——
       const Wd = hsr ? 6.6 : sub ? 5.4 : 5.8;
@@ -471,7 +507,7 @@ export default {
         const w = getTile(key, T, kx, kz, false);
         attr[0] = slabKind; attr[1] = 0; attr[2] = 0; attr[3] = Math.round(Wd * 100);
         band(w, secs, iA, iB, ys, [{ o: hwd - 0.3, dy: 0, u: hwd - 0.3 }, { o: -hwd + 0.3, dy: 0, u: -hwd + 0.3 }], TOP, attr, null);
-        if (core) railsBand(w, secs, iA, iB, ys, 0.02);
+        if (core) railsBand(subTileAt(kx, kz), secs, iA, iB, ys, 0.02);
         // 梁体（结构写入器）
         const prof = core
           ? [
@@ -480,6 +516,7 @@ export default {
             ]
           : [[-hwd + 0.3, 0.9], [-hwd, 0.9], [-hwd * 0.6, -Dg], [hwd * 0.6, -Dg], [hwd, 0.9], [hwd - 0.3, 0.9]];
         const n = prof.length;
+        const SW = swAt(kx, kz);
         SW.ensure((iB - iA + 1) * (n - 1) * 2, (iB - iA) * (n - 1) * 6);
         let prevBase = -1;
         for (let i = iA; i <= iB; i++) {
@@ -551,7 +588,9 @@ export default {
     }
 
     const T3 = performance.now();
-    dbg.railStruct = SW.ni / 3 - dbg.roadStruct;
+    dbg.railStruct = structTris() - dbg.roadStruct;
+    dbg.kinds = Object.fromEntries(Object.entries(kindTris).map(([k, v]) => [k, Math.round(v / 1000) + 'k']));
+    dbg.structTiles = sTiles.size;
     dbg.railPiers = piers.length / 10 - dbg.roadPiers;
     dbg.tiles = {};
     for (const [key, t] of tiles) dbg.tiles[key[0]] = (dbg.tiles[key[0]] || 0) + t.w.ni / 3;
@@ -560,7 +599,7 @@ export default {
     const surfMat = createSurfaceMaterial(ctx, { name: 'roadSurface' });
     surfMat.envMapIntensity = 0.12;
     ctx.overlay(surfMat, 0.0004);
-    const minorTiles = [];
+    const minorTiles = [], subTiles = [], farTiles = [], majorTiles = [];
     let tris = 0;
     for (const [key, t] of tiles) {
       const g = t.w.geometry();
@@ -572,24 +611,29 @@ export default {
       m.matrixAutoUpdate = false;
       m.renderOrder = -1;
       root.add(m);
-      if (t.minor) minorTiles.push({ mesh: m, cx: t.cx, cz: t.cz });
+      if (t.minor === 'sub') subTiles.push({ mesh: m, cx: t.cx, cz: t.cz });
+      else if (t.minor) minorTiles.push({ mesh: m, cx: t.cx, cz: t.cz });
+      else if (key[0] === 'f') farTiles.push({ mesh: m, cx: t.cx, cz: t.cz });
+      else if (key[0] === 'm') majorTiles.push({ mesh: m, cx: t.cx, cz: t.cz });
     }
-    // 结构物
+    // 结构物：按 2.5 km 分块（视锥裁剪；阴影只给相机附近的块，见 updateLOD）
     const concMap = ctx.mats.get('concrete').map;
     const structMat = createStructMaterial(ctx, concMap);
-    {
-      const g = SW.geometry();
-      if (g) {
-        tris += SW.ni / 3;
-        const m = new THREE.Mesh(g, structMat);
-        m.name = '桥梁与高架结构';
-        m.castShadow = true;
-        m.receiveShadow = true;
-        m.matrixAutoUpdate = false;
-        root.add(m);
-      }
+    const structMeshes = []; // {mesh, cx, cz, r}
+    for (const [key, t] of sTiles) {
+      const g = t.w.geometry();
+      if (!g) continue;
+      tris += t.w.ni / 3;
+      const m = new THREE.Mesh(g, structMat);
+      m.name = '桥梁与高架结构-' + key;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.matrixAutoUpdate = false;
+      root.add(m);
+      const bs = g.boundingSphere;
+      structMeshes.push({ mesh: m, cx: bs.center.x, cz: bs.center.z, r: bs.radius });
     }
-    // 桥墩（实例化，只显示相机附近：远处细柱子亚像素）
+    // 桥墩（实例化，只显示相机附近：远处细柱子亚像素）：近处一组投射阴影、完整圆柱；远处一组低模不投影
     const nP = piers.length / 10;
     const PCELL = 1000;
     const pierCells = new Map();
@@ -603,18 +647,24 @@ export default {
     const pierMat = new THREE.MeshStandardMaterial({ color: 0x8a867e, roughness: 0.88 });
     const colG = new THREE.CylinderGeometry(0.5, 0.5, 1, 10, 1, true);
     colG.translate(0, 0.5, 0);
+    const colGLow = new THREE.CylinderGeometry(0.5, 0.5, 1, 6, 1, true);
+    colGLow.translate(0, 0.5, 0);
     const capG = new THREE.BoxGeometry(1, 1, 1);
     capG.translate(0, 0.5, 0);
-    const pierCols = new THREE.InstancedMesh(colG, pierMat, PCAP);
-    const pierCaps = new THREE.InstancedMesh(capG, pierMat, PCAP);
-    for (const im of [pierCols, pierCaps]) {
+    const mkPier = (geo, shadow, name) => {
+      const im = new THREE.InstancedMesh(geo, pierMat, PCAP);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       im.count = 0;
       im.frustumCulled = false;
-      im.castShadow = true;
+      im.castShadow = shadow;
       im.receiveShadow = true;
+      im.name = name;
       root.add(im);
-    }
+      return im;
+    };
+    const pierCols = mkPier(colG, true, '桥墩柱'), pierCaps = mkPier(capG, true, '桥墩盖梁');
+    const pierColsFar = mkPier(colGLow, false, '桥墩柱-远'), pierCapsFar = mkPier(capG, false, '桥墩盖梁-远');
+    const pierSets = [[pierCols, pierCaps], [pierColsFar, pierCapsFar]];
     const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _sc = new THREE.Vector3(), _ps = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
     // 接触网支柱实例（H 型钢柱 + 腕臂），与桥墩同步按距离刷新
     const nM = masts.length / 4;
@@ -667,33 +717,38 @@ export default {
       mastMesh.visible = n > 0;
       mastMesh.instanceMatrix.needsUpdate = true;
     }
-    function refreshPiers(cx, cz, R) {
-      let n = 0;
-      const R2 = R * R;
+    function refreshPiers(cx, cz, R, Rnear) {
+      const n = [0, 0];
+      const R2 = R * R, Rn2 = Rnear * Rnear;
       const c0x = Math.floor((cx - R) / PCELL), c1x = Math.floor((cx + R) / PCELL);
       const c0z = Math.floor((cz - R) / PCELL), c1z = Math.floor((cz + R) / PCELL);
-      for (let gx = c0x; gx <= c1x && n < PCAP; gx++)
-        for (let gz = c0z; gz <= c1z && n < PCAP; gz++) {
+      for (let gx = c0x; gx <= c1x; gx++)
+        for (let gz = c0z; gz <= c1z; gz++) {
           const a = pierCells.get(gx * 100003 + gz);
           if (!a) continue;
           for (const i of a) {
             const o = i * 10;
             const x = piers[o], g = piers[o + 1], z = piers[o + 2], h = piers[o + 3];
-            if ((x - cx) ** 2 + (z - cz) ** 2 > R2 || n >= PCAP) continue;
+            const d2 = (x - cx) ** 2 + (z - cz) ** 2;
+            if (d2 > R2) continue;
+            const s = d2 < Rn2 ? 0 : 1;
+            const k = n[s];
+            if (k >= PCAP) continue;
             _q.setFromAxisAngle(_up, piers[o + 4]);
             _m4.compose(_ps.set(x, g, z), _q, _sc.set(piers[o + 5], h, piers[o + 6]));
-            pierCols.setMatrixAt(n, _m4);
+            pierSets[s][0].setMatrixAt(k, _m4);
             _m4.compose(_ps.set(x, g + h, z), _q, _sc.set(piers[o + 7], piers[o + 8], piers[o + 9]));
-            pierCaps.setMatrixAt(n, _m4);
-            n++;
+            pierSets[s][1].setMatrixAt(k, _m4);
+            n[s]++;
           }
         }
-      for (const im of [pierCols, pierCaps]) {
-        im.count = n;
-        im.visible = n > 0;
-        im.instanceMatrix.needsUpdate = true;
-      }
-      return n;
+      for (let s = 0; s < 2; s++)
+        for (const im of pierSets[s]) {
+          im.count = n[s];
+          im.visible = n[s] > 0;
+          im.instanceMatrix.needsUpdate = true;
+        }
+      return n[0] + n[1];
     }
 
     // ================= 路灯 =================
@@ -712,16 +767,21 @@ export default {
       a.push(i);
     }
     const CAP = 9000;
-    const inst = {};
+    const lampGeoLow = lampGeometriesLow(lampGeo);
+    const inst = {}, instFar = {}; // 近处完整灯型 / 远处低模（杆 + 灯头盒）
     for (const t of types) {
-      const im = new THREE.InstancedMesh(lampGeo[t].geo, lampMat, CAP);
-      im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      im.count = 0;
-      im.frustumCulled = false;
-      im.castShadow = false;
-      im.name = '路灯-' + t;
-      root.add(im);
-      inst[t] = im;
+      const mk = (geo, name) => {
+        const im = new THREE.InstancedMesh(geo, lampMat, CAP);
+        im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        im.count = 0;
+        im.frustumCulled = false;
+        im.castShadow = false;
+        im.name = name;
+        root.add(im);
+        return im;
+      };
+      inst[t] = mk(lampGeo[t].geo, '路灯-' + t);
+      instFar[t] = mk(lampGeoLow[t], '路灯远-' + t);
     }
     // 远景灯头光点
     let nPts = 0;
@@ -771,17 +831,16 @@ export default {
 
     // ================= LOD / 更新 =================
     const cam = ctx.camera;
-    let lampR = [500, 800, 1200, 1600][ctx.quality.level ?? 2] || 1200;
-    let minorR = [1500, 2000, 2500, 3500][ctx.quality.level ?? 2] || 2500;
-    let lastX = 1e9, lastZ = 1e9, lastR = 0, lastY = 1e9, lastPX = 1e9, lastPZ = 1e9;
-    let pierR = [2500, 3500, 5000, 7000][ctx.quality.level ?? 2] || 5000;
+    let qLvl = lvl;
+    let lampR = LAMP_R[qLvl], lampNearR = LAMP_NEAR_R[qLvl], minorR = MINOR_R[qLvl], pierR = PIER_R[qLvl];
+    let lastX = 1e9, lastZ = 1e9, lastR = 0, lastY = 1e9, lastPX = 1e9, lastPZ = 1e9, lastSX = 1e9, lastSZ = 1e9, lastSY = 1e9;
     const e = new Float32Array(16);
     let dbgFrame = 0;
     function refreshLamps(cx, cz, agl) {
-      const counts = {};
-      for (const t of types) counts[t] = 0;
+      const counts = {}, countsFar = {};
+      for (const t of types) (counts[t] = 0), (countsFar[t] = 0);
       if (agl < 1400) {
-        const R = lampR, R2 = R * R;
+        const R = lampR, R2 = R * R, Rn2 = lampNearR * lampNearR;
         const c0x = Math.floor((cx - R) / CELL), c1x = Math.floor((cx + R) / CELL);
         const c0z = Math.floor((cz - R) / CELL), c1z = Math.floor((cz + R) / CELL);
         for (let gx = c0x; gx <= c1x; gx++)
@@ -790,10 +849,13 @@ export default {
             if (!a) continue;
             for (const i of a) {
               const dx = lamps.x[i] - cx, dz = lamps.z[i] - cz;
-              if (dx * dx + dz * dz > R2) continue;
+              const d2 = dx * dx + dz * dz;
+              if (d2 > R2) continue;
               const t = lamps.type[i];
-              const im = inst[t];
-              const k = counts[t];
+              const near = d2 < Rn2;
+              const im = near ? inst[t] : instFar[t];
+              const cnt = near ? counts : countsFar;
+              const k = cnt[t];
               if (k >= CAP) continue;
               const c = Math.cos(lamps.yaw[i]), s = Math.sin(lamps.yaw[i]);
               const arr = im.instanceMatrix.array;
@@ -802,19 +864,28 @@ export default {
               arr[o + 4] = 0; arr[o + 5] = 1; arr[o + 6] = 0; arr[o + 7] = 0;
               arr[o + 8] = s; arr[o + 9] = 0; arr[o + 10] = c; arr[o + 11] = 0;
               arr[o + 12] = lamps.x[i]; arr[o + 13] = lamps.y[i]; arr[o + 14] = lamps.z[i]; arr[o + 15] = 1;
-              counts[t] = k + 1;
+              cnt[t] = k + 1;
             }
           }
       }
-      for (const t of types) {
-        const im = inst[t];
-        im.count = counts[t];
-        im.visible = counts[t] > 0;
-        if (counts[t]) {
-          im.instanceMatrix.clearUpdateRanges();
-          im.instanceMatrix.addUpdateRange(0, counts[t] * 16);
-          im.instanceMatrix.needsUpdate = true;
+      for (const t of types)
+        for (const [im, n] of [[inst[t], counts[t]], [instFar[t], countsFar[t]]]) {
+          im.count = n;
+          im.visible = n > 0;
+          if (n) {
+            im.instanceMatrix.clearUpdateRanges();
+            im.instanceMatrix.addUpdateRange(0, n * 16);
+            im.instanceMatrix.needsUpdate = true;
+          }
         }
+    }
+    // 桥梁结构块：显示半径 + 只有近处的块投射阴影（阴影贴图范围本就只有相机周围几百米到几公里）
+    function refreshStructs(cx, cz, agl) {
+      const sr = shadowReach(ctx, STRUCT_SHADOW_R[qLvl], 25), vr = STRUCT_R[qLvl];
+      for (const s of structMeshes) {
+        const d = Math.hypot(s.cx - cx, s.cz - cz) - s.r;
+        s.mesh.visible = Math.hypot(Math.max(0, d), agl) < vr;
+        s.mesh.castShadow = d < sr;
       }
     }
     function updateLOD(force) {
@@ -822,11 +893,15 @@ export default {
       const agl = cam.position.y - terrain.heightAt(cx, cz);
       const moved = Math.hypot(cx - lastX, cz - lastZ);
       if (force || Math.hypot(cx - lastPX, cz - lastPZ) > 350) {
-        refreshPiers(cx, cz, pierR);
-        refreshMasts(cx, cz, Math.min(pierR, 2500));
+        refreshPiers(cx, cz, pierR, shadowReach(ctx, PIER_SHADOW_R[qLvl], 20));
+        refreshMasts(cx, cz, Math.min(pierR, MAST_R[qLvl]));
         lastPX = cx; lastPZ = cz;
       }
-      if (force || moved > lampR * 0.12 || Math.abs(agl - lastY) > 150 || lastR !== lampR) {
+      if (force || Math.hypot(cx - lastSX, cz - lastSZ) > 150 || Math.abs(agl - lastSY) > 150) {
+        refreshStructs(cx, cz, agl);
+        lastSX = cx; lastSZ = cz; lastSY = agl;
+      }
+      if (force || moved > lampNearR * 0.25 || Math.abs(agl - lastY) > 150 || lastR !== lampR) {
         refreshLamps(cx, cz, agl);
         lastX = cx; lastZ = cz; lastY = agl; lastR = lampR;
       }
@@ -835,6 +910,26 @@ export default {
         const d = Math.max(Math.abs(t.cx - cx), Math.abs(t.cz - cz)) - T_MINOR / 2;
         t.mesh.visible = vis && d < minorR;
       }
+      // 人行道/路缘石/分隔带/钢轨：只在相机附近显示（远处亚像素）
+      const subR = SUB_R[qLvl];
+      for (const t of subTiles) {
+        const d = Math.max(Math.abs(t.cx - cx), Math.abs(t.cz - cz)) - T_SUB / 2;
+        t.mesh.visible = agl < 2500 && d < subR;
+      }
+      // 核心区外路面 / 核心区主要道路：低/中画质只显示相机附近（三维距离）的分块，远处与高空俯视由影像表现
+      const farR = FAR_TILE_R[qLvl], majorR = MAJOR_TILE_R[qLvl];
+      if (farR < 1e8)
+        for (const t of farTiles) {
+          const d = Math.max(0, Math.max(Math.abs(t.cx - cx), Math.abs(t.cz - cz)) - T_FAR / 2);
+          t.mesh.visible = Math.hypot(d, agl) < farR;
+        }
+      else for (const t of farTiles) t.mesh.visible = true;
+      if (majorR < 1e8)
+        for (const t of majorTiles) {
+          const d = Math.max(0, Math.max(Math.abs(t.cx - cx), Math.abs(t.cz - cz)) - T_MAJOR / 2);
+          t.mesh.visible = Math.hypot(d, agl) < majorR;
+        }
+      else for (const t of majorTiles) t.mesh.visible = true;
     }
     updateLOD(true);
     const hFov = () => cam.fov;
@@ -873,9 +968,11 @@ export default {
         }
       },
       setQuality(q) {
-        lampR = [500, 800, 1200, 1600][q.level] || 1200;
-        minorR = [1500, 2000, 2500, 3500][q.level] || 2500;
-        pierR = [2500, 3500, 5000, 7000][q.level] || 5000;
+        qLvl = Math.max(0, Math.min(3, q.level ?? qLvl));
+        lampR = LAMP_R[qLvl];
+        lampNearR = LAMP_NEAR_R[qLvl];
+        minorR = MINOR_R[qLvl];
+        pierR = PIER_R[qLvl];
         updateLOD(true);
       },
       setLayer(name, on) {
