@@ -241,3 +241,6 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 **修复分工（5 个独立工作树代理）**：夜景远距光斑 / 曲江绘制调用（含 `tools/check_drawcalls.mjs` 与 `docs/PERF_DRAWCALLS.md`）/ 白天大气调校 / 三角形 LOD（含 `docs/PERF_TRIANGLES.md`）/ 用户点名片区的街景级打磨（未央商圈、凤城七路、曲江周边道路、浐灞后海、回民街洒金桥；可能新增 `src/modules/streetscape.js`）。合并后需再跑一遍 13 视角体检。
 
 **影像包结论（2026-10-06 本机生成）**：最终用 **Google 单源**（`python tools/imagery_pack.py all --source google --plan ultra --workers 16`），`tiles/` 共 1.35 GB、108664 张（z11~z20，核心片区 z20），下载约 55 分钟。曾试过 `--source google,esri_clarity --pick sharp`：择优块里 Esri Clarity 色调偏青绿，在全城俯视里呈现成片矩形色差，比少量雪斑更碍眼，故弃用。`tiles/` 不入库，换机器需重新生成；瓦片缓存在 `data-src/tiles_hd/google/`（约 2.7 GB）。
+
+**第 12 节修复轮整合结果（2026-10-06，主仓库 main）**：四路已合并（大气调校 d4bd916、曲江合批 0cd9127、夜景光斑 588932d、三角形 LOD e0f4366）。19 机位体检 0 报错、60 fps；三角形（q=2）全城 16.2→7.7M、钟楼 15.6→7.7M、大雁塔 19.7→10.5M、不夜城 22.9→14.4M、曲江 21.9→13.1M、高新 10.0→3.8M、机场 8.2→2.0M；W 酒店机位 draw call 1834→1057。夜景地平线光团四个来源（机场灯叠亮、水面倒影着色器远处无穷大、障碍灯、钢轨 UV）全部消除。片区街景打磨代理仍在跑（分支 worktree-agent-a91aa8925115e5699，未合并）。
+剩余可做：dossier 全城俯视 426 次 draw call（3 km 格网无远景 LOD）、heritage26 170 次、datang 2 km 外未合并（见 docs/PERF_DRAWCALLS.md）；qujiang 仍 5~6M 三角形是视角 3/4/6 的主要负担；通用建筑楼顶粉色亮化灯带可加距离衰减；仅加载 skyline 时东北方向有一片黄色发光面待定位。
