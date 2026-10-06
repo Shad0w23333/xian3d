@@ -1,13 +1,13 @@
 // 专题图层接线：路名、小区名称/边界、建筑分类高亮（含 skyline 精建高楼的屋顶色块）
 // 由 main.js 调用 setupThematic()；返回 { update(camera, w, h) } 供主循环每帧调用。
-// URL 参数：roadnames=0 / estates=0 / estatelines=0 关闭；bldclass=1 开启分类高亮；bldsel=res,com,… 只高亮指定类别
+// URL 参数：roadnames=0 / estates=0 关闭；estatelines=1 开启小区边界线（默认关，夜景里黄线太抢眼）；bldclass=1 开启分类高亮；bldsel=res,com,… 只高亮指定类别
 import * as THREE from 'three';
 import { RoadNames } from './roadnames.js';
 import { Estates } from './estates.js';
 import { BLD_CLASSES, C, classByName } from '../arch/bld-class.js';
 
 export function setupThematic({ app, ctx, ui, root, params }) {
-  const state = { roadnames: params.get('roadnames') !== '0', estates: params.get('estates') !== '0', estateLines: params.get('estatelines') !== '0', bldclass: params.get('bldclass') === '1', sel: null };
+  const state = { roadnames: params.get('roadnames') !== '0', estates: params.get('estates') !== '0', estateLines: params.get('estatelines') === '1', bldclass: params.get('bldclass') === '1', sel: null };
   if (params.get('bldsel')) {
     const keys = params.get('bldsel').split(',');
     state.sel = new Set(BLD_CLASSES.map((c, i) => (keys.includes(c.key) ? i : -1)).filter((i) => i >= 0));
