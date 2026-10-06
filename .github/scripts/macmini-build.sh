@@ -41,10 +41,10 @@ case "$repo" in
     ;;
   ios6-qemu)
     python3 -m unittest discover -s tools -p 'test_*.py' -v
-    bash /Users/server/Documents/Codex/ci-macmini/bin/build-qemu.sh
+    bash /Users/Shared/macmini-ci/bin/build-qemu.sh
     ;;
   uci-parking-archive|zotcopilot-dining-art)
-    python3 /Users/server/Documents/Codex/ci-macmini/bin/validate-assets.py
+    python3 /Users/Shared/macmini-ci/bin/validate-assets.py
     ;;
   *)
     if [ -f .github/scripts/ci.sh ]; then
@@ -71,7 +71,7 @@ case "$repo" in
       "$RUNNER_TEMP/project-venv/bin/pip" install pytest
       "$RUNNER_TEMP/project-venv/bin/python" -m pytest
     else
-      python3 /Users/server/Documents/Codex/ci-macmini/bin/validate-assets.py
+      python3 /Users/Shared/macmini-ci/bin/validate-assets.py
     fi
     ;;
 esac
