@@ -28,6 +28,7 @@ export const MODULES = [
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'compounds', load: () => import('./compounds.js') }, // 小区与校园内部：须在 vegetation 之前（prepare 登记车行道/车位/园路的“只让树”排除区）
   { id: 'vegetation', load: () => import('./vegetation.js') },
+  { id: 'parks', load: () => import('./parks.js') }, // 公园与水岸近景：须在 water（ctx.waterBodies）、buildings（让位表）、vegetation（种植结果）之后
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
   { id: 'amapinfo', load: () => import('./amapinfo.js') },
