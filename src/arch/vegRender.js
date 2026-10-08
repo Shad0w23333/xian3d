@@ -149,6 +149,20 @@ const IGN = /* glsl */ `
 float vegIGN(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
 `;
 
+// 叶片额外受光（所有直射光：太阳 + 夜间路灯点光源）：
+//  · 透光：逆光看叶片时（相机 → 叶 → 光源同向）叶片透出黄绿光——逆光的树冠不再是一团黑；
+//  · 包裹光：背光面也有少量漫射（冠层内多次散射），只按法线背离程度给，不把背光面照得和受光面一样亮。
+// directLight.color 已乘过阴影（太阳）与距离衰减（路灯），所以楼影里、离灯远的叶片不会凭空发亮。
+const LEAF_LIGHT = (w) => `
+  reflectedLight.directDiffuse += directLight.color * material.diffuseColor * ( ${w} ) * (
+    0.14 * saturate( 0.45 - dot( geometryNormal, directLight.direction ) ) +
+    0.32 * pow( saturate( dot( - geometryViewDir, directLight.direction ) ), 3.0 ) );`;
+const RE_CALL = 'RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );';
+function patchLeafLight(frag, w) {
+  const lights = THREE.ShaderChunk.lights_fragment_begin.split(RE_CALL).join(RE_CALL + LEAF_LIGHT(w));
+  return frag.replace('#include <lights_fragment_begin>', lights);
+}
+
 /**
  * 树木（近景 / 中景）材质补丁。uniforms：{uTime, uNight, uCameraPos} 为全局共享对象；
  * fade：THREE.Vector4（淡入起止、淡出起止，单位米，按树基到相机距离）
@@ -175,7 +189,8 @@ varying vec4 vInfo;
 varying float vFadeIn;
 varying float vFadeOut;
 varying float vLeaf;
-varying float vHgt;`,
+varying float vHgt;
+varying float vRoadSide;`,
       )
       .replace(
         '#include <project_vertex>',
@@ -205,6 +220,8 @@ gl_Position = projectionMatrix * mvPosition;
   vInfo = aInfo;
   vLeaf = step( uv.y, 0.5 );
   vHgt = position.y * iS;
+  // 行道树的本地 +x 朝向车行道（种植时按路向定旋转）：朝路一侧被路灯照到，背路一侧暗
+  vRoadSide = 0.2 + 0.8 * smoothstep( -0.75, 0.85, position.x / ( length( position.xz ) + 0.6 ) );
 }`,
       );
     sh.fragmentShader = sh.fragmentShader
@@ -218,6 +235,7 @@ varying float vFadeIn;
 varying float vFadeOut;
 varying float vLeaf;
 varying float vHgt;
+varying float vRoadSide;
 ${IGN}`,
       )
       .replace(
@@ -243,6 +261,12 @@ diffuseColor.rgb *= 0.84 + 0.32 * vInfo.x;
     vec3 gold = vec3( lum * 2.05, lum * 1.72, lum * 0.32 );
     diffuseColor.rgb = mix( diffuseColor.rgb, gold, clamp( yv * ( 0.35 + 1.1 * nz ), 0.0, 1.0 ) );
   }
+}
+// 侧对相机（几乎沿卡片平面看）的叶片卡淡出：否则一张张卡片侧面成硬直的细条，近看像纸板插片
+if ( vLeaf > 0.5 ) {
+  vec3 gN = cross( dFdx( vViewPosition ), dFdy( vViewPosition ) );
+  float gl = length( gN );
+  if ( gl > 1e-12 ) diffuseColor.a *= smoothstep( 0.07, 0.34, abs( dot( gN / gl, normalize( vViewPosition ) ) ) );
 }`,
         )
         .replace(
@@ -253,15 +277,25 @@ diffuseColor.rgb *= 0.84 + 0.32 * vInfo.x;
           '#include <emissivemap_fragment>',
           `#include <emissivemap_fragment>
 {
-  // 路灯（约 9~12 m 高）从下方/侧方照亮树冠：下部亮、树顶暗；颜色偏暖、降低饱和度
+  // 路灯（约 9~12 m 高）从下方/侧方照亮行道树：树冠下部、朝下的叶面、朝路一侧亮，树顶与背路一侧暗；
+  // 只是远处没有动态点光源时的补光（近处真实点光源由 lightpool 提供），强度控制在灯下地面以下
   float lampH = 1.0 - 0.8 * smoothstep( 4.0, 14.0, vHgt );
-  vec3 base = mix( diffuseColor.rgb, vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), 0.45 );
-  totalEmissiveRadiance += base * vec3( 1.0, 0.62, 0.3 ) * ( vInfo.z * uNight * uLampK * lampH );
+  vec3 upV = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );
+  float under = 0.25 + 0.75 * clamp( 0.55 - 0.65 * dot( normal, upV ), 0.0, 1.0 );
+  vec3 base = mix( diffuseColor.rgb, vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), 0.4 );
+  totalEmissiveRadiance += base * vec3( 1.0, 0.64, 0.32 ) * ( vInfo.z * uNight * uLampK * lampH * under * vRoadSide * 0.75 );
 }`,
         );
+      sh.fragmentShader = patchLeafLight(sh.fragmentShader, 'vLeaf').replace(
+        '#include <lights_physical_fragment>',
+        `#include <lights_physical_fragment>
+// 叶片：压低掠射角菲涅尔高光（否则侧对太阳/天空的叶片卡泛出一片灰白）
+material.specularF90 = mix( material.specularF90, 0.3, vLeaf );
+material.specularColorBlended *= mix( 1.0, 0.6, vLeaf );`,
+      );
     }
   };
-  mat.customProgramCacheKey = () => `veg-tree-${key}${depth ? '-d' : ''}`;
+  mat.customProgramCacheKey = () => `veg-tree-${key}${depth ? '-d' : ''}-v2`;
   return mat;
 }
 
@@ -320,7 +354,9 @@ vec2 impUv;
   float slot;
   if ( aCorner.z < 0.5 ) {
     bbPos = aPos + hr * ( cu * imp.x * s ) + up * ( aCorner.y * imp.y * s ) + hd * ( imp.x * s * 0.3 );
-    objectNormal = normalize( hd * 0.8 + hr * cu * 0.75 + up * ( aCorner.y - 0.3 ) * 1.1 );
+    // 侧视公告板的法线：朝相机 + 朝上（远看树冠能看到的多是受天光/阳光的冠顶与外层），不再纯水平——
+    // 纯水平法线在逆光方向（相机朝太阳）时只剩环境光，中远景行道树成了一串近黑的墨绿点
+    objectNormal = normalize( hd * 0.55 + hr * cu * 0.5 + up * ( 0.6 + ( aCorner.y - 0.3 ) * 0.7 ) );
     slot = aData.x;
   } else {
     vec3 camR = vec3( viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0] );
@@ -337,7 +373,7 @@ vec2 impUv;
   vViewW = viewW;
   vViewTop = aCorner.z;
   vLampF = aData.w / 255.0 * ( 1.0 - smoothstep( 700.0, 2600.0, d ) );
-  vShadeY = aCorner.z > 0.5 ? 1.0 : 0.6 + 0.4 * aCorner.y;
+  vShadeY = aCorner.z > 0.5 ? 1.0 : 0.72 + 0.28 * aCorner.y;
 }`,
       )
       .replace('#include <begin_vertex>', 'vec3 transformed = bbPos;')
@@ -368,16 +404,23 @@ ${IGN}`,
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
+{
+  // 烘焙图集的 GPU mipmap 会把叶缝平均掉、alpha 越远越低，远景树冠缩成稀疏小点：按 mip 级别放大 alpha 保持覆盖率
+  vec2 tc = vMapUv * 1024.0;
+  float lod = max( 0.0, 0.5 * log2( max( dot( dFdx( tc ), dFdx( tc ) ), dot( dFdy( tc ), dFdy( tc ) ) ) ) );
+  diffuseColor.a *= 1.0 + lod * 0.28;
+}
 diffuseColor.a = clamp( ( diffuseColor.a - 0.42 ) / max( fwidth( diffuseColor.a ), 1e-3 ) + 0.5, 0.0, 1.0 );
 diffuseColor.rgb *= vShadeY;`,
       )
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
-totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), 0.45 ) * vec3( 1.0, 0.62, 0.3 ) * ( vLampF * uNight * uLampK * 0.7 );`,
+totalEmissiveRadiance += mix( diffuseColor.rgb, vec3( dot( diffuseColor.rgb, vec3( 0.3, 0.59, 0.11 ) ) ), 0.45 ) * vec3( 1.0, 0.62, 0.3 ) * ( vLampF * uNight * uLampK * 0.3 );`,
       );
+    sh.fragmentShader = patchLeafLight(sh.fragmentShader, '1.0');
   };
-  mat.customProgramCacheKey = () => 'veg-far';
+  mat.customProgramCacheKey = () => 'veg-far-v2';
   return mat;
 }
 
@@ -394,10 +437,12 @@ export function makeFarGeometry(n) {
   return g;
 }
 
-/** 绿篱材质：单位盒按实例缩放，UV 以米计 */
-export function patchHedgeMaterial(mat, G, fade) {
+/** 绿篱材质：单位盒按实例缩放，UV 以米计；夜间按路灯给一点暖色补光（绿篱都沿路，原先夜里是纯黑一块） */
+export function patchHedgeMaterial(mat, G, fade, lampK) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uCamPos = G.uCameraPos;
+    sh.uniforms.uNight = G.uNight;
+    sh.uniforms.uLampK = lampK || { value: 0.85 };
     sh.uniforms.uFade = { value: fade };
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nuniform vec3 uCamPos;\nuniform vec4 uFade;\nvarying float vFadeOut;\nvarying float vTop;')
@@ -414,14 +459,19 @@ export function patchHedgeMaterial(mat, G, fade) {
 vTop = normal.y;`,
       );
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>\nvarying float vFadeOut;\nvarying float vTop;\n${IGN}`)
+      .replace('#include <common>', `#include <common>\nuniform float uNight;\nuniform float uLampK;\nvarying float vFadeOut;\nvarying float vTop;\n${IGN}`)
       .replace(
         '#include <clipping_planes_fragment>',
         `#include <clipping_planes_fragment>
 if ( vegIGN( gl_FragCoord.xy ) >= 1.0 - vFadeOut ) discard;`,
       )
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 0.78 + 0.3 * max( vTop, 0.0 );');
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 0.78 + 0.3 * max( vTop, 0.0 );')
+      .replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+totalEmissiveRadiance += diffuseColor.rgb * vec3( 1.0, 0.68, 0.36 ) * ( uNight * uLampK * ( 0.16 + 0.12 * max( vTop, 0.0 ) ) );`,
+      );
   };
-  mat.customProgramCacheKey = () => 'veg-hedge';
+  mat.customProgramCacheKey = () => 'veg-hedge-v2';
   return mat;
 }

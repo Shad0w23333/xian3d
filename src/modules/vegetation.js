@@ -1,13 +1,14 @@
 // 城市植被：行道树 / 公园绿地 / 环城公园 / 校园大院 / 水岸垂柳 / 绿篱。
 //
 // 树种（详见 src/arch/vegSpecies.js 注释）：国槐（市树，行道树主力）、法国梧桐（友谊路/含光路/咸宁路等老路）、
-// 雪松（公园/单位大院/校园）、垂柳（护城河/湖岸）、银杏（雁塔西路等，9 月下旬开始微黄）、石榴（市花，小乔木）、
-// 灌木球与绿篱（大叶黄杨 / 金叶女贞 / 红叶石楠）。
+// 雪松（公园/单位大院/校园，少量）、垂柳（护城河/湖岸）、银杏（雁塔西路等，9 月下旬开始微黄）、石榴（市花，小乔木）、
+// 侧柏（寺院古柏/陵园/环城公园）、灌木球与绿篱（大叶黄杨 / 金叶女贞 / 红叶石楠）。行道树与中央分隔带不种针叶树。
 //
-// 种植点：src/arch/vegPlant.js 在 Web Worker 中生成（道路两侧 6.5~8.5 m 间距、单行道中央分隔带、城墙与护城河之间
-// 的环城公园逐排加密、水岸垂柳、按用地类型 + 团簇噪声撒点；避开建筑/路面/水面/排除区/城墙本体）。
+// 种植点：src/arch/vegPlant.js 在 Web Worker 中生成（道路两侧 6.5~8.5 m 间距、按实测宽度布置的中央分隔带绿篱/灌木、
+// 城墙与护城河之间的环城公园逐排加密、水岸垂柳、寺院院落古槐古柏、按用地类型 + 团簇噪声撒点；避开建筑/路面/水面/
+// 排除区/城墙本体；钟楼四条大街、城门内外、雁塔北路等对景视廊上只留灌木与绿篱）。
 //
-// 渲染（≤ 16 个 draw call + 近景阴影 ≤ 7）：
+// 渲染（≤ 18 个 draw call + 近景阴影 ≤ 8；远景按 2 km 分格另计）：
 //   近景（< 90~170 m）：每树种 1 个 InstancedMesh，完整程序化几何（主干/主枝/次枝管 + Canvas 叶簇卡片），投射阴影；
 //   中景（至 300~900 m）：每树种 1 个 InstancedMesh，叶片抽稀放大的简化几何；
 //   远景：1 个 InstancedBufferGeometry impostor（启动时把近景几何正交烘焙成侧视/俯视图集），GPU 按距离/密度剔除；
@@ -29,7 +30,7 @@ const LOD_BY_LEVEL = [
 ];
 const BAND = 16; // 近↔中 交叉淡化带（米）
 const FARBAND = 60; // 中↔远 交叉淡化带（米）
-const FAR_CELL = 1500; // 远景 impostor 分格尺寸（米）：整格做视锥 + 距离剔除
+const FAR_CELL = 2000; // 远景 impostor 分格尺寸（米）：整格做视锥 + 距离剔除
 
 // 本模块自己的让位区（地标内部的铺装广场 / 大唐不夜城步行街轴线由对应模块自行布置树木）
 function localExclusions(ctx) {
@@ -124,15 +125,18 @@ export default {
     const atlas = buildAtlas();
     atlas.anisotropy = Math.min(8, ctx.quality.anisotropy || 4);
     const nearGeos = buildSpeciesGeometries();
+    // 中景简化参数（按树种；灌木球没有中景）
     const MID_OPT = [
-      { keep: 0.34, grow: 1.55, trunkY: 3.4 },
-      { keep: 0.3, grow: 1.65, trunkY: 4.6 },
-      { keep: 0.42, grow: 1.35, trunkY: 2.2 },
-      { keep: 0.45, grow: 1.35, trunkY: 3.2 },
-      { keep: 0.36, grow: 1.5, trunkY: 4.5 },
-      { keep: 0.4, grow: 1.45, trunkY: 1.4 },
+      { keep: 0.27, grow: 1.6, trunkY: 2.9 }, // 国槐
+      { keep: 0.26, grow: 1.65, trunkY: 3.4 }, // 法桐
+      { keep: 0.27, grow: 1.45, trunkY: 1.8 }, // 雪松
+      { keep: 0.38, grow: 1.4, trunkY: 2.6 }, // 垂柳
+      { keep: 0.34, grow: 1.5, trunkY: 3.6 }, // 银杏
+      { keep: 0.4, grow: 1.45, trunkY: 1.4 }, // 石榴
+      null, // 灌木球
+      { keep: 0.36, grow: 1.5, trunkY: 2.0 }, // 侧柏
     ];
-    const midGeos = MID_OPT.map((o, sp) => simplifyTree(nearGeos[sp], { ...o, seed: 101 + sp }));
+    const midGeos = MID_OPT.map((o, sp) => (o ? simplifyTree(nearGeos[sp], { ...o, seed: 101 + sp }) : null));
     const imp = bakeImpostors(ctx.renderer, nearGeos, atlas);
     const hedgeGeo = buildHedgeGeometry();
     const hedgeTex = buildHedgeTexture();
@@ -173,7 +177,7 @@ export default {
       depth: true,
     });
     const farMat = makeFarMaterial(G, imp.texture, imp.info, { fade: fadeFar, rankMax, lampK });
-    const hedgeMat = patchHedgeMaterial(new THREE.MeshStandardMaterial({ map: hedgeTex, roughness: 0.9, metalness: 0 }), G, fadeHedge);
+    const hedgeMat = patchHedgeMaterial(new THREE.MeshStandardMaterial({ map: hedgeTex, roughness: 0.9, metalness: 0 }), G, fadeHedge, lampK);
 
     // —— 动态实例槽 ——
     const slots = [];
@@ -211,17 +215,17 @@ export default {
       s.m = m;
       s.info = info;
     };
-    const NAMES = ['国槐', '法国梧桐', '雪松', '垂柳', '银杏', '石榴', '灌木'];
+    const NAMES = ['国槐', '法国梧桐', '雪松', '垂柳', '银杏', '石榴', '灌木', '侧柏'];
     const near = [], mid = [];
     for (let sp = 0; sp < SPECIES_COUNT; sp++)
       near.push(makeSlot(nearGeos[sp], sp === GUANMU ? shrubMat : nearMat, sp === GUANMU ? 4096 : 2048, { shadow: !!ctx.quality.shadows, name: `植被近景-${NAMES[sp]}` }));
-    for (let sp = 0; sp < midGeos.length; sp++) mid.push(makeSlot(midGeos[sp], midMat, 4096, { name: `植被中景-${NAMES[sp]}` }));
+    for (let sp = 0; sp < midGeos.length; sp++) mid.push(midGeos[sp] ? makeSlot(midGeos[sp], midMat, 4096, { name: `植被中景-${NAMES[sp]}` }) : null);
     const hedgeSlot = makeSlot(hedgeGeo, hedgeMat, 2048, { name: '植被-绿篱' });
     hedgeSlot.mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(hedgeSlot.cap * 3), 3);
     hedgeSlot.mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
     hedgeSlot.col = hedgeSlot.mesh.instanceColor.array;
     // 大叶黄杨 / 金叶女贞 / 红叶石楠
-    const HEDGE_COL = [new THREE.Color(0x4f7436), new THREE.Color(0x93a64a), new THREE.Color(0x8c5a3c)];
+    const HEDGE_COL = [new THREE.Color(0x4f7436), new THREE.Color(0x93a64a), new THREE.Color(0x9a4636)];
 
     // —— 等待种植结果 ——
     let dirty = true;
@@ -325,7 +329,7 @@ export default {
       }
       D = { ...r, y, cy0, cy1, hy };
       applyDensity();
-      console.warn(`[vegetation] 树木 ${n}（行道树 ${r.stats.street}、分隔带 ${r.stats.median}、环城公园 ${r.stats.wallpark}、水岸 ${r.stats.bank}、用地 ${r.stats.landuse}），绿篱 ${r.hedgeN} 段；种植 ${r.stats.ms} ms，装配 ${(performance.now() - t0).toFixed(0)} ms`);
+      console.warn(`[vegetation] 树木 ${n}（行道树 ${r.stats.street}、分隔带 ${r.stats.median}、环城公园 ${r.stats.wallpark}、水岸 ${r.stats.bank}、院落 ${r.stats.court}、用地 ${r.stats.landuse}、外圈 ${r.stats.outer}），绿篱 ${r.hedgeN} 段；种植 ${r.stats.ms} ms，装配 ${(performance.now() - t0).toFixed(0)} ms`);
     };
     let density = ctx.quality.treeDensity ?? 1;
     const applyDensity = () => {
@@ -546,7 +550,7 @@ export default {
       stats() {
         const far = farCells ? farCells.reduce((s, c) => (c.mesh.visible ? s + c.mesh.geometry.instanceCount : s), 0) : 0;
         const farCellsVis = farCells ? farCells.filter((c) => c.mesh.visible).length : 0;
-        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => s.n), hedge: hedgeSlot.n, far, farCells: farCellsVis } : null;
+        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => (s ? s.n : 0)), hedge: hedgeSlot.n, far, farCells: farCellsVis } : null;
       },
       get ready() {
         return dataReady;
