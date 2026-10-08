@@ -81,8 +81,8 @@ function sdist(x, z, p) {
   return inside ? -best : best;
 }
 // 树冠水平半径（缩放 1 时，与 src/arch/vegSpecies.js 的 crownR 一致）
-const CROWN_R = [4.3, 7.2, 4.6, 4.8, 3.1, 1.9, 0.85];
-const NAMES = ['国槐', '法桐', '雪松', '垂柳', '银杏', '石榴', '灌木'];
+const CROWN_R = [4.3, 7.2, 4.6, 4.8, 3.1, 1.9, 0.85, 2.6];
+const NAMES = ['国槐', '法桐', '雪松', '垂柳', '银杏', '石榴', '灌木', '侧柏'];
 const res = { trees: V.n, trunkIn: 0, crown1: 0, crown2: 0, bySp: {}, bySrc: {}, worst: [] };
 const worst = [];
 for (let i = 0; i < V.n; i++) {
