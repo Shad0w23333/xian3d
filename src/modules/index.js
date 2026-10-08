@@ -1,6 +1,8 @@
 // 模块注册表：按顺序 prepare → build。每个模块是独立文件，互不改动。
 // 懒加载，单个模块失败不影响整体。
 export const MODULES = [
+  // 未央城市广场：prepare 就地改路网数据（张家堡环岛改十字），必须排第一
+  { id: 'weiyang', load: () => import('./weiyang.js') },
   { id: 'water', load: () => import('./water.js') },
   { id: 'landuse', load: () => import('./landuse.js') },
   { id: 'roads', load: () => import('./roads.js') },
