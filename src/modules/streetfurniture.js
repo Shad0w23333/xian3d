@@ -19,6 +19,7 @@ const POOLS = [
   ['sigHead', 'matte', 'far', true, false],
   ['pedHead', 'matte', 'far', true, false],
   ['lens', 'lens', 'far', false, false, { aSig: 4 }],
+  ['cdown', 'lens', 'far', false, false, { aSig: 4 }], // 信号倒计时面板（与灯面同一相位着色器）
   ['post', 'metal', 'far', true, true],
   ['plate', 'plate', 'far', true, false, { aUV: 4, aUV2: 4 }],
   ['ad', 'ad', 'far', false, false, { aUV: 4, aUV2: 4 }],

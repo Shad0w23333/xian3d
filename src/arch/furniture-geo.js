@@ -77,7 +77,8 @@ function sigArm() {
 }
 /** 机动车灯组：三灯竖排黑色灯箱，灯面朝 +X，灯罩（遮檐）三道；顶部吊杆 */
 function sigHead() {
-  const parts = [box(0.26, 1.16, 0.4, DARK, {}), box(0.05, 0.4, 0.05, STEEL, { y: 0.77 })];
+  // 灯箱下方挂倒计时器（西安路口常见：三灯竖排 + 下方两位数倒计时）
+  const parts = [box(0.26, 1.16, 0.4, DARK, {}), box(0.05, 0.4, 0.05, STEEL, { y: 0.77 }), box(0.24, 0.42, 0.44, DARK, { y: -0.82 }), box(0.05, 0.08, 0.05, STEEL, { y: -0.6 })];
   for (const ly of [0.38, 0, -0.38]) {
     parts.push(box(0.2, 0.02, 0.32, BLACK, { x: 0.23, y: ly + 0.155, rz: -0.12 }));
     parts.push(box(0.2, 0.2, 0.015, BLACK, { x: 0.23, y: ly + 0.05, z: 0.16 }));
@@ -87,13 +88,20 @@ function sigHead() {
 }
 /** 人行灯：两灯（上红人、下绿人），灯面朝 +X，背后抱箍连到立杆 */
 function pedHead() {
-  const parts = [box(0.22, 0.66, 0.32, DARK, {}), box(0.22, 0.06, 0.06, STEEL, { x: -0.2, y: 0.18 }), box(0.22, 0.06, 0.06, STEEL, { x: -0.2, y: -0.18 })];
+  const parts = [box(0.22, 0.66, 0.32, DARK, {}), box(0.22, 0.06, 0.06, STEEL, { x: -0.2, y: 0.18 }), box(0.22, 0.06, 0.06, STEEL, { x: -0.2, y: -0.18 }),
+    box(0.2, 0.3, 0.32, DARK, { y: -0.5 })]; // 下方倒计时器
   for (const ly of [0.16, -0.16]) parts.push(box(0.16, 0.02, 0.3, BLACK, { x: 0.18, y: ly + 0.15, rz: -0.12 }));
   return merge(parts);
 }
 /** 灯面圆片：单位半径，法线朝 +X；uv 供人行灯图案用 */
 function lensGeo() {
   const g = new THREE.CircleGeometry(1, 14);
+  g.rotateY(Math.PI / 2);
+  return part(g, [1, 1, 1]);
+}
+/** 倒计时面板：单位 1 × 1 平面，法线朝 +X，uv 左→右（从正面看）、下→上；实例缩放 (1, 高, 宽) */
+function cdownGeo() {
+  const g = new THREE.PlaneGeometry(1, 1);
   g.rotateY(Math.PI / 2);
   return part(g, [1, 1, 1]);
 }
@@ -312,7 +320,7 @@ function fenceGeo() {
 /** 全部构件几何 */
 export function makeGeometries() {
   return {
-    sigPole: sigPole(), sigArm: sigArm(), sigHead: sigHead(), pedHead: pedHead(), lens: lensGeo(),
+    sigPole: sigPole(), sigArm: sigArm(), sigHead: sigHead(), pedHead: pedHead(), lens: lensGeo(), cdown: cdownGeo(),
     post: postGeo(), plate: plateGeo(), ad: plateGeo(), pane: paneGeo(),
     shelter2: shelterGeo(2), shelter3: shelterGeo(3), kiosk: kioskGeo(),
     bin: binGeo(), bike: bikeGeo(), ebike: ebikeGeo(), dbox: dboxGeo(), hydrant: hydrantGeo(), cabinet: cabinetGeo(),
@@ -683,7 +691,26 @@ export function makeMaterials(ctx, atlas) {
       .replace('#include <common>', '#include <common>\nattribute vec4 aSig;\nvarying vec4 vSig;\nvarying vec2 vLensUv;')
       .replace('#include <uv_vertex>', '#include <uv_vertex>\nvSig = aSig;\nvLensUv = uv;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform float uNight;\nuniform sampler2D uIcon;\nvarying vec4 vSig;\nvarying vec2 vLensUv;')
+      .replace('#include <common>', `#include <common>
+uniform float uTime;
+uniform float uNight;
+uniform sampler2D uIcon;
+varying vec4 vSig;
+varying vec2 vLensUv;
+// 七段数码管：p ∈ [0,1]²（y 向上），返回该像素是否点亮
+float segBox(vec2 p, vec2 c, vec2 h) { vec2 d = abs(p - c) - h; return step(max(d.x, d.y), 0.0); }
+float digit7(vec2 p, int n) {
+  int m = n == 0 ? 63 : n == 1 ? 6 : n == 2 ? 91 : n == 3 ? 79 : n == 4 ? 102 : n == 5 ? 109 : n == 6 ? 125 : n == 7 ? 7 : n == 8 ? 127 : 111;
+  float t = 0.075, w = 0.28, v = 0.2, s = 0.0;
+  if ((m & 1) != 0) s = max(s, segBox(p, vec2(0.5, 0.92), vec2(w, t)));
+  if ((m & 2) != 0) s = max(s, segBox(p, vec2(0.84, 0.71), vec2(t, v)));
+  if ((m & 4) != 0) s = max(s, segBox(p, vec2(0.84, 0.29), vec2(t, v)));
+  if ((m & 8) != 0) s = max(s, segBox(p, vec2(0.5, 0.08), vec2(w, t)));
+  if ((m & 16) != 0) s = max(s, segBox(p, vec2(0.16, 0.29), vec2(t, v)));
+  if ((m & 32) != 0) s = max(s, segBox(p, vec2(0.16, 0.71), vec2(t, v)));
+  if ((m & 64) != 0) s = max(s, segBox(p, vec2(0.5, 0.5), vec2(w, t)));
+  return s;
+}`)
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
@@ -693,6 +720,27 @@ export function makeMaterials(ctx, atlas) {
           float k = vSig.z;
           vec3 lc = vec3(1.0, 0.07, 0.03);
           float on = 0.0;
+          if (k > 4.5) {
+            // 倒计时（k=5 机动车：绿剩 28−t、黄剩 31−t、红剩 64−t；k=6 行人：绿剩 25−t、红剩 64−t），两位数七段码，颜色随当前灯色
+            float rem;
+            if (k < 5.5) {
+              if (t < 28.0) { rem = 28.0 - t; lc = vec3(0.05, 1.0, 0.42); }
+              else if (t < 31.0) { rem = 31.0 - t; lc = vec3(1.0, 0.55, 0.02); }
+              else { rem = 64.0 - t; }
+            } else {
+              if (t < 25.0) { rem = 25.0 - t; lc = vec3(0.05, 1.0, 0.42); } else { rem = 64.0 - t; }
+            }
+            int r = int(ceil(rem - 0.001));
+            vec2 q = vLensUv;
+            float lit = 0.0;
+            // 两个字位：左十位、右个位，留 10% 边
+            vec2 c0 = vec2((q.x - 0.08) / 0.4, (q.y - 0.12) / 0.76), c1 = vec2((q.x - 0.52) / 0.4, (q.y - 0.12) / 0.76);
+            if (r >= 10 && c0.x > 0.0 && c0.x < 1.0 && c0.y > 0.0 && c0.y < 1.0) lit = digit7(c0, r / 10);
+            if (c1.x > 0.0 && c1.x < 1.0 && c1.y > 0.0 && c1.y < 1.0) lit = max(lit, digit7(c1, r - (r / 10) * 10));
+            float inten = mix(2.0, 7.0, uNight);
+            totalEmissiveRadiance = lc * (lit * inten + 0.01);
+            diffuseColor.rgb = mix(vec3(0.012), lc * 0.08, lit);
+          } else {
           if (k < 0.5) { on = step(31.0, t); }
           else if (k < 1.5) { lc = vec3(1.0, 0.55, 0.02); on = step(28.0, t) * step(t, 31.0); }
           else if (k < 2.5) { lc = vec3(0.05, 1.0, 0.42); on = step(t, 28.0); }
@@ -703,6 +751,7 @@ export function makeMaterials(ctx, atlas) {
           float inten = mix(2.4, 9.0, uNight);
           totalEmissiveRadiance = lc * mask * (on * inten + 0.025);
           diffuseColor.rgb = mix(vec3(0.015), lc * 0.06, mask);
+          }
         }`
       );
   };

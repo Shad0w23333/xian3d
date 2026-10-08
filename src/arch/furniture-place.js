@@ -550,6 +550,9 @@ export class Planner {
     const off = ped ? 0.115 : 0.135;
     const lens = ped ? [[0.16, 3], [-0.16, 4]] : [[0.38, 0], [0, 1], [-0.38, 2]];
     for (const [ly, k] of lens) out.push('lens', x + fx * off, y + ly, z + fz * off, yaw, ped ? 0.12 : 0.14, ped ? 0.12 : 0.14, ped ? 0.12 : 0.14, null, { aSig: [J.offset, g, k, 0] });
+    // 倒计时器：机动车灯组下方 0.36 × 0.3 m，人行灯下方 0.26 × 0.22 m（灯箱几何里已带底盒）
+    if (ped) out.push('cdown', x + fx * 0.105, y - 0.5, z + fz * 0.105, yaw, 1, 0.22, 0.26, null, { aSig: [J.offset, g, 6, 0] });
+    else out.push('cdown', x + fx * 0.125, y - 0.82, z + fz * 0.125, yaw, 1, 0.3, 0.36, null, { aSig: [J.offset, g, 5, 0] });
   }
 
   planJunction(out, J) {
