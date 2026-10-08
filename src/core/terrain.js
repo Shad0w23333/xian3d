@@ -143,12 +143,14 @@ bool terrInHole(vec2 p) {
 `;
 
 // ---------- 地面语义图：用地（绿地/广场）+ 路网（路面、夜间城市光）栅格化成贴图，供地形着色器使用 ----------
-// 通道：R = 绿地（公园/草地/林地/果园），G = 夜间城市漫射光（按路网等级与周边路网密度，路灯与店铺溢光的近似），
+// 通道：R = 绿地（公园/草地/林地/果园）1.0 / 城市建设用地 0.25，G = 夜间城市漫射光（按路网等级与周边路网密度，路灯与店铺溢光的近似），
 //       B = 路面（1，地面层道路）/ 广场（0.5）。
 // 两张：远图覆盖主城 36 km（17.6 m/像素，供俯视夜景与中远景）；近图跟随相机 1.6 km（1.6 m/像素，人眼高度的绿地边界与灯光衰减）。
 const GND_FAR = { x0: -18000, z0: -18000, size: 36000, px: 2048 };
 const GND_NEAR = { size: 1600, px: 1024, move: 320, maxAgl: 700 };
 const VEG_KINDS = new Set(['park', 'grass', 'forest', 'orchard']);
+// 城市建设用地：近景程序化地面只在这些用地里（或路网附近）画铺装，其余非绿地按影像色调画成泥土（农田、空地、工地）
+const URBAN_KINDS = new Set(['residential', 'commercial', 'industrial', 'university', 'military']);
 // 类别 → [夜间光强 0..1, 光晕外扩（米，单侧）]
 const ROAD_GLOW = {
   motorway: [0.8, 20], trunk: [1, 22], primary: [1, 20], secondary: [0.9, 16], tertiary: [0.75, 13], residential: [0.5, 10],
@@ -177,7 +179,7 @@ class GroundMaps {
     }
     this.areas = [];
     for (const f of (data && data.landuse && data.landuse.polys) || []) {
-      const kind = VEG_KINDS.has(f.k) ? 1 : f.k === 'square' ? 2 : 0;
+      const kind = VEG_KINDS.has(f.k) ? 1 : f.k === 'square' ? 2 : URBAN_KINDS.has(f.k) ? 3 : 0;
       if (!kind || !f.outer || f.outer.length < 6) continue;
       const o = f.outer;
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -238,14 +240,15 @@ class GroundMaps {
       for (let i = 2; i < r.length; i += 2) c.lineTo(r[i], r[i + 1]);
       c.closePath();
     };
-    for (const kind of [1, 2]) {
+    for (const kind of [3, 1, 2]) {
       c.beginPath();
       for (const a of areas) {
         if (a.kind !== kind || !inView(a.bb, 0)) continue;
         ring(a.outer);
         for (const h of a.holes) if (h && h.length >= 6) ring(h);
       }
-      c.fillStyle = kind === 1 ? '#ff0000' : '#000080';
+      // R：绿地 1.0、建设用地 0.25（叠加时绿地优先，'lighter' 相加后夹到 1）；B：广场 0.5
+      c.fillStyle = kind === 1 ? '#ff0000' : kind === 3 ? '#400000' : '#000080';
       c.fill('evenodd');
     }
     // 路面（只画地面层道路；同宽度一批，单条路径内重叠不叠加）
@@ -535,11 +538,15 @@ const TERRAIN_SURFACE_GLSL = /* glsl */ `
       // 分类
       float imgVeg = smoothstep(0.03, 0.12, (low.g - max(low.r, low.b)) / max(mxL, 0.02));
       float bright = smoothstep(0.09, 0.2, lumL) * (1.0 - imgVeg);          // 绿地里的亮灰：园路、小广场
-      float veg = max(imgVeg * (0.5 + 0.5 * gnd.r), gnd.r * (1.0 - bright));
+      float vegR = smoothstep(0.45, 0.9, gnd.r);                                    // 绿地（R=1）；建设用地（R≈0.25）不算
+      float urbanLU = smoothstep(0.12, 0.2, gnd.r) * (1.0 - vegR);
+      float veg = max(imgVeg * (0.5 + 0.5 * vegR), vegR * (1.0 - bright));
       veg = smoothstep(0.42, 0.58, veg + (n1 - 0.5) * 0.3 + (n3 - 0.5) * 0.08);
       float asphalt = smoothstep(0.7, 0.9, gnd.b);
       float plaza = smoothstep(0.3, 0.45, gnd.b) * (1.0 - asphalt);
-      float soil = smoothstep(0.12, 0.3, (low.r - low.b) / max(mxL, 0.02)) * (1.0 - veg) * (1.0 - asphalt);
+      // 泥土：影像偏红褐，或既不在建设用地里也不靠近路网（郊野空地、农田、工地——此前一律画成了灰色铺装）
+      float built = max(urbanLU, smoothstep(0.03, 0.12, gnd.g));
+      float soil = max(smoothstep(0.12, 0.3, (low.r - low.b) / max(mxL, 0.02)), 1.0 - built) * (1.0 - veg) * (1.0 - asphalt) * (1.0 - plaza);
 
       // 地块：48 m 方格，每格在随机位置按东西或南北一分为二
       vec2 cell = floor(w / 48.0);
