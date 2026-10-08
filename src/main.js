@@ -100,7 +100,9 @@ async function main() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = !!quality.shadows;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // three r186 已删除 PCFSoftShadowMap：设它的话要等第一次渲染阴影时才被换成 PCFShadowMap，此前编译的着色器（启动预编译、
+  // 水面倒影那一遍）声明的是 sampler2D，换成深度比较纹理后每次绘制都报 GL_INVALID_OPERATION（纹理格式与采样器类型不匹配）
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   app.renderer = renderer;
   app.reversedDepth = reversed;
 

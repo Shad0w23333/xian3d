@@ -32,7 +32,7 @@ if (only) spots = spots.filter((s) => only.has(s.id) || only.has(s.view));
 
 // 独立的依赖预构建缓存目录：多个工作树共用 node_modules 时避免互相覆盖 .vite 缓存
 const cacheDir = process.env.VITE_CACHE || path.join(os.tmpdir(), 'xian3d-vite-' + Buffer.from(root).toString('base64url').slice(-24));
-const server = await createServer({ root, logLevel: 'error', cacheDir, server: { port: 0, host: '127.0.0.1' } });
+const server = await createServer({ root, logLevel: 'error', cacheDir, server: { port: 0, host: '127.0.0.1', hmr: false, watch: { ignored: ['**/*'] } } }); // 不热更新、不监听：拍摄中改代码不会重载页面
 await server.listen();
 const port = server.httpServer.address().port;
 const mac = process.platform === 'darwin' && !process.env.SWIFTSHADER;
