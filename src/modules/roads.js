@@ -1,4 +1,5 @@
-// 道路与轨道交通：路面（沥青 PBR + 着色器车道线/斑马线/箭头/导流线）、人行道与路缘石、中央分隔带、
+// 道路与轨道交通：路面（沥青 PBR + 着色器车道线/斑马线/箭头/导流线）、人行道与路缘石、
+// 中央分隔带（实体：路缘 + 箱形绿篱，窄处隔离墩 + 金属护栏；逐断面按局部中分带宽）、主路路口铺面、
 // 桥梁高架（桥面板/护栏/箱梁/桥墩/匝道）、路灯（五种灯型实例化 + 远景光点 + 着色器贴地光斑）、
 // 铁路（道砟/轨枕/钢轨、高铁与地铁高架箱梁 + 桥墩）。
 // 路面高度统一使用 core/roadheight.js 的 roadY / bridgeLift（与车流模块一致）：build 开头先在整张路网上求纵断面
@@ -10,7 +11,7 @@
 //   （远处只画杆 + 灯头盒）；桥墩分近（投影）/远（低模、不投影）两组。
 import * as THREE from 'three';
 import { LIFT, roadY, bridgeLift, prepareRoadProfiles, profileStepFn } from '../core/roadheight.js';
-import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, F, KIND, LAMP } from '../arch/roads_net.js';
+import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, pairGapAt, markParkWalkways, F, KIND, LAMP } from '../arch/roads_net.js';
 import { SurfWriter, StructWriter, sampleSections } from '../arch/roads_mesh.js';
 import { createSurfaceMaterial, createStructMaterial } from '../arch/roads_shader.js';
 import { lampGeometries, lampGeometriesLow, lampMaterial, lampPointsMaterial } from '../arch/roads_lamps.js';
@@ -18,7 +19,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { shadowReach } from '../arch/perf-lod.js';
 
 const LAMPL = 2048, LAMPR = 4096, LAMPM = 8192;
-const KIND_SLAB = 6, KIND_MEDIAN = 3;
+const KIND_SLAB = 6, KIND_MEDIAN = 3, KIND_HEDGE = 8, KIND_FENCE = 9;
 const T_MAJOR = 5000, T_MINOR = 5000, T_FAR = 10000; // 核心区外路面 10 km 分块（原 30 km：从任何视角都整块在视锥内）
 const T_STRUCT = 2500; // 桥梁/高架结构分块
 const T_SUB = 2500; // 人行道/路缘石/分隔带/钢轨（细小附属，只在相机附近显示）分块
@@ -67,9 +68,19 @@ export default {
 
     // —— 网络 ——
     const T0 = performance.now();
+    // 景区/公园里的无名支路（寺院甬道、园路）按步行道画：石板铺装、不布路灯（traffic 同一规则不跑车）
+    const nPark = markParkWalkways(ctx.data.roads, ctx.data.landuse);
     const net = buildRoadNet(ctx.data.roads, { inDetail: inCore });
     const T1 = performance.now();
     const { edges, feats, info, chain, total } = net;
+    // 双幅路互相配对的要素：对向一幅也会建它那一半中分带（绿篱内侧封口面可省）
+    const pairedBy = new Map();
+    for (const E of edges) {
+      if (!(E.flags & F.PAIRED)) continue;
+      let st = pairedBy.get(E.pairF);
+      if (!st) pairedBy.set(E.pairF, (st = new Set()));
+      st.add(E.fi);
+    }
 
     // —— 写入器 ——
     const tiles = new Map(); // key -> {w, minor, cx, cz}
@@ -199,12 +210,13 @@ export default {
       if (!cfg.lamp || !lampRegion(mx, mz, false)) return 0;
       if (f.c === 0) {
         if (!lampRegion(mx, mz, true)) return 0;
-        if (E.flags & F.PAIRED) return E.gap > 0.5 && E.gap < 30 ? LAMPL : 0;
+        if (E.flags & F.PAIRED) return E.gapMed > 0.5 && E.gapMed < 30 ? LAMPL : 0;
         return LAMPR;
       }
       let b = LAMPR;
+      if (cfg.lampOne) return b; // 支路单侧灯
       if (E.flags & F.PAIRED) {
-        if (E.gap > 1.2 && E.gap < 40 && !E.b) b |= LAMPL;
+        if (E.gapMed > 1.2 && E.gapMed < 40 && !E.b) b |= LAMPL;
       } else {
         b |= LAMPL;
         if (!E.oneway && E.W >= 24 && !E.b) b |= LAMPM;
@@ -293,35 +305,158 @@ export default {
           });
         }
       }
-      // —— 中央分隔带（双幅路之间的窄绿篱带） ——
-      if (core && (E.flags & F.PAIRED) && E.gap > 0.8 && E.gap < 70 && !isBridge) {
-        // 窄分隔带整条绿篱；宽绿化带只做 1.5 m 的路缘+绿篱边（中间交给影像/植被）
-        const g2 = Math.min(E.gap / 2, E.gap < 14 ? 99 : 1.5);
-        const rA = E.s0 + Math.max(E.R0 + 1.5, E.sw0 * 0.5, 1), rB = E.s1 - Math.max(E.R1 + 1.5, E.sw1 * 0.5, 1);
-        if (rB - rA > 8) {
-          const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
-          if (s2) {
-            const y2 = sectionYs(s2, f, tot);
-            const H = 0.2;
-            const top = [{ o: hw + g2 + 0.05, dy: H, u: g2 }, { o: hw, dy: H, u: 0 }];
-            const curb = [{ o: hw, dy: H, u: 0 }, { o: hw, dy: 0, u: 0 }];
-            attrS[1] = (lb & LAMPL ? S << 4 : 0) | (lvl << 10);
-            attrS[2] = lb & LAMPL;
-            attrS[3] = Math.round(E.gap * 100);
-            runs(s2, y2.valid, T_SUB, 'w', (key, kx, kz, iA, iB) => {
-              const w = getTile(key, T_SUB, kx, kz, 'sub');
-              attrS[0] = KIND_MEDIAN;
-              band(w, s2, iA, iB, y2.ys, top, TOP, attrS, E);
-              attrS[0] = KIND.CURB;
-              band(w, s2, iA, iB, y2.ys, curb, [-1, 0], attrS, E);
-            });
-          }
-        }
-      }
+      // —— 中央分隔带（双幅路之间）：两幅各建靠自己一侧的一半，按断面处的局部中分带宽选型 ——
+      if (core && (E.flags & F.PAIRED) && !isBridge) buildMedian(E, f, ch, tot, stepFn, grid, lb, S, lvl);
       // —— 桥梁：桥面板 + 护栏 + 箱梁 + 桥墩 ——
       if (isBridge) buildBridgeDeck(E, f, ch, tot, secs, ys, valid, core);
       // —— 被纵断面抬高的地面路段（引桥路堤/匝道）：两侧挡土墙，避免路面悬空露缝 ——
       else embankWalls(E, secs, ys, valid, cfg, swAt(mx, mz));
+    }
+
+    /**
+     * 中央分隔带（实体构件，人眼高度有体积）。每幅路从自己的左路缘建到局部中分带中线（另一半由对向一幅建），
+     * 中分带宽 g 逐断面用 pairGapAt 求（同一条边上宽度可从 0.2 m 变到 4 m）：
+     *   g < 1.3 m：混凝土隔离墩 + 中线金属护栏（护栏面朝本幅，两幅各画一面）；
+     *   1.3~12 m：花岗岩路缘 + 绿篱（箱形修剪灌木，高 0.7~0.85 m）；
+     *   ≥ 12 m：宽绿化带只做路缘 + 1.5 m 宽的边缘绿篱，中间交给影像/植被。
+     */
+    function buildMedian(E, f, ch, tot, stepFn, grid, lb, S, lvl) {
+      const rA = E.s0 + Math.max(E.R0 + 1.5, E.sw0 * 0.5, 1), rB = E.s1 - Math.max(E.R1 + 1.5, E.sw1 * 0.5, 1);
+      if (rB - rA < 8) return;
+      const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
+      const backed = !!pairedBy.get(E.fi)?.has(E.pairF);
+      if (!s2) return;
+      const y2 = sectionYs(s2, f, tot);
+      const n = s2.n, hw = E.W / 2;
+      const gap = new Float32Array(n), type = new Int8Array(n);
+      for (let i = 0; i < n; i++) {
+        const g = pairGapAt(net, E, s2.x[i], s2.z[i], s2.rx[i], s2.rz[i]);
+        gap[i] = g ?? -1;
+        type[i] = g === null || g < 0.25 || g > 70 ? -1 : g < 1.3 ? 0 : g < 12 ? 1 : 2;
+        if (type[i] < 0) y2.valid[i] = 0;
+      }
+      attrS[1] = (lb & LAMPL ? S << 4 : 0) | (lvl << 10);
+      attrS[2] = lb & LAMPL;
+      const Hc = 0.18; // 路缘高
+      const P = (k) => { const a = []; for (let j = 0; j < k; j++) a.push({ o: 0, dy: 0, u: 0 }); return a; };
+      const p2 = P(2);
+      // 按类型切成连续段（每个断面间隔取两端较宽的类型；类型变化处两段共用断面，不留缺口）
+      const segT = (i) => (y2.valid[i] && y2.valid[i + 1] ? Math.max(type[i], type[i + 1]) : -1);
+      for (let a = 0; a < n - 1; ) {
+        const t = segT(a);
+        let b = a + 1;
+        while (b < n - 1 && segT(b) === t) b++;
+        if (t >= 0) emit(t, a, b);
+        a = b;
+      }
+      function emit(t, iA, iB) {
+        runs(subSlice(s2, iA, iB), sliceArr(y2.valid, iA, iB), T_SUB, 'w', (key, kx, kz, a, b) => {
+          const w = getTile(key, T_SUB, kx, kz, 'sub');
+          const A = a + iA, B = b + iA;
+          const face = (kind, nrm, fill) => {
+            attrS[0] = kind;
+            bandF(w, s2, A, B, y2.ys, p2, fill, nrm, attrS, E);
+          };
+          if (t === 0) {
+            // 隔离墩：从本幅路缘到中线，高 0.25 m；中线护栏 1.0 m
+            const Hb = 0.25;
+            attrS[3] = 30;
+            face(KIND.CURB, [-1, 0], (i, q) => { q[0].o = hw; q[0].dy = Hb; q[1].o = hw; q[1].dy = 0; });
+            face(KIND.CURB, TOP, (i, q) => { const c = hw + Math.max(gap[i] / 2, 0.2); q[0].o = c; q[0].dy = Hb; q[1].o = hw; q[1].dy = Hb; });
+            face(KIND_FENCE, [-1, 0], (i, q) => {
+              const c = hw + Math.max(gap[i] / 2, 0.2) - 0.02;
+              q[0].o = c; q[0].dy = Hb + 1.0; q[0].u = 1.0; q[1].o = c; q[1].dy = Hb; q[1].u = 0;
+            });
+            return;
+          }
+          const Hh = t === 2 ? 0.6 : 0.7; // 绿篱高（路缘顶以上）
+          const hedgeW = (i) => (t === 2 ? 1.5 : Math.max(gap[i] / 2, 0.36)); // 本幅一侧绿篱外缘到其内缘（中线）
+          attrS[3] = Math.round(Math.min(gap[iA], 99) * 100);
+          // 路缘立面 + 路缘顶（0.25 m 花岗岩）
+          face(KIND.CURB, [-1, 0], (i, q) => { q[0].o = hw; q[0].dy = Hc; q[1].o = hw; q[1].dy = 0; });
+          face(KIND_MEDIAN, TOP, (i, q) => { q[0].o = hw + 0.25; q[0].dy = Hc; q[0].u = 0.25; q[1].o = hw; q[1].dy = Hc; q[1].u = 0; });
+          // 绿篱外侧面（略内收）、顶面
+          face(KIND_HEDGE, [-0.99, 0.12], (i, q) => {
+            q[0].o = hw + 0.32; q[0].dy = Hc + Hh; q[0].u = Hh;
+            q[1].o = hw + 0.25; q[1].dy = Hc; q[1].u = 0;
+          });
+          face(KIND_HEDGE, TOP, (i, q) => {
+            const e = hw + Math.min(hedgeW(i), Math.max(gap[i] / 2, 0.36));
+            q[0].o = e; q[0].dy = Hc + Hh; q[0].u = Hh + e - hw;
+            q[1].o = hw + 0.32; q[1].dy = Hc + Hh; q[1].u = Hh + 0.32;
+          });
+          // 段首段尾端面（路口处绿篱断开，不封口会看见空壳）
+          for (const [i, sg] of [[A, -1], [B, 1]]) {
+            const e = hw + Math.min(hedgeW(i), Math.max(gap[i] / 2, 0.36));
+            endCap(w, s2, i, sg, hw, hw + 0.25, y2.ys[i], 0, Hc, KIND.CURB);
+            endCap(w, s2, i, sg, hw + 0.25, e, y2.ys[i], t === 2 ? -0.3 : 0, Hc + Hh, KIND_HEDGE);
+          }
+          // 内侧面：宽带落到地面；窄带只在对向一幅没有配对回来时在中线处封口（不露空）
+          if (t === 1 && backed) return;
+          face(KIND_HEDGE, [1, 0], (i, q) => {
+            const e = hw + Math.min(hedgeW(i), Math.max(gap[i] / 2, 0.36));
+            q[0].o = e; q[0].dy = t === 2 ? -0.3 : 0; q[0].u = 0;
+            q[1].o = e; q[1].dy = Hc + Hh; q[1].u = Hh;
+          });
+        });
+      }
+    }
+    /** 构件端面：断面 i 处、横向 o0..o1、高 dy0..dy1 的竖直矩形，sg=+1 朝前进方向、-1 朝后 */
+    function endCap(W, secs, i, sg, o0, o1, y, dy0, dy1, kind) {
+      const cx = secs.x[i], cz = secs.z[i], rx = secs.rx[i], rz = secs.rz[i];
+      const rl = Math.hypot(rx, rz) || 1;
+      const fx = (rz / rl) * sg, fz = (-rx / rl) * sg; // 前进方向 = (rz, -rx)
+      const ux = rx / rl, uz = rz / rl; // 单位右法线（o 方向为其反向）
+      attrS[0] = kind;
+      W.ensure(4, 6);
+      const P = [[o0, dy0], [o1, dy0], [o1, dy1], [o0, dy1]];
+      const b = W.n;
+      for (const [o, dy] of P) W.v(cx - ux * o, y + dy, cz - uz * o, fx, 0, fz, dy, secs.s[i], attrS, JUNC);
+      // 按几何法线与期望朝向一致定绕序
+      const ax = -ux * (o1 - o0), az = -uz * (o1 - o0); // 0→1 方向（水平）
+      const ny = dy1 - dy0; // 1→2 方向（竖直）
+      // (p1-p0)×(p2-p1) = (ax,0,az)×(0,ny,0) = (-az*ny, 0, ax*ny)
+      const dot = -az * ny * fx + ax * ny * fz;
+      if (dot > 0) { W.tri(b, b + 1, b + 2); W.tri(b, b + 2, b + 3); }
+      else { W.tri(b, b + 2, b + 1); W.tri(b, b + 3, b + 2); }
+    }
+    /** 断面子集（视图，便于对子区间调用 runs） */
+    function subSlice(sc, a, b) {
+      return { n: b - a + 1, x: sc.x.subarray(a, b + 1), z: sc.z.subarray(a, b + 1), s: sc.s.subarray(a, b + 1), rx: sc.rx.subarray(a, b + 1), rz: sc.rz.subarray(a, b + 1) };
+    }
+    function sliceArr(arr, a, b) { return arr.subarray(a, b + 1); }
+    /** 与 band 相同，但剖面点逐断面由 fill(i, pts) 填写（宽度沿路变化的构件） */
+    function bandF(W, secs, iA, iB, ys, pts, fill, nrm, attr, E) {
+      const np = pts.length;
+      W.ensure((iB - iA + 1) * np, (iB - iA) * (np - 1) * 6);
+      kindTris[attr[0]] = (kindTris[attr[0]] || 0) + (iB - iA) * (np - 1) * 2;
+      let prev = -1;
+      const nl = Math.hypot(nrm[0], nrm[1]) || 1;
+      const no = nrm[0] / nl, ny = nrm[1] / nl;
+      for (let i = iA; i <= iB; i++) {
+        fill(i, pts);
+        const cx = secs.x[i], cz = secs.z[i], rx = secs.rx[i], rz = secs.rz[i];
+        const rl = Math.hypot(rx, rz) || 1;
+        const nx = (-rx / rl) * no, nz = (-rz / rl) * no;
+        if (E) {
+          JUNC[0] = secs.s[i] - E.s0;
+          JUNC[1] = E.s1 - secs.s[i];
+          JUNC[2] = E.R0;
+          JUNC[3] = E.R1;
+        }
+        const base = W.n;
+        for (let k = 0; k < np; k++) {
+          const p = pts[k];
+          W.v(cx - rx * p.o, ys[i] + p.dy, cz - rz * p.o, nx, ny, nz, p.u, secs.s[i], attr, JUNC);
+        }
+        if (prev >= 0)
+          for (let k = 0; k < np - 1; k++) {
+            const a0 = prev + k, a1 = a0 + 1, b0 = base + k, b1 = b0 + 1;
+            W.tri(a0, a1, b0);
+            W.tri(a1, b1, b0);
+          }
+        prev = base;
+      }
     }
 
     function embankWalls(E, secs, ys, valid, cfg, SW) {
@@ -437,6 +572,118 @@ export default {
         }
       }
     }
+
+    // ================= 路口铺面 =================
+    // 每条边只画自己宽度的条带，十字/丁字路口里各条带之间的转角与（双幅路）中分带缺口没有路面，露出影像/地面。
+    // 把核心区地面主路的路口节点按 35 m 聚类（双幅路交叉口是 4 个节点），取各进口在“路口半径”处的左右路缘点
+    // 求凸包，铺一块沥青（无标线、比路面低 4 cm：条带处条带在上，缺口处露出铺面）。
+    const T6 = performance.now();
+    let nJunc = 0;
+    {
+      const ends = new Map(); // node -> [{x,z,dx,dz,hw,R,y}]
+      for (const E of edges) {
+        if (!E.rendered || E.b) continue;
+        const f = feats[E.fi], cfg = info[E.fi].cfg;
+        if (!cfg.major || cfg.link || f.c === 0) continue;
+        const ch = chain[E.fi], tot = total[E.fi];
+        for (const atStart of [true, false]) {
+          const s = atStart ? E.s0 : E.s1;
+          const [x, z, dx, dz] = pointAt(f.p, ch, Math.min(Math.max(s + (atStart ? 0.5 : -0.5), 0), tot));
+          if (!inCore(x, z) || excluded(x, z)) continue;
+          const y = roadY(terrain, f, x, z, s, tot);
+          if (y === null) continue;
+          const sg = atStart ? 1 : -1; // 离开节点的方向
+          const node = atStart ? E.n0 : E.n1;
+          let a = ends.get(node);
+          if (!a) ends.set(node, (a = []));
+          a.push({ x, z, dx: dx * sg, dz: dz * sg, hw: E.W / 2, R: atStart ? E.R0 : E.R1, y, f, s, sg, tot });
+        }
+      }
+      // 路口节点：≥3 个主路进口
+      const jn = [];
+      for (const [node, a] of ends) if (a.length >= 3) jn.push(node);
+      // 35 m 聚类（并查集，网格加速）
+      const par = new Map(jn.map((n) => [n, n]));
+      const find = (a) => { while (par.get(a) !== a) { par.set(a, par.get(par.get(a))); a = par.get(a); } return a; };
+      const JC = 35, jg = new Map();
+      for (const n of jn) {
+        const e0 = ends.get(n)[0];
+        const k = Math.floor(e0.x / JC) * 100003 + Math.floor(e0.z / JC);
+        let l = jg.get(k);
+        if (!l) jg.set(k, (l = []));
+        l.push(n);
+      }
+      for (const n of jn) {
+        const e0 = ends.get(n)[0];
+        const cx = Math.floor(e0.x / JC), cz = Math.floor(e0.z / JC);
+        for (let i = -1; i <= 1; i++)
+          for (let j = -1; j <= 1; j++) {
+            const l = jg.get((cx + i) * 100003 + cz + j);
+            if (!l) continue;
+            for (const m of l) {
+              if (m === n) continue;
+              const e1 = ends.get(m)[0];
+              if (Math.hypot(e1.x - e0.x, e1.z - e0.z) < JC) { const ra = find(n), rb = find(m); if (ra !== rb) par.set(ra, rb); }
+            }
+          }
+      }
+      const groups = new Map();
+      for (const n of jn) {
+        const r = find(n);
+        let g = groups.get(r);
+        if (!g) groups.set(r, (g = []));
+        g.push(...ends.get(n));
+      }
+      const JA = [KIND.ASPHALT, 1, F.NOMARK, 1000], JJ = [0, 0, 99, 99];
+      for (const g of groups.values()) {
+        // 凸包顶点带高程（各进口在该里程处的路面高）：路口铺面随路面纵坡倾斜，整体比路面低 4 cm，
+        // 不会在下坡一侧顶出路面（平的铺面在有坡的路口会盖住条带，夜里成一块没有路灯光斑的暗斑）
+        const pts = [];
+        let ymin = Infinity;
+        for (const e of g) {
+          const D = Math.min(Math.max(e.R, e.hw) + 0.5, 40);
+          const rx = -e.dz, rz = e.dx;
+          const fx = e.x + e.dx * D, fz = e.z + e.dz * D;
+          const yf = roadY(terrain, e.f, fx, fz, Math.min(Math.max(e.s + e.sg * D, 0), e.tot), e.tot) ?? e.y;
+          pts.push([fx + rx * e.hw, fz + rz * e.hw, yf], [fx - rx * e.hw, fz - rz * e.hw, yf]);
+          pts.push([e.x + rx * e.hw, e.z + rz * e.hw, e.y], [e.x - rx * e.hw, e.z - rz * e.hw, e.y]);
+          if (e.y < ymin) ymin = e.y;
+        }
+        // 凸包（Andrew 单调链）
+        pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+        const lo = [], hi = [];
+        for (const q of pts) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+        for (let i = pts.length - 1; i >= 0; i--) { const q = pts[i]; while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], q) <= 0) hi.pop(); hi.push(q); }
+        const hull = lo.slice(0, -1).concat(hi.slice(0, -1));
+        if (hull.length < 3) continue;
+        let area = 0, cx = 0, cz = 0, diam = 0;
+        for (let i = 0; i < hull.length; i++) {
+          const a = hull[i], b = hull[(i + 1) % hull.length];
+          area += a[0] * b[1] - b[0] * a[1];
+          cx += a[0]; cz += a[1];
+        }
+        area = Math.abs(area) / 2;
+        cx /= hull.length; cz /= hull.length;
+        for (const a of hull) diam = Math.max(diam, Math.hypot(a[0] - cx, a[1] - cz));
+        // 立交、环岛、大广场之类的大凸包会盖住绿地/建筑：只铺普通平面交叉口
+        if (area > 9000 || diam > 75) continue;
+        const w = getTile(tileKey(cx, cz, T_MAJOR, 'm'), T_MAJOR, cx, cz, false);
+        w.ensure(hull.length + 1, hull.length * 3);
+        const c0 = w.v(cx, ymin - 0.04, cz, 0, 1, 0, 0.5, 0, JA, JJ);
+        for (const a of hull) w.v(a[0], Math.min(a[2], ymin + 1.5) - 0.04, a[1], 0, 1, 0, 0.5, 0, JA, JJ);
+        for (let i = 0; i < hull.length; i++) {
+          const a = c0 + 1 + i, b = c0 + 1 + ((i + 1) % hull.length);
+          // 朝上：(b-a)×(c-a) 的 y 分量 > 0 时按 (c0, a, b)，否则反过来
+          const A = hull[i], B = hull[(i + 1) % hull.length];
+          const ny = (A[1] - cz) * (B[0] - cx) - (A[0] - cx) * (B[1] - cz);
+          if (ny > 0) w.tri(c0, a, b); else w.tri(c0, b, a);
+        }
+        kindTris.j = (kindTris.j || 0) + hull.length;
+        nJunc++;
+      }
+    }
+    console.warn(`[roads] 路口铺面 ${nJunc} 处，${(performance.now() - T6).toFixed(0)} ms`);
 
     // ================= 铁路 =================
     console.warn('[roads] secs ' + JSON.stringify(DS) + ' km ' + JSON.stringify(DL));
@@ -753,7 +1000,13 @@ export default {
 
     // ================= 路灯 =================
     const T4 = performance.now();
-    const lamps = placeLamps(net, terrain, roadY, { region: lampRegion, LIFT, edgeFilter: (E) => E.rendered });
+    const lamps = placeLamps(net, terrain, roadY, {
+      region: lampRegion,
+      LIFT,
+      edgeFilter: (E) => E.rendered,
+      // 支路灯不立进片区自建建筑/地标范围（排除区里“让树”的都是实体占地）
+      minorOk: (x, z) => !(excl && excl.items && excl.items.length && excl.test(x, z, 'trees')),
+    });
     const lampGeo = lampGeometries();
     const lampMat = lampMaterial(ctx);
     const types = [LAMP.SINGLE, LAMP.DOUBLE, LAMP.KNOT, LAMP.PALACE, LAMP.LANTERN];
@@ -937,7 +1190,7 @@ export default {
     const sz = new THREE.Vector2();
 
     console.warn(
-      `[roads] 边 ${nEdges}/${edges.length}，铁路 ${nRail}，分块 ${tiles.size}，三角形 ${(tris / 1e6).toFixed(2)}M，桥墩 ${nP}，路灯 ${lamps.n}，光点 ${nPts}，耗时 ${(performance.now() - t0).toFixed(0)} ms`
+      `[roads] 景区步行化支路 ${nPark}，边 ${nEdges}/${edges.length}，铁路 ${nRail}，分块 ${tiles.size}，三角形 ${(tris / 1e6).toFixed(2)}M，桥墩 ${nP}，路灯 ${lamps.n}，光点 ${nPts}，耗时 ${(performance.now() - t0).toFixed(0)} ms`
     );
 
     return {

@@ -9,6 +9,8 @@
 import * as THREE from 'three';
 import { personGeometry } from '../arch/datang-props.js';
 import { LIFT, roadY } from '../core/roadheight.js';
+import { pointInPoly } from '../core/util.js';
+import { markParkWalkways } from '../arch/roads_net.js';
 
 // 各画质档：最大人数 / 活动半径上限 / 绘制距离 / 生效的最大离地高度
 const CAP = [500, 1000, 1800, 2800];
@@ -29,6 +31,18 @@ const HOTSPOTS = [
   [108.9440, 34.2620, 1800, 1.6], // 明城墙内
   [108.9780, 34.2050, 800, 1.6], // 曲江池
   [108.8850, 34.2250, 1800, 1.2], // 高新区
+];
+// 小吃街/步行街热点（世界坐标 x, z, 半径, 倍率；按 roads.json 街道中心线量取）：
+// 下午到夜里都是人挤人的地方，倍率高于一般热点
+const HOT_STREETS = [
+  [-305, -290, 280, 16], // 北院门（鼓楼以北，步行街）
+  [-1322, -900, 330, 12], // 洒金桥（北段）
+  [-1322, -560, 300, 10], // 洒金桥（南段，近大麦市街）
+  [-520, -415, 240, 8], // 西羊市
+  [-550, -563, 220, 6], // 大皮院
+  [-570, -292, 200, 4], // 化觉巷
+  [230, 800, 260, 5], // 书院门 · 三学街（南门内东侧）
+  [2100, -560, 200, 5], // 永兴坊（中山门内）
 ];
 // 时段人流（相对傍晚高峰）
 const HOUR_KEYS = [[0, 0.3], [2, 0.1], [5, 0.06], [7, 0.45], [9, 0.7], [12, 0.85], [15, 0.8], [18, 1], [20.5, 1], [22.5, 0.65], [24, 0.3]];
@@ -59,15 +73,21 @@ function rnd() {
 }
 
 function crowdMaterial(ctx) {
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0, emissive: 0x2a2724, emissiveIntensity: 0 });
+  // 夜间不再用统一的灰白自发光（0x2a2724 × uNight × 0.9 → 黑暗街道里一个个发光的鬼影）：
+  // 改为“被路灯/店面灯从上方照亮”的补光 = 反照率 × 暖色 × 强度（深色衣服仍然是深色），头肩亮、腿脚暗
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0 });
+  const uLit = { value: 0 };
+  mat.userData.uLit = uLit;
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = ctx.uniforms.uTime;
+    sh.uniforms.uLit = uLit;
     sh.vertexShader = sh.vertexShader
       .replace(
         '#include <common>',
         `#include <common>
         attribute vec2 aAnim; attribute float tint;
-        uniform float uTime;`
+        uniform float uTime;
+        varying float vPedH;`
       )
       .replace(
         '#include <begin_vertex>',
@@ -80,6 +100,7 @@ function crowdMaterial(ctx) {
           float armK = step(0.2, abs(transformed.x)) * step(0.78, transformed.y) * max(0.0, 1.42 - transformed.y);
           transformed.z -= sin(wPh) * sign(transformed.x) * armK * 0.5 * wMov;
           transformed.y += abs(sin(wPh)) * 0.035 * wMov;
+          vPedH = transformed.y;
         }`
       )
       .replace(
@@ -89,8 +110,17 @@ function crowdMaterial(ctx) {
           vColor.rgb = mix(color.rgb, color.rgb * instanceColor.rgb, tint);
         #endif`
       );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uLit;\nvarying float vPedH;')
+      // 衣物反照率上限 0.6（纯白 0.8 的衣服在近处点光源下过曝、被泛光放大成一个发光的三角）
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = min(diffuseColor.rgb, vec3(0.6));')
+      .replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.78, 0.55) * uLit * (0.3 + 0.7 * smoothstep(0.3, 1.6, vPedH));`
+      );
   };
-  mat.customProgramCacheKey = () => 'xianPeds';
+  mat.customProgramCacheKey = () => 'xianPeds|v3';
   return mat;
 }
 
@@ -106,6 +136,7 @@ export default {
     // 每条路径：pts（x,z 交错）、cum（累计里程）、len、off（横向偏移基准）、jit（横向抖动幅度）、w（密度权重）、lift
     const paths = [];
     const hot = HOTSPOTS.map(([lon, lat, r, k]) => { const p = ctx.geo.project(lon, lat); return { x: p.x, z: p.z, r, k }; });
+    for (const [x, z, r, k] of HOT_STREETS) hot.push({ x, z, r, k });
     const hotAt = (x, z) => {
       let k = 1;
       for (const h of hot) {
@@ -115,8 +146,9 @@ export default {
       return k;
     };
     const feats = ctx.data.roads?.features || [];
+    markParkWalkways(ctx.data.roads, ctx.data.landuse); // 景区/公园里的无名支路按步行道（c=12）放人
     for (const f of feats) {
-      const c = f.c;
+      const c = f._ped ? 12 : f.c;
       if (f.t || f.b || !f.p || f.p.length < 4) continue;
       let sides = null;
       const W = Math.min(42, Math.max(Number(f.w) || MIN_W[c] || 5, MIN_W[c] || 5, c >= 1 && c <= 4 ? Math.max(1, f.l | 0 || 1) * (c <= 2 ? 3.4 : 3.1) : 0));
@@ -144,6 +176,34 @@ export default {
     }
     // 空间网格：cell → [pathIndex, segIndex, ...]；道路模块不画的路段（排除区 roads）与地形挖洞处不放人
     const hidden = (x, z) => !!(terrain.inHole?.(x, z) || ctx.exclusions?.test(x, z, 'roads'));
+    // 实体占地：片区模块自建房屋的逐户轮廓（回民街/曲江等登记为“只让树”的排除区，单个面积 < 5000 m²）。
+    // OSM 街道中心线与房屋轮廓常有几米到十几米的偏差（北院门南段中心线斜进西侧铺面），行人落进房子里就看不见了：
+    // 生成与行走时遇到房屋就横向挪到街上
+    const SOLID_CELL = 50;
+    const solidGrid = new Map();
+    for (const it of ctx.exclusions?.items || []) {
+      const fl = it.flags;
+      if (!fl.trees || fl.buildings || fl.roads) continue;
+      const b = it.bb;
+      if ((b.x1 - b.x0) * (b.z1 - b.z0) > 5000) continue;
+      for (let cx = Math.floor(b.x0 / SOLID_CELL); cx <= Math.floor(b.x1 / SOLID_CELL); cx++)
+        for (let cz = Math.floor(b.z0 / SOLID_CELL); cz <= Math.floor(b.z1 / SOLID_CELL); cz++) {
+          const k = cx * 100003 + cz;
+          let a = solidGrid.get(k);
+          if (!a) solidGrid.set(k, (a = []));
+          a.push(it);
+        }
+    }
+    const solid = (x, z) => {
+      const a = solidGrid.get(Math.floor(x / SOLID_CELL) * 100003 + Math.floor(z / SOLID_CELL));
+      if (!a) return false;
+      for (const it of a) {
+        const b = it.bb;
+        if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+        if (pointInPoly(x, z, it.p)) return true;
+      }
+      return false;
+    };
     const grid = new Map();
     const key = (cx, cz) => cx * 65536 + cz;
     paths.forEach((p, pi) => {
@@ -209,6 +269,20 @@ export default {
       wZ[i] = az + (bz - az) * t + dx * wOff[i];
       if (wSpd[i] > 0) wYaw[i] = Math.atan2(dx * wDir[i], dz * wDir[i]);
     };
+    // 落在房屋里：沿路径法线左右试探（±1.5 m 步长，至多 ±12 m）挪到最近的空地；找不到返回 false
+    const LAT_STEPS = [1.5, -1.5, 3, -3, 4.5, -4.5, 6, -6, 8, -8, 10, -10, 12, -12];
+    const unstick = (i) => {
+      if (!solidGrid.size || !solid(wX[i], wZ[i])) return true;
+      const o0 = wOff[i];
+      for (const d of LAT_STEPS) {
+        wOff[i] = o0 + d;
+        locate(i);
+        if (!solid(wX[i], wZ[i])) return true;
+      }
+      wOff[i] = o0;
+      locate(i);
+      return false;
+    };
     // 高度跟随道路纵断面（引桥路堤、被抬高的地面路上行人不再低于路面）；无纵断面时退回地形
     const groundY = (i) => {
       const p = paths[wPath[i]];
@@ -236,7 +310,7 @@ export default {
         wTimer[i] = stand ? 5 + rnd() * 25 : 20 + rnd() * 60;
         locate(i);
         // 中点不在隐藏区的路段也可能部分穿进坑口/楼体排除区：落点在区内就重抽，5 次都不行就不补这个人
-        if (hidden(wX[i], wZ[i])) { if (tries < 4) continue; return false; }
+        if (hidden(wX[i], wZ[i]) || !unstick(i)) { if (tries < 4) continue; return false; }
         if (anywhere || tries === 4) break;
         // 非初始补人：尽量补在视野外或较远处，避免“凭空出现”
         const d = Math.hypot(wX[i] - cp.x, wZ[i] - cp.z);
@@ -270,6 +344,9 @@ export default {
       }
       const R = THREE.MathUtils.clamp(260 + Math.max(0, agl) * 1.3, 300, R_MAX[level]);
       const wasOn = bub.on;
+      // 相机瞬移（预设视角/跳转，一次移动超过气泡半径）：旧气泡里的人全部出圈，新气泡按“首次”处理直接铺满，
+      // 否则补人只补在视野外，跳过去后的前几十秒街上空无一人
+      const jumped = wasOn && Math.hypot(cp.x - bub.x, cp.z - bub.z) > R;
       bub.on = true;
       bub.x = cp.x; bub.z = cp.z; bub.R = R;
       // 候选段
@@ -304,7 +381,7 @@ export default {
         if (dx * dx + dz * dz > out2) kill(i);
       }
       while (N > target) kill(N - 1);
-      const anywhere = first || !wasOn;
+      const anywhere = first || !wasOn || jumped;
       // 每次最多补一部分，分摊到多次刷新
       const add = anywhere ? target - N : Math.min(target - N, 300);
       for (let k = 0; k < add; k++) if (spawn(N, anywhere)) N++;
@@ -359,7 +436,8 @@ export default {
               groundY(i);
               // 从外面走进被隐藏的路段（下沉广场坑口、楼体内部等排除区）就掉头；
               // 连续两次检查都在区内（掉头也没走出来）说明卡住了，移除，由补人逻辑重新生成
-              const h = hidden(wX[i], wZ[i]) ? 1 : 0;
+              // 走进房屋：先横向挪回街上，挪不开再按隐藏区处理
+              const h = hidden(wX[i], wZ[i]) || !unstick(i) ? 1 : 0;
               if (h && wHid[i]) { kill(i); i--; continue; }
               if (h) wDir[i] = -wDir[i];
               wHid[i] = h;
@@ -388,8 +466,8 @@ export default {
         const ic = mesh.instanceColor;
         ic.clearUpdateRanges(); ic.addUpdateRange(0, Math.max(1, n) * 3); ic.needsUpdate = true;
         aAnim.clearUpdateRanges(); aAnim.addUpdateRange(0, Math.max(1, n) * 2); aAnim.needsUpdate = true;
-        // 夜里略提亮（路灯下可辨认）
-        mat.emissiveIntensity = ctx.uniforms.uNight.value * 0.9;
+        // 夜里：路灯/店面补光（反照率比例，强度低，不再整体发灰白光）
+        mat.userData.uLit.value = ctx.uniforms.uNight.value * 0.14;
       },
       setLayer(name, on) {
         if (name !== 'people') return;
