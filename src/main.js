@@ -158,7 +158,7 @@ async function main() {
 
   // —— 系统 ——
   const uniformsHolder = {};
-  const lights = new LightPool(scene, quality.pointLights);
+  const lights = new LightPool(scene, quality.pointLights, renderer, camera);
   const labels = new Labels(root);
   const exclusions = new Exclusions();
   const ctx = createContext({ renderer, scene, camera, terrain, imagery, sky: null, lights, labels, exclusions, quality, data, meta });
@@ -203,7 +203,7 @@ async function main() {
       app.errors.push(`${mod.id}.prepare: ${e.message}`);
     }
   }
-  terrain.initRender(scene, imagery, quality);
+  terrain.initRender(scene, imagery, quality, ctx);
 
   // build
   const instances = [];
