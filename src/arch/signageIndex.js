@@ -108,7 +108,7 @@ export class BuildingIndex {
   }
   height(b) { return this.p.hDm[b] * 0.1; }
   minHeight(b) { return this.p.minDm[b] * 0.1; }
-  candidates(x, z, r, cb) {
+  candidates(x, z, r, cb, raw = false) {
     const c0 = Math.floor((x - r) / BG), c1 = Math.floor((x + r) / BG), r0 = Math.floor((z - r) / BG), r1 = Math.floor((z + r) / BG);
     const seen = this._seen || (this._seen = new Set());
     seen.clear();
@@ -121,10 +121,27 @@ export class BuildingIndex {
           seen.add(b);
           const bb = this.bb;
           if (x < bb[b * 4] - r || x > bb[b * 4 + 2] + r || z < bb[b * 4 + 1] - r || z > bb[b * 4 + 3] + r) continue;
-          if (!this.usable(b)) continue;
+          // raw：prepare 阶段（通用建筑的让位结果尚未产生）只按几何遍历，不查也不缓存 usable
+          if (!raw && !this.usable(b)) continue;
           cb(b);
         }
       }
+  }
+  /** 点到建筑轮廓的距离（在轮廓内为 0） */
+  distTo(b, x, z) {
+    if (this.contains(b, x, z)) return 0;
+    const n = this.p.vc[b];
+    let best = Infinity;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const ax = this.vx(b, i), az = this.vz(b, i), dx = this.vx(b, j) - ax, dz = this.vz(b, j) - az;
+      const L2 = dx * dx + dz * dz || 1e-6;
+      let t = ((x - ax) * dx + (z - az) * dz) / L2;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const d = Math.hypot(ax + dx * t - x, az + dz * t - z);
+      if (d < best) best = d;
+    }
+    return best;
   }
   contains(b, x, z) {
     const bb = this.bb;
@@ -230,9 +247,11 @@ export class RoadIndex {
  * 评分 = POI 到边的距离 + 0.7 × 该边外侧 7 m 处到最近道路路缘的距离（临街优先）
  *        + 外侧被别的建筑堵住的惩罚 + 短边惩罚。
  * 返回 {b, e, ax, az, bx, bz, L, nx, nz, t, fx, fz, d, inside} 或 null。
+ * list = N（> 0）时改为返回按评分升序的前 N 个候选立面数组（首选立面挂不下时依次换下一个）。
  */
-export function findFacade(bi, ri, x, z, { maxR = 45, minLen = 3, notRoad = null, filter = null } = {}) {
+export function findFacade(bi, ri, x, z, { maxR = 45, minLen = 3, notRoad = null, filter = null, list = 0 } = {}) {
   let best = null, bestScore = Infinity;
+  const all = list > 0 ? [] : null;
   const accept = (c) => c !== ri.cls.motorway && c !== ri.cls.motorway_link;
   bi.candidates(x, z, maxR, (b) => {
     if (filter && !filter(b)) return;
@@ -259,11 +278,13 @@ export function findFacade(bi, ri, x, z, { maxR = 45, minLen = 3, notRoad = null
       score += 0.7 * (r ? Math.max(0, r.d) : 40);
       if (bi.inside(fx + nx * 2.5, fz + nz * 2.5, b) >= 0) score += 30; // 外侧紧贴别的建筑（夹缝）
       if (notRoad && r && r.d < -1) score += 10;
-      if (score < bestScore) {
+      if (all) all.push({ b, e: i, ax, az, bx, bz, L, nx, nz, t, fx, fz, d, inside, score });
+      else if (score < bestScore) {
         bestScore = score;
         best = { b, e: i, ax, az, bx, bz, L, nx, nz, t, fx, fz, d, inside, score };
       }
     }
   });
+  if (all) return all.sort((p, q) => p.score - q.score).slice(0, list);
   return best;
 }
