@@ -200,6 +200,64 @@ export function pickStyle(poi, text, district) {
   return s;
 }
 
+// ———————————————————— 夜间发光上限 ————————————————————
+// 夜景泛光阈值约 0.7（线性 HDR 亮度，见 core/post.js），超过阈值的像素整块进入泛光。灯箱/牌匾整面发光，
+// 若按固定倍率（旧值 1.6~2.0）点亮，黄/白底整块冲过阈值，泛光把字淹没成一团光（“串串香”、红底白字招牌）。
+// 做法：按招牌发光部分的最大亮度归一——整面发光的灯箱压到阈值以下（只亮不晕，字底对比按原配色保留），
+// 发光字/霓虹只有细笔画发光，允许略超阈值留一点光晕（霓虹感）。
+const srgbLin = (v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+/** '#rrggbb' → 线性亮度 */
+export function hexLum(hex) {
+  if (!hex || hex[0] !== '#' || hex.length < 7) return 0;
+  const n = parseInt(hex.slice(1, 7), 16);
+  return 0.2126 * srgbLin(((n >> 16) & 255) / 255) + 0.7152 * srgbLin(((n >> 8) & 255) / 255) + 0.0722 * srgbLin((n & 255) / 255);
+}
+/** 与 signagePaint.lighter 相同的提亮（霓虹字芯 = 字色向白提亮 62%） */
+function lighterHex(hex, k) {
+  const n = parseInt(hex.slice(1, 7), 16);
+  const f = (v) => Math.round(v + (255 - v) * k);
+  return '#' + [f((n >> 16) & 255), f((n >> 8) & 255), f(n & 255)].map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+/** 夜间发光部分的最大线性亮度 */
+export function signLum(s) {
+  const fg = s.fg || '#ffffff';
+  let L;
+  if (s.type === 'led' || s.type === 'ticker') L = hexLum(fg);
+  else if (s.type === 'neon') L = Math.max(hexLum(lighterHex(fg, 0.62)), s.back ? hexLum(s.back) : 0);
+  else L = Math.max(hexLum(s.bg || '#ffffff'), hexLum(fg), s.emblemColor ? hexLum(s.emblemColor) : 0);
+  return Math.max(L, 0.04);
+}
+/** 发光亮度上限（线性 HDR）：整面灯箱 < 泛光阈值；发光字/霓虹细笔画略高于阈值 */
+export const GLOW_CAP = { lightbox: 0.62, plaque: 0.62, trad: 0.62, led: 0.95, neon: 1.25, ticker: 0.9, roof: 1.15 };
+export function capGlow(s, glow, cap = GLOW_CAP[s.type] ?? 0.62) {
+  return Math.min(glow, cap / signLum(s));
+}
+
+// ———————————————————— 补充门头店名库（按街道等级选业态） ————————————————————
+// 主干道（trunk / primary：东西南北大街、长安路、小寨东西路……）：沿街是银行、品牌零售、珠宝、通讯营业厅、连锁酒店、
+// 连锁餐饮与西安本地老字号，而不是“黄焖鸡米饭 / 数码冲印”这类小巷底商。[业态 kind, 店名]
+export const FILL_MAIN = [
+  ['bank', '中国工商银行'], ['bank', '中国建设银行'], ['bank', '中国农业银行'], ['bank', '中国银行'], ['bank', '交通银行'], ['bank', '招商银行'],
+  ['bank', '中国邮政储蓄银行'], ['bank', '浦发银行'], ['bank', '中信银行'], ['bank', '兴业银行'], ['bank', '光大银行'], ['bank', '民生银行'],
+  ['bank', '平安银行'], ['bank', '西安银行'], ['bank', '长安银行'], ['bank', '华夏银行'],
+  ['shop', '周大福'], ['shop', '老凤祥'], ['shop', '周生生'], ['shop', '六福珠宝'], ['shop', '中国黄金'], ['shop', '老庙黄金'],
+  ['shop', '中国移动'], ['shop', '中国联通'], ['shop', '中国电信'], ['shop', '华为'], ['shop', '小米之家'], ['shop', 'OPPO'], ['shop', 'vivo'],
+  ['shop', '李宁'], ['shop', '安踏'], ['shop', '特步'], ['shop', '海澜之家'], ['shop', '波司登'], ['shop', '太平鸟'], ['shop', '鸿星尔克'],
+  ['shop', '宝岛眼镜'], ['shop', '精益眼镜'], ['shop', '屈臣氏'], ['shop', '名创优品'], ['shop', '新华书店'], ['shop', '西部证券'], ['shop', '中国人寿'],
+  ['pharmacy', '怡康医药'], ['pharmacy', '广济堂医药'], ['pharmacy', '老百姓大药房'],
+  ['hotel', '如家酒店'], ['hotel', '汉庭酒店'], ['hotel', '全季酒店'], ['hotel', '维也纳酒店'], ['hotel', '锦江之星'], ['hotel', '7天酒店'],
+  ['fast_food', '肯德基'], ['fast_food', '麦当劳'], ['fast_food', '德克士'], ['restaurant', '必胜客'], ['cafe', '星巴克'], ['cafe', '瑞幸咖啡'],
+  ['restaurant', '魏家凉皮'], ['restaurant', '老米家泡馍'], ['restaurant', '西安饭庄'], ['restaurant', '同盛祥'], ['restaurant', '德发长'],
+  ['restaurant', '春发生'], ['restaurant', '樊记腊汁肉夹馍'], ['restaurant', '海底捞'], ['cafe', '喜茶'], ['cafe', '茶话弄'], ['cafe', '霸王茶姬'],
+];
+/** 次干道上可用的“体面”小店名（排除五金、开锁、棋牌、冲印这类小巷业态） */
+export const FILL_OK = new Set([
+  '西府臊子面', '陕西油泼面', '关中羊肉泡馍', '老碗面馆', '重庆小面', '家常菜馆', '湘菜馆', '老火锅', '酸菜鱼', '面包坊', '蛋糕烘焙', '烤鱼',
+  '牛肉面', 'biangbiang面', '葫芦头泡馍', '腊汁肉夹馍', '岐山面馆', '汉中热米皮', '秦镇米皮', '秦味肉夹馍', '石锅拌饭',
+  '明视眼镜', '鑫源通讯', '丽人美发', '美容美甲', '大众药房', '康民大药房', '鲜果时光', '花语鲜花', '茗茶茶叶', '时尚女装', '男装折扣',
+  '品牌鞋店', '母婴用品', '化妆品', '口腔诊所', '健身会所', '婚纱摄影', '童装', '便民超市', '好又多便利店',
+]);
+
 /** 商场/百货类名称：做楼顶大字 */
 export const MALL_RE = /购物中心|购物广场|百货|商场|商城|奥特莱斯|奥莱|万达广场|大悦城|赛格|开元商城|世纪金花|王府井|万象城|银泰|砂之船|SKP|益田|大融城|印象城|龙湖|吾悦|凯德|茂业|民生百货|金鹰|太古里|老城根|华旗|兴正元|世贸/i;
 /** 楼顶发光字的建筑名（大厦/酒店/商场） */
