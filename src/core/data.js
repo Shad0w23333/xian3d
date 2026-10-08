@@ -38,7 +38,7 @@ async function track(name, fn) {
 
 // 高德覆盖：tools/amap_fetch.py merge 把高德衍生数据写到 public/data/local/（私有仓库，个人本地使用）。
 // 这些文件存在时优先读取，否则用 public/data 下的 OSM 版本。
-const LOCAL_OVERRIDE = new Set(['pois.json', 'roads.json', 'rail.json', 'amap_extra.json']);
+const LOCAL_OVERRIDE = new Set(['pois.json', 'roads.json', 'rail.json', 'amap_extra.json', 'buildings_names.json']);
 async function fetchData(name) {
   if (LOCAL_OVERRIDE.has(name)) {
     try {

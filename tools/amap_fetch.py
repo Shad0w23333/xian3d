@@ -52,6 +52,12 @@ TYPES = ('050000|060000|070000|080000|090000|100000|110000|120100|120200|130000|
 # 第二遍（--extra）：汽车销售 / 汽车维修 / 摩托车服务——沿街门店，第一遍类型没覆盖到。独立的完成表（meta['done_extra']），
 # 与第一遍的请求缓存互不影响；POI 合并进同一个 pois.json。
 TYPES_EXTRA = '020000|030000|040000'
+# 第三遍（poi3）：住宅区 / 别墅 / 宿舍（120300），带 navi 字段（entr_location 出入口坐标）→ 小区真实名称与大门位置，
+# 存 data-src/amap/compounds.json（不进 pois.json：小区名不做招牌）
+TYPES_RES = '120300'
+# 各遍的参数：(类型, 完成表键, show_fields, 输出文件)
+PASSES = {'main': (None, 'done', 'business', 'pois.json'), 'extra': (None, 'done_extra', 'business', 'pois.json'),
+          'res': (TYPES_RES, 'done_res', 'navi', 'compounds.json')}
 # v5 多边形搜索：count 只是“本页条数”（不是总数），以“满页”判断是否还有更多
 PAGE = 25            # v5 page_size 上限
 SPLIT_PAGES = 8      # 一格超过 8 页（200 条）就四分细分
@@ -164,14 +170,14 @@ def _poi_key(p):
     return p.get('id') or (str(p.get('name', '')) + str(p.get('location', '')))
 
 
-def poi_cell(cli, w, s, e, n, out, stat, depth=0, types=None):
+def poi_cell(cli, w, s, e, n, out, stat, depth=0, types=None, fields='business'):
     """抓一个 GCJ 矩形里的全部 POI。v5 的 count 只是本页条数，不能当总数用：
     第 1 页不满 → 这一格就这么多；满页 → 探第 9 页：有数据（> 200 条）且还能细分就四分递归，
     否则逐页翻到短页为止（不能再分的最小格最多翻到第 100 页，仍满页则打印截断警告）。
     请求失败（AmapCellError）记入 stat['failed']，不当成空格。"""
     poly = f'{w:.6f},{n:.6f}|{e:.6f},{s:.6f}'
     types = types or TYPES
-    base = {'polygon': poly, 'types': types, 'page_size': PAGE, 'show_fields': 'business'}
+    base = {'polygon': poly, 'types': types, 'page_size': PAGE, 'show_fields': fields}
 
     def page(k):
         ps = cli.get('/v5/place/polygon', {**base, 'page_num': k}).get('pois') or []
@@ -186,7 +192,7 @@ def poi_cell(cli, w, s, e, n, out, stat, depth=0, types=None):
         if can_split and page(SPLIT_PAGES + 1):
             mx, my = (w + e) / 2, (s + n) / 2
             for (a, b, c, d) in ((w, my, mx, n), (mx, my, e, n), (w, s, mx, my), (mx, s, e, my)):
-                poi_cell(cli, a, b, c, d, out, stat, depth + 1, types)
+                poi_cell(cli, a, b, c, d, out, stat, depth + 1, types, fields)
             return
         last = SPLIT_PAGES if can_split else MAX_PAGE
         for k in range(2, last + 1):
@@ -201,19 +207,21 @@ def poi_cell(cli, w, s, e, n, out, stat, depth=0, types=None):
 
 
 def cmd_poi(cli, bbox, cell, extra=False):
+    """extra: False=第一遍全部类别；True=汽车/摩托第二遍；'res'=住宅区第三遍（带出入口）"""
     mf = CACHE / 'meta.json'
     meta = json.loads(mf.read_text('utf-8')) if mf.exists() else {}
     meta.setdefault('boxes', [])
     if list(bbox) not in meta['boxes']:
         meta['boxes'].append(list(bbox))   # 只作记录；merge 以 done（整格抓完的初始网格，GCJ 边界）为准
-    dkey = 'done_extra' if extra else 'done'
-    types = TYPES_EXTRA if extra else TYPES
+    mode = 'res' if extra == 'res' else 'extra' if extra else 'main'
+    _, dkey, fields, fname = PASSES[mode]
+    types = TYPES_RES if mode == 'res' else TYPES_EXTRA if mode == 'extra' else TYPES
     done = {tuple(c) for c in meta.get(dkey, [])}
     out = {}
 
     def flush(quiet):
         # 先存 POI 再存 done：done 里的格子，其 POI 一定已经落盘
-        save_pois(out, quiet)
+        save_pois(out, quiet, fname)
         meta[dkey] = sorted(done)
         mf.parent.mkdir(parents=True, exist_ok=True)
         mf.write_text(json.dumps(meta), 'utf-8')
@@ -229,7 +237,7 @@ def cmd_poi(cli, bbox, cell, extra=False):
                 nf = len(stat['failed'])
                 if tuple(round(v, 6) for v in c) in done:
                     continue   # 整格已抓完（续传：请求缓存命中也要走一遍网络判断，直接跳过更快）
-                poi_cell(cli, *c, out, stat, 0, types)
+                poi_cell(cli, *c, out, stat, 0, types, fields)
                 if len(stat['failed']) == nf:
                     done.add(tuple(round(v, 6) for v in c))
             flush(True)
@@ -242,8 +250,8 @@ def cmd_poi(cli, bbox, cell, extra=False):
         raise SystemExit(f'{len(stat["failed"])} 个网格请求失败（未计入已完成范围，merge 时那里保留 OSM POI），重新运行 poi 即可补抓')
 
 
-def save_pois(out, quiet=False):
-    f = CACHE / 'pois.json'
+def save_pois(out, quiet=False, fname='pois.json'):
+    f = CACHE / fname
     old = json.loads(f.read_text('utf-8')) if f.exists() else {}
     old.update(out)
     f.parent.mkdir(parents=True, exist_ok=True)
@@ -1275,7 +1283,7 @@ def load_dotenv():
 def main():
     load_dotenv()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('cmd', choices=['poi', 'poi2', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
+    ap.add_argument('cmd', choices=['poi', 'poi2', 'poi3', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
     ap.add_argument('--key', default=os.environ.get('AMAP_KEY', ''))
     ap.add_argument('--bbox', default=','.join(map(str, DEFAULT_BBOX)), help='WGS-84 西,南,东,北')
     ap.add_argument('--cell', type=float, default=0.01, help='POI 初始网格（度）')
@@ -1311,6 +1319,8 @@ def main():
         cmd_poi(cli, bbox, a.cell)
     if a.cmd in ('poi2', 'all'):
         cmd_poi(cli, bbox, a.cell, extra=True)
+    if a.cmd in ('poi3', 'all'):
+        cmd_poi(cli, bbox, a.cell, extra='res')
     if a.cmd in ('roads', 'all'):
         cmd_roads(cli, bbox)
 
