@@ -953,7 +953,40 @@ const chdLib = {
     notes: '13 层 × 4.2 m ≈ 55 m；中部通高玻璃带用立面嵌板（白天为玻璃幕墙）表示；弧形翼楼高度无出处，按卫星低层估 18 m。楼顶字为档案 signage 的屋顶红色书法字，立在南立面顶上方。' },
 };
 
-export default [gov, shiwei, tcm, sheraton, yxc, rongmin, lijun, chengbei, tiandi, telecom, zhongdeng, changqing, suligs, igc1, igc2, jinhua, tianlang, weiyangGov,
+
+// ═════════════ 北站南广场西侧：鹏瑞利国际健康商旅城西地块（2017 年封顶后停工，计划 2026 年底复工） ═════════════
+// 审查 g8 P0：这里是四栋超高层，通用建筑只建成 6~7 层砖楼（CMAB 高度 12.6~26 m）。
+// 资料：新闻（经开区留言回复、网易号、腾讯新闻）只给出“西地块 2017 年封顶、1# 酒店、2#/3# 办公、4# 酒店、5# 商业楼及地下车库，
+// 总建面约 36.1 万 m²”，查不到高度与层数。轮廓用 CMAB 四个塔楼底面（buildings.bin #220101~#220104，其中 #220101 原被当成
+// 12.6 m 的大块，其实是对角放置的第四栋板楼）。高度按谷歌影像中屋面相对底面的倾倒量（约 60 m）与同期影像中的
+// 中登大厦 A 座（100 m，倾倒约 70 m）比对估算，取 95 m（约 26 层），误差可能 ±20 m。裙房范围按影像中塔楼之间的浅色屋面量取。
+// 停工多年：幕墙已挂、内部空置，夜间不亮灯。
+const PRL_STYLE = { pattern: 'grid', tint: '#1d2a36', spd: '#5f6870', floorH: 3.6, colW: 1.5, spandrel: 0.18, mullW: 0.08, lit: 0.0 };
+const pengruili = {
+  id: 'n-pengruili', name: '鹏瑞利国际健康商旅城（在建）', center: [-840, -12550],
+  parts: [
+    { name: 'podium', kind: 'podium', pts: [-915, -12676, -776, -12681, -747, -12548, -752, -12424, -905, -12419, -915, -12548], base: 0, top: 22,
+      style: { pattern: 'retail', tint: '#2a3540', spd: '#9a9890', floorH: 5.5, colW: 4, spandrel: 0.35, lit: 0.0 }, roofMat: { color: '#8f8a80', roughness: 0.9 } },
+    { name: 'T1', pts: [-822.9, -12514.9, -841.3, -12524.3, -844.9, -12527.0, -846.9, -12534.4, -845.0, -12539.3, -840.8, -12542.8, -834.3, -12542.3, -811.7, -12530.9, -805.0, -12533.1, -793.7, -12555.4, -788.6, -12560.2, -782.7, -12561.3, -777.0, -12558.6, -773.8, -12554.8, -774.6, -12547.3, -787.4, -12519.4, -778.8, -12494.3, -777.9, -12487.7, -779.4, -12480.8, -784.1, -12474.9, -790.4, -12471.0, -798.9, -12470.7, -807.1, -12474.0, -811.5, -12479.7],
+      base: 0, top: 95, style: PRL_STYLE, roof: { mech: true, parapet: 1.5 } },
+    { name: 'T2', pts: [-877.2, -12451.4, -895.3, -12511.1, -895.8, -12514.8, -894.1, -12517.7, -889.5, -12520.9, -885.8, -12521.3, -882.4, -12520.9, -879.6, -12518.8, -878.2, -12516.3, -860.0, -12456.6, -859.9, -12452.9, -861.1, -12449.6, -863.4, -12447.2, -866.3, -12445.9, -869.6, -12445.8, -873.0, -12446.7, -875.5, -12448.4],
+      base: 0, top: 95, style: PRL_STYLE, roof: { mech: true, parapet: 1.5 } },
+    { name: 'T3', pts: [-904.4, -12545.4, -922.5, -12605.1, -922.9, -12608.8, -921.3, -12611.7, -916.7, -12614.9, -913.0, -12615.3, -909.6, -12614.9, -906.8, -12612.8, -905.4, -12610.3, -887.2, -12550.6, -887.1, -12546.9, -888.3, -12543.6, -890.6, -12541.2, -893.5, -12539.9, -896.8, -12539.8, -900.2, -12540.7, -902.7, -12542.4],
+      base: 0, top: 95, style: PRL_STYLE, roof: { mech: true, parapet: 1.5 } },
+    { name: 'T4', pts: [-896.2, -12647.6, -842.3, -12664.5, -836.6, -12662.8, -833.4, -12658.6, -833.7, -12653.3, -837.5, -12649.4, -891.4, -12632.5, -896.3, -12633.6, -900.1, -12638.3, -899.9, -12643.8],
+      base: 0, top: 95, style: PRL_STYLE, roof: { mech: true, parapet: 1.5 } },
+  ],
+  label: false,
+  meta: {
+    dossier: '（无档案条目；审查 g8 P0 补建）',
+    sources: ['https://www.163.com/dy/article/L3MMN763055616ZA.html', 'https://news.qq.com/rain/a/20230420A014W200', 'https://news.qq.com/rain/a/20240307A09YN000',
+      'CMAB 轮廓（buildings.bin #220101~#220104）', '谷歌卫星 z18（屋面倾倒量）'],
+    photos: [], confidence: 'low（高度）；medium（轮廓、栋数）',
+    notes: '高度 95 m 为影像倾倒量估算（与同期影像中 100 m 的中登大厦 A 座比对），±20 m；无外观照片，立面按影像中的深色玻璃幕墙推断。裙房 22 m 按常见 4 层商业估。',
+  },
+};
+
+export default [pengruili, gov, shiwei, tcm, sheraton, yxc, rongmin, lijun, chengbei, tiandi, telecom, zhongdeng, changqing, suligs, igc1, igc2, jinhua, tianlang, weiyangGov,
   wygj, wygjzx, xidigang, darongcheng, ihg, ehb, xuhuiA, xuhuiB, zhixuan, nifc, hanshen, metroBldg, baoyi, gym,
   thirdHosp, xiyueli, fulton, jkqGwh, beizhan, dahua, tianjie, sanfuwan, court];
 // 去重：长安大学逸夫图书馆归 public.js（高校类由公共建筑片负责）
