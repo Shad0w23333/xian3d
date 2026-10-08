@@ -1,6 +1,6 @@
 # 精修轮通用说明（5 个精修代理共读）
 
-你在西安 3D 城市模型工程（Three.js r186 + Vite）的一个**独立 git 工作树**里做精修。主仓库：/Users/xiaochoumao/Documents/github repo/xian3d（下称 MAIN）。基线提交 d4612d8。
+你在西安 3D 城市模型工程（Three.js r186 + Vite）的一个**独立 git 工作树**里做精修。主仓库：/Users/xiaochoumao/Documents/github repo/xian3d（下称 MAIN）。基线提交 3ab2ca7。
 
 ## 背景
 上一轮（十路修复）已把一眼可见的大错修完：全城 59 机位巡检 0 报错、60 fps。用户看了修前修后对比仍说：“还可以做得更好更精细，现在还不满意”。
@@ -10,7 +10,7 @@
 在你的工作树根目录执行（这些目录不在 git 里）：
     ln -s "MAIN/node_modules" node_modules; ln -s "MAIN/tiles" tiles; ln -s "MAIN/data-src" data-src; ln -s "MAIN/.venv-tools" .venv-tools
 （MAIN 换成上面的绝对路径，路径含空格要加引号。）然后读 HANDOFF.md 第 3 节（目录结构）与第 13 节（最近一轮）。
-如果工作树不在 d4612d8，先 `git reset --hard d4612d8`（工作树是新建的，没有你的改动时才这样做）。
+如果工作树不在 3ab2ca7，先 `git reset --hard 3ab2ca7`（工作树是新建的，没有你的改动时才这样做）。
 
 ## 现状截图（先看）
 - MAIN/shots/fine1/*.png：本轮新拍的 30 张精细机位（机位表 MAIN/tools/tour_fine.json）：18 条街道人行道人眼高度、8 个小区内部 40 m 低空、4 张夜景。
