@@ -24,6 +24,7 @@ export default {
     const P = [], I = [];
     let nv = 0;
     const th = ctx.terrain;
+    const EX = ctx.exclusions && ctx.exclusions.items && ctx.exclusions.items.length ? ctx.exclusions : null;
     for (const f of polys) {
       if (!TINT_KINDS.has(f.k) || !f.outer || f.outer.length < 6) continue;
       if ((f.a || 0) < MIN_AREA) continue;
@@ -52,9 +53,26 @@ export default {
         const la = Math.hypot(a[0] - b[0], a[1] - b[1]), lb = Math.hypot(b[0] - c[0], b[1] - c[1]), lc = Math.hypot(c[0] - a[0], c[1] - a[1]);
         const L = Math.max(la, lb, lc);
         const hole = holes.length && nearHole(a, b, c);
+        // 精建区（地标/档案建筑/广场等模块登记的“通用建筑让位”排除区）不铺：那里的铺装由模块自己画，色调层会把广场染成薄荷绿。
+        // 跨边界的三角形细分到 6 m 再按质心取舍
+        if (EX && L <= 60) {
+          const ins = [a, b, c, [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3]].map((p) => EX.test(p[0], p[1], 'buildings', 0));
+          if (ins.every(Boolean)) return;
+          if (ins.some(Boolean)) {
+            if (L > 6 && depth < 16) return split(a, b, c, depth, L, la, lb);
+            if (ins[3]) return;
+          }
+        }
         // 近洞细分到 1.5 m；三个顶点或质心任一落进洞就整块丢弃（只看质心会留下伸进坑口 1~2 m 的薄片）
         if (hole && L <= 1.5 && (th.inHole(a[0], a[1]) || th.inHole(b[0], b[1]) || th.inHole(c[0], c[1]) || th.inHole((a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3))) return;
-        if ((L > 60 && depth < 7) || (hole && L > 1.5 && depth < 20)) {
+        if ((L > 60 && depth < 7) || (hole && L > 1.5 && depth < 20)) return split(a, b, c, depth, L, la, lb);
+        for (const p of [a, b, c]) {
+          P.push(p[0], th.heightAt(p[0], p[1]) + 0.25, p[1]);
+          I.push(nv++);
+        }
+      };
+      const split = (a, b, c, depth, L, la, lb) => {
+        {
           // 最长边二分
           if (L === la) {
             const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -69,11 +87,6 @@ export default {
             emit(a, b, m, depth + 1);
             emit(m, b, c, depth + 1);
           }
-          return;
-        }
-        for (const p of [a, b, c]) {
-          P.push(p[0], th.heightAt(p[0], p[1]) + 0.25, p[1]);
-          I.push(nv++);
         }
       };
       for (let k = 0; k < tris.length; k += 3) emit(tris[k], tris[k + 1], tris[k + 2], 0);
