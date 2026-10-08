@@ -65,7 +65,12 @@ export function preprocess(ctx, P) {
     bb[i * 4 + 1] = Z0;
     bb[i * 4 + 2] = X1;
     bb[i * 4 + 3] = Z1;
-    if (sky.length && P.flags[i] & 8) {
+    // 数据层让位（tools/buildings_patch.py 写的 flags bit7：工地临建、站场设施、地铁出入口小盒子、寺院回廊上的楼……）
+    if (P.flags[i] & 128) {
+      skip[i] = 1;
+      nEx++;
+    }
+    if (!skip[i] && sky.length && P.flags[i] & 8) {
       for (const f of sky) {
         if (Math.abs(f.x - ax) < 150 && Math.abs(f.z - az) < 150 && (Math.hypot(f.x - ax, f.z - az) < 45 || inPoly(ax, az, f.outer))) {
           skip[i] = 1;

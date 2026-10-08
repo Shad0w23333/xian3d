@@ -226,7 +226,7 @@ export function classifyBuildings(P, names, landuse, pois) {
       else set(i, luC, 7);
       continue;
     }
-    const fromStyle = sf >= 1 && sf <= 4 ? C.RES : sf === 5 ? C.OFF : sf === 6 ? C.COM : sf === 7 ? C.IND : sf === 8 ? C.GOV : -1;
+    const fromStyle = sf >= 1 && sf <= 4 ? C.RES : sf === 5 ? C.OFF : sf === 6 || sf === 9 ? C.COM : sf === 7 ? C.IND : sf === 8 ? C.GOV : -1;
     if (fromStyle >= 0) set(i, fromStyle, 8);
   }
 
