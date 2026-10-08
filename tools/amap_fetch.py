@@ -9,6 +9,7 @@ OSM 在西安的 POI 只有约 9 千条且陈旧；高德同范围有十几万�
 
 用法：
   python tools/amap_fetch.py poi   [--bbox 108.84,34.17,109.08,34.40] [--max-requests 4000]   # 多边形 POI 搜索（可多次运行续传）
+  python tools/amap_fetch.py poi2  [...]                                                    # 第二遍：汽车销售/维修/摩托车门店
   python tools/amap_fetch.py roads [--bbox ...]                                             # 交通态势·矩形区域道路（带路名/等级）
   python tools/amap_fetch.py status                                                        # 已缓存请求数、POI 数、已完成网格数
   python tools/amap_fetch.py metro                                                         # 地铁全部线路折线 + 车站（公交路线查询）
@@ -16,7 +17,7 @@ OSM 在西安的 POI 只有约 9 千条且陈旧；高德同范围有十几万�
   python tools/amap_fetch.py place                                                         # 按 research/refs/landmarks2026 清单逐个定位地标
   python tools/amap_fetch.py all                                                           # 以上全部 + poi + roads（一次跑完，配额内续传）
   python tools/amap_fetch.py merge                                                         # 合并进 public/data/pois.json、roads.json
-缓存：data-src/amap/（每个请求一个 JSON，断点续传；原始数据文件会备份为 *.before_amap.json）
+缓存：data-src/amap/（每个请求一个 JSON，断点续传）。合并结果写 public/data/local/（不入库，前端优先读取），仓库里的 OSM 版本不动。
 续传：meta.json 只记录“整格抓完且无失败请求”的初始网格；merge 只在这些网格里用高德 POI 替换 OSM POI
       （高德 POI 也只取这些网格里的），未抓完的地方保留 OSM（多天抓取中途 merge 不会挖空，也不会两套并存）。
 坐标：高德为 GCJ-02，合并时逆变换回 WGS-84（迭代法，误差 < 0.5 m）再投影到世界坐标。
@@ -48,6 +49,9 @@ DEFAULT_BBOX = (108.84, 34.17, 109.08, 34.40)  # CORE + 未央/浐灞北扩
 # 公交车站 1507、停车场 1509 数量极大、不做招牌也不是地标，只会白耗翻页请求。中类代码会带上其下所有小类。
 TYPES = ('050000|060000|070000|080000|090000|100000|110000|120100|120200|130000|140000|'
          '150200|150400|150500|160000|010000')
+# 第二遍（--extra）：汽车销售 / 汽车维修 / 摩托车服务——沿街门店，第一遍类型没覆盖到。独立的完成表（meta['done_extra']），
+# 与第一遍的请求缓存互不影响；POI 合并进同一个 pois.json。
+TYPES_EXTRA = '020000|030000|040000'
 # v5 多边形搜索：count 只是“本页条数”（不是总数），以“满页”判断是否还有更多
 PAGE = 25            # v5 page_size 上限
 SPLIT_PAGES = 8      # 一格超过 8 页（200 条）就四分细分
@@ -160,13 +164,14 @@ def _poi_key(p):
     return p.get('id') or (str(p.get('name', '')) + str(p.get('location', '')))
 
 
-def poi_cell(cli, w, s, e, n, out, stat, depth=0):
+def poi_cell(cli, w, s, e, n, out, stat, depth=0, types=None):
     """抓一个 GCJ 矩形里的全部 POI。v5 的 count 只是本页条数，不能当总数用：
     第 1 页不满 → 这一格就这么多；满页 → 探第 9 页：有数据（> 200 条）且还能细分就四分递归，
     否则逐页翻到短页为止（不能再分的最小格最多翻到第 100 页，仍满页则打印截断警告）。
     请求失败（AmapCellError）记入 stat['failed']，不当成空格。"""
     poly = f'{w:.6f},{n:.6f}|{e:.6f},{s:.6f}'
-    base = {'polygon': poly, 'types': TYPES, 'page_size': PAGE, 'show_fields': 'business'}
+    types = types or TYPES
+    base = {'polygon': poly, 'types': types, 'page_size': PAGE, 'show_fields': 'business'}
 
     def page(k):
         ps = cli.get('/v5/place/polygon', {**base, 'page_num': k}).get('pois') or []
@@ -181,7 +186,7 @@ def poi_cell(cli, w, s, e, n, out, stat, depth=0):
         if can_split and page(SPLIT_PAGES + 1):
             mx, my = (w + e) / 2, (s + n) / 2
             for (a, b, c, d) in ((w, my, mx, n), (mx, my, e, n), (w, s, mx, my), (mx, s, e, my)):
-                poi_cell(cli, a, b, c, d, out, stat, depth + 1)
+                poi_cell(cli, a, b, c, d, out, stat, depth + 1, types)
             return
         last = SPLIT_PAGES if can_split else MAX_PAGE
         for k in range(2, last + 1):
@@ -195,19 +200,21 @@ def poi_cell(cli, w, s, e, n, out, stat, depth=0):
         print(f'  ！网格 {poly} 请求失败：{ex}（不计入已完成范围，重新运行会重试）', flush=True)
 
 
-def cmd_poi(cli, bbox, cell):
+def cmd_poi(cli, bbox, cell, extra=False):
     mf = CACHE / 'meta.json'
     meta = json.loads(mf.read_text('utf-8')) if mf.exists() else {}
     meta.setdefault('boxes', [])
     if list(bbox) not in meta['boxes']:
         meta['boxes'].append(list(bbox))   # 只作记录；merge 以 done（整格抓完的初始网格，GCJ 边界）为准
-    done = {tuple(c) for c in meta.get('done', [])}
+    dkey = 'done_extra' if extra else 'done'
+    types = TYPES_EXTRA if extra else TYPES
+    done = {tuple(c) for c in meta.get(dkey, [])}
     out = {}
 
     def flush(quiet):
         # 先存 POI 再存 done：done 里的格子，其 POI 一定已经落盘
         save_pois(out, quiet)
-        meta['done'] = sorted(done)
+        meta[dkey] = sorted(done)
         mf.parent.mkdir(parents=True, exist_ok=True)
         mf.write_text(json.dumps(meta), 'utf-8')
 
@@ -220,7 +227,9 @@ def cmd_poi(cli, bbox, cell):
             for k in range(ny):
                 c = (w + i * cell, s + k * cell, min(e, w + (i + 1) * cell), min(n, s + (k + 1) * cell))
                 nf = len(stat['failed'])
-                poi_cell(cli, *c, out, stat)
+                if tuple(round(v, 6) for v in c) in done:
+                    continue   # 整格已抓完（续传：请求缓存命中也要走一遍网络判断，直接跳过更快）
+                poi_cell(cli, *c, out, stat, 0, types)
                 if len(stat['failed']) == nf:
                     done.add(tuple(round(v, 6) for v in c))
             flush(True)
@@ -323,7 +332,8 @@ POI_KIND_MAP = {
 }
 POI_KIND_T2 = {'05': ('restaurant', 1), '06': ('shop', 1), '07': ('shop', 1), '08': ('leisure', 1), '09': ('clinic', 1),
                '10': ('hotel', 1), '11': ('attraction', 1), '12': ('landmark', 0), '13': ('townhall', 1), '14': ('school', 1),
-               '15': ('transport', 0), '16': ('bank', 1), '01': ('fuel', 1)}
+               '15': ('transport', 0), '16': ('bank', 1), '01': ('fuel', 1),
+               '02': ('shop', 1), '03': ('shop', 1), '04': ('shop', 1)}   # 汽车销售 / 汽车维修 / 摩托车服务（4S 店、汽修、车行）
 # 国铁大站（与 build_data.POI_FAMOUS / 现有 pois.json 的 i=3 车站一致）：traffic.js 只让国铁/高铁在 i>=3 的车站停车
 MAJOR_STATION_RE = re.compile(r'^(西安(北|东|南|西)?|阿房宫|咸阳(西)?|引镇)站$')
 PAREN_RE = re.compile(r'[（(][^）)]*[）)]')
@@ -454,6 +464,16 @@ def _sha1(path):
     return hashlib.sha1(path.read_bytes()).hexdigest() if path.exists() else ''
 
 
+# 高德衍生数据只写本地目录 public/data/local/（.gitignore；前端 src/core/data.js 优先读它），不覆盖仓库里的 OSM 版本：
+# 高德服务条款只允许个人本地使用，合并结果不能随仓库推送到 GitHub。底稿永远是仓库里的 public/data/<name>。
+LOCAL = DATA / 'local'
+
+
+def local_out(name):
+    LOCAL.mkdir(parents=True, exist_ok=True)
+    return LOCAL / name
+
+
 def merge_base(src, bak, tag):
     """merge 的底稿 data-src/*.before_amap.json。public/data 下的文件若已不是上次 merge 写出的
     （build_data.py / roads_update.py 重新生成过），就用它刷新底稿——否则会用旧底稿把新数据覆盖掉。"""
@@ -510,9 +530,7 @@ def merge_pois(core_cap=20000):
     import shapely
     A = json.loads(f.read_text('utf-8'))
     src = DATA / 'pois.json'
-    bak = ROOT / 'data-src' / 'pois.before_amap.json'
-    merge_base(src, bak, 'pois')
-    osm = json.loads(bak.read_text('utf-8'))['pois']
+    osm = json.loads(src.read_text('utf-8'))['pois']   # 底稿：仓库里的 OSM 版本
     out, seen = [], set()
     kinds = Counter()
     near = defaultdict(list)   # (类别, 名称) → 已收坐标：车站、地铁口同名近距离只留一个
@@ -603,9 +621,9 @@ def merge_pois(core_cap=20000):
             continue
         out.append(p)
     out = cap_core(out, core_cap)
-    with open(src, 'w', encoding='utf-8') as fp:
+    dst = local_out('pois.json')
+    with open(dst, 'w', encoding='utf-8') as fp:
         json.dump({'pois': out}, fp, ensure_ascii=False, separators=(',', ':'))
-    merge_done('pois', src)
     print(f'pois.json：OSM {len(osm)}（被高德替换 {n_rep}）→ 合并后 {len(out)} 条（高德类别 {kinds.most_common(12)}）')
 
 
@@ -740,9 +758,7 @@ def merge_roads():
     from shapely.strtree import STRtree
     from build_data import ROAD_LANE_W, ROAD_LANES_TWOWAY, ROAD_EXTRA_TWOWAY, ROAD_LANES_ONEWAY, ROAD_EXTRA_ONEWAY
     src = DATA / 'roads.json'
-    bak = ROOT / 'data-src' / 'roads.before_amap.json'
-    merge_base(src, bak, 'roads')
-    R = json.loads(bak.read_text('utf-8'))
+    R = json.loads(src.read_text('utf-8'))   # 底稿：仓库里的 OSM 版本
     cls = R['classes']
     ci = {c: i for i, c in enumerate(cls)}
     feats = R['features']
@@ -1013,9 +1029,8 @@ def merge_roads():
         added += 1
         two += nf['two']
         km += shapely.LineString(q).length / 1000
-    with open(src, 'w', encoding='utf-8') as fp:
+    with open(local_out('roads.json'), 'w', encoding='utf-8') as fp:
         json.dump(R, fp, ensure_ascii=False, separators=(',', ':'))
-    merge_done('roads', src)
     print(f'roads.json：新增高德路段 {added} 段 {km:.1f} km（双向 {two}、单向 {added - two}），端点吸附 {snapped} 处、'
           f'平交路口 {crossed} 处（向 {len(touched)} 条已有道路插入节点），斜穿处不断开 {gaps} 处，为原无名路段补路名 {named} 段')
 
@@ -1188,8 +1203,7 @@ def merge_extra():
         rsrc = DATA / 'rail.json'
         rbak = ROOT / 'data-src' / 'rail.before_amap.json'
         if rsrc.exists():
-            merge_base(rsrc, rbak, 'rail')
-            R = json.loads(rbak.read_text('utf-8'))
+            R = json.loads(rsrc.read_text('utf-8'))
             sub = R['classes'].index('subway')
             have = set()
             for ft in R['features']:
@@ -1200,9 +1214,9 @@ def merge_extra():
             for L in add:
                 R['features'].append({'c': sub, 'n': f'西安地铁{L["num"]}号线', 'w': 3.0, 'l': 1, 'o': 0, 'b': 0, 't': 0,
                                       'y': -1, 'p': L['p'], 'src': 'amap'})
-            with open(rsrc, 'w', encoding='utf-8') as fp:
+            with open(local_out('rail.json'), 'w', encoding='utf-8') as fp:
                 json.dump(R, fp, ensure_ascii=False, separators=(',', ':'))
-            merge_done('rail', rsrc)
+            pass
             print(f'rail.json：补 OSM 缺失的地铁线 {len(add)} 条（{", ".join(L["n"] for L in add) or "无"}）')
         print(f'地铁：{len(lines)} 条线，{sum(len(L["s"]) for L in lines)} 站次')
     df = CACHE / 'district.json'
@@ -1238,9 +1252,9 @@ def merge_extra():
         ex['places'] = pl
         print(f'地标定位：{len(pl)} 个')
     if len(ex) > 1:
-        with open(DATA / 'amap_extra.json', 'w', encoding='utf-8') as fp:
+        with open(local_out('amap_extra.json'), 'w', encoding='utf-8') as fp:
             json.dump(ex, fp, ensure_ascii=False, separators=(',', ':'))
-        print(f'已写出 {DATA / "amap_extra.json"}')
+        print(f'已写出 {LOCAL / "amap_extra.json"}')
     else:
         print('没有地铁/区划/商圈/地标缓存，跳过 amap_extra.json（先运行 metro / district / poi / place）')
 
@@ -1261,7 +1275,7 @@ def load_dotenv():
 def main():
     load_dotenv()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('cmd', choices=['poi', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
+    ap.add_argument('cmd', choices=['poi', 'poi2', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
     ap.add_argument('--key', default=os.environ.get('AMAP_KEY', ''))
     ap.add_argument('--bbox', default=','.join(map(str, DEFAULT_BBOX)), help='WGS-84 西,南,东,北')
     ap.add_argument('--cell', type=float, default=0.01, help='POI 初始网格（度）')
@@ -1274,9 +1288,10 @@ def main():
         n = sum(1 for _ in (CACHE / 'req').rglob('*.json')) if (CACHE / 'req').exists() else 0
         p = CACHE / 'pois.json'
         mf = CACHE / 'meta.json'
-        done = len(json.loads(mf.read_text('utf-8')).get('done') or []) if mf.exists() else 0
+        mm = json.loads(mf.read_text('utf-8')) if mf.exists() else {}
+        done, done2 = len(mm.get('done') or []), len(mm.get('done_extra') or [])
         print(f'已缓存请求 {n} 个；POI {len(json.loads(p.read_text("utf-8"))) if p.exists() else 0} 条；'
-              f'已完成初始网格 {done} 个；道路缓存 {"有" if (CACHE / "roads.json").exists() else "无"}')
+              f'已完成初始网格 {done} 个（汽车/摩托类第二遍 {done2} 个）；道路缓存 {"有" if (CACHE / "roads.json").exists() else "无"}')
         return
     if a.cmd == 'merge':
         merge_pois(a.core_cap)
@@ -1294,6 +1309,8 @@ def main():
         cmd_place(cli, place_names())
     if a.cmd in ('poi', 'all'):
         cmd_poi(cli, bbox, a.cell)
+    if a.cmd in ('poi2', 'all'):
+        cmd_poi(cli, bbox, a.cell, extra=True)
     if a.cmd in ('roads', 'all'):
         cmd_roads(cli, bbox)
 

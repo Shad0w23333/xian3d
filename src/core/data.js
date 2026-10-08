@@ -36,6 +36,22 @@ async function track(name, fn) {
   }
 }
 
+// 本地覆盖：tools/amap_fetch.py merge 把高德衍生数据写到 public/data/local/（.gitignore，不入库——高德服务条款只允许
+// 个人本地使用）。这些文件存在时优先读取，否则用仓库里的 OSM 版本。
+const LOCAL_OVERRIDE = new Set(['pois.json', 'roads.json', 'rail.json', 'amap_extra.json']);
+async function fetchData(name) {
+  if (LOCAL_OVERRIDE.has(name)) {
+    try {
+      const r = await fetch(BASE + 'local/' + name);
+      if (r.ok && !(r.headers.get('content-type') || '').includes('text/html')) {
+        console.info('[data] 使用本地高德数据', 'local/' + name);
+        return r;
+      }
+    } catch (e) { /* 没有本地覆盖 */ }
+  }
+  return fetch(BASE + name);
+}
+
 /** 读取原始字节（自动处理 gzip） */
 export async function loadBytes(name, { optional = false } = {}) {
   return track(name, async () => {
@@ -44,7 +60,7 @@ export async function loadBytes(name, { optional = false } = {}) {
     if (emb) {
       bytes = b64ToBytes(emb);
     } else {
-      const res = await fetch(BASE + name);
+      const res = await fetchData(name);
       // 开发服务器对缺失文件会回退 index.html
       const html = (res.headers.get('content-type') || '').includes('text/html') && !name.endsWith('.html');
       if (!res.ok || html) {
