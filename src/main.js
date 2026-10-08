@@ -8,7 +8,7 @@ import { SkySystem } from './core/sky.js';
 import { Controls } from './core/controls.js';
 import { Post } from './core/post.js';
 import { LightPool } from './core/lightpool.js';
-import { Labels } from './core/labels.js';
+import { Labels, LabelSpace } from './core/labels.js';
 import { Exclusions } from './core/exclusions.js';
 import { createContext } from './core/context.js';
 import { UI } from './core/ui.js';
@@ -20,6 +20,7 @@ import { setupThematic } from './core/thematic.js';
 import { DisplaySettings } from './core/display.js';
 import { buildDisplayPanel } from './core/display-ui.js';
 import { setupInfoCard } from './core/infocard.js';
+import { Occluders, OCCLUDER_MODULES } from './core/occluders.js';
 
 installHeightFog();
 
@@ -161,6 +162,18 @@ async function main() {
   const labels = new Labels(root);
   const exclusions = new Exclusions();
   const ctx = createContext({ renderer, scene, camera, terrain, imagery, sky: null, lights, labels, exclusions, quality, data, meta });
+  // 遮挡体登记：精建模块的实体（标注视线遮挡 + 相机建筑内推出），见 core/occluders.js
+  const occluders = new Occluders(terrain);
+  ctx.occluders = occluders;
+  app.occluders = occluders;
+  /** 视线遮挡（标注共用）：通用建筑真实轮廓 + 精建模块遮挡体；终点留 m1 米不算（锚点贴着地标本身） */
+  ctx.lineBlocked = (ax, ay, az, bx, by, bz, m1) => {
+    const L = Math.hypot(bx - ax, bz - az);
+    const end = m1 ?? Math.min(40, Math.max(6, L * 0.03));
+    if (occluders.segmentBlocked(ax, ay, az, bx, by, bz, 1, end)) return true;
+    const b = ctx.modules.buildings;
+    return !!(b && b.occluded && b.occluded(ax, ay, az, bx, by, bz));
+  };
   const sky = new SkySystem(renderer, scene, ctx.uniforms, quality);
   ctx.sky = sky;
   app.ctx = ctx;
@@ -206,6 +219,7 @@ async function main() {
       for (let k = nChildren; k < scene.children.length; k++) scene.children[k].userData.module ??= mod.id;
       inst.id = mod.id;
       inst.name = mod.name;
+      if (OCCLUDER_MODULES.has(mod.id)) for (let k = nChildren; k < scene.children.length; k++) occluders.addObject(scene.children[k]);
       instances.push(inst);
       ctx.modules[mod.id] = inst;
       console.log(`[module] ${mod.id} 构建完成 ${(performance.now() - t0).toFixed(0)} ms`);
@@ -252,13 +266,38 @@ async function main() {
     return { p, t };
   };
   const allPresets = [...PRESETS, ...PRESETS_EXTRA];
+  // —— 建筑碰撞 / 落点推出：通用建筑（真实轮廓棱柱）+ 精建模块遮挡体 ——
+  const bldSolid = (x, y, z) => {
+    const b = ctx.modules.buildings;
+    return !!(b && b.occluded && b.occluded(x - 0.2, y, z, x + 0.2, y, z, 0, true) >= 0);
+  };
+  controls.solid = (x, y, z) => occluders.solidAt(x, y, z) || bldSolid(x, y, z);
+  /** 某处附近（400 m）的遮挡体还没栅格化完：优先做完（同步，最多约 1.5 s） */
+  const occNear = (x, z, r = 400) => {
+    if (!occluders.queue.length) return;
+    occluders.prioritize(x, z);
+    if (occluders.queue[0].d > r) return;
+    const t0 = performance.now();
+    while (occluders.queue.length && occluders.queue[0].d <= r && performance.now() - t0 < 1500) occluders.process(50, r);
+  };
+  app.occNear = occNear;
   const setView = (v, instant) => {
     const { p, t } = resolveView(v);
     if (instant) {
-      camera.position.copy(p);
+      occNear(p.x, p.z);
+      camera.position.copy(controls.resolve(p, t));
       camera.lookAt(t);
       controls._syncAnglesFromCamera();
-    } else controls.flyTo(p, t);
+    } else {
+      // 平滑飞行：不同步等待栅格化（避免按键卡顿），只把目的地附近排到队首，飞行途中后台做完；到达后若落在实体内再推出
+      if (occluders.queue.length) occluders.prioritize(p.x, p.z);
+      controls.flyTo(p, t, {
+        onArrive: () => {
+          occNear(p.x, p.z, 200);
+          controls.ensureFree();
+        },
+      });
+    }
     if (v.hours != null) sky.setHours(v.hours, !instant);
   };
   let startView = START_VIEW;
@@ -275,6 +314,11 @@ async function main() {
     startView = { pos: [a[0], a[1], a[2]], target: [a[3], a[4], a[5]], agl: true };
   }
   setView(startView, true);
+  occluders.onIdle = () => {
+    const s = occluders.stats();
+    console.log(`[occluders] 遮挡体 ${s.meshes} 个网格 / ${(s.tris / 1e6).toFixed(2)}M 三角形 → ${s.tiles} 块（${s.mb} MB），累计 ${s.ms} ms`);
+    if (controls.ensureFree()) console.log('[occluders] 相机落在实体内，已推出');
+  };
   if (params.get('time')) sky.setHours(parseFloat(params.get('time')));
   if (params.get('orbit') === '1') controls.setMode('orbit');
 
@@ -302,13 +346,92 @@ async function main() {
     setView(v, false);
     ui.toast(`前往：${v.name}`);
   };
-  // 画质预设：填充“画质与显示”各细项并增量应用（core/display.js）
-  const applyQuality = (i) => {
-    qIndex = THREE.MathUtils.clamp(i | 0, 0, QUALITY_LEVELS.length - 1);
-    display.applyPreset(qIndex);
-    quality = ctx.quality;
-    ui.toast(`画质：${QUALITY_LEVELS[qIndex].name}`);
+  // —— 着色器预编译：点光源数量 / 阴影开关 / 环境贴图变化会让几乎所有材质重新编译（实测 4→12 盏灯单帧卡 0.8~1.6 s，
+  //    从“低”切到“超高”连续几次累计 5 s 以上）。改为：暂停出图 → 按场景子树分帧提交编译（KHR_parallel_shader_compile 后台编译）
+  //    → 全部就绪后恢复出图。主线程不再长时间阻塞，界面（提示、按钮）保持响应。
+  const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+  /** 在后期管线的 HDR 渲染目标下编译（程序参数里的色调映射/输出色彩空间与实际出图一致，否则首帧会全部再编译一遍） */
+  const compileInSceneTarget = (obj) => {
+    const prev = renderer.getRenderTarget();
+    renderer.setRenderTarget(post.composer?.renderTarget1 || null);
+    try {
+      return renderer.compileAsync(obj, camera, scene).catch(() => {});
+    } finally {
+      renderer.setRenderTarget(prev);
+    }
   };
+  let compileJob = null;
+  const precompile = () => {
+    if (compileJob) return compileJob;
+    compileJob = (async () => {
+      const t0 = performance.now();
+      app.compiling = true;
+      try {
+        await nextFrame();
+        // 编译单元：网格很多的组拆成子树（每个单元同步部分 ≤ 十几毫秒，按帧切片提交）
+        const units = [];
+        const split = (o, depth) => {
+          let n = 0;
+          o.traverse((m) => { if (m.isMesh) n++; });
+          if (n > 120 && depth < 4 && !o.isMesh && o.children.length > 1) for (const c of o.children) split(c, depth + 1);
+          else if (n) units.push(o);
+        };
+        for (const c of scene.children) split(c, 0);
+        const jobs = [];
+        let tSlice = performance.now();
+        for (const u of units) {
+          jobs.push(compileInSceneTarget(u));
+          if (performance.now() - tSlice > 16) {
+            await nextFrame();
+            tSlice = performance.now();
+          }
+        }
+        await Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 10000))]);
+        // 首次使用时取 uniform/attribute 位置也是同步调用（几百个程序累计可达 0.5~1 s），同样分帧预取
+        tSlice = performance.now();
+        for (const p of renderer.info.programs || []) {
+          try { p.getUniforms(); p.getAttributes(); } catch {}
+          if (performance.now() - tSlice > 12) {
+            await nextFrame();
+            tSlice = performance.now();
+          }
+        }
+      } finally {
+        app.compiling = false;
+        compileJob = null;
+        app.lastCompileMs = Math.round(performance.now() - t0);
+      }
+    })();
+    return compileJob;
+  };
+  app.precompile = precompile;
+  let qSwitching = false;
+  // 画质预设：填充“画质与显示”各细项并增量应用（core/display.js），随后后台预编译着色器
+  const applyQuality = async (i) => {
+    qIndex = THREE.MathUtils.clamp(i | 0, 0, QUALITY_LEVELS.length - 1);
+    const name = QUALITY_LEVELS[qIndex].name;
+    ui.setQualityActive(qIndex);
+    ui.setQualityBusy?.(true);
+    ui.toast(`正在切换画质：${name}（编译着色器）……`, 12000);
+    qSwitching = true;
+    try {
+      await nextFrame();
+      await nextFrame(); // 先让提示显示出来
+      display.applyPreset(qIndex);
+      quality = ctx.quality;
+      await precompile();
+    } finally {
+      qSwitching = false;
+      ui.setQualityBusy?.(false);
+    }
+    ui.toast(`画质：${name}${app.lastCompileMs > 300 ? `（着色器编译 ${(app.lastCompileMs / 1000).toFixed(1)} s）` : ''}`);
+  };
+  // “画质与显示”面板里单项改动同样可能触发全体重编译（灯数 / 阴影 / 环境反射）
+  display.onChange((d, ch) => {
+    if (!app.ready || qSwitching || !['pointLights', 'shadows', 'ibl'].some((k) => ch.has(k))) return;
+    ui.toast('正在编译着色器……', 12000);
+    precompile().then(() => ui.toast('显示设置已应用'));
+  });
   const layers = { traffic: true, labels: true, buildings: true, districts: false };
   const setLayer = (name, v) => {
     layers[name] = v;
@@ -343,19 +466,47 @@ async function main() {
   ui.on('buildings', (v) => setLayer('buildings', v));
   ui.on('districts', (v) => setLayer('districts', v));
   // —— 地铁：透视俯视 / 进入地下 ——
+  // 透视俯视 / 地下浏览时，地面路名、小区名和地面地名不再显示（只留地铁站名），退出时恢复原开关状态
+  let metroSaved = null;
+  const GROUND_CATS = ['landmark', 'district', 'airport', 'station', 'street', 'admin', 'town', 'biz', 'metro'];
+  const metroLabels = (quiet, hideGround = false) => {
+    if (quiet) {
+      if (!metroSaved) {
+        const th = app.thematic && app.thematic.state;
+        metroSaved = { rn: th ? th.roadnames : true, es: th ? th.estates : true, hidden: new Set(labels.hidden) };
+        app.setRoadNames?.(false);
+        app.setEstates?.(false);
+      }
+      if (hideGround) for (const c of GROUND_CATS) labels.hidden.add(c);
+    } else if (metroSaved) {
+      app.setRoadNames?.(metroSaved.rn && layers.labels);
+      app.setEstates?.(metroSaved.es && layers.labels);
+      for (const c of GROUND_CATS) labels.hidden.delete(c);
+      for (const c of metroSaved.hidden) if (GROUND_CATS.includes(c)) labels.hidden.add(c);
+      metroSaved = null;
+    }
+  };
   const metroXray = () => {
     const m = ctx.metro;
     if (!m) return ui.toast('地铁数据未加载');
-    if (m.underground) m.setUnder(false);
+    if (m.underground) {
+      m.setUnder(false);
+      metroLabels(false);
+      ui.setMetroUnder?.(false);
+    }
     m.setXray(!m.xray);
+    metroLabels(m.xray, true);
     ui.setLayer('metro', m.xray);
     ui.toast(m.xray ? '地铁透视：线网按官方色显示（X 返回）' : '已退出地铁透视');
   };
   const metroUnder = () => {
     const m = ctx.metro;
     if (!m) return ui.toast('地铁数据未加载');
+    if (m.xray) metroLabels(false);
     m.setUnder(!m.underground);
+    metroLabels(m.underground);
     ui.setLayer('metro', false);
+    ui.setMetroUnder?.(m.underground);
     ui.toast(m.underground ? `已进入地铁 ${m.station} 站（G 切换步行/飞行，U 返回地面）` : '已返回地面');
   };
   app.metroXray = metroXray;
@@ -378,10 +529,11 @@ async function main() {
   const thematic = setupThematic({ app, ctx, ui, root, params });
   app.thematic = thematic;
   // 地标/片区标注：被建筑挡住时隐藏
-  labels.occ = (ax, ay, az, bx, by, bz) => {
-    const b = ctx.modules.buildings;
-    return b && b.occluded ? b.occluded(ax, ay, az, bx, by, bz) : false;
-  };
+  labels.occ = ctx.lineBlocked;
+  labels.groundAt = (x, z) => terrain.heightAt(x, z);
+  labels.occVersion = () => occluders.version;
+  const labelSpace = new LabelSpace();
+  app.labelSpace = labelSpace;
 
   // —— 左上角“西安时讯”卡片：北京时间/农历节气、实时天气与空气质量、网络广播（见 core/infocard.js） ——
   app.infoCard = setupInfoCard({ root, ui, sky, display, params });
@@ -485,6 +637,7 @@ async function main() {
   const clock = new THREE.Clock();
   let fps = 60, frames = 0, fpsT = 0, elapsed = 0;
   const prevPos = camera.position.clone();
+  const lastLabelPos = camera.position.clone();
   let speed = 0;
   app.frame = 0;
   const tick = () => {
@@ -493,6 +646,8 @@ async function main() {
     const dt = Math.min(clock.getDelta(), 0.1);
     elapsed += dt;
     app.frame++;
+    // 遮挡体分帧栅格化（相机附近优先；全部完成后若相机落在实体内则推出）
+    if (occluders.queue.length) occluders.process(app.frame < 30 ? 2 : 4);
     controls.update(dt);
     // 动态近裁剪面：高空时增大，提升深度精度
     const agl = camera.userData.agl || 0;
@@ -518,9 +673,18 @@ async function main() {
     lights.update(camera, sky.night);
     post.update(sky.night);
     renderer.info.reset();
-    post.render(dt);
-    labels.update(camera, window.innerWidth, window.innerHeight);
-    thematic.update(camera, window.innerWidth, window.innerHeight);
+    // 预编译着色器期间暂停出图（画面停在上一帧），避免渲染时同步等待编译造成长卡顿
+    if (!app.compiling) post.render(dt);
+    // 标注：三套（地名 → 路名 → 小区名）每 2 帧共用一张屏幕占用表，按离地高度整体限量
+    // 相机瞬移（预设跳转/ll 定位/推出）后当帧就刷新，不留上一机位的残影
+    const jumped = camera.position.distanceToSquared(lastLabelPos) > 900;
+    if ((app.frame % 2 === 0 || jumped) && !app.compiling) {
+      lastLabelPos.copy(camera.position);
+      const W = window.innerWidth, H = window.innerHeight;
+      labelSpace.begin(camera, W, H);
+      labels.update(camera, W, H, labelSpace);
+      thematic.update(camera, W, H, labelSpace);
+    }
 
     speed = speed * 0.9 + (camera.position.distanceTo(prevPos) / Math.max(dt, 1e-3)) * 0.1;
     prevPos.copy(camera.position);
@@ -539,7 +703,8 @@ async function main() {
       speed,
       mode: controls.mode,
       locked: controls.locked,
-      place: placeName(camera.position.x, camera.position.z),
+      place: ctx.metro && ctx.metro.underground ? `地下 · 地铁${ctx.metro.station || ''}站` : placeName(camera.position.x, camera.position.z),
+      under: !!(ctx.metro && ctx.metro.underground),
       online: imagery.online.enabled ? `${imagery.provider.local ? '本地' : imagery.online.status} · 缓存 ${imagery.cache.size}` : '离线',
       stats: `绘制 ${info.calls} 次 · ${(info.triangles / 1e6).toFixed(2)}M 三角形 · 地形块 ${terrain.visibleCount}`,
     });
@@ -550,7 +715,7 @@ async function main() {
   // 预热一帧（编译着色器）后再移除加载页
   ui.setLoading(0.97, '编译着色器……');
   try {
-    await renderer.compileAsync(scene, camera);
+    await compileInSceneTarget(scene);
   } catch (e) {
     console.warn('compileAsync 失败', e);
   }
@@ -566,6 +731,8 @@ async function main() {
     terrain,
     imagery,
     goto: goPreset,
+    presets: allPresets,
+    resolveView,
     setView: (v) => setView(v, true),
     setHours: (hrs) => sky.setHours(hrs),
     setQuality: applyQuality,

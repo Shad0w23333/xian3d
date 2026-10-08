@@ -1,5 +1,7 @@
-// 左上角“西安时讯”卡片（位置信息卡下方，独立、可折叠、可拖动）：
-//   · 时间：北京时间（Asia/Shanghai）年月日/星期/时分秒、农历与节气、节日；“场景同步当前时间”让昼夜跟随现实
+// 左上角“西安时讯”卡片（位置信息卡下方，独立、可折叠、可拖动；默认折叠成一行，不挡画面）：
+//   · 时间：现实北京时间（Asia/Shanghai）年月日/星期/时分秒、农历与节气、节日；与“场景时间”并列显示，
+//     不一致时提示“场景时间与现实不同”，可一键“场景同步当前时间”让昼夜跟随现实
+//   · 天气为现实中的实时天气（与场景的白天/夜景无关，明确标注“现实”）
 //   · 天气：Open-Meteo 实时天气 + 空气质量（免费、无需 Key、支持 CORS），每 10 分钟刷新；可选“天气同步到场景”（云量/雾）
 //   · 广播：西安/陕西网络广播（见 core/radio.js），多候选源自动回退
 // 用法（main.js）：setupInfoCard({ root, ui, sky, display, params })；URL 参数 infocard=0 关闭，ui=0 时不创建。
@@ -154,7 +156,13 @@ class InfoCard {
     this.ui = ui;
     this.sky = sky;
     this.display = display;
-    this.state = loadStore(STORE_KEY, { collapsed: false, tab: 'wx', pos: null, volume: 0.8, muted: false, station: null, wxSync: false, follow: false });
+    this.state = loadStore(STORE_KEY, { collapsed: true, tab: 'wx', pos: null, volume: 0.8, muted: false, station: null, wxSync: false, follow: false });
+    // 2026-10 起默认折叠（展开时与信息栏、小地图一起占满左栏）：旧存档里的“展开”迁移一次为折叠
+    if (!this.state.ui2) {
+      this.state.collapsed = true;
+      this.state.ui2 = true;
+      saveStore(STORE_KEY, this.state);
+    }
     if (params && params.has('time')) this.state.follow = false; // URL 指定了场景时间：不自动跟随现实时间
     this.wx = null; // { fc, aq, fetchedAt }
     this.wxError = null;
@@ -200,14 +208,15 @@ class InfoCard {
     el.innerHTML = `
       <header class="xc-head" title="拖动移动位置 · 双击恢复默认位置">
         <span class="xc-logo" aria-hidden="true">◷</span>
-        <div class="xc-title"><b>西安时讯</b><small>北京时间 · 天气 · 广播</small></div>
-        <span class="xc-mini"><b class="xc-mini-t">--:--</b><span class="xc-mini-w"></span><span class="xc-mini-r"></span></span>
+        <div class="xc-title"><b>西安时讯</b><small>现实时间 · 实时天气 · 广播</small></div>
+        <span class="xc-mini" title="现实中的北京时间与实时天气（不是场景里的时间）"><em class="xc-real">现实</em><b class="xc-mini-t">--:--</b><span class="xc-mini-w"></span><span class="xc-mini-r"></span></span>
         <button class="xc-fold" title="折叠 / 展开" aria-expanded="true">▾</button>
       </header>
       <div class="xc-body">
         <div class="xc-time">
-          <div class="xc-clock"><b class="xc-hms">--:--:--</b><span class="xc-tz">UTC+8</span></div>
+          <div class="xc-clock"><b class="xc-hms">--:--:--</b><span class="xc-tz">现实 · 北京时间</span></div>
           <div class="xc-date">—</div>
+          <div class="xc-scene" title="场景里的太阳/昼夜按这个时间计算（右侧面板时间滑块）">场景时间 <b class="xc-scene-t">--:--</b> <span class="xc-scene-s"></span></div>
           <div class="xc-lunar"></div>
           <div class="xc-tacts">
             <button class="xc-sync" title="把场景的太阳/昼夜设到当前北京时间">⟳ 场景同步当前时间</button>
@@ -215,7 +224,7 @@ class InfoCard {
           </div>
         </div>
         <nav class="xc-tabs" role="tablist">
-          <button data-tab="wx" role="tab">天气 · 空气</button>
+          <button data-tab="wx" role="tab">实时天气 · 空气</button>
           <button data-tab="radio" role="tab">网络广播<i class="xc-live" aria-hidden="true"></i></button>
         </nav>
         <div class="xc-player" hidden>
@@ -226,18 +235,19 @@ class InfoCard {
         </div>
         <div class="xc-pane xc-wx" data-pane="wx">
           <div class="xc-wx-msg">正在获取西安实时天气……</div>
+          <div class="xc-wx-note">现实中的西安天气（与场景的白天 / 夜景设置无关）</div>
           <div class="xc-wx-data" hidden>
             <div class="xc-now">
               <span class="xc-ico"></span>
               <div class="xc-temp"><b></b><small></small></div>
               <div class="xc-cond"><b></b><small></small></div>
             </div>
+            <div class="xc-aqi"></div>
             <div class="xc-wind">
               <span class="xc-arrow" title="">${ARROW_SVG}</span>
               <div><b class="xc-wind-a"></b><small class="xc-wind-b"></small></div>
             </div>
             <div class="xc-grid"></div>
-            <div class="xc-aqi"></div>
             <div class="xc-hours"></div>
           </div>
           <div class="xc-wx-foot">
@@ -416,7 +426,23 @@ class InfoCard {
       this._renderDate(t);
     }
     if (this.state.follow) this._followStep();
+    this._renderSceneTime(t);
     this._clockT = setTimeout(() => this._tick(), 1000 - (Date.now() % 1000) + 8);
+  }
+
+  /** 场景时间与现实时间对照（相差超过 10 分钟时提示不同步） */
+  _renderSceneTime(t) {
+    const sky = this.sky;
+    if (!sky || !Number.isFinite(sky.hours)) return;
+    const hs = ((sky.hours % 24) + 24) % 24;
+    const hh = Math.floor(hs), mm = Math.floor((hs - hh) * 60);
+    this.$('.xc-scene-t').textContent = `${pad(hh)}:${pad(mm)}`;
+    let d = Math.abs(hs - (t.h + t.mi / 60));
+    d = Math.min(d, 24 - d);
+    const el = this.$('.xc-scene-s');
+    const night = (sky.night ?? 0) > 0.5;
+    el.textContent = d < 1 / 6 ? '（与现实同步）' : `（${night ? '夜景' : '白天'}，与现实不同步）`;
+    el.classList.toggle('diff', d >= 1 / 6);
   }
 
   _renderDate(t) {

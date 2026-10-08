@@ -4,10 +4,12 @@
 //     同名锚点在 0.75×spacing 半径内去重（双向分幅道路/多段同名道路只留一个）；急弯处不放
 //   · 显示距离（相机到锚点的三维距离）：高速/快速/主干道 1.5 km，次干道 1.15 km，支路 900 m，街巷/匝道 650 m
 //   · 每 2 帧：查询相机附近网格 → 投影 → 屏幕上的道路方向角（文字始终正读，不倒置）→ 按等级/距离排序
-//     → 旋转矩形分离轴碰撞检测 + 同名屏幕间距 → 复用 DOM 节点池
+//     → 与地名、小区名共用屏幕占用表（LabelSpace，旋转矩形碰撞）+ 同名全屏只留一个 → 复用 DOM 节点池
+//   · 道路模块不画的路段（排除区 roads=true：步行街、档案建筑/下沉广场内部）不显示机动车路名；
+//     步行街排除区改为沿街显示步行街名（如“大唐不夜城步行街”）
 import * as THREE from 'three';
 import { roadY } from './roadheight.js';
-import { aglScale, occludedCached, inFront } from './labels.js';
+import { aglScale, occludedCached, inFront, LabelSpace } from './labels.js';
 
 const CELL = 300;
 // 等级：0 高速/快速/主干 1 次干道 2 支路 3 街巷/匝道/步行街
@@ -15,27 +17,32 @@ const TIER_OF_CLASS = [0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3];
 const TIER_MAXD = [1500, 1150, 900, 650];
 const TIER_SPACING = [420, 340, 260, 200];
 const TIER_FONT = [15, 14, 13, 12];
-const MAX_VISIBLE = 44;
+// 排除区名称 → 显示的步行街名
+const WALK_ALIAS = [[/不夜城步行街/, '大唐不夜城步行街']];
 
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 
 export class RoadNames {
-  /** container：DOM 父节点；roads：roads.json；terrain：地形（heightAt） */
-  constructor(container, roads, terrain) {
+  /** container：DOM 父节点；roads：roads.json；terrain：地形（heightAt）；exclusions：排除区（可选） */
+  constructor(container, roads, terrain, exclusions = null) {
     this.root = document.createElement('div');
     this.root.className = 'rnames';
     container.appendChild(this.root);
     this.visible = true;
     /** 视线遮挡函数，由 thematic.js 注入（建筑模块的 occluded） */
     this.occ = null;
+    this.occVersion = () => 0;
+    this._own = new LabelSpace();
     this.pool = [];
     this.used = 0;
     this._frame = 0;
     this.grid = new Map();
     this.anchors = [];
     const t0 = performance.now();
+    this._noRoad = (exclusions?.items || []).filter((it) => it.flags && it.flags.roads);
     this._build(roads, terrain);
+    this._walkStreets(terrain);
     console.log(`[roadnames] 路名锚点 ${this.anchors.length} 个（${this.names.length} 条路名），${(performance.now() - t0).toFixed(0)} ms`);
   }
 
@@ -114,6 +121,7 @@ export class RoadNames {
         const dl = Math.hypot(dx, dz) || 1;
         dx /= dl;
         dz /= dl;
+        if (this._inNoRoad(x, z)) continue; // 道路模块不画的路段（步行街 / 楼内 / 下沉广场）
         const y = roadY(terrain, f, x, z, s, L) ?? terrain.heightAt(x, z);
         let ni = nameIdx.get(f.n);
         if (ni == null) {
@@ -122,12 +130,65 @@ export class RoadNames {
           this.names.push(f.n);
         }
         mark(f.n, x, z);
-        const an = { x, y: y + 1.2, z, dx, dz, tier, name: f.n, ni };
-        this.anchors.push(an);
-        const key = Math.floor(x / CELL) * 100003 + Math.floor(z / CELL);
-        let a = this.grid.get(key);
-        if (!a) this.grid.set(key, (a = []));
-        a.push(an);
+        this._push({ x, y: y + 1.2, z, dx, dz, tier, name: f.n, ni, bi: this._baseIdx(f.n) });
+      }
+    }
+    this._nameIdx = nameIdx;
+  }
+
+  /** 路名主干（去掉“东段/西段/辅路”等后缀）的编号：中低空时同一主干全屏只标一次（“环城北路”“环城北路西段”不交替重复） */
+  _baseIdx(name) {
+    if (!this._bases) this._bases = new Map();
+    const b = name.replace(/(?:[东西南北中]段)?(?:辅路)?$/, '') || name;
+    let i = this._bases.get(b);
+    if (i == null) this._bases.set(b, (i = this._bases.size));
+    return i;
+  }
+
+  _push(an) {
+    this.anchors.push(an);
+    const key = Math.floor(an.x / CELL) * 100003 + Math.floor(an.z / CELL);
+    let a = this.grid.get(key);
+    if (!a) this.grid.set(key, (a = []));
+    a.push(an);
+  }
+
+  _inNoRoad(x, z) {
+    for (const it of this._noRoad) {
+      const b = it.bb;
+      if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+      const p = it.p;
+      let c = false;
+      for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
+        if (p[i + 1] > z !== p[j + 1] > z && x < ((p[j] - p[i]) * (z - p[i + 1])) / (p[j + 1] - p[i + 1]) + p[i]) c = !c;
+      }
+      if (c) return true;
+    }
+    return false;
+  }
+
+  /** 步行街排除区：沿长轴每 260 m 放一个步行街名锚点（方向 = 排除区长轴） */
+  _walkStreets(terrain) {
+    for (const it of this._noRoad) {
+      const alias = WALK_ALIAS.find(([re]) => re.test(it.name || ''));
+      if (!alias) continue;
+      const b = it.bb;
+      const w = b.x1 - b.x0, d = b.z1 - b.z0;
+      const alongZ = d >= w;
+      const L = alongZ ? d : w;
+      const name = alias[1];
+      let ni = this._nameIdx.get(name);
+      if (ni == null) {
+        ni = this.names.length;
+        this._nameIdx.set(name, ni);
+        this.names.push(name);
+      }
+      const n = Math.max(1, Math.round(L / 260));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) / n;
+        const x = alongZ ? (b.x0 + b.x1) / 2 : b.x0 + w * t;
+        const z = alongZ ? b.z0 + d * t : (b.z0 + b.z1) / 2;
+        this._push({ x, y: terrain.heightAt(x, z) + 1.2, z, dx: alongZ ? 0 : 1, dz: alongZ ? 1 : 0, tier: 2, name, ni, bi: this._baseIdx(name), walk: true });
       }
     }
   }
@@ -151,11 +212,19 @@ export class RoadNames {
     return e;
   }
 
-  update(camera, w, h) {
+  /** space：与地名/小区名共用的屏幕占用表（调用方每轮 begin）；不传时自用一张并隔帧更新 */
+  update(camera, w, h, space = null) {
     if (!this.visible) return;
-    if (++this._frame % 2) return;
+    if (!space) {
+      if (++this._frame % 2) return;
+      space = this._own;
+      space.begin(camera, w, h);
+    } else this._frame++;
     const cp = camera.position;
+    const agl = camera.userData.agl ?? 300;
     const kD = aglScale(camera, false);
+    // 人眼高度/低空：锚点抬到离路面约 4.5 m（不压在车顶上），只看近处
+    const lift = agl < 30 ? 3.3 : 0;
     const R = TIER_MAXD[0] * kD;
     const ci = Math.floor(cp.x / CELL), cj = Math.floor(cp.z / CELL), k = Math.ceil(R / CELL);
     const cand = [];
@@ -167,52 +236,60 @@ export class RoadNames {
         const arr = this.grid.get(i * 100003 + j);
         if (!arr) continue;
         for (const an of arr) {
-          const d = Math.hypot(an.x - cp.x, an.y - cp.y, an.z - cp.z);
+          const ay = an.y + lift;
+          const d = Math.hypot(an.x - cp.x, ay - cp.y, an.z - cp.z);
           const maxD = TIER_MAXD[an.tier] * kD;
           if (d > maxD) continue;
-          if (!inFront(camera, an.x, an.y, an.z)) continue;
-          _a.set(an.x, an.y, an.z).project(camera);
-          if (_a.z > 1 || _a.z < -1 || Math.abs(_a.x) > 1 || Math.abs(_a.y) > 1) continue;
+          if (!inFront(camera, an.x, ay, an.z)) continue;
+          _a.set(an.x, ay, an.z).project(camera);
+          if (Math.abs(_a.x) > 1 || Math.abs(_a.y) > 1) continue;
           const sx = (_a.x * 0.5 + 0.5) * w, sy = (-_a.y * 0.5 + 0.5) * h;
           const step = Math.max(4, d * 0.02);
-          _b.set(an.x + an.dx * step, an.y, an.z + an.dz * step).project(camera);
+          _b.set(an.x + an.dx * step, ay, an.z + an.dz * step).project(camera);
           let ex = (_b.x * 0.5 + 0.5) * w - sx, ey = (-_b.y * 0.5 + 0.5) * h - sy;
           const lenAlong = Math.hypot(ex, ey);
-          _b.set(an.x + rx * step, an.y + ry * step, an.z + rz * step).project(camera);
+          _b.set(an.x + rx * step, ay + ry * step, an.z + rz * step).project(camera);
           const lenRef = Math.hypot((_b.x * 0.5 + 0.5) * w - sx, (-_b.y * 0.5 + 0.5) * h - sy) || 1;
           let ang;
-          if (lenAlong / lenRef < 0.3) ang = 0; // 道路几乎沿视线方向：文字正放
+          // 道路几乎沿视线方向：人眼高度时文字正放；高处俯看时仍沿道路在屏幕上的走向（竖排感，从下往上读）
+          if (lenAlong < 0.5 || (lenAlong / lenRef < 0.3 && agl < 20)) ang = 0;
           else {
             if (ex < 0) (ex = -ex), (ey = -ey); // 始终从左往右读
             ang = Math.atan2(ey, ex);
             if (ang > 1.4) ang -= Math.PI; // 接近竖直时统一成从下往上读
           }
           const fade = Math.min(1, (maxD - d) / (maxD * 0.2));
-          cand.push({ an, d, sx, sy, ang, fade, score: an.tier * 10000 + d });
+          cand.push({ an, ay, d, sx, sy, ang, fade, score: an.tier * 10000 + d - (an.walk ? 20000 : 0) });
         }
       }
     cand.sort((a, b) => a.score - b.score);
 
     const acc = [];
+    const cap = space.caps.roads ?? 44;
     const lastByName = new Map();
-    const inUI = (x, y) => (x < 292 && y < 202) || x > w - 322 || (x < 224 && y > h - 214) || y > h - 62;
+    const ver = this.occVersion();
+    let checks = 0;
     for (const c of cand) {
-      if (acc.length >= MAX_VISIBLE) break;
+      if (acc.length >= cap || space.full) break;
       const fs = TIER_FONT[c.an.tier];
       const hw = (Array.from(c.an.name).length * (fs + 2.5) + 10) / 2, hh = fs * 0.8;
-      if (inUI(c.sx, c.sy)) continue;
-      // 同名路：屏幕上至少相隔 260 px
-      const same = lastByName.get(c.an.ni);
-      if (same && same.some((o) => Math.hypot(o.sx - c.sx, o.sy - c.sy) < 260)) continue;
+      // 同名路：高空时屏幕上至少相隔 420 px；中低空同一主干（含东段/西段/辅路）全屏只留一个；与地名同名的也不重复
+      const same = lastByName.get(agl < 400 ? -1 - c.an.bi : c.an.ni);
+      if (same && (agl < 400 || same.some((o) => Math.hypot(o.sx - c.sx, o.sy - c.sy) < 420))) continue;
+      if (!same && space.names.has(c.an.name)) continue;
       const ca = Math.cos(c.ang), sa = Math.sin(c.ang);
       c.box = { x: c.sx, y: c.sy, ux: ca, uy: sa, hw, hh };
-      let hit = false;
-      for (const o of acc) if (obbOverlap(c.box, o.box)) { hit = true; break; }
-      if (hit) continue;
-      // 被建筑挡住的路名不显示（锚点抬高 2 m，避免路面本身遮挡判定）
-      if (c.d > 30 && occludedCached(c.an, this.occ, camera.position, c.an.x, c.an.y + 2, c.an.z, this._frame)) continue;
+      if (!space.fits(c.box)) continue;
+      // 被建筑挡住的路名不显示（锚点抬高 2 m，避免路面本身遮挡判定）；每轮最多新算 40 次
+      if (c.d > 30 && this.occ) {
+        const o = c.an._occ;
+        const cached = o && o.ver === ver && this._frame - o.f < 15 && Math.abs(o.x - cp.x) + Math.abs(o.y - cp.y) + Math.abs(o.z - cp.z) < 4;
+        if (!cached && checks++ > 40) continue;
+        if (occludedCached(c.an, this.occ, cp, c.an.x, c.ay + 2, c.an.z, this._frame, ver)) continue;
+      }
+      space.add(c.box, c.an.name);
       acc.push(c);
-      if (!same) lastByName.set(c.an.ni, [c]);
+      if (!same) lastByName.set(agl < 400 ? -1 - c.an.bi : c.an.ni, [c]);
       else same.push(c);
     }
     for (let i = 0; i < acc.length; i++) {
@@ -236,14 +313,3 @@ export class RoadNames {
   }
 }
 
-// 两个旋转矩形（中心 x,y；单位方向 ux,uy；半宽 hw、半高 hh）分离轴检测，留 4 px 间隙
-function obbOverlap(a, b) {
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const axes = [[a.ux, a.uy], [-a.uy, a.ux], [b.ux, b.uy], [-b.uy, b.ux]];
-  for (const [ax, ay] of axes) {
-    const ra = (a.hw + 4) * Math.abs(a.ux * ax + a.uy * ay) + (a.hh + 3) * Math.abs(-a.uy * ax + a.ux * ay);
-    const rb = (b.hw + 4) * Math.abs(b.ux * ax + b.uy * ay) + (b.hh + 3) * Math.abs(-b.uy * ax + b.ux * ay);
-    if (Math.abs(dx * ax + dy * ay) > ra + rb) return false;
-  }
-  return true;
-}
