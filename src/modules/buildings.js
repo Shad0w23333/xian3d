@@ -9,18 +9,25 @@
 //     底商雨棚——只出体块（给轮廓与自阴影），楼层内的栏板/玻璃/楼板线/防盗笼/晾晒/夜间亮灯由立面着色器按构件类型画；
 //     与近景外墙同一网格、同一材质，不增加 draw call。低画质不生成。
 //   · 老旧多层“平改坡”：无小区风貌依据的 80~90 年代板楼按年代概率加红/橙红/灰蓝瓦四坡顶（远近景几何都有）。
-//   · 屋顶构件（楼梯间/机房、水箱、空调机组、成排太阳能热水器、彩钢棚）：随近景小块实例化（4 个 InstancedMesh）。
+//   · 屋顶构件（11 种实例，见 PROP_NAMES）：高层电梯机房 + 楼梯间（挑檐/门/百叶）、机房顶水箱、构架收头（满铺花架或四周飘板）、
+//     通信天线；多层每单元上人孔小屋、厨卫排风道、逐台的成排太阳能热水器、圆/方水箱；商业办公多联机、冷却塔、临街广告牌支架。
+//     随近景小块实例化；小构件（水箱、空调、热水器、天线、排风道）只画相机 650 m 内的小块。
+//   · 近景细部层（相机离地 < 100 m、300 m 内的 400 m 小格，Worker 按需生成，bld-gen.js nearChunk）：老楼外挂空调、防盗窗（镂空、
+//     alpha-to-coverage）、窗外晾衣，高层空调格栅机位、凸阳台每层楼板挑檐，所有楼的勒脚凸台；位置与立面着色器逐位一致。
+//   · 屋面（第二张数据纹理 uBld2：主轴角/屋面中心/半长半宽/屋面类型/勒脚高/小区种子）：按楼型与年代画上人屋面面砖、矿物面卷材、
+//     老沥青油毡、TPO/碎石、彩钢板、水泥砂浆，主轴对齐的分格缝/卷材搭接/排水坡分水线/雨水口，远处淡化为均值。
+//   · 同一小区（landuse residential 多边形）的住宅楼共用主色、点缀色、立面变体、阳台做法、屋面做法、勒脚。
 //   · 航空障碍灯：高度 ≥ 100 m 的楼顶四角红色闪光灯（Points）。
 //   · 夜景：按时段的亮灯率曲线（住宅/办公/商业）驱动着色器里的亮灯（住宅按户成组、楼梯间声控灯、单元门灯、雨棚下店铺灯光）；
 //     约 1/3 的高层/写字楼楼顶亮化（顶部泛光 + 轮廓灯带，中画质以上）。
 //   · 小区风貌：public/data/estates_style.json（tools/build_estates.py，按档案与实景照片）——落在有照片依据的小区多边形内的
 //     住宅楼按小区 style 着色与生成细节（墙色/点缀色/窗套/腰线/阳台/坡屋顶/塔冠/构架），参数走一张 RGBA32F 小纹理（uEst），
 //     不新建材质；有照片依据的小区大门合并成一个网格（src/arch/bld-estates.js）。
-// 对外 API：nearestFacade(x, z, maxDist) → {x, z, nx, nz, height, index, …}（招牌模块用）
+// 对外 API：nearestFacade(x, z, maxDist) → {x, z, nx, nz, height, index, …}（招牌模块用）、occluded()（标注遮挡）
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { parseBuildings, createGenerator, CHUNK, LO_STRIDE, HI_STRIDE, LO_QXZ, STYLE_NAMES, packEstateStyles } from '../arch/bld-gen.js';
-import { createFacadeMaterials, createDataTexture, createClassTexture, createEstateTexture } from '../arch/bld-shader.js';
+import { createFacadeMaterials, createDataTexture, createDataTexture2, createClassTexture, createEstateTexture } from '../arch/bld-shader.js';
 import { buildEstateGates } from '../arch/bld-estates.js';
 import { loadJSON } from '../core/data.js';
 import { preprocess } from '../arch/bld-skip.js';
@@ -40,6 +47,8 @@ const SHADOW_D = [900, 1400, 2000, 2800];
 // 超过此距离改用“超远景·精简子集”（只有高 ≥ 40 m 或占地 ≥ 3000 m² 的楼；地面视角下几公里外的小楼亚像素且多被近楼遮挡）
 const FAR2_D = [4500, 6000, 8000, 11000];
 const HI_CACHE = 40; // 近景小块缓存上限
+// 近景细部层（bld-gen.js nearChunk）：400 m 小格、相机 300 m 内、离地 100 m 以下
+const NEAR_CELL = 400, NEAR_R = 300, NEAR_AGL = 100, NEAR_CACHE = 24;
 // 立面细节档位（按画质）：0 低 = 不生成立面附属几何、关闭楼顶亮化与单元门；1 中 = 凸阳台/凸窗叠柱、单元入口雨棚（着色器同时画单元门）；2 高/超高 = 再加顶部构架、底商雨棚
 const DETAIL = [0, 1, 2, 2];
 
@@ -144,6 +153,22 @@ function packRoads(roads) {
   return { pts, starts, widths };
 }
 
+/** 小区分组用的住区多边形（landuse residential 外环，扁平坐标 + 起点表），见 bld-gen.js buildGroupIndex */
+function packGroups(landuse) {
+  const polys = (landuse?.polys || []).filter((p) => p.k === 'residential' && p.outer && p.outer.length >= 6);
+  let np = 0;
+  for (const p of polys) np += p.outer.length / 2;
+  const pts = new Float32Array(np * 2), starts = new Int32Array(polys.length + 1);
+  let o = 0;
+  polys.forEach((p, k) => {
+    starts[k] = o;
+    pts.set(p.outer, o * 2);
+    o += p.outer.length / 2;
+  });
+  starts[polys.length] = o;
+  return { pts, starts };
+}
+
 // ———— 屋顶构件几何（单位尺寸，实例缩放；顶点色 × 实例色） ————
 function tint(g, c) {
   const n = g.attributes.position.count;
@@ -153,9 +178,17 @@ function tint(g, c) {
   if (g.index) g = g.toNonIndexed();
   return g;
 }
+// 屋顶构件类型（与 bld-gen.js roofProps 的 type 编号一致）
+const PROP_NAMES = ['屋顶盒体构件', '屋顶圆水箱', '屋顶空调机组', '太阳能热水器', '冷却塔', '屋顶广告牌', '方形水箱', '通信天线', '机房与楼梯间', '排风道出屋面', '高层构架收头'];
+// 投射阴影的构件（小构件不投影，省一半三角形）
+const PROP_SHADOW = [true, false, false, false, true, true, false, false, true, false, false];
+// 小构件（圆水箱、空调机组、热水器、方水箱、天线、排风道）只在相机附近的近景小块里画（远处几个像素、三角形却不少）
+const PROP_SMALL = [false, true, true, true, false, false, true, true, false, true, false];
+const PROP_SMALL_R = 650;
+const box3 = (w, h, d, x, y, z, c) => tint(new THREE.BoxGeometry(w, h, d).translate(x, y, z), c);
 function propGeometries() {
   // 构件三角形预算：老城屋面由坡顶改回平屋面后构件数量翻倍（审查 st_eastgate），每种构件都压到够用的最少面数
-  // 0 盒体：电梯机房/楼梯间/彩钢棚/通风器/悬空构架梁（底面在 y=0；不再单独做压顶盒；构架梁悬空，底面要保留）
+  // 0 盒体：彩钢棚/通风器/构架梁柱/门/百叶（底面在 y=0；构架梁悬空，底面要保留）
   const box = tint(new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), [1, 1, 1]);
   // 1 水箱：不锈钢/玻璃钢圆罐（8 边，顶盖；总是坐在屋面或机房顶上，去掉底面）
   const tank = tint(new THREE.CylinderGeometry(0.5, 0.5, 1, 8, 1, false).translate(0, 0.5, 0), [1, 1, 1]);
@@ -169,12 +202,74 @@ function propGeometries() {
   //   储水罐为积灰的不锈钢（审查 st_shanbo：原 0.86 近白反照率在成排拼接后像一根发光灯管）
   const tilt = (40 * Math.PI) / 180;
   const solar = mergeGeometries([
-    tint(new THREE.BoxGeometry(1.8, 0.08, 1.4).rotateX(tilt).translate(0, 0.3 + 0.7 * Math.sin(tilt), 0.2), [0.07, 0.09, 0.13]),
+    // 集热板：朝上一块面片（逐台实例后每台三角形要省）
+    tint(new THREE.PlaneGeometry(1.8, 1.4).rotateX(-Math.PI / 2).rotateX(tilt).translate(0, 0.34 + 0.7 * Math.sin(tilt), 0.2), [0.07, 0.09, 0.13]),
     tint(new THREE.CylinderGeometry(0.2, 0.2, 1.9, 6, 1, true).rotateZ(Math.PI / 2).translate(0, 0.3 + 1.4 * Math.sin(tilt) + 0.12, 0.2 - 0.7 * Math.cos(tilt) - 0.1), [0.5, 0.51, 0.5]),
-    // 支架背板：一块朝北的面片（原薄盒 12 个三角形）
+    // 支架背板：一块朝北的面片（原薄盒 12 个三角形）+ 前脚一道镀锌角钢（面片）
     tint(new THREE.PlaneGeometry(1.7, 1.2).rotateY(Math.PI).translate(0, 0.6, -0.38), [0.42, 0.42, 0.41]),
+    tint(new THREE.PlaneGeometry(1.75, 0.3).translate(0, 0.15, 0.74), [0.5, 0.51, 0.51]),
   ]);
-  return [box, tank, ac, solar];
+  // 4 冷却塔（方形横流式，商业/办公楼屋面）：塔体 + 两侧进风百叶（深色）+ 顶部风筒与风机（深灰）
+  const cool = mergeGeometries([
+    box3(1, 0.72, 1, 0, 0.36, 0, [1, 1, 1]),
+    box3(1.02, 0.42, 0.9, 0, 0.3, 0, [0.32, 0.34, 0.35]),
+    box3(0.9, 0.04, 0.9, 0, 0.74, 0, [0.86, 0.86, 0.85]),
+    tint(new THREE.CylinderGeometry(0.34, 0.36, 0.26, 12, 1, true).translate(0, 0.89, 0), [0.6, 0.62, 0.63]),
+    tint(new THREE.CircleGeometry(0.33, 12).rotateX(-Math.PI / 2).translate(0, 0.94, 0), [0.12, 0.12, 0.13]),
+  ]);
+  // 5 屋顶广告牌：钢架（立柱 + 斜撑 + 横梁，深灰）+ 牌面（正面朝 +Z，实例色 = 底色），实尺寸 1×1×1 → 按牌长/高/支架深缩放
+  const fr = [0.32, 0.33, 0.34];
+  const bill = mergeGeometries([
+    box3(1, 0.62, 0.04, 0, 0.69, 0.02, [1, 1, 1]),
+    box3(1.02, 0.03, 0.06, 0, 1.0, 0.02, [0.85, 0.85, 0.83]),
+    box3(1.02, 0.03, 0.06, 0, 0.385, 0.02, [0.85, 0.85, 0.83]),
+    box3(0.03, 0.4, 0.03, -0.42, 0.2, -0.02, fr), box3(0.03, 0.4, 0.03, 0.42, 0.2, -0.02, fr), box3(0.03, 0.4, 0.03, 0, 0.2, -0.02, fr),
+    box3(0.03, 0.9, 0.03, -0.42, 0.55, -0.6, fr), box3(0.03, 0.9, 0.03, 0.42, 0.55, -0.6, fr),
+    box3(0.03, 0.03, 0.62, -0.42, 0.68, -0.3, fr), box3(0.03, 0.03, 0.62, 0.42, 0.68, -0.3, fr),
+    box3(0.9, 0.03, 0.03, 0, 0.98, -0.6, fr),
+    tint(new THREE.BoxGeometry(0.025, 0.025, 0.85).rotateX(-0.95).translate(-0.42, 0.42, -0.3), fr),
+    tint(new THREE.BoxGeometry(0.025, 0.025, 0.85).rotateX(-0.95).translate(0.42, 0.42, -0.3), fr),
+  ]);
+  // 6 方形不锈钢水箱 + 型钢支座（老楼、城中村、商业屋面）：约 30 个三角形——箱体 + 一道加强肋 + 支座四面 + 人孔盖
+  const st = [0.36, 0.37, 0.38];
+  const ring = (w, h, y, c) => {
+    const g = tint(new THREE.BoxGeometry(w, h, w).translate(0, y, 0), c);
+    dropFace(g, 0, -1, 0);
+    return dropFace(g, 0, 1, 0);
+  };
+  const tankSq = mergeGeometries([
+    box3(1, 0.72, 1, 0, 0.61, 0, [1, 1, 1]),
+    ring(1.03, 0.05, 0.6, [0.8, 0.8, 0.8]),
+    ring(0.92, 0.25, 0.125, st),
+    tint(new THREE.PlaneGeometry(0.2, 0.2).rotateX(-Math.PI / 2).translate(0.28, 0.975, 0.28), [0.62, 0.62, 0.62]),
+  ]);
+  dropFace(tankSq, 0, -1, 0);
+  // 7 通信基站天线（高层/写字楼屋面）：抱杆 + 三面板状天线 + 底部机柜，实尺寸 1×1×1 → 高度按 6~9 m 缩放
+  const pole = [0.62, 0.63, 0.64];
+  const ant = mergeGeometries([
+    tint(new THREE.CylinderGeometry(0.012, 0.016, 1, 6, 1, true).translate(0, 0.5, 0), pole),
+    ...[0, 2.094, 4.189].map((a) =>
+      tint(new THREE.BoxGeometry(0.05, 0.2, 0.016).translate(0, 0.84, 0.035).rotateY(a), [0.86, 0.86, 0.84])
+    ),
+    box3(0.07, 0.11, 0.05, 0.06, 0.055, 0.0, [0.78, 0.79, 0.8]),
+  ]);
+  // 8 电梯机房 / 楼梯间（出屋面小屋）：墙体（实例色 = 楼体色）+ 挑出的屋面板 + 一樘深色门 + 侧面百叶
+  //   （约 26 个三角形：墙体去底 10 + 屋面板 12 + 门、百叶各一块面片）
+  const hutBody = tint(new THREE.BoxGeometry(1, 0.92, 1).translate(0, 0.46, 0), [1, 1, 1]);
+  dropFace(hutBody, 0, -1, 0);
+  dropFace(hutBody, 0, 1, 0);
+  const hut = mergeGeometries([
+    hutBody,
+    box3(1.07, 0.08, 1.07, 0, 0.96, 0, [0.95, 0.94, 0.92]),
+    tint(new THREE.PlaneGeometry(0.24, 0.6).translate(0.22, 0.3, 0.503), [0.2, 0.19, 0.18]),
+    tint(new THREE.PlaneGeometry(0.34, 0.16).rotateY(Math.PI / 2).translate(0.503, 0.7, -0.1), [0.42, 0.43, 0.43]),
+  ]);
+  // 9 厨卫排风道出屋面：砌体 + 架空的混凝土风帽板（约 22 个三角形）
+  const shaftBody = tint(new THREE.BoxGeometry(1, 0.8, 1).translate(0, 0.4, 0), [1, 1, 1]);
+  dropFace(shaftBody, 0, -1, 0);
+  const shaft = mergeGeometries([shaftBody, box3(1.35, 0.06, 1.4, 0, 0.95, 0, [0.82, 0.82, 0.8])]);
+  // 10 高层构架收头的梁柱（与 0 同为盒体，单独一组：不投射阴影）
+  return [box, tank, ac, solar, cool, bill, tankSq, ant, hut, shaft, box.clone()];
 }
 /** 去掉法线为 (nx,ny,nz) 的面（非索引几何，按三角形逐个检查；屋顶构件贴在屋面上的底面永远看不见） */
 function dropFace(g, nx, ny, nz) {
@@ -263,7 +358,7 @@ export default {
 
     // —— Worker：解析 + 分类 + 数据纹理 + 远景几何 ——
     const gen = new GenClient();
-    const init = await gen.call({ type: 'init', buffer: ctx.data.buildings, ga: pre.ga, base: pre.base, skip: pre.skip, roads, estates: estDoc });
+    const init = await gen.call({ type: 'init', buffer: ctx.data.buildings, ga: pre.ga, base: pre.base, skip: pre.skip, roads, estates: estDoc, groups: packGroups(ctx.data.landuse) });
     if (!init || init.type !== 'init' || !init.ok) {
       gen.dispose();
       throw new Error('建筑生成失败：' + ((init && init.message) || '未知错误'));
@@ -273,6 +368,10 @@ export default {
     const dataTex = createDataTexture(texArr, init.texRows);
     const mats = createFacadeMaterials(ctx, dataTex);
     const U = mats.uniforms;
+    if (init.tex2) {
+      U.uBld2.value.dispose();
+      U.uBld2.value = createDataTexture2(init.tex2, init.texRows);
+    }
     if (estDoc?.styles?.length) {
       const pk = packEstateStyles(estDoc.styles);
       U.uEst.value.dispose();
@@ -385,6 +484,12 @@ export default {
     warm.visible = true;
     warm.frustumCulled = false;
     hiGroup.add(warm);
+    const warmN = makeHiMesh({ vbuf: new Uint16Array(HI_STRIDE * 3), ibuf: new Uint32Array([0, 1, 2]), bounds: [0, 0, 0, 1, 1, 1], ox: 0, oz: 0, key: 'warmN' });
+    warmN.material = mats.near;
+    warmN.visible = true;
+    warmN.frustumCulled = false;
+    warmN.castShadow = false;
+    hiGroup.add(warmN);
 
     // —— 屋顶构件（实例化） ——
     const propGroup = new THREE.Group();
@@ -393,8 +498,9 @@ export default {
     const propGeos = propGeometries();
     const propMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.08, envMapIntensity: 0.5 });
     propMat.name = '屋顶构件';
-    const propMeshes = [null, null, null, null];
-    const propCap = [0, 0, 0, 0];
+    const NPROP = propGeos.length;
+    const propMeshes = new Array(NPROP).fill(null);
+    const propCap = new Array(NPROP).fill(0);
     const ensureProp = (t, n) => {
       if (propMeshes[t] && propCap[t] >= n) return propMeshes[t];
       let cap = 256;
@@ -407,33 +513,49 @@ export default {
       m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
       m.count = 0;
       m.frustumCulled = false;
-      m.castShadow = t <= 1; // 小构件不投射阴影（省一半三角形）
+      m.castShadow = PROP_SHADOW[t]; // 小构件不投射阴影（省一半三角形）
       m.receiveShadow = true;
-      m.name = ['屋顶机房', '屋顶水箱', '屋顶空调机组', '太阳能热水器'][t];
+      m.name = PROP_NAMES[t];
       propGroup.add(m);
       propMeshes[t] = m;
       propCap[t] = cap;
       return m;
     };
-    for (let t = 0; t < 4; t++) ensureProp(t, 1);
+    for (let t = 0; t < NPROP; t++) ensureProp(t, 1);
     const _m4 = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _c = new THREE.Color();
     const _up = new THREE.Vector3(0, 1, 0);
+    /** 相机附近（PROP_SMALL_R 内）的近景小块：小构件只在这些小块里画 */
+    let smallKey = '';
+    const smallSet = () => {
+      const cam = ctx.camera.position;
+      const r = [];
+      for (const k of hiShown) {
+        const c = chunkDir.get(k);
+        if (!c) continue;
+        const dx = Math.max(c.cx * CHUNK - cam.x, 0, cam.x - (c.cx + 1) * CHUNK), dz = Math.max(c.cz * CHUNK - cam.z, 0, cam.z - (c.cz + 1) * CHUNK);
+        if (Math.hypot(dx, dz) < PROP_SMALL_R) r.push(k);
+      }
+      return r.sort().join(';');
+    };
     const rebuildProps = () => {
-      const cnt = [0, 0, 0, 0];
+      smallKey = smallSet();
+      const near = new Set(smallKey ? smallKey.split(';') : []);
+      const cnt = new Array(NPROP).fill(0);
       for (const k of hiShown) {
         const e = hiCache.get(k);
         if (!e || !e.props) continue;
-        const pr = e.props;
-        for (let o = 0; o < pr.length; o += 9) cnt[pr[o]]++;
+        const pr = e.props, nk = near.has(k);
+        for (let o = 0; o < pr.length; o += 9) if (nk || !PROP_SMALL[pr[o]]) cnt[pr[o]]++;
       }
       const ms = cnt.map((n, t) => ensureProp(t, n));
-      const w = [0, 0, 0, 0];
+      const w = new Array(NPROP).fill(0);
       for (const k of hiShown) {
         const e = hiCache.get(k);
         if (!e || !e.props) continue;
-        const pr = e.props;
+        const pr = e.props, nk = near.has(k);
         for (let o = 0; o < pr.length; o += 9) {
           const t = pr[o];
+          if (!nk && PROP_SMALL[t]) continue;
           _p.set(pr[o + 1], pr[o + 2], pr[o + 3]);
           _q.setFromAxisAngle(_up, pr[o + 7]);
           _s.set(pr[o + 4], pr[o + 5], pr[o + 6]);
@@ -444,10 +566,92 @@ export default {
           w[t]++;
         }
       }
-      for (let t = 0; t < 4; t++) {
+      for (let t = 0; t < NPROP; t++) {
         ms[t].count = w[t];
         ms[t].instanceMatrix.needsUpdate = true;
         if (ms[t].instanceColor) ms[t].instanceColor.needsUpdate = true;
+      }
+    };
+
+    // —— 近景细部层（外挂空调、防盗窗、晾衣、空调格栅、楼板挑檐、勒脚凸台）：相机离地 < NEAR_AGL 时，
+    //    NEAR_R 内的 400 m 小格按需在 Worker 里生成（bld-gen.js nearChunk），与近景外墙同一材质、不投射阴影 ——
+    const nearGroup = new THREE.Group();
+    nearGroup.name = '建筑近景细部';
+    root.add(nearGroup);
+    const nearCache = new Map(); // key → {state, mesh, used, gen}
+    let nearInflight = 0, nearPending = 0;
+    const requestNear = (key) => {
+      const g = hiGen;
+      nearCache.set(key, { state: 'loading', used: frame, gen: g });
+      nearInflight++;
+      gen.call({ type: 'near', key, detail: detailLvl }).then((m) => {
+        nearInflight--;
+        const e = nearCache.get(key);
+        if (!e) return;
+        if (e.gen !== g) {
+          nearCache.delete(key);
+          return;
+        }
+        if (!m || m.type !== 'near' || m.empty || !m.ibuf || !m.ibuf.length) {
+          if (!m || m.type !== 'near') console.warn('[buildings] 近景细部生成失败', key, m && m.message);
+          e.state = 'empty';
+          return;
+        }
+        e.mesh = makeHiMesh(m);
+        e.mesh.material = mats.near;
+        e.mesh.castShadow = false;
+        e.mesh.name = '建筑近景细部 ' + key;
+        e.state = 'ready';
+        nearGroup.add(e.mesh);
+      });
+    };
+    const disposeNear = (key) => {
+      const e = nearCache.get(key);
+      if (e && e.mesh) {
+        nearGroup.remove(e.mesh);
+        e.mesh.geometry.dispose();
+      }
+      nearCache.delete(key);
+    };
+    const manageNear = () => {
+      const cam = ctx.camera.position;
+      const agl = cam.y - ctx.terrain.heightAt(cam.x, cam.z);
+      const want = [];
+      // 近景外墙接管了相机所在小块才画细部（细部贴在近景外墙上；远景外墙轮廓简化过，对不上）
+      if (layerOn && hiRect && detailLvl >= 1 && agl < NEAR_AGL) {
+        const R = NEAR_R;
+        for (let z = Math.floor((cam.z - R) / NEAR_CELL); z <= Math.floor((cam.z + R) / NEAR_CELL); z++)
+          for (let x = Math.floor((cam.x - R) / NEAR_CELL); x <= Math.floor((cam.x + R) / NEAR_CELL); x++) {
+            const dx = Math.max(x * NEAR_CELL - cam.x, 0, cam.x - (x + 1) * NEAR_CELL), dz = Math.max(z * NEAR_CELL - cam.z, 0, cam.z - (z + 1) * NEAR_CELL);
+            if (Math.hypot(dx, dz) > R) continue;
+            const ccx = Math.floor((x * NEAR_CELL + NEAR_CELL / 2) / CHUNK), ccz = Math.floor((z * NEAR_CELL + NEAR_CELL / 2) / CHUNK);
+            if (ccx < hiRect[0] || ccx > hiRect[2] || ccz < hiRect[1] || ccz > hiRect[3]) continue;
+            want.push(x + ',' + z);
+          }
+      }
+      const miss = want.filter((k) => !nearCache.has(k));
+      if (miss.length && nearInflight < 2) {
+        const d = (k) => {
+          const [x, z] = k.split(',').map(Number);
+          return Math.hypot((x + 0.5) * NEAR_CELL - cam.x, (z + 0.5) * NEAR_CELL - cam.z);
+        };
+        miss.sort((a, b) => d(a) - d(b));
+        for (const k of miss) {
+          if (nearInflight >= 2) break;
+          requestNear(k);
+        }
+      }
+      const ws = new Set(want);
+      nearPending = 0;
+      for (const k of want) {
+        const e = nearCache.get(k);
+        if (!e || e.state === 'loading') nearPending++;
+        if (e) e.used = frame;
+      }
+      for (const [k, e] of nearCache) if (e.mesh) e.mesh.visible = ws.has(k);
+      if (nearCache.size > NEAR_CACHE) {
+        const cand = [...nearCache.entries()].filter(([k, e]) => e.state !== 'loading' && !ws.has(k)).sort((a, b) => a[1].used - b[1].used);
+        for (let i = 0; i < cand.length && nearCache.size > NEAR_CACHE; i++) disposeNear(cand[i][0]);
       }
     };
 
@@ -540,6 +744,8 @@ export default {
           else U.uHiRect.value.set(1e6, 1e6, -1e6, -1e6);
           if (propsChanged) rebuildProps();
         }
+        // 相机跨过小块边界：附近小块集合变了，重排小构件
+        if (frame % 9 === 0 && hiShown.size && smallSet() !== smallKey) rebuildProps();
       }
       // 淘汰远处缓存
       if (hiCache.size > HI_CACHE) {
@@ -855,8 +1061,9 @@ export default {
         farVisible: blocks.reduce((s, b) => s + b.pool[1].filter((m) => m && m.visible).length + b.pool[3].filter((m) => m && m.visible).length, 0),
         hiShown: hiShown.size,
         hiCached: hiCache.size,
-        hiLoading: inflight,
-        hiPending,
+        hiLoading: inflight + nearInflight,
+        hiPending: hiPending + nearPending,
+        nearShown: [...nearCache.values()].filter((e) => e.mesh && e.mesh.visible).length,
         detail: detailLvl,
         props: propMeshes.map((m) => m.count),
       }),
@@ -865,6 +1072,8 @@ export default {
         if (frame === 3 && warm.parent) {
           hiGroup.remove(warm);
           warm.geometry.dispose();
+          hiGroup.remove(warmN);
+          warmN.geometry.dispose();
         }
         if (!root.visible) return;
         // 亮灯率：住宅 / 办公 / 商业 + 夜间开灯系数
@@ -875,6 +1084,7 @@ export default {
         const slow = dt > 0.066; // dt 在主循环里被钳到 ≤ 0.1 s：低于约 15 fps 即视为慢帧
         maxInflight = slow ? 6 : 2;
         if (frame % 3 === 0 || frame < 3 || slow) manageHi();
+        if (frame % 3 === 1 || frame < 3 || slow) manageNear();
         updateRuns();
         if (gates && frame % 15 === 0) gates.update(ctx.camera.position);
       },
@@ -899,6 +1109,10 @@ export default {
             if (e.state === 'loading') e.gen = -1;
             else disposeHi(k);
           }
+          for (const [k, e] of [...nearCache.entries()]) {
+            if (e.state === 'loading') e.gen = -1;
+            else disposeNear(k);
+          }
           hiShown = new Set();
           hiRect = null;
           U.uHiRect.value.set(1e6, 1e6, -1e6, -1e6);
@@ -908,14 +1122,17 @@ export default {
       dispose() {
         gen.dispose();
         for (const k of [...hiCache.keys()]) disposeHi(k);
+        for (const k of [...nearCache.keys()]) disposeNear(k);
         for (const blk of blocks) for (const pool of blk.pool) for (const m of pool) m && m.geometry.dispose();
         for (const m of propMeshes) m && m.dispose();
         propGeos.forEach((g) => g.dispose());
         dataTex.dispose();
+        U.uBld2.value.dispose();
         U.uEst.value.dispose();
         if (gates) gates.dispose();
         mats.lo.dispose();
         mats.hi.dispose();
+        mats.near.dispose();
         ctx.scene.remove(root);
       },
     };
