@@ -63,6 +63,8 @@ function hourFactor(h) {
 // 与 arch/roads_net.js 的 CFG 对应：路面最小宽 / 人行道宽
 const MIN_W = [7.5, 7, 7, 6.5, 6, 5, 3.5, 5, 4.5, 4.5, 4.5, 4, 4, 2];
 const SIDEWALK = [0, 4.5, 5, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+// 行道树离路缘距离（与 arch/vegPlant.js 的 STREET 表一致）：行人走在树池内侧（靠建筑一侧），不再穿过树干与灯杆
+const TREE_D = [0, 2.0, 2.0, 1.9, 1.8];
 
 const NEAR_D = 60; // 细模距离
 const NEAR_CAP = 700;
@@ -108,8 +110,9 @@ export default {
       else if (c === 13) sides = [[0, Math.min(W, 3) * 0.6, 1.1]];
       else if (c >= 1 && c <= 4) {
         const sw = SIDEWALK[c];
-        const o = W / 2 + sw * 0.5;
-        sides = f.o ? [[o, sw * 0.6, 1]] : [[o, sw * 0.6, 1], [-o, sw * 0.6, 1]];
+        const a = TREE_D[c] + 0.7, b = Math.max(a + 0.2, sw - 0.3);
+        const o = W / 2 + (a + b) / 2, jit = Math.max(0.3, b - a);
+        sides = f.o ? [[o, jit, 1]] : [[o, jit, 1], [-o, jit, 1]];
       } else if (c === 5) {
         // 小区路/支路没有人行道：走在路缘外侧（路面上有行车与路边停车）
         const o = featureWidth(f) / 2 + 0.7;
@@ -415,6 +418,12 @@ export default {
         density = q.peopleDensity ?? density;
         WN.mesh.castShadow = shadowsOn();
         refreshT = 0;
+      },
+      /** 调试：行人位置、朝向、速度 */
+      debugWalkers() {
+        const out = [];
+        for (let i = 0; i < N; i++) out.push({ x: wX[i], y: wY[i], z: wZ[i], yaw: wYaw[i], v: wSpd[i] });
+        return out;
       },
       stats() {
         return { walkers: N, drawn: WN.mesh.count + WF.mesh.count, near: WN.mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, cand: nCand };

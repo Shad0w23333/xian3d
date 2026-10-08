@@ -342,7 +342,7 @@ void main() {
     vec3 Lh = normalize(vec3(Lx.x, 0.0, Lx.z));
     vec3 Fh = normalize(vec3(Fz.x, 0.0, Fz.z));
     wp = c + Lh * aL.z * 3.0 * ks * (0.75 + 0.25 * aL.w) + Fh * aL.w * L + vec3(0.0, 0.12, 0.0);
-    vCol = vec3(1.0, 0.86, 0.66) * 0.34 * on * fade * uNight * mix(0.5, 1.0, ks);
+    vCol = vec3(1.0, 0.86, 0.66) * 0.42 * on * fade * uNight * mix(0.5, 1.0, ks);
   } else {
     // 尾灯在路面上的红晕（刹车时更亮）
     float on = trBit(fl, 4.0) * (big ? 0.0 : 1.0);
@@ -352,7 +352,7 @@ void main() {
     vec3 Lh = normalize(vec3(Lx.x, 0.0, Lx.z));
     vec3 Fh = normalize(vec3(Fz.x, 0.0, Fz.z));
     wp = c + Lh * aL.z * 1.3 * ks + Fh * aL.w * 1.6 * ks + vec3(0.0, 0.11, 0.0);
-    vCol = vec3(1.0, 0.05, 0.02) * (trBit(fl, 1.0) > 0.5 ? 0.22 : 0.08) * on * fade * uNight;
+    vCol = vec3(1.0, 0.05, 0.02) * (trBit(fl, 1.0) > 0.5 ? 0.32 : 0.12) * on * fade * uNight;
   }
   vec4 mvPosition = viewMatrix * vec4(wp, 1.0);
   if (which > 1.5) mvPosition.xyz *= 0.996;
@@ -840,7 +840,7 @@ export default {
         if (!active[vEdge[i]]) despawn(i);
       }
       for (const id of toFill) fillEdge(id);
-      bikeRefresh(dens);
+      bikeRefresh(Q.trafficDensity ?? 1); // 时段系数由 bikeHour 单独给出
     }
     function fillEdge(id) {
       const e = edges[id];
@@ -2009,6 +2009,16 @@ export default {
         for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1)]);
         return out;
       },
+      /** 调试：两轮车（位置、朝向、速度、车型） */
+      debugBikes() {
+        const out = [];
+        for (let q = 0; q < nB; q++) {
+          const b = bAlive[q], o = b * 6;
+          bikePose(b);
+          out.push({ x: bPose[o], y: bPose[o + 1], z: bPose[o + 2], fx: bPose[o + 3], fz: bPose[o + 5], v: bV[b], type: bType[b] });
+        }
+        return out;
+      },
       /** 调试：各阶段最大耗时（ms），读取后清零 */
       profile() { const o = { ...prof }; for (const k in prof) prof[k] = 0; return o; },
       stats() {
@@ -2020,7 +2030,9 @@ export default {
           if (vHold[i]) held++;
           vsum += vV[i];
         }
-        return { vehicles: nAlive, stopped, held, ghosts, vAvg: +(vsum / Math.max(1, nAlive)).toFixed(2), ms: +perfMs.toFixed(2), activeEdges: activeList.length, bubbleR: bubble.R, near: W.car.n, heavy: W.heavy.n, far: W.far.n, lights: W.light.n, fine: W.carFine.n, parked: parkCount, parkFeat: nParkFeat, bikes: nB, bikesDrawn: W.bike0.n + W.bike1.n + W.bike2.n, riders: RN.n + RF.n, trainsNear: W.tNear.n, trainsFar: W.tFar.n, services: services.length };
+        let bStop = 0;
+        for (let q = 0; q < nB; q++) if (bV[bAlive[q]] < 0.3) bStop++;
+        return { vehicles: nAlive, stopped, held, ghosts, bikesStopped: bStop, vAvg: +(vsum / Math.max(1, nAlive)).toFixed(2), ms: +perfMs.toFixed(2), activeEdges: activeList.length, bubbleR: bubble.R, near: W.car.n, heavy: W.heavy.n, far: W.far.n, lights: W.light.n, fine: W.carFine.n, parked: parkCount, parkFeat: nParkFeat, bikes: nB, bikesDrawn: W.bike0.n + W.bike1.n + W.bike2.n, riders: RN.n + RF.n, trainsNear: W.tNear.n, trainsFar: W.tFar.n, services: services.length };
       },
     };
     if (typeof window !== 'undefined') window.__traffic = inst;
