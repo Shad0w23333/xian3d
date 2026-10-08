@@ -17,7 +17,7 @@ OSM 在西安的 POI 只有约 9 千条且陈旧；高德同范围有十几万�
   python tools/amap_fetch.py place                                                         # 按 research/refs/landmarks2026 清单逐个定位地标
   python tools/amap_fetch.py all                                                           # 以上全部 + poi + roads（一次跑完，配额内续传）
   python tools/amap_fetch.py merge                                                         # 合并进 public/data/pois.json、roads.json
-缓存：data-src/amap/（每个请求一个 JSON，断点续传）。合并结果写 public/data/local/（不入库，前端优先读取），仓库里的 OSM 版本不动。
+缓存：data-src/amap/（每个请求一个 JSON，断点续传）。合并结果写 public/data/local/（前端优先读取），OSM 版本不动。
 续传：meta.json 只记录“整格抓完且无失败请求”的初始网格；merge 只在这些网格里用高德 POI 替换 OSM POI
       （高德 POI 也只取这些网格里的），未抓完的地方保留 OSM（多天抓取中途 merge 不会挖空，也不会两套并存）。
 坐标：高德为 GCJ-02，合并时逆变换回 WGS-84（迭代法，误差 < 0.5 m）再投影到世界坐标。
@@ -464,8 +464,8 @@ def _sha1(path):
     return hashlib.sha1(path.read_bytes()).hexdigest() if path.exists() else ''
 
 
-# 高德衍生数据只写本地目录 public/data/local/（.gitignore；前端 src/core/data.js 优先读它），不覆盖仓库里的 OSM 版本：
-# 高德服务条款只允许个人本地使用，合并结果不能随仓库推送到 GitHub。底稿永远是仓库里的 public/data/<name>。
+# 高德衍生数据写 public/data/local/（前端 src/core/data.js 优先读它），不覆盖 OSM 版本：底稿永远是 public/data/<name>，
+# 这样 OSM 数据重新生成后再 merge 不会叠加两遍高德数据。仓库为私有、个人本地使用（用户 2026-10-08 确认可以入库）。
 LOCAL = DATA / 'local'
 
 
