@@ -55,6 +55,8 @@ function makeSkyMaterial() {
       uniform float uStarRot;
       uniform vec2 uSkyKnee;
       uniform float uSkyGain;
+      uniform float uUrban;
+      uniform float uEnvDesat;
       float shash(vec3 p){ p = fract(p*0.3183099+vec3(0.1,0.2,0.3)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }`
     )
     .replace(
@@ -78,29 +80,35 @@ function makeSkyMaterial() {
       `{
         vec3 dir = direction;
         float hz = clamp(dir.y, -0.2, 1.0);
-        // 夜空：天顶深蓝，地平线带城市光污染的暖褐色辉光
-        vec3 nZen = vec3(0.0025, 0.0045, 0.012);
-        vec3 nHor = vec3(0.030, 0.026, 0.030);
+        // 夜空：郊野天顶深蓝；城区（uUrban）是光污染的橙褐色天光——天顶灰褐、地平线一圈更亮的暖褐色辉光
+        vec3 nZen = mix(vec3(0.0025, 0.0045, 0.012), vec3(0.0058, 0.0054, 0.0068), uUrban);
+        vec3 nHor = mix(vec3(0.030, 0.026, 0.030), vec3(0.042, 0.032, 0.028), uUrban);
         vec3 nightCol = mix(nHor, nZen, smoothstep(0.0, 0.45, hz));
-        nightCol += vec3(0.075, 0.040, 0.020) * exp(-max(dir.y, 0.0) * 12.0);
-        // 星星（随时间缓慢旋转）
+        nightCol += vec3(0.075, 0.040, 0.020) * exp(-max(dir.y, 0.0) * 12.0) * (1.0 + 0.25 * uUrban);
+        nightCol += vec3(0.0075, 0.0047, 0.0031) * exp(-max(dir.y, 0.0) * 3.5) * uUrban;
+        // 星星（随时间缓慢旋转）。城区光污染下只剩极少数最亮的星，且偏暗
         float ca = cos(uStarRot), sa = sin(uStarRot);
         vec3 sd = vec3(ca*dir.x - sa*dir.z, dir.y, sa*dir.x + ca*dir.z) * 380.0;
         vec3 cell = floor(sd);
         float h = shash(cell);
         float star = 0.0;
-        if (h > 0.9965) {
+        float sTh = mix(0.9965, 0.99985, uUrban);
+        if (h > sTh) {
           vec3 c = cell + 0.5 + (vec3(shash(cell+1.3), shash(cell+2.1), shash(cell+3.7)) - 0.5) * 0.6;
           float d = length(sd - c);
-          star = smoothstep(0.38, 0.0, d) * (h - 0.9965) / 0.0035;
+          star = smoothstep(0.38, 0.0, d) * (h - sTh) / (1.0 - sTh);
           star *= 0.6 + 0.4 * sin(time * 2.7 + h * 100.0);
         }
-        star *= smoothstep(0.02, 0.25, dir.y);
+        // 城区地平线附近的星被辉光淹没，只在高仰角看得到
+        star *= smoothstep(0.02 + 0.3 * uUrban, 0.25 + 0.4 * uUrban, dir.y) * mix(1.0, 0.45, uUrban);
         // 月亮
         float md = dot(dir, normalize(uMoonDir));
         float disc = smoothstep(0.99983, 0.99990, md);
         vec3 moon = vec3(1.0, 0.96, 0.88) * disc * 1.6 + vec3(0.35, 0.40, 0.55) * pow(max(md, 0.0), 800.0) * 0.12;
         texColor = mix(texColor, texColor * 0.2, uNight) + (nightCol + vec3(0.9, 0.93, 1.0) * star * 0.9 + moon) * uNight;
+        // 环境贴图（IBL）用的天空降饱和：晴天天顶是很饱和的深蓝，直接拿来当漫反射天光，阴影里的地面、屋面、
+        // 墙面全被染成藏青（审查：中性灰瓦渲染成藏青）。真实街道里阴影还受周围受光墙面/地面的中性反光，偏冷但不发蓝。
+        texColor = mix(vec3(dot(texColor, vec3(0.2126, 0.7152, 0.0722))), texColor, 1.0 - uEnvDesat);
       }
       gl_FragColor = vec4( texColor, 1.0 );`
     );
@@ -110,6 +118,8 @@ function makeSkyMaterial() {
   uniforms.uStarRot = { value: 0 };
   uniforms.uSkyKnee = { value: new THREE.Vector2(0.3, 1.5) }; // (软肩起点亮度, 压缩斜率)；y=0 即关闭
   uniforms.uSkyGain = { value: 1 }; // 白天整体增益（update 中按太阳高度设置）
+  uniforms.uUrban = { value: 1 }; // 城区程度（光污染：星星少、天光橙褐），按相机位置设置
+  uniforms.uEnvDesat = { value: 0 }; // 降饱和（只用于环境贴图）
   return new THREE.ShaderMaterial({
     name: 'XianSky',
     uniforms,
@@ -131,7 +141,7 @@ const FOG_KEYS = [
 const SUN_KEYS = [
   [-4, C('#ff6a3a'), 0], [0, C('#ff8248'), 0.9], [4, C('#ffa262'), 2.4], [10, C('#ffd4a4'), 3.9], [25, C('#ffeacc'), 6.0], [60, C('#fff3e4'), 6.8],
 ];
-const HEMI_SKY = [[-10, C('#2a3656')], [0, C('#6f7ea6')], [10, C('#a9bddb')], [40, C('#c9d6e6')]];
+const HEMI_SKY = [[-10, C('#2a3656')], [0, C('#6f7ea6')], [10, C('#aab8cc')], [40, C('#c6cfda')]];
 
 function lerpKeys(keys, x, out) {
   if (x <= keys[0][0]) return out.copy(keys[0][1]);
@@ -195,6 +205,7 @@ export class SkySystem {
     this.envSky = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.skyMat.clone());
     this.envSky.scale.setScalar(50);
     this.envSky.material.uniforms.showSunDisc.value = 0;
+    this.envSky.material.uniforms.uEnvDesat.value = 0.6;
     this.envScene.add(this.envSky);
     // 环境里加一块“地面”，让反射下半球不是纯黑
     const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x6d6457 }));
@@ -314,6 +325,13 @@ export class SkySystem {
     eu.uMoonDir.value.copy(md);
     eu.cloudCoverage.value = u.cloudCoverage.value;
     eu.time.value = u.time.value;
+    // 城区程度（光污染）：主城 9 km 内为 1，到 32 km 外的郊野为 0（相机在钟楼 (0,0) 附近为城心，略偏南）
+    if (camera) {
+      const r = Math.hypot(camera.position.x, camera.position.z - 2500);
+      this.urban = 1 - smooth(9000, 32000, r);
+    } else if (this.urban == null) this.urban = 1;
+    u.uUrban.value = this.urban;
+    eu.uUrban.value = this.urban;
 
     // 共享 uniform
     this.uniforms.uNight.value = this.night;
@@ -323,14 +341,16 @@ export class SkySystem {
     const moonMode = el < -4;
     const lightDir = moonMode ? md : sd;
     if (moonMode) {
-      this.sun.color.set(0x8fa6d8);
+      this.sun.color.set(0x9eabc9);
       this.sun.intensity = 0.32 * smooth(-4, -10, el) * smooth(-0.05, 0.25, md.y);
     } else {
       lerpKeys(SUN_KEYS, el, this.sun.color);
       this.sun.intensity = lerpScalar(SUN_KEYS, el);
     }
     this.hemi.color.copy(lerpKeys(HEMI_SKY, el, this._tmpC));
-    this.hemi.groundColor.set(0x5d5446).lerp(C('#141210'), this.night);
+    // 城区夜里的天光主要来自地面灯光被大气散射回来（橙褐色），不是月光下的蓝：按城区程度暖化
+    this.hemi.color.lerp(C('#3b3029'), this.night * this.urban * 0.85);
+    this.hemi.groundColor.set(0x5d5446).lerp(C('#141210'), this.night).lerp(C('#2b1f15'), this.night * this.urban * 0.7);
     // 半球光：高太阳时减到 0.64（晴天直射为主、阴影有层次），低太阳时保持原来的 0.84
     this.hemi.intensity = 0.22 + (0.62 - 0.2 * hi) * (1 - this.night) + (this.envEnabled ? 0 : 0.3 * (1 - this.night) + 0.04);
     this.scene.environmentIntensity = 0.3 + 0.55 * (1 - this.night);
@@ -348,8 +368,10 @@ export class SkySystem {
     }
     this.scene.fog.density = Math.max((2.4e-5 + this.night * 1.4e-5) * this.fogScale, this.fogFloor);
 
-    // 曝光（Preetham 天空亮度高，白天需压低曝光，太阳光相应调强）
-    this.renderer.toneMappingExposure = (0.6 + this.night * 0.55) * this.exposureScale;
+    // 曝光（Preetham 天空亮度高，白天需压低曝光，太阳光相应调强）。
+    // 室内/地下（天空被隐藏，例如进入地铁站）：曝光固定为室内值，不随地面昼夜变化（夜里进站曾整站过曝成白雾）
+    this.indoor = !this.sky.visible;
+    this.renderer.toneMappingExposure = (this.indoor ? 0.62 : 0.6 + this.night * 0.55) * this.exposureScale;
 
     // 阴影相机跟随
     if (camera && this.sun.castShadow) this._updateShadow(camera, lightDir, agl);

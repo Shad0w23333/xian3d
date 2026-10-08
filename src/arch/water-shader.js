@@ -9,11 +9,12 @@ import * as THREE from 'three';
 // 类型表：0 渭河 1 泾河 2 其他河流（灞/浐/沣…） 3 护城河 4 城市湖泊 5 水库/大湖 6 池塘/调蓄池 7 小河/渠
 // deep/shallow 为漫反射色（sRGB 十六进制）；param = [深水过渡距离 m, 泡沫带宽 m, 波浪强度, 流速 m/s]
 export const WATER_TYPES = [
-  { deep: '#5d5441', shallow: '#8f7f60', param: [70, 3.2, 1.0, 1.1] }, // 渭河：黄褐含沙
+  // 渭河：黄褐含沙。浅水色原为 #8f7f60（接近沙洲的米色），OSM 河道面又把沙洲一并包进来，远看整条河像水泥带/干河床（审查）
+  { deep: '#4f4a39', shallow: '#6a6049', param: [70, 3.2, 1.0, 1.1] },
   { deep: '#34463f', shallow: '#56695d', param: [45, 2.2, 0.85, 0.9] }, // 泾河：较清，青灰
   { deep: '#384841', shallow: '#5b6a5a', param: [35, 1.8, 0.8, 0.7] }, // 灞浐沣等
   { deep: '#2b3a26', shallow: '#46553a', param: [9, 0.0, 0.35, 0.05] }, // 护城河：墨绿
-  { deep: '#27402f', shallow: '#4b6149', param: [26, 0.6, 0.5, 0.05] }, // 城市湖泊：偏绿
+  { deep: '#223a37', shallow: '#3f5a51', param: [26, 0.6, 0.5, 0.05] }, // 城市湖泊：青绿（原 #27402f 偏橄榄绿，俯视像草皮）
   { deep: '#203a41', shallow: '#40605a', param: [60, 0.8, 0.75, 0.05] }, // 水库/大湖：蓝绿
   { deep: '#2f3f2a', shallow: '#4f5b3c', param: [10, 0.0, 0.3, 0.02] }, // 池塘
   { deep: '#3a4a40', shallow: '#5a6655', param: [5, 0.6, 0.6, 0.6] }, // 小河/渠
@@ -30,6 +31,14 @@ export function createWaterMaterial(ctx, { level = 2 } = {}) {
     uDeep: { value: deep },
     uShallow: { value: shallow },
     uParam: { value: param },
+    // 近景平面倒影（water.js 的 PlanarReflection 每帧写入）：贴图、世界→贴图投影矩阵、镜面高度、开关、作用半径
+    uPlanar: { value: null },
+    uPlanarMat: { value: new THREE.Matrix4() },
+    uPlanarY: { value: -1e5 },
+    uPlanarOn: { value: 0 },
+    uPlanarRange: { value: 1200 },
+    // 水面接收阴影的强度（树影、楼影只轻微压暗水面：水面亮度主要来自反射，反射不受岸上物体的阴影影响）
+    uWaterShadow: { value: 0.3 },
   };
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -71,6 +80,12 @@ uniform float uReflBoost;
 uniform vec3 uDeep[8];
 uniform vec3 uShallow[8];
 uniform vec4 uParam[8];
+uniform sampler2D uPlanar;
+uniform mat4 uPlanarMat;
+uniform float uPlanarY;
+uniform float uPlanarOn;
+uniform float uPlanarRange;
+uniform float uWaterShadow;
 varying vec3 vWPos;
 varying vec4 vWater;
 varying vec2 vFlow;
@@ -129,6 +144,8 @@ float wD = vWater.x;
 vec2 wP = vWPos.xz;
 vec2 wG = wWaves( wP, vFlow, uTime, wPrm.z, wFar ) * mix( 1.0, 0.8, wFar );
 vec3 wN = normalize( vec3( -wG.x, 1.0, -wG.y ) );
+// 近景平面倒影的权重（镜面高度附近、作用半径内）
+float wPW = uPlanarOn * ( 1.0 - smoothstep( 0.35, 0.9, abs( vWPos.y - uPlanarY ) ) ) * ( 1.0 - smoothstep( uPlanarRange * 0.65, uPlanarRange, wDist ) );
 // 低频噪声：深浅/泥沙/界面扰动
 float wLo = wNoise( wP * 0.012 ) * 0.65 + wNoise( wP * 0.045 + 7.3 ) * 0.35;
 float wDepthT = smoothstep( 0.0, wPrm.x, wD * ( 0.75 + 0.5 * wLo ) );
@@ -151,9 +168,11 @@ float wFoam = 0.0;
 if ( wPrm.y > 0.0 ) {
   float fn = wNoise( ( wP - vFlow * uTime * 0.8 ) * 0.35 ) * 0.6 + wNoise( wP * 1.3 + uTime * 0.2 ) * 0.4;
   wFoam = ( 1.0 - smoothstep( 0.0, wPrm.y * ( 0.6 + fn ), wD ) ) * smoothstep( 0.35, 0.65, fn + 0.25 );
-  wFoam *= 1.0 - wFar * 0.6;
+  wFoam *= 1.0 - smoothstep( 250.0, 1500.0, wDist );  // 远处泡沫噪声（约 3 m 周期）会走样成满河的小亮点
 }
 wCol = mix( wCol, vec3( 0.62, 0.6, 0.55 ), wFoam * 0.55 );
+// 近处（人眼高度看湖面）水体本身的散射很弱，画面主要是反射：近景漫反射色压暗，远景（俯视）保持原色
+wCol *= mix( 0.55, 1.0, smoothstep( 120.0, 900.0, wDist ) ) + wFoam * 0.4;
 diffuseColor.rgb = wCol;
 diffuseColor.a = mix( 0.5, 0.97, smoothstep( 0.0, 2.5, wD ) );`
       )
@@ -192,22 +211,48 @@ if ( uNight > 0.02 ) {
   float shore = 0.35 + 0.65 * exp( -wD / 45.0 );
   vec3 lc = mix( vec3( 1.0, 0.6, 0.26 ), vec3( 0.8, 0.88, 1.0 ), step( 0.72, r2 ) );
   lc = mix( lc, vec3( 1.0, 0.25, 0.18 ), step( 0.93, r1 ) );
-  em += lc * s * rip * ( 0.5 + 1.7 * r2 ) * shore * ( 0.35 + 0.65 * wFres ) * ( 1.0 - wFar * 0.5 ) * urban;
+  em += lc * s * rip * ( 0.5 + 1.7 * r2 ) * shore * ( 0.35 + 0.65 * wFres ) * ( 1.0 - wFar * 0.5 ) * urban * ( 1.0 - 0.85 * wPW );
   // 远处（> 2 km）倒影减弱：掠射角下 wFres→1，远处河湖整片亮到 1 以上会在地平线上结成亮线；并给发光封顶兜底
   em *= 1.0 - 0.8 * smoothstep( 2000.0, 7000.0, wDist );
   em = min( em, vec3( 3.0 ) );
   totalEmissiveRadiance += em * uNight;
 }`
       )
+      // 阴影减弱：只改水面这一个材质的平行光阴影项（three 的 lights_fragment_begin 片段展开后替换）
+      .replace(
+        '#include <lights_fragment_begin>',
+        THREE.ShaderChunk.lights_fragment_begin
+          .replace(
+            '? getShadow( directionalShadowMap[ i ]',
+            '? mix( 1.0, getShadow( directionalShadowMap[ i ]'
+          )
+          .replace(
+            'vDirectionalShadowCoord[ i ] ) : 1.0;',
+            'vDirectionalShadowCoord[ i ] ), uWaterShadow ) : 1.0;'
+          )
+      )
       .replace(
         '#include <lights_fragment_maps>',
         `#include <lights_fragment_maps>
 #if defined( RE_IndirectSpecular )
   radiance *= uReflBoost;
+  // 近景平面倒影：镜面高度附近、作用半径内用实时渲染的倒影代替天空环境反射（对岸的树、楼、亭台都映在水里）。
+  // 波浪法线扰动取样位置；贴图越界或离镜面太远时退回环境反射。
+  if ( wPW > 0.001 ) {
+    float pw = wPW;
+    {
+      vec4 pc = uPlanarMat * vec4( vWPos.x, uPlanarY, vWPos.z, 1.0 );
+      vec2 puv = pc.xy / pc.w + wN.xz * mix( 0.035, 0.012, wFar );
+      vec2 pe = min( puv, 1.0 - puv );
+      pw *= smoothstep( 0.0, 0.02, min( pe.x, pe.y ) );
+      vec3 pr = texture2D( uPlanar, clamp( puv, vec2( 0.001 ), vec2( 0.999 ) ) ).rgb;
+      radiance = mix( radiance, min( pr, vec3( 16.0 ) ) * 0.92, pw );
+    }
+  }
 #endif`
       );
   };
-  mat.customProgramCacheKey = () => 'xian-water-v2-' + level;
+  mat.customProgramCacheKey = () => 'xian-water-v3-' + level;
   ctx.overlay(mat, 0.00018);
   return mat;
 }
