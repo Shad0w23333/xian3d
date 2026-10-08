@@ -8,13 +8,17 @@
 //   · 材质：见 src/arch/water-shader.js（程序化法线、IBL 菲涅尔、太阳高光、分水体色、泾渭分明、夜间灯光倒影）。
 //   · 护城河：石砌压顶 + 石栏杆（近景细节，远处隐藏）。
 // 类型色参考：research/refs/water/（中新网泾渭交汇航拍：渭河黄褐含沙、大片沙洲；护城河实拍：墨绿水色 + 灰石驳岸 + 石栏杆）。
-// draw call：水面 1 + 小河渠 1 + 压顶 1 + 栏杆 1 = 4。
+// 水位（2026-10 精修）：prepare 阶段按当前地形重定城市湖泊/池塘/护城河/河道水位并压低水下地形（src/arch/water-banks.js），
+// 水面成为低于岸顶 0.5~2.2 m 的平面；驳岸、栏杆、亲水台阶由 parks 模块按相机距离流式生成（ctx.parksShore 为真时
+// 本模块不再画护城河的贴图栏杆与压顶）。build 后把每块水面的水位函数登记到 ctx.waterBodies 供驳岸模块取高度。
+// draw call：水面 1 + 小河渠 1（+ 无 parks 模块时护城河压顶 1 + 栏杆 1）。
 import * as THREE from 'three';
 import {
   cleanRing, ringArea, ringBBox, triangulate, shoreSegments, ShoreDistance, resampleLine, inPoly,
   moatEdgeGeometry, railingTexture,
 } from '../arch/water-geom.js';
 import { createWaterMaterial } from '../arch/water-shader.js';
+import { planWaterLevels } from '../arch/water-banks.js';
 
 const MAX_AREA = 30e6; // m²
 const MAX_SPAN = 26000; // m
@@ -181,6 +185,20 @@ function urbanOf(x, z, type) {
 export default {
   id: 'water',
   name: '渭河与城市水系',
+  prepare(ctx) {
+    // 水位重定 + 水下地形压低（必须在其他模块取地面高度之前：本模块在注册表第 2 位）
+    const t0 = performance.now();
+    try {
+      this._levels = planWaterLevels(ctx.data.water, ctx.terrain, ctx.data.roads);
+    } catch (e) {
+      console.warn('[water] 水位重定失败，沿用原水位', e);
+      this._levels = new Map();
+    }
+    ctx.waterLevels = this._levels;
+    let d = 0;
+    for (const v of this._levels.values()) d += Math.max(0, v.h0 - v.L);
+    console.info(`[water] 水位重定 ${this._levels.size} 块（平均下调 ${(d / Math.max(1, this._levels.size)).toFixed(2)} m），${(performance.now() - t0).toFixed(0)} ms`);
+  },
   async build(ctx) {
     const t0 = performance.now();
     const data = ctx.data.water || {};
@@ -218,8 +236,10 @@ export default {
       hs.sort((a, b) => a - b);
       const q25 = hs[Math.floor(hs.length * 0.25)];
       let h = Number(src.h);
-      if (!Number.isFinite(h) || h > q25 + 6 || h < q25 - 6) { h = q25 - 0.3; log.relevel++; }
-      polys.push({ src, n: src.n || '', k: src.k, type: typeOf({ ...src, a: area }), outer, holes, bb, area, cx, cz, h });
+      const lv = this._levels && this._levels.get(src);
+      if (lv) h = lv.L; // prepare 已按岸高重定（水下地形已压低，不再按地形回退）
+      else if (!Number.isFinite(h) || h > q25 + 6 || h < q25 - 6) { h = q25 - 0.3; log.relevel++; }
+      polys.push({ src, n: src.n || '', k: src.k, type: typeOf({ ...src, a: area }), outer, holes, bb, area, cx, cz, h, bank: lv ? lv.bank : null, lvKind: lv ? lv.kind : null });
     }
 
     // ---------- 2. 同名河流：水位场（反距离加权）+ 流向（h 线性回归的下坡方向）----------
@@ -440,10 +460,20 @@ export default {
     let streams = null;
     if (LI.length) { streams = mkMesh(LP, LA, LF, LI, '小河与渠'); root.add(streams); }
 
-    // ---------- 6. 护城河石砌压顶 + 栏杆 ----------
+    // ---------- 5b. 水体登记（驳岸模块取水位/水面高度） ----------
+    ctx.waterBodies = polys
+      .filter((p) => Number.isFinite(p.planeY))
+      .map((p) => ({
+        n: p.n, k: p.k, type: p.type, outer: p.outer, holes: p.holes, bb: p.bb, area: p.area, cx: p.cx, cz: p.cz,
+        level: p.h, planeY: p.planeY, bank: p.bank, lvKind: p.lvKind, src: p.src,
+        /** 水面网格在 (x,z) 处的高度（与水面顶点同一公式） */
+        surfaceY: (x, z) => surfaceY(p, x, z),
+      }));
+
+    // ---------- 6. 护城河石砌压顶 + 栏杆（parks 模块在时由它按距离流式生成三维石栏杆，这里不画） ----------
     const edges = [];
     const moatSegs = [];
-    for (const p of moatPolys) {
+    for (const p of ctx.parksShore ? [] : moatPolys) {
       const o = p.outer;
       for (let i = 0, n = o.length / 2, j = n - 1; i < n; j = i++) moatSegs.push({ p, ax: o[j * 2], az: o[j * 2 + 1], bx: o[i * 2], bz: o[i * 2 + 1] });
     }
@@ -457,7 +487,7 @@ export default {
       }
       return false;
     };
-    for (const p of moatPolys) {
+    for (const p of ctx.parksShore ? [] : moatPolys) {
       const o = p.outer, sgn = Math.sign(ringArea(o)) || 1;
       for (let i = 0, n = o.length / 2, j = n - 1; i < n; j = i++) {
         const ax = o[j * 2], az = o[j * 2 + 1], bx = o[i * 2], bz = o[i * 2 + 1];
@@ -477,7 +507,10 @@ export default {
           const k = x.toFixed(1) + ',' + z.toFixed(1);
           if (!yOf.has(k)) {
             const e = edges.find((q) => (q.ax === x && q.az === z) || (q.bx === x && q.bz === z));
-            yOf.set(k, surfaceY(e ? e.p : moatPolys[0], x, z));
+            // 水位已降到岸顶以下 2 m 左右：压顶取“水面 + 0.55”与“岸上地面 − 0.3”的高者（岸点本身在压低区内，取四周 1.2 m）
+            let g = -Infinity;
+            for (const [dx, dz] of [[1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]]) g = Math.max(g, T.heightAt(x + dx, z + dz));
+            yOf.set(k, Math.max(surfaceY(e ? e.p : moatPolys[0], x, z), g - 0.85));
           }
           return yOf.get(k);
         },
