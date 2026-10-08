@@ -7,6 +7,7 @@
 //     → 旋转矩形分离轴碰撞检测 + 同名屏幕间距 → 复用 DOM 节点池
 import * as THREE from 'three';
 import { roadY } from './roadheight.js';
+import { aglScale, occludedCached, inFront } from './labels.js';
 
 const CELL = 300;
 // 等级：0 高速/快速/主干 1 次干道 2 支路 3 街巷/匝道/步行街
@@ -26,6 +27,8 @@ export class RoadNames {
     this.root.className = 'rnames';
     container.appendChild(this.root);
     this.visible = true;
+    /** 视线遮挡函数，由 thematic.js 注入（建筑模块的 occluded） */
+    this.occ = null;
     this.pool = [];
     this.used = 0;
     this._frame = 0;
@@ -152,7 +155,8 @@ export class RoadNames {
     if (!this.visible) return;
     if (++this._frame % 2) return;
     const cp = camera.position;
-    const R = TIER_MAXD[0];
+    const kD = aglScale(camera, false);
+    const R = TIER_MAXD[0] * kD;
     const ci = Math.floor(cp.x / CELL), cj = Math.floor(cp.z / CELL), k = Math.ceil(R / CELL);
     const cand = [];
     // 相机右向量（用于判断道路在屏幕上的透视压缩）
@@ -164,8 +168,9 @@ export class RoadNames {
         if (!arr) continue;
         for (const an of arr) {
           const d = Math.hypot(an.x - cp.x, an.y - cp.y, an.z - cp.z);
-          const maxD = TIER_MAXD[an.tier];
+          const maxD = TIER_MAXD[an.tier] * kD;
           if (d > maxD) continue;
+          if (!inFront(camera, an.x, an.y, an.z)) continue;
           _a.set(an.x, an.y, an.z).project(camera);
           if (_a.z > 1 || _a.z < -1 || Math.abs(_a.x) > 1 || Math.abs(_a.y) > 1) continue;
           const sx = (_a.x * 0.5 + 0.5) * w, sy = (-_a.y * 0.5 + 0.5) * h;
@@ -204,6 +209,8 @@ export class RoadNames {
       let hit = false;
       for (const o of acc) if (obbOverlap(c.box, o.box)) { hit = true; break; }
       if (hit) continue;
+      // 被建筑挡住的路名不显示（锚点抬高 2 m，避免路面本身遮挡判定）
+      if (c.d > 30 && occludedCached(c.an, this.occ, camera.position, c.an.x, c.an.y + 2, c.an.z, this._frame)) continue;
       acc.push(c);
       if (!same) lastByName.set(c.an.ni, [c]);
       else same.push(c);

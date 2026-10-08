@@ -312,7 +312,10 @@ async function main() {
   const layers = { traffic: true, labels: true, buildings: true, districts: false };
   const setLayer = (name, v) => {
     layers[name] = v;
-    if (name === 'labels') labels.setVisible(v);
+    if (name === 'labels') {
+      labels.setVisible(v);
+      if (app.thematic && app.thematic.setText) app.thematic.setText(v); // 路名、小区名一起开关
+    }
     for (const inst of instances) if (inst.setLayer) inst.setLayer(name, v);
     ui.setLayer(name, v);
   };
@@ -373,6 +376,12 @@ async function main() {
 
   // —— 专题图层：路名 / 小区 / 建筑分类高亮（见 core/thematic.js） ——
   const thematic = setupThematic({ app, ctx, ui, root, params });
+  app.thematic = thematic;
+  // 地标/片区标注：被建筑挡住时隐藏
+  labels.occ = (ax, ay, az, bx, by, bz) => {
+    const b = ctx.modules.buildings;
+    return b && b.occluded ? b.occluded(ax, ay, az, bx, by, bz) : false;
+  };
 
   // —— 左上角“西安时讯”卡片：北京时间/农历节气、实时天气与空气质量、网络广播（见 core/infocard.js） ——
   app.infoCard = setupInfoCard({ root, ui, sky, display, params });

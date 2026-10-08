@@ -7,7 +7,8 @@ import { Estates } from './estates.js';
 import { BLD_CLASSES, C, classByName } from '../arch/bld-class.js';
 
 export function setupThematic({ app, ctx, ui, root, params }) {
-  const state = { roadnames: params.get('roadnames') !== '0', estates: params.get('estates') !== '0', estateLines: params.get('estatelines') === '1', bldclass: params.get('bldclass') === '1', sel: null };
+  const noText = params.get('labels') === '0';
+  const state = { roadnames: params.get('roadnames') !== '0' && !noText, estates: params.get('estates') !== '0' && !noText, estateLines: params.get('estatelines') === '1', bldclass: params.get('bldclass') === '1', sel: null };
   if (params.get('bldsel')) {
     const keys = params.get('bldsel').split(',');
     state.sel = new Set(BLD_CLASSES.map((c, i) => (keys.includes(c.key) ? i : -1)).filter((i) => i >= 0));
@@ -27,6 +28,13 @@ export function setupThematic({ app, ctx, ui, root, params }) {
     app.errors.push('estates: ' + e.message);
   }
   const skyCaps = buildSkylineCaps(ctx);
+  // 视线遮挡：建筑模块构建完成后才有，按调用时查找
+  const occ = (ax, ay, az, bx, by, bz) => {
+    const b = ctx.modules.buildings;
+    return b && b.occluded ? b.occluded(ax, ay, az, bx, by, bz) : false;
+  };
+  if (roadNames) roadNames.occ = occ;
+  if (estates && estates.labels) estates.labels.occ = occ;
 
   const applyClass = () => {
     const b = ctx.modules.buildings;
@@ -92,6 +100,11 @@ export function setupThematic({ app, ctx, ui, root, params }) {
   });
 
   return {
+    /** 与“地名标注”总开关联动：路名、小区名一起开关 */
+    setText(v) {
+      setRoadNames(v);
+      setEstates(v);
+    },
     update(camera, w, h) {
       if (roadNames) roadNames.update(camera, w, h);
       if (estates) estates.update(camera, w, h);

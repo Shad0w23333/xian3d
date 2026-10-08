@@ -3,6 +3,29 @@ import * as THREE from 'three';
 
 const _p = new THREE.Vector3();
 const CELL = 84;
+// 近地时（人眼高度/低空）收紧显示距离：楼群会挡住远处地名，不收紧就会在地平线上堆满标签。
+// 地标/片区名保留更远距离（高出楼顶、本来就该远看），其余类别按离地高度缩放。
+const FAR_CATS = new Set(['landmark', 'district', 'admin', 'airport']);
+const _vs = new THREE.Vector3();
+/** 点是否在相机前方（视空间 z < 0）。反向深度缓冲下投影后的 NDC z 不能用来判断“在相机后方”，否则背后的标注会被镜像投到画面上 */
+export function inFront(camera, x, y, z, near = 0.5) {
+  _vs.set(x, y, z).applyMatrix4(camera.matrixWorldInverse);
+  return _vs.z < -near;
+}
+export function aglScale(camera, far = false) {
+  const agl = camera.userData.agl ?? 300;
+  const k = Math.min(1, Math.max(0, (agl - 2) / 220));
+  return far ? 0.45 + 0.55 * k : 0.18 + 0.82 * k;
+}
+/** 视线遮挡检查（带缓存）：obj 上记录上次结果，相机移动 >4 m 或超过 15 帧才重算 */
+export function occludedCached(obj, occ, cp, x, y, z, frame) {
+  if (!occ) return false;
+  const c = obj._occ;
+  if (c && frame - c.f < 15 && Math.abs(c.x - cp.x) + Math.abs(c.y - cp.y) + Math.abs(c.z - cp.z) < 4) return c.v;
+  const v = !!occ(cp.x, cp.y, cp.z, x, y, z);
+  obj._occ = { f: frame, x: cp.x, y: cp.y, z: cp.z, v };
+  return v;
+}
 const CATEGORY_WEIGHT = { landmark: 5, airport: 4, admin: 3.5, district: 3, biz: 2.5, station: 2, metro: 2, town: 1, street: 1 };
 
 export class Labels {
@@ -13,6 +36,8 @@ export class Labels {
     this.items = [];
     this.visible = true;
     this.hidden = new Set();
+    /** 视线遮挡函数 (ax,ay,az,bx,by,bz) → bool，由 main.js 在建筑模块就绪后注入 */
+    this.occ = null;
     this._frame = 0;
   }
 
@@ -52,9 +77,12 @@ export class Labels {
     if (++this._frame % 2) return;
     const cp = camera.position;
     const candidates = [];
+    const kNear = aglScale(camera, false), kFar = aglScale(camera, true);
     for (const it of this.items) {
       const d = it.pos.distanceTo(cp);
-      let show = !this.hidden.has(it.category) && d > it.minDist && d < it.maxDist;
+      const maxD = it.maxDist * (FAR_CATS.has(it.category) ? kFar : kNear);
+      let show = !this.hidden.has(it.category) && d > it.minDist && d < maxD;
+      if (show && !inFront(camera, it.pos.x, it.pos.y, it.pos.z)) show = false;
       if (show) {
         _p.copy(it.pos).project(camera);
         if (_p.z > 1 || _p.z < -1 || Math.abs(_p.x) > 1.05 || Math.abs(_p.y) > 1.05) show = false;
@@ -62,7 +90,7 @@ export class Labels {
       if (show) {
         const x = (_p.x * 0.5 + 0.5) * w;
         const y = (-_p.y * 0.5 + 0.5) * h;
-        const fade = Math.min(1, (it.maxDist - d) / (it.maxDist * 0.25), (d - it.minDist) / 40);
+        const fade = Math.min(1, (maxD - d) / (maxD * 0.25), (d - it.minDist) / 40);
         if (fade > 0.08) candidates.push({ it, d, x, y, fade,
           score: it.priority * 100 + (CATEGORY_WEIGHT[it.category] || 0) * 10 - d * 0.001 });
       }
@@ -90,6 +118,8 @@ export class Labels {
         if (cell && cell.some((other) => overlaps(box, other))) { collision = true; break; }
       }
       if (collision) continue;
+      // 被建筑挡住的不显示（离得很近的不查，避免锚点贴墙误判）
+      if (d > 40 && occludedCached(it, this.occ, cp, it.pos.x, it.pos.y, it.pos.z, this._frame)) continue;
       for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
         const key = `${gx}:${gy}`;
         if (!occupied.has(key)) occupied.set(key, []);

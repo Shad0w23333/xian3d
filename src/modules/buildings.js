@@ -725,6 +725,63 @@ export default {
       };
     };
 
+    /**
+     * 视线遮挡：线段 a→b 是否被某栋建筑（按外包盒 + 底高/顶高近似）挡住。标注模块用来隐藏楼后面的地名。
+     * 只检查线段 2D 投影经过的外墙网格格子（64 m），两端各留 margin 米不算（标注锚点本身贴着楼时不误判）。
+     */
+    const occluded = (ax, ay, az, bx, by, bz, margin = 6, retIdx = false) => {
+      if (!fgrid) fgrid = buildFacadeGrid();
+      if (++qid >= 0xffffffff) (qid = 1), stamp.fill(0);
+      const dx = bx - ax, dy = by - ay, dz = bz - az;
+      const L = Math.hypot(dx, dz);
+      if (L < 1e-3) return false;
+      const t0 = Math.min(0.49, margin / L), t1 = 1 - t0;
+      const steps = Math.ceil(L / (FC * 0.5)) + 1;
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        const cx = Math.floor((ax + dx * t) / FC), cz = Math.floor((az + dz * t) / FC);
+        const l = fgrid.get(cx * 100003 + cz);
+        if (!l) continue;
+        for (const i of l) {
+          if (stamp[i] === qid) continue;
+          stamp[i] = qid;
+          const q = i * 4;
+          const x0 = pre.bb[q], z0 = pre.bb[q + 1], x1 = pre.bb[q + 2], z1 = pre.bb[q + 3];
+          const H = texArr[i * 16 + 1] || P.heightDm[i] * 0.1;
+          const y0 = pre.base[i], y1 = pre.ga[i] + H;
+          // 线段与外包盒求交（slab 法）
+          let lo = t0, hi = t1;
+          const slab = (o, d, mn, mx) => {
+            if (Math.abs(d) < 1e-9) return o >= mn && o <= mx;
+            let ta = (mn - o) / d, tb = (mx - o) / d;
+            if (ta > tb) [ta, tb] = [tb, ta];
+            if (ta > lo) lo = ta;
+            if (tb < hi) hi = tb;
+            return lo <= hi;
+          };
+          if (!(slab(ax, dx, x0, x1) && slab(az, dz, z0, z1) && slab(ay, dy, y0, y1))) continue;
+          // 外包盒命中后再按真实轮廓逐点检查（L 形/大院合并轮廓的外包盒常常盖住街道）
+          const s0 = P.vertStart[i], n = P.vertCount[i], oxA = P.anchorX[i], ozA = P.anchorZ[i];
+          const offs = P.offs;
+          const segL = (hi - lo) * Math.hypot(dx, dy, dz);
+          const k = Math.max(2, Math.min(40, Math.ceil(segL / 3)));
+          for (let m = 0; m <= k; m++) {
+            const tt = lo + ((hi - lo) * m) / k;
+            const px = ax + dx * tt, py = ay + dy * tt, pz = az + dz * tt;
+            if (py < y0 || py > y1) continue;
+            let inside = false;
+            for (let a = 0, b = n - 1; a < n; b = a++) {
+              const xa = oxA + offs[(s0 + a) * 2] * 0.1, za = ozA + offs[(s0 + a) * 2 + 1] * 0.1;
+              const xb = oxA + offs[(s0 + b) * 2] * 0.1, zb = ozA + offs[(s0 + b) * 2 + 1] * 0.1;
+              if (za > pz !== zb > pz && px < ((xb - xa) * (pz - za)) / (zb - za) + xa) inside = !inside;
+            }
+            if (inside) return retIdx ? i : true;
+          }
+        }
+      }
+      return retIdx ? -1 : false;
+    };
+
     const stat = init.stat;
     console.log(
       `[buildings] v${init.version} ${N} 栋（排除 ${pre.nEx}，skyline 让位 ${pre.nSky}）；远景 ${blocks.length} 块 ${(stat.loTris / 1e6).toFixed(2)}M 三角形；` +
@@ -768,7 +825,8 @@ export default {
       classStats: () => ensureClasses().stats,
       classOf: (i) => ensureClasses().cls[i],
       nearestFacade,
-      api: { nearestFacade },
+      occluded,
+      api: { nearestFacade, occluded },
       // 诊断用（tools/check_overlap.mjs）：最终是否渲染（0=渲染）、底部高程、锚点地面高程
       diag: { skip: pre.skip, base: pre.base, ga: pre.ga },
       stats: () => ({
