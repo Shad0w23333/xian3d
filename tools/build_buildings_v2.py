@@ -310,6 +310,10 @@ def build_footprints(cm, osm):
     og = osm['geoms']
     oarea = shapely.area(og)
     is_part = np.array([bool(t.get('building:part')) and not t.get('building') for t in osm['tags']])
+    # 城墙类要素：OSM 关系 3450809「西安城墙」带 building=yes + historic=citywalls，osm_polys 把内环也拼成实心面，
+    # 城内 6000 多栋 CMAB 楼都会“最佳匹配”到它而被标成 kind=5 历史/宗教（整片老城变成深灰砖墙 + 近黑大坡顶）。
+    # 城墙由 citywall 模块建，这类要素不参与名称/kind/高度匹配，也不作为补充楼（已生成数据的纠正见 tools/buildings_patch.py）
+    is_wall = np.array([t.get('barrier') == 'city_wall' or t.get('historic') == 'citywalls' for t in osm['tags']])
     # ---- CMAB 覆盖区：有 CMAB 楼的 500 m 网格（再膨胀 1 格）
     cc = shapely.get_coordinates(shapely.centroid(cg))
     cov = set()
@@ -334,6 +338,8 @@ def build_footprints(cm, osm):
     best_ov = np.zeros(len(cg))
     hmax_part = np.full(len(cg), np.nan)
     for a, b, v, r in zip(oi[ok], ci[ok], inter[ok], rel[ok]):
+        if is_wall[a]:
+            continue
         if is_part[a]:
             if np.isfinite(osm_h[a]) and r >= 0.5:
                 hmax_part[b] = np.fmax(hmax_part[b], osm_h[a])
@@ -356,7 +362,7 @@ def build_footprints(cm, osm):
             m_h[b] = osm_h[a]
     m_h = np.where(np.isfinite(hmax_part) & ~np.isfinite(m_h), hmax_part, m_h)
     # ---- OSM 补充楼：非 part；覆盖区外全部；覆盖区内仅当被 CMAB 覆盖 < 20%
-    add = (~is_part) & ((~in_cov) | (cover_o < 0.2)) & (oarea >= MIN_AREA)
+    add = (~is_part) & (~is_wall) & ((~in_cov) | (cover_o < 0.2)) & (oarea >= MIN_AREA)
     log(f'OSM 补充：覆盖区外 {int(((~is_part) & ~in_cov & (oarea >= MIN_AREA)).sum())}，'
         f'覆盖区内 CMAB 缺失 {int(((~is_part) & in_cov & (cover_o < 0.2) & (oarea >= MIN_AREA)).sum())}')
     ai = np.nonzero(add)[0]
