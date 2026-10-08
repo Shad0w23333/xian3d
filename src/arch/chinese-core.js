@@ -584,13 +584,14 @@ function emissiveTimesVertexColor(m) {
 // 材质定义：所有材质 vertexColors=true，颜色走顶点色。
 const MAT_DEFS = {
   // 屋面（近景底瓦，筒瓦用几何）
-  tile: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tile.map, normalMap: k.tex.tile.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), roughness: 0.82, side: THREE.DoubleSide }),
+  // 素烧灰瓦哑光：环境反射减半（朝天的屋面镜面反射整片蓝天，灰瓦被染成藏青）
+  tile: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tile.map, normalMap: k.tex.tile.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), roughness: 0.86, envMapIntensity: 0.55, side: THREE.DoubleSide }),
   tileGlazed: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tile.map, normalMap: k.tex.tile.normalMap, normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.32, metalness: 0.05, side: THREE.DoubleSide }),
   // 屋面（远/中景，瓦垄画进贴图）
-  tileFlat: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tileFlat.map, normalMap: k.tex.tileFlat.normalMap, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.8, side: THREE.DoubleSide }),
+  tileFlat: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tileFlat.map, normalMap: k.tex.tileFlat.normalMap, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.86, envMapIntensity: 0.55, side: THREE.DoubleSide }),
   tileFlatGlazed: (k) => new THREE.MeshStandardMaterial({ map: k.tex.tileFlat.map, normalMap: k.tex.tileFlat.normalMap, normalScale: new THREE.Vector2(1.0, 1.0), roughness: 0.34, metalness: 0.05, side: THREE.DoubleSide }),
   // 屋脊、吻兽、走兽
-  ridge: (k) => new THREE.MeshStandardMaterial({ map: k.tex.noise, roughness: 0.72 }),
+  ridge: (k) => new THREE.MeshStandardMaterial({ map: k.tex.noise, roughness: 0.78, envMapIntensity: 0.6 }),
   ridgeGlazed: (k) => new THREE.MeshStandardMaterial({ map: k.tex.noise, roughness: 0.3, metalness: 0.05 }),
   // 油饰木构（柱、枋、斗拱、椽、门框……）
   paint: (k) => new THREE.MeshStandardMaterial({ map: k.tex.noise, roughness: 0.55 }),
@@ -667,6 +668,8 @@ export function getKit(ctx) {
  *   floodlit(material, {color, strength, baseY, height, top, ctx})
  *   color: 光色（默认暖金 0xffc47a）；strength：强度（1~3，默认 1.6）；baseY：灯具所在世界高度（通常为台基/城台顶）；
  *   height：渐变高度（米）；top：顶部相对亮度（默认 0.35）；朝上的面（屋面）亮度自动减弱，檐下/斗拱（朝下的面）更亮。
+ * shade（可选）：泛光照不到的区域（券洞、门洞深处等），世界坐标轴对齐盒，最多 4 个：
+ *   [{min:[x,y,z], max:[x,y,z], soft:[sx,sy,sz]（各轴从盒边向内渐暗的距离，默认 1 m）, k（遮挡程度，默认 0.92）}]
  * 会修改并返回该材质（如需与其他建筑区分，先 clone）。可与已有 onBeforeCompile 叠加。
  */
 export function floodlit(material, opts = {}) {
@@ -680,6 +683,13 @@ export function floodlit(material, opts = {}) {
     uFloodTop: { value: opts.top ?? 0.35 },
     uFloodUp: { value: opts.upDim ?? 0.7 },
   };
+  const shade = (opts.shade || []).slice(0, 4);
+  const nShade = shade.length;
+  if (nShade) {
+    u.uShadeMin = { value: shade.map((s) => new THREE.Vector3(...s.min)) };
+    u.uShadeMax = { value: shade.map((s) => new THREE.Vector3(...s.max)) };
+    u.uShadeSoft = { value: shade.map((s) => new THREE.Vector4(...(s.soft || [1, 1, 1]).map((v) => Math.max(0.01, v)), s.k ?? 0.92)) };
+  }
   material.userData.flood = u;
   const prev = material.onBeforeCompile;
   const prevKey = material.customProgramCacheKey ? material.customProgramCacheKey.bind(material) : () => '';
@@ -713,7 +723,8 @@ export function floodlit(material, opts = {}) {
         varying vec3 vFloodW;
         varying vec3 vFloodN;
         uniform vec3 uFloodColor;
-        uniform float uFloodStrength, uFloodBase, uFloodHeight, uFloodTop, uFloodUp, uNight;`
+        uniform float uFloodStrength, uFloodBase, uFloodHeight, uFloodTop, uFloodUp, uNight;
+        ${nShade ? `uniform vec3 uShadeMin[${nShade}], uShadeMax[${nShade}]; uniform vec4 uShadeSoft[${nShade}];` : ''}`
       )
       .replace(
         '#include <emissivemap_fragment>',
@@ -723,11 +734,16 @@ export function floodlit(material, opts = {}) {
           float prof = mix( 1.0, uFloodTop, fh ) * smoothstep( -1.5, 0.5, vFloodW.y - uFloodBase );
           vec3 fN = vFloodN / max( length( vFloodN ), 1e-4 ); // 插值法线可能为 0（双面薄片），不能直接 normalize
           float face = 1.0 - uFloodUp * max( fN.y, 0.0 ) + 0.35 * max( -fN.y, 0.0 );
+          ${nShade ? `for ( int si = 0; si < ${nShade}; si++ ) {
+            vec3 dIn = min( vFloodW - uShadeMin[si], uShadeMax[si] - vFloodW ) / uShadeSoft[si].xyz;
+            float sk = smoothstep( 0.0, 1.0, min( min( dIn.x, dIn.y ), dIn.z ) );
+            prof *= 1.0 - uShadeSoft[si].w * sk;
+          }` : ''}
           totalEmissiveRadiance += diffuseColor.rgb * uFloodColor * ( uFloodStrength * uNight * prof * face );
         }`
       );
   };
-  material.customProgramCacheKey = () => prevKey() + '|flood';
+  material.customProgramCacheKey = () => prevKey() + '|flood' + nShade;
   material.needsUpdate = true;
   return material;
 }
@@ -1242,9 +1258,11 @@ export class ArchBuilder {
     const getMat = (key) => {
       if (matCache.has(key)) return matCache.get(key);
       let m = opts.materials?.[key] || kit.mat(key);
-      if (opts.flood && !['emit', 'glow', 'lattice', 'led'].includes(key)) {
+      // flood.byKey：按材质名覆盖泛光参数（如砖台与木构分别配色/强度），值为 false 时该材质不泛光
+      const fk = opts.flood?.byKey?.[key];
+      if (opts.flood && fk !== false && !['emit', 'glow', 'lattice', 'led'].includes(key)) {
         m = m.clone();
-        floodlit(m, { ctx: this.ctx, ...opts.flood });
+        floodlit(m, { ctx: this.ctx, ...opts.flood, ...(fk || {}) });
       }
       matCache.set(key, m);
       return m;
@@ -1406,10 +1424,13 @@ export function stats(obj) {
 }
 
 // ───────────────────────────── 风格与配色 ─────────────────────────────
-/** 屋面配色（顶点色，已按贴图亮度校正）。可传十六进制自定义：{tile, tube, ridge, glazed} */
+/**
+ * 屋面配色（顶点色，已按贴图亮度校正）。可传十六进制自定义：{tile, tube, ridge, glazed}
+ * 灰瓦取中性略暖的灰（原先 0x6e7176 等偏蓝，叠加天空环境光后整片屋面呈藏青色）。
+ */
 export const ROOF_COLORS = {
-  gray: { tile: 0x9a9ea3, tube: 0x8f9398, ridge: 0x5d6064, glazed: false },
-  darkgray: { tile: 0x6e7176, tube: 0x676a6f, ridge: 0x46494d, glazed: false },
+  gray: { tile: 0x9e9c98, tube: 0x93918d, ridge: 0x605e5b, glazed: false },
+  darkgray: { tile: 0x75726e, tube: 0x6d6a66, ridge: 0x4a4845, glazed: false },
   green: { tile: 0x2e7446, tube: 0x2b6e42, ridge: 0x235a36, glazed: true },
   yellow: { tile: 0xf2b640, tube: 0xefb33d, ridge: 0xd99b2b, glazed: true },
   blue: { tile: 0x3a62a8, tube: 0x3960a3, ridge: 0x2d4f8a, glazed: true },

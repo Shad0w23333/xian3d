@@ -183,6 +183,9 @@ export default {
     const shoreG = shore.build({ name: '驳岸宫灯', castShadow: false });
     shoreG.position.set(O.x, O.y, O.z);
     root.add(shoreG);
+    // 湖心岛岛面与伸入湖中的小半岛：原先只砌了一圈驳岸，框里露出比水面还低的 DEM 地形（看起来是一池深色水、树从水里长出）
+    const isle = islandTops(ctx, Object.values(lakes), ground);
+    if (isle) root.add(isle);
 
     // ───── 5. 湖面倒影（每湖按 solid/emit/glow 合并成 ≤ 3 个网格；原先逐网格复制共 269 个） ─────
     // 先把 root 下所有世界矩阵算一遍：倒影按世界坐标复制几何（LOD 子级的父矩阵在首帧渲染前尚未更新）
@@ -390,6 +393,89 @@ function shoreline(b, lk, O, ground) {
       }
     }
   });
+}
+
+// ───────────── 湖心岛岛面 ─────────────
+/**
+ * 外环上伸入湖中的小半岛（外环在短距离内折出一个“凹口”，凹口里是陆地）：返回凹口多边形（扁平数组）与封口弦。
+ * 判据：外环上相隔 2~6 个顶点的两点距离 < 14 m、沿环路程 > 2.2 倍直线距离、围出的区域中心在湖外（陆地）、面积 15~2500 m²。
+ */
+function shorePockets(lk) {
+  const o = lk.poly.outer, n = o.length / 2, out = [];
+  const P = (i) => [o[((i % n) + n) % n * 2], o[((i % n) + n) % n * 2 + 1]];
+  const used = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    for (let k = 2; k <= 6; k++) {
+      const a = P(i), b = P(i + k);
+      const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (d > 14 || d < 1) continue;
+      let L = 0;
+      for (let t = 0; t < k; t++) { const p = P(i + t), q = P(i + t + 1); L += Math.hypot(q[0] - p[0], q[1] - p[1]); }
+      if (L < d * 2.2) continue;
+      const poly = [];
+      for (let t = 0; t <= k; t++) poly.push(...P(i + t));
+      const c = polyCentroid(poly);
+      const cx = c.x ?? c[0], cz = c.z ?? c[1];
+      if (pointInPoly(cx, cz, o) || (lk.poly.holes || []).some((h) => pointInPoly(cx, cz, h))) continue;
+      const area = Math.abs(polyAreaFlat(poly));
+      if (area < 15 || area > 2500) continue;
+      let skip = false;
+      for (let t = 0; t <= k; t++) if (used[(i + t) % n]) skip = true;
+      if (skip) continue;
+      for (let t = 0; t <= k; t++) used[(i + t) % n] = 1;
+      out.push({ poly, chord: [a, b] });
+      break;
+    }
+  }
+  return out;
+}
+/** 每个湖的每个洞（岛）与外环小半岛生成高出水面 0.55 m 的草地面（原有地形更高时被地形盖住，不影响） */
+function islandTops(ctx, lakes, ground) {
+  const P = [], N = [], U = [];
+  let nIs = 0;
+  const skirt = (a, b, y) => {
+    // 半岛封口弦一侧的草坡侧面（岛面 → 岸上地面），避免看到悬空的岛面边缘
+    const ya = Math.min(y, ground(a[0], a[1])) - 0.1, yb = Math.min(y, ground(b[0], b[1])) - 0.1;
+    const nx = -(b[1] - a[1]), nz = b[0] - a[0], l = Math.hypot(nx, nz) || 1;
+    for (const q of [[a[0], y, a[1]], [b[0], y, b[1]], [b[0], yb, b[1]], [a[0], y, a[1]], [b[0], yb, b[1]], [a[0], ya, a[1]]]) {
+      P.push(...q);
+      N.push(nx / l, 0, nz / l);
+      U.push((q[0] + q[2]) / 4, q[1] / 4);
+    }
+  };
+  for (const lk of lakes) {
+    const pockets = shorePockets(lk);
+    for (const pk of pockets) skirt(pk.chord[0], pk.chord[1], lk.y + 0.55), skirt(pk.chord[1], pk.chord[0], lk.y + 0.55);
+    for (const h of [...(lk.poly.holes || []), ...pockets.map((p) => p.poly)]) {
+      if (h.length < 6) continue;
+      const pts = [];
+      for (let i = 0; i < h.length; i += 2) pts.push(new THREE.Vector2(h[i], h[i + 1]));
+      const tris = THREE.ShapeUtils.triangulateShape(pts, []);
+      if (!tris.length) continue;
+      const y = lk.y + 0.55;
+      for (const t of tris) {
+        // 统一朝上（ShapeUtils 输出的绕向随输入环方向而变）
+        const [a, b, c] = t.map((k) => pts[k]);
+        const up = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) < 0;
+        for (const p of up ? [a, b, c] : [a, c, b]) {
+          P.push(p.x, y, p.y);
+          N.push(0, 1, 0);
+          U.push(p.x / 4, p.y / 4);
+        }
+      }
+      nIs++;
+    }
+  }
+  if (!nIs) return null;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  g.computeBoundingSphere();
+  const m = new THREE.Mesh(g, ctx.mats.get('grass'));
+  m.receiveShadow = true;
+  m.name = '湖心岛岛面';
+  return m;
 }
 
 // ───────────── 唐城墙遗址：夯土残段 ─────────────
