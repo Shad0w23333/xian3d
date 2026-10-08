@@ -174,7 +174,12 @@ const wanzhong = {
 // 高度：商场“地上 7 层”（高楼迷/百科），照片 7 层 × 约 5.4 m → 38 m；圆筒比台地高约 1–2 层 → 45 m；
 // 塔楼无资料：照片 saige_3 中塔楼高约为圆筒的 2.2–2.4 倍、夜景 saige_4 可数约 26–28 层 → 取 100 m（按照片比例与数层）。
 const SAIGE_FP = '5dfb5e1c-d051-4f6a-a088-5b2038187946';
-const SAIGE_STY = { pattern: 'retail', tint: '#2f5f9a', spd: '#7f8c99', floorH: 5.4, colW: 3.2, spandrel: 0.35, mullW: 0.25, lit: 0.85 };
+// 2026-10 修正：原立面一色蓝玻璃方格（spandrel 0.35、tint 亮蓝），看不出“山崖台地”；改为深蓝灰玻璃 + 米灰石材层间带（窗槛墙加厚），
+// 台地外沿加种植槽（绿篱）+ 立面顶部垂挂绿植带；南立面玻璃盒子贴着所在台地的墙面、坐在下一级台地屋面上（原来离墙 7 m / 悬空 2~9 m）。
+const SAIGE_STY = { pattern: 'retail', tint: '#2b4760', spd: '#b7b0a3', floorH: 5.4, colW: 3.2, spandrel: 0.46, mullW: 0.35, lit: 0.7 };
+// 南立面各级台地的墙面 z（轮廓最南点 4050.9 − 7k，再按 grow −0.15k 内缩）与台地屋面高度
+const SG_FACE = [4050.9, 4043.75, 4036.6, 4029.45], SG_TOP = [14, 21, 28, 38];
+const SG_GREEN = { color: '#4b6b37', roughness: 0.95, metalness: 0 };
 const saige = {
   id: 'saige-xiaozhai',
   name: '赛格国际购物中心',
@@ -203,11 +208,29 @@ const saige = {
       style: { pattern: 'verticalFins', tint: '#8fb9d8', spd: '#d8e6ee', floorH: 3.85, colW: 1.2, spandrel: 0.05, mullW: 0.16, lit: 0.95, seed: 60 + i },
       roof: { mech: false },
     })),
-    // 南立面挂的外挑玻璃盒子（saige_0/1）
-    ...[95, 122, 149, 176, 203].map((x, i) => ({
-      name: 'box' + i, shape: 'rect', size: [8, 5], at: [x, 4046.5], base: 16 + (i % 2) * 7, top: 21 + (i % 2) * 7,
-      style: { pattern: 'curtain', tint: '#cfe3ee', spd: '#e8eef2', floorH: 5, colW: 2, spandrel: 0.08, mullW: 0.12, lit: 0.95, seed: 70 + i },
-      roof: { mech: false, parapet: 0.3 },
+    // 南立面的外挑玻璃盒子（saige_0/1）：偶数号贴第 1 级台地墙面、坐在商场屋面（14 m）上，奇数号贴第 2 级台地墙面、坐在第 1 级台地屋面（21 m）上；
+    // 盒子北端嵌进墙里 1.5 m，向南挑出 3 m（深 4.5 m），不压到台地外沿的种植槽
+    ...[95, 122, 149, 176, 203].map((x, i) => {
+      const k = 1 + (i % 2), zf = SG_FACE[k];
+      return {
+        name: 'box' + i, shape: 'rect', size: [8, 4.5], at: [x, zf + 0.75], base: SG_TOP[k - 1], top: SG_TOP[k - 1] + 5.6,
+        style: { pattern: 'curtain', tint: '#cfe3ee', spd: '#e8eef2', floorH: 5.6, colW: 2, spandrel: 0.08, mullW: 0.12, lit: 0.95, seed: 70 + i },
+        roof: { mech: false, parapet: 0.3 }, footprint: false,
+      };
+    }),
+    // 台地外沿种植槽（绿篱高出女儿墙约 0.5 m、宽 1.1 m）：商场屋面与三级台地屋面的南沿，西端让开转角圆筒；
+    // 商场屋面南沿在 x 184.6 以东退到 4049.0，那一段不放
+    ...SG_TOP.map((top, k) => {
+      const x1 = k === 0 ? 184 : 216;
+      return {
+        name: 'planter' + k, kind: 'solid', pts: [80, SG_FACE[k] - 1.6, x1, SG_FACE[k] - 1.6, x1, SG_FACE[k] - 0.5, 80, SG_FACE[k] - 0.5],
+        base: top, top: top + 1.7, mat: SG_GREEN, footprint: false, sink: 0.3,
+      };
+    }),
+    // 台地墙面顶部的垂挂绿植带（第 1~3 级墙面，墙顶以下 2.4 m）
+    ...[1, 2, 3].map((k) => ({
+      name: 'hang' + k, kind: 'solid', pts: [80, SG_FACE[k] + 0.05, 216, SG_FACE[k] + 0.05, 216, SG_FACE[k] + 0.4, 80, SG_FACE[k] + 0.4],
+      base: SG_TOP[k] - 2.4, top: SG_TOP[k] - 0.1, mat: SG_GREEN, footprint: false, sink: 0,
     })),
   ],
   signs: [
@@ -225,7 +248,8 @@ const saige = {
     confidence: 'medium（形体）；low（塔楼高度）',
     notes: '商场 38 m 按“地上 7 层”× 约 5.4 m（按照片数层）；台地分 3 级，每级南移约 7 m（按照片比例）；圆筒 45 m 按照片比台地高约 1–2 层。'
       + '塔楼高度无资料：按照片比例（约为圆筒 2.2–2.4 倍）与夜景数层（约 26–28 层）取 100 m。旧 sky-data saige（56 m 单一裙楼）作废。'
-      + '塔楼立面对角斜线灯带、东侧 50.3 m 室外扶梯、商场东端两处小天井未建。',
+      + '塔楼立面对角斜线灯带、东侧 50.3 m 室外扶梯、商场东端两处小天井未建。'
+      + '2026-10：玻璃盒子改为贴所在台地墙面、坐在下一级台地屋面上（原离墙 7 m、悬空 2~9 m）；台地外沿加种植槽 + 墙顶垂挂绿植带；立面改深蓝灰玻璃 + 米灰石材层间带。',
   },
 };
 
@@ -324,30 +348,37 @@ const yintaiQJ = {
     {
       name: 'boxA', kind: 'podium', fp: '5fc5f88e-2cc2-46c6-b44d-8d831d0f489d', base: 0, top: 22,
       style: { pattern: 'grid', tint: '#6b7780', spd: '#9c7a4f', floorH: 3.2, colW: 1.6, spandrel: 0.55, mullW: 0.5, lit: 0.75 },
-      crown: { type: 'tangRoof', eave: 3.5, h: 9, ridge: 0.62, mat: TANG_ROOF, glow: '#ffc36b' },
+      // 檐口金色线灯：默认强度 2.4 远看是一道很粗的金线（g10 审查），减到 0.9
+      crown: { type: 'tangRoof', eave: 3.5, h: 9, ridge: 0.62, mat: TANG_ROOF, glow: '#ffc36b', strength: 0.9 },
     },
     {
       name: 'shopA', kind: 'facade', fp: '5fc5f88e-2cc2-46c6-b44d-8d831d0f489d', grow: 0.15, base: 0, top: 7.5,
       style: { pattern: 'retail', tint: '#3a4650', spd: '#9c7a4f', floorH: 7.5, colW: 3.4, spandrel: 0.1, mullW: 0.25, lit: 0.95 },
     },
     {
+      // 白色石材竖向分格（夜景照片 yintai_qj_3）：原 stoneWindows 4.8 m 层高方窗格像普通写字楼 → 1 m 宽石材竖肋 + 1.2 m 窄长玻璃、6 m 一道细横带
       name: 'boxB', kind: 'podium', fp: 'af6118b1-4400-47af-9080-7ac94655cf37', holes: 'fp', base: 0, top: 24,
-      style: { pattern: 'stoneWindows', tint: '#6b7780', spd: '#e6e0d6', floorH: 4.8, colW: 3.0, spandrel: 0.5, mullW: 1.2, lit: 0.6 },
+      style: { pattern: 'stoneWindows', tint: '#56636c', spd: '#e8e3da', floorH: 6, colW: 2.2, spandrel: 0.1, mullW: 1.0, lit: 0.45 },
     },
     {
-      name: 'galleryB', // B 馆顶层唐风长廊（红色柱廊 + 庑殿顶），沿长轴居中
-      shape: 'rect', size: [196, 16], at: [1632, 5828], rot: 90, base: 24, top: 30,
-      style: { pattern: 'verticalFins', tint: '#3a2a24', spd: '#8b2a1e', floorH: 6, colW: 2.6, spandrel: 0.12, mullW: 0.7, lit: 0.8 },
+      // B 馆顶层唐风长廊，沿长轴居中：原来是一整块红色竖肋立面 + 红色泛光 + 白色亮窗（远看是扁平红带加白竖条），
+      // 改为退进的木格栅暖光内廊（芯体 192×10 m）+ 外圈红色圆柱柱廊（columns，柱距 4.4 m）+ 深灰瓦庑殿顶（出檐盖过柱廊）
+      name: 'galleryB',
+      shape: 'rect', size: [192, 10], at: [1632, 5828], rot: 90, base: 24, top: 30,
+      style: { pattern: 'grid', tint: '#4a3426', spd: '#6b3a26', floorH: 6, colW: 1.4, spandrel: 0.14, mullW: 0.35, lit: 0.35 },
       roof: { mech: false, parapet: 0.3 },
-      crown: { type: 'tangRoof', eave: 3, h: 5.5, mat: TANG_ROOF, glow: '#ffc36b' },
+      crown: { type: 'tangRoof', eave: 4.2, h: 5.5, mat: TANG_ROOF, glow: '#ffc36b', strength: 0.8 },
     },
   ],
+  columns: [{ part: 'galleryB', out: 2.6, step: 4.4, r: 0.38, from: 24, to: 30.2, mat: { color: '#8e2a1f', roughness: 0.6, metalness: 0.05, glow: '#ff5a32', glowNight: 0.35 } }],
+  bands: [{ part: 'galleryB', levels: [30.2], h: 0.9, depth: 2.95, color: '#7a2418' }], // 柱头额枋一圈（接檐下）
   signs: [
     { text: '银泰城', part: 'boxA', face: ['E', 'S'], y: 17.5, h: 3.4, color: '#ffffff' },
     { text: 'INTIME CITY', part: 'boxA', face: 'E', y: 14.6, h: 1.4, color: '#ffffff' },
   ],
   night: {
-    floodlight: [{ part: 'galleryB', color: '#ff3b2a', strength: 0.4 }], // 斗拱、柱廊红光
+    // 柱廊：柱身红色微光 + 内廊暖光透出（原 0.4 强度的红色光幕整块铺满长廊，看不出屋顶形体）
+    floodlight: [{ part: 'galleryB', color: '#ff5a32', strength: 0.12, fall: 1.2, offset: 2.9 }],
     media: [{ part: 'boxB', face: 'W', from: 6, to: 19, width: 26, shift: -45 }, { part: 'boxB', face: 'W', from: 6, to: 19, width: 26, shift: 45 }],
   },
   supersede: { names: ['曲江银泰城(A馆+B馆)', '曲江银泰城（A馆+B馆）', '西安曲江银泰', '银泰百货曲江店', '银泰城A馆', '银泰城B馆'] },
@@ -357,7 +388,8 @@ const yintaiQJ = {
     photos: ['scratchpad/dossier_core_south/photos/yintai_qj_0.jpg', 'yintai_qj_3.jpg（B 馆夜景）', 'yintai_qj_4.jpg（A 馆）'],
     confidence: 'medium（形体）；low（高度）',
     notes: '高度无资料：A 馆 22 m、B 馆 24 m 按照片数层（约 4 层）；屋顶高度按照片比例（A 馆屋面约为墙身 40%）。B 馆顶层长廊的平面范围按夜景照片推定为沿长轴居中、宽约 16 m，±5 m。'
-      + 'A 馆北侧 OSM 017ac0f7/dbe8e51c 等附属体量不在档案条目内，未改动。',
+      + 'A 馆北侧 OSM 017ac0f7/dbe8e51c 等附属体量不在档案条目内，未改动。'
+      + '2026-10：B 馆立面改为石材竖肋 + 窄长玻璃；顶层长廊改为退进的木格栅内廊 + 外圈红柱（柱距 4.4 m）+ 额枋 + 庑殿顶，去掉整块红色光幕；LED 屏换成有画面与字幕的内容、亮度压到泛光阈值附近；A 馆檐口灯带减弱。',
   },
 };
 
@@ -793,15 +825,17 @@ const sxTheater = {
 // 照片 changan_gj_2（由北侧永宁门广场向南）：前排两座约 12 层玻璃塔（顶部“CAKG”“长安控股”），后排居中最高一座挂“华侨城·长安国际”（约 22 层），
 // 中间为抬高的入口平台；changan_gj_0：塔顶“HSBC 汇丰”“BEA 东亚银行”红字；首层 GUCCI/Zegna/PRADA 等店面。
 // 高度：项目“总层高 22 层”（网易/安居客）→ 后排 22 层 × 4.2 m ≈ 92 m；前排按照片数层约 12 层 → 50 m；裙楼 3 层 → 14 m。
-const CAG_STY = { pattern: 'curtain', tint: '#3a5570', spd: '#8a9aa6', floorH: 4.2, colW: 1.5, spandrel: 0.2, mullW: 0.08, lit: 0.5 };
+// 夜景（2026-10 修正）：原 curtain 按 4.5 m 一组随机亮灯、暗处玻璃死黑，远看像二维码 → office：整层成片的冷白办公灯 + 玻璃反射城市天光的深蓝灰底色。
+const CAG_STY = { pattern: 'office', tint: '#3a5570', spd: '#7d8c98', floorH: 4.2, colW: 1.5, spandrel: 0.2, mullW: 0.08, lit: 0.5 };
 const changanIntl = {
   id: 'changan-intl-center',
   name: '华侨城·长安国际中心',
   fp: '3786683c-f19c-40b1-aa94-2f58501926ef',
   parts: [
     {
+      // 裙楼原 lit 0.9 + 窗槛墙 0.2：夜里一整圈通亮白带过曝；王府井百货裙楼石材为主、橱窗为辅 → 窗槛墙加大、亮灯率减半
       name: 'podium', kind: 'podium', fp: '3786683c-f19c-40b1-aa94-2f58501926ef', grow: -0.3, base: 0, top: 14,
-      style: { pattern: 'retail', tint: '#2f3c47', spd: '#8a6a3a', floorH: 4.7, colW: 3.4, spandrel: 0.2, mullW: 0.2, lit: 0.9 },
+      style: { pattern: 'retail', tint: '#2f3c47', spd: '#8a6a3a', floorH: 4.7, colW: 3.4, spandrel: 0.42, mullW: 0.3, lit: 0.5 },
     },
     ...[['towerNW', '863b36ab-8f97-4b3d-b5be-a85a75b7edc8', 50], ['towerNE', '87701acc-5de8-4e9f-9615-6169277ac741', 50],
       ['towerSW', 'a873ff83-f19a-4ec1-acbb-2219f883213d', 92], ['towerSE', '3bccb574-22c2-4629-a877-9574ff9fe749', 92]].map(([name, fp, top], i) => ({
