@@ -10,7 +10,7 @@
 在你的工作树根目录执行（这些目录不在 git 里）：
     ln -s "MAIN/node_modules" node_modules; ln -s "MAIN/tiles" tiles; ln -s "MAIN/data-src" data-src; ln -s "MAIN/.venv-tools" .venv-tools
 （MAIN 换成上面的绝对路径，路径含空格要加引号。）然后读 HANDOFF.md 第 3 节（目录结构）与第 13 节（最近一轮）。
-如果工作树不在 3ab2ca7，先 `git reset --hard 3ab2ca7`（工作树是新建的，没有你的改动时才这样做）。
+工作树应包含提交 3ab2ca7（`git log --oneline -3` 可见）；不包含时先 `git reset --hard 0d04a74`（工作树是新建的、没有你的改动时才这样做）。
 
 ## 现状截图（先看）
 - MAIN/shots/fine1/*.png：本轮新拍的 30 张精细机位（机位表 MAIN/tools/tour_fine.json）：18 条街道人行道人眼高度、8 个小区内部 40 m 低空、4 张夜景。
