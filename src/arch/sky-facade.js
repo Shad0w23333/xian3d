@@ -6,7 +6,8 @@
 //   aTint 玻璃底色（线性）  aSpd 窗槛墙/竖梃/石材颜色（线性）
 // 模式 mode：0 普通幕墙  1 LED 媒体幕墙（绿地中心“丝路之门”）  2 楼层线灯  3 横向白色百叶（体育之窗）
 //            4 塔冠玻璃（v 为塔冠内高度，aFac.x=塔冠高度，自下而上泛光渐隐）  5 LED 大屏  6 商业裙房（大玻璃、夜间通亮）
-//            7 石材墙面+窗洞（行政中心、老式高层）
+//            7 石材墙面+窗洞（行政中心、老式高层）  8 彩色渐变泛光  9 石材+暖色基座泛光
+//            10 办公楼玻璃幕墙（白天同 0；夜间整层成片的冷白办公亮窗 + 玻璃反射城市天光的深蓝灰底亮，不再是死黑墙上的随机亮块）
 // 竖梃/横梁/窗槛墙都由着色器按“米”生成，fwidth 抗锯齿，远处自动退化为平均色（不闪烁）。
 import * as THREE from 'three';
 
@@ -76,7 +77,9 @@ const MAP_F = /* glsl */ `
   float blind = step(0.9, ph2) * (skMode == 6.0 ? 0.0 : 1.0);
   glassC = mix(glassC, vec3(0.26, 0.26, 0.25), blind * 0.35);
   vec3 spdC = vSpd;
-  bool stone = skMode > 6.5;
+  // 10：办公楼玻璃幕墙（白天同 0；夜间按整层成片的办公亮窗 + 玻璃反射城市天光的底亮，见 EMIS_F）
+  bool office = skMode > 9.5 && skMode < 10.5;
+  bool stone = skMode > 6.5 && !office;
   vec3 mullC = stone ? vSpd * 0.92 : mix(vSpd, vec3(0.50, 0.52, 0.54), 0.6);
   vec3 louv = vec3(0.10, 0.11, 0.115) * (0.75 + 0.25 * step(0.5, fract(vFuv.y * 2.2)));
   float lv = band * (1.0 - frame);
@@ -123,7 +126,17 @@ const EMIS_F = /* glsl */ `
     float inner = smoothstep(spR, 1.0, fq.y);
     float grad = 0.5 + 0.5 * inner;
     float k = (0.55 + 0.75 * skH21(vec2(rid * 1.7, fl * 2.3)));
-    if (skCrown < 0.5) em += lc * lit * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    if (office) {
+      // 办公楼：亮灯以“整层”为单位（加班的楼层整层亮），亮层里个别开间关灯，暗层里零星几间亮；
+      // 冷白日光灯为主、亮度均匀；玻璃在夜里反射城市天光，暗处保留深蓝灰底色而不是死黑
+      float floorOn = step(skH21(vec2(fl * 0.913, seed * 1.7)), vSty.y);
+      float bay = skH21(vec2(floor(col / 2.0), fl) + seed * 3.9);
+      lit = (floorOn > 0.5 ? step(0.12, bay) : step(0.93, bay)) * (1.0 - band);
+      lc = mix(vec3(0.88, 0.94, 1.0), vec3(1.0, 0.86, 0.66), step(0.8, skH21(vec2(fl * 0.29, seed + 2.5))));
+      k = 0.85 + 0.25 * skH21(vec2(col * 0.37, fl * 1.9));
+      em += lc * lit * vision * (0.6 + 0.4 * inner) * k * 0.24;
+      em += vTint * (0.05 + 0.04 * ph) * vision * (1.0 - lit);
+    } else if (skCrown < 0.5) em += lc * lit * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
     if (skMode == 1.0) { // 绿地中心：竖梃/横梁 LED 线条动画
       float t = uTime;
       float wave = 0.5 + 0.5 * sin(vFuv.y * 0.05 - t * 1.1 + sin(vFuv.x * 0.045 + t * 0.35) * 1.6);
@@ -142,14 +155,27 @@ const EMIS_F = /* glsl */ `
       em += cc * (pow(1.0 - ch, 1.6) * 1.3 + 0.18) * (0.4 + 0.6 * (1.0 - vision));
       em += cc * mull * 2.2;
     }
-    if (skMode == 5.0) { // LED 大屏：缓慢变化的色块与横向滚动
-      vec2 p = vFuv * vec2(0.035, 0.05);
-      float s1 = sin(p.x * 3.0 + uTime * 0.7) + sin(p.y * 4.0 - uTime * 0.9) + sin((p.x + p.y) * 2.0 + uTime * 0.4);
-      vec3 c = skHsv(vec3(fract(s1 * 0.08 + uTime * 0.03), 0.65, 1.0));
-      em = c * (0.9 + 0.5 * sin(s1)) * 1.7 * (1.0 - mull * 0.6);
+    if (skMode == 5.0) { // LED 大屏：每 8 秒换一屏的“画面”（大色块构图 + 缓慢流动）+ 底部白字滚动字幕条
+      // 原来是整屏同一色调、亮度 1.7×(0.9..1.4) 的色块，泛光后过曝成纯白矩形；现在亮度上限约 0.8、饱和度更高，有明暗构图
+      vec2 q = vFuv;
+      float slot = floor(uTime / 8.0 + seed * 0.37);
+      float hA = skH21(vec2(slot, seed + 1.3)), hB = skH21(vec2(slot + 7.1, seed));
+      vec2 p = q * vec2(0.035, 0.05);
+      float s1 = sin(p.x * 3.0 + uTime * 0.5) + sin(p.y * 4.0 - uTime * 0.6) + sin((p.x + p.y) * 2.0 + uTime * 0.3);
+      vec3 bg = skHsv(vec3(fract(hA + s1 * 0.05), 0.8, 0.55 + 0.15 * sin(s1)));
+      // 画面主体：一块随画面变化位置的亮色椭圆（人物/产品图的近似）
+      vec2 ctr = vec2(fract(hB * 3.7) * 30.0 + 4.0, 6.0 + hB * 5.0);
+      float blob = 1.0 - smoothstep(3.5, 6.5, length((vec2(mod(q.x, 40.0), q.y) - ctr) * vec2(0.8, 1.0)));
+      vec3 c = mix(bg, skHsv(vec3(fract(hA + 0.45), 0.55, 1.0)), blob * 0.85);
+      // 字幕条（屏底 0.6~2.4 m）：深色底 + 向左滚动的白色“字块”
+      float bar = step(0.6, q.y) * (1.0 - step(2.4, q.y));
+      float gx = floor((q.x + uTime * 3.0) / 0.9);
+      float glyph = step(0.45, skH21(vec2(gx, floor(q.y / 0.6) + slot))) * step(0.12, fract((q.x + uTime * 3.0) / 0.9)) * step(0.25, skH21(vec2(floor(gx / 7.0), slot)));
+      c = mix(c, vec3(0.05) + vec3(0.95, 0.95, 0.9) * glyph, bar);
+      em = c * 0.8 * (1.0 - mull * 0.6);
       nt = max(nt, 0.35); // 白天也亮（较弱）
     }
-    if (skMode > 7.5) {
+    if (skMode > 7.5 && !office) {
       if (skMode < 8.5) { // 8：彩色渐变泛光（电视塔塔身）
         // 底部投光灯自下而上渐隐 + 沿塔身上行的彩色光带（LED 线条），不做“整根发光管”
         float ch = clamp(vFuv.y / 150.0, 0.0, 1.0);
@@ -194,7 +220,7 @@ export function createFacadeMaterial(ctx) {
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + NORMAL_F)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + EMIS_F);
   };
-  m.customProgramCacheKey = () => 'skyFacade-v1';
+  m.customProgramCacheKey = () => 'skyFacade-v2';
   return m;
 }
 
@@ -204,11 +230,14 @@ const lin = (hex) => {
   return [c.r, c.g, c.b];
 };
 export function style(o = {}) {
+  // 种子折回 [0, 9.73)：着色器哈希 skH21(格号 + seed×17.13 …) 先乘 123/456 再取小数，seed 一大（档案建筑缺省种子按 7.3 递增到几千、
+  // 通用塔楼 i×2.3）乘积超过 float32 精度，fract 退化成常数——整栋亮灯率失效（裙楼一整圈通亮白带）、亮窗成大块“二维码”
+  const s0 = o.seed ?? Math.random() * 100;
   return {
     floorH: o.floorH ?? 4.2,
     colW: o.colW ?? 1.5,
     spandrel: o.spandrel ?? 0.28,
-    seed: o.seed ?? Math.random() * 100,
+    seed: ((s0 % 9.73) + 9.73) % 9.73,
     mullW: o.mullW ?? 0.12,
     lit: o.lit ?? 0.35,
     mode: o.mode ?? 0,

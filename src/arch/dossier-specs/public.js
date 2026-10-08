@@ -776,7 +776,8 @@ const zrbwg = {
       pts: [-63.8, 6854.0, -17.6, 6853.6, -17.3, 6897, -63.3, 6897],
       style: { pattern: 'stoneWindows', spd: '#c8c0b0', tint: '#2f3b44', floorH: 6, colW: 4.0, spandrel: 0.3, mullW: 1.4, lit: 0.6 },
       roofMat: { color: '#a8a296', roughness: 0.9 },
-      crown: [{ type: 'sphere', r: 19, cy: 19, at: [-40.2, 6875.5], mat: { color: '#9aa3aa', metalness: 0.65, roughness: 0.18 }, ribs: 18, ribMat: '#3c3f42' }],
+      // 档案“银灰三角分格网壳”：测地线三角分格（grid:'tri'）+ 银灰哑光板（原 metalness 0.65 / roughness 0.18 + 18 道经线环，像镀铬洋葱球）
+      crown: [{ type: 'sphere', r: 19, cy: 19, at: [-40.2, 6875.5], grid: 'tri', detail: 6, mat: { color: '#a3abb1', metalness: 0.35, roughness: 0.42 }, ribW: 0.14, ribMat: '#c9cdd0' }],
     },
   ],
   signs: [{ text: '陕西自然博物馆', part: 'lobby', face: 'N', y: 4.6, h: 1.6, color: '#3a3a36', serif: true }],

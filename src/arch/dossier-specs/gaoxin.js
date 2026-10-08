@@ -120,10 +120,9 @@ function greenland(id, name, x0, x1, zN, zS, corner, seed, extra = {}) {
       ...(extra.parts || []),
     ],
     signs: extra.signs || [],
-    night: {
-      // 切面三角形两侧的上照光束（从冠顶两个切角端点向上）
-      beams: [{ part: 'body', from: GL_TOP + 9, at: extra.beamAt, len: 160, w: 2.2, color: '#e6f0ff', strength: 0.55 }],
-    },
+    // 夜景：LED 媒体立面（style media）+ 冠顶玻璃围屏泛光（lantern）。原先从冠顶两个切角端点向天空打两道 160 m 的光束：
+    // 中玻网说的“点杯灯向上照射形成竖向光束”是切面两侧立面上的洗墙光，不是探照光柱；夜景远看成冠顶上三根约百米高的白色细竖线（白天没有），已删除。
+    night: {},
     supersede: extra.supersede,
     meta: extra.meta,
   };
@@ -131,7 +130,6 @@ function greenland(id, name, x0, x1, zN, zS, corner, seed, extra = {}) {
 // 切角两端点（冠顶处）：A 座西南角、B 座东南角
 const GLA = [-6130.3, -6074.3, 7157.8, 7200.6], GLB = [-6251.2, -6201.5, 7185.1, 7229.4];
 const glA = greenland('glA', '西安绿地中心A座', ...GLA, 'SW', 21, {
-  beamAt: [[GLA[0], GLA[3] - GL_C], [GLA[0] + GL_C, GLA[3]]],
   parts: [
     // 绿地缤纷荟（Overture 6821eb31 / OSM w550214182）：地下 1 层–地上 4 层购物中心
     {
@@ -151,7 +149,6 @@ const glA = greenland('glA', '西安绿地中心A座', ...GLA, 'SW', 21, {
   },
 });
 const glB = greenland('glB', '西安绿地中心B座', ...GLB, 'SE', 23, {
-  beamAt: [[GLB[1], GLB[3] - GL_C], [GLB[1] - GL_C, GLB[3]]],
   parts: [
     // OSM w986974317 整体轮廓（含西段裙房）；裙房高度无资料，与 A 座裙房同取 22 m
     {

@@ -4,30 +4,41 @@ import { Batcher } from '../core/util.js';
 import * as G from './sky-geom.js';
 import { style as mkStyle } from './sky-facade.js';
 
-// ---------- 招牌图集：所有楼顶字/立面字合成一张贴图、一个材质、一次绘制 ----------
+// ---------- 招牌图集：所有楼顶字/立面字合成贴图（按需分页，每页一个材质、一次绘制） ----------
 // 已拷进图集并释放了像素的文字画布（textures.text 的模块级缓存会一直持有它们，同键再取到时需换键重绘）
 const RELEASED = new WeakSet();
 let freshSeq = 0;
 export class SignAtlas {
   /**
-   * opts（均可选，默认值即 skyline 原行为）：
-   *   rowH  横排条目在图集中的像素高度（默认 150）
-   *   vW    >0 时竖排条目按宽度缩放到 vW 像素（默认 0：与横排一样按高度 rowH，竖排字会很窄）
-   *   side  材质面向（默认 DoubleSide；单面招牌可用 FrontSide，背面不再显示镜像字）
+   * opts（均可选）：
+   *   rowH      横排条目在图集中的像素高度（默认 150）
+   *   vW        >0 时竖排条目按宽度缩放到 vW 像素（默认 0：与横排一样按高度 rowH，竖排字会很窄）
+   *   side      显式指定材质面向（如 FrontSide：只从正面看、背面不画，贴墙的店招用）。
+   *             不指定时为“双面正读”：每块字牌生成正反两片（背面那片 U 翻转），材质 FrontSide——
+   *             从背后看是正字而不是镜像字（钟楼饭店楼顶立体字、塔楼顶字从反方向看的问题）
+   *   maxPages  最多几页（默认 8）：一页写满自动开新页（同尺寸画布），不再丢字；超过上限才报错
    */
   constructor(ctx, W = 4096, H = 2048, opts = {}) {
     this.ctx = ctx;
     this.W = W; this.H = H;
     this.rowH = opts.rowH ?? 150;
     this.vW = opts.vW ?? 0;
-    this.side = opts.side ?? THREE.DoubleSide;
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = W; this.canvas.height = H;
-    this.g = this.canvas.getContext('2d');
-    this.x = 0; this.y = 0; this.row = 0;
-    this.pos = []; this.uv = []; this.cache = new Map();
+    this.twoFaced = opts.side == null;
+    this.side = opts.side ?? THREE.FrontSide;
+    this.maxPages = opts.maxPages ?? 8;
+    this.tag = opts.tag || 'skyline';
+    this.pages = [];
+    this.cache = new Map();
+    this._page();
   }
-  /** 渲染文字进图集，返回 {u0,v0,u1,v1,aspect}；图集已满返回 null */
+  _page() {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.W; canvas.height = this.H;
+    const P = { canvas, g: canvas.getContext('2d'), x: 0, y: 0, row: 0, pos: [], uv: [] };
+    this.pages.push(P);
+    return P;
+  }
+  /** 渲染文字进图集，返回 {u0,v0,u1,v1,aspect,page}；超过页数上限返回 null（并报错） */
   entry(text, opts) {
     const key = text + JSON.stringify(opts);
     if (this.cache.has(key)) return this.cache.get(key);
@@ -37,21 +48,38 @@ export class SignAtlas {
     const c = t.canvas;
     let w = c.width, h = c.height;
     const k = opts?.vertical && this.vW ? Math.min(1, this.vW / w) : Math.min(1, this.rowH / h);
-    w = Math.ceil(w * k); h = Math.ceil(h * k);
+    w = Math.min(this.W, Math.ceil(w * k)); h = Math.min(this.H, Math.ceil(h * k));
     // 文字画布只用于拷进图集：用完即释放像素（缓存条目仍在，但只剩 1×1），否则每个条目都常驻一张全尺寸画布
     const release = () => {
       t.texture?.dispose?.();
       c.width = c.height = 1;
       RELEASED.add(c);
     };
-    if (this.x + w > this.W) { this.x = 0; this.y += this.row + 4; this.row = 0; }
-    if (this.y + h > this.H) { console.warn('[skyline] 招牌图集已满', text); release(); this.cache.set(key, null); return null; }
-    this.g.drawImage(c, this.x, this.y, w, h);
+    let pi = this.pages.length - 1, P = this.pages[pi];
+    if (P.x + w > this.W) { P.x = 0; P.y += P.row + 4; P.row = 0; }
+    if (P.y + h > this.H) {
+      if (this.pages.length >= this.maxPages) {
+        console.error(`[${this.tag}] 招牌图集 ${this.pages.length} 页已满，丢弃：`, text);
+        release(); this.cache.set(key, null); return null;
+      }
+      P = this._page(); pi = this.pages.length - 1;
+    }
+    P.g.drawImage(c, P.x, P.y, w, h);
     release();
-    const e = { u0: this.x / this.W, u1: (this.x + w) / this.W, v0: 1 - (this.y + h) / this.H, v1: 1 - this.y / this.H, aspect: w / h };
-    this.x += w + 4; this.row = Math.max(this.row, h);
+    const e = { page: pi, u0: P.x / this.W, u1: (P.x + w) / this.W, v0: 1 - (P.y + h) / this.H, v1: 1 - P.y / this.H, aspect: w / h };
+    P.x += w + 4; P.row = Math.max(P.row, h);
     this.cache.set(key, e);
     return e;
+  }
+  /** 放一块四边形字牌：P 四角 [左下, 右下, 右上, 左上]（从正读的一侧看），e 为 entry 结果。
+   *  双面正读时再加一片背面（顶点 1,0,3,2 + 同一组 UV → 从背面看 U 方向反过来，字是正的），两片各自 FrontSide 剔除 */
+  quad(e, P) {
+    const pg = this.pages[e.page];
+    const U = [[e.u0, e.v0], [e.u1, e.v0], [e.u1, e.v1], [e.u0, e.v1]];
+    for (const k of [0, 1, 2, 0, 2, 3]) { pg.pos.push(...P[k]); pg.uv.push(...U[k]); }
+    if (!this.twoFaced) return;
+    const B = [P[1], P[0], P[3], P[2]];
+    for (const k of [0, 1, 2, 0, 2, 3]) { pg.pos.push(...B[k]); pg.uv.push(...U[k]); }
   }
   /** 在世界中放置一块文字牌：中心 p，外法线 n（水平单位向量），字高 h（米），最大宽度 maxW */
   place(text, p, nx, nz, h, maxW, opts = {}) {
@@ -64,28 +92,48 @@ export class SignAtlas {
     const y0 = p.y - h / 2, y1 = p.y + h / 2;
     const o = 0.45;
     const P = [[x0, y0, z0], [x1, y0, z1], [x1, y1, z1], [x0, y1, z0]].map(([x, y, z]) => [x + nx * o, y, z + nz * o]);
-    const U = [[e.u0, e.v0], [e.u1, e.v0], [e.u1, e.v1], [e.u0, e.v1]];
-    for (const k of [0, 1, 2, 0, 2, 3]) { this.pos.push(...P[k]); this.uv.push(...U[k]); }
+    this.quad(e, P);
   }
+  /** 返回 Group（每页一个网格）；没有字返回 null */
   build() {
-    if (!this.pos.length) return null;
-    const tex = new THREE.CanvasTexture(this.canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 8;
-    tex.generateMipmaps = true;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    const mat = new THREE.MeshStandardMaterial({
-      map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0, transparent: true, alphaTest: 0.08,
-      roughness: 0.45, metalness: 0.1, side: this.side, depthWrite: true,
-    });
-    this.ctx.night.register(mat, { day: 0.06, night: 2.6 });
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    g.computeVertexNormals();
-    const m = new THREE.Mesh(g, mat);
-    m.name = '楼顶字';
-    return m;
+    const used = this.pages.filter((P) => P.pos.length);
+    if (!used.length) return null;
+    const grp = new THREE.Group();
+    grp.name = '楼顶字';
+    for (const P of this.pages) {
+      if (!P.pos.length) continue;
+      // 最后一页往往只用了上面一部分：裁到实际用到的高度（取 256 的倍数），省显存；UV 的 v 按新高度换算
+      let H = this.H, canvas = P.canvas;
+      const usedH = Math.min(this.H, Math.ceil((P.y + P.row + 4) / 256) * 256);
+      if (usedH < this.H) {
+        const c2 = document.createElement('canvas');
+        c2.width = this.W; c2.height = usedH;
+        c2.getContext('2d').drawImage(P.canvas, 0, 0);
+        canvas = c2; H = usedH;
+        const k = this.H / H;
+        for (let i = 1; i < P.uv.length; i += 2) P.uv[i] = 1 - (1 - P.uv[i]) * k;
+        P.canvas.width = P.canvas.height = 1;
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      tex.generateMipmaps = true;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      const mat = new THREE.MeshStandardMaterial({
+        map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0, transparent: true, alphaTest: 0.08,
+        roughness: 0.45, metalness: 0.1, side: this.side, depthWrite: true,
+      });
+      this.ctx.night.register(mat, { day: 0.06, night: 2.6 });
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P.pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(P.uv, 2));
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, mat);
+      m.name = '楼顶字';
+      grp.add(m);
+    }
+    if (used.length > 1) console.info(`[${this.tag}] 招牌图集 ${used.length} 页`);
+    return grp;
   }
 }
 
@@ -118,12 +166,13 @@ export class Beacons {
           float day = 1.0 - uNight;
           vA = on * mix(1.0, 0.35, day) * (kind > 0.5 && kind < 1.5 ? 0.7 : 1.0);
           float dist = max(1.0, -mv.z);
-          float sz = aInfo.z * uScale / dist;
+          // 光晕直径按 aInfo.z 米的 45% 计（原来按整米数，近看一盏灯有一层楼高的大红球），屏幕上最大 12 px
+          float sz = aInfo.z * 0.45 * uScale / dist;
           // 远距离衰减：亚像素灯点按 (像素尺寸/2.2)^0.6 减亮，6 km 起整体减弱、14 km 外不可见——
           // 否则从低机位远看，成片塔楼的障碍灯会在地平线上叠成红色光团再被泛光放大
           float fade = 1.0 - smoothstep(6000.0, 14000.0, dist);
           vA *= fade * fade * min(1.0, pow(max(sz, 0.01) / 2.2, 0.6) + 0.1);
-          gl_PointSize = clamp(sz, 2.2, 40.0) * (0.6 + 0.4 * uNight);
+          gl_PointSize = clamp(sz, 2.2, 12.0) * (0.6 + 0.4 * uNight);
           #include <logdepthbuf_vertex>
         }`,
       fragmentShader: /* glsl */ `

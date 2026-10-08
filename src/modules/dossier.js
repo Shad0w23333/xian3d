@@ -50,14 +50,14 @@ export default {
         // 楼体内部的路段（OSM 路线穿过落地体块：数据错位或未标注的门洞）不画路面；贴墙 1.5 m 以内保留，
         // 真正的过街门洞（体块架空 base > 0.5，见时代盛典大厦）不受影响
         for (const P of R.parts) {
-          if (P.base > 0.5) continue;
+          if (P.base > 0.5 || P.part.kind === 'pave') continue;
           const q = G.inset(P.pts, 1.5);
           if (G.area(q) > 10) ctx.exclusions.add({ points: q, name: 'dossier:' + spec.id }, { buildings: false, trees: false, pois: false, roads: true });
         }
         // 落地体块下的地形：档案建筑以轮廓最低点为底（groundMin）。FABDEM 在大屋面/站房/老厂房处常残留几米到十几米的“屋顶地形”，
         // 上坡侧地形高出底板就成了埋地（墙脚被地形吞掉、地形从楼里冒出来）。轮廓一圈地形起伏 > 2.5 m 或 spec.flatten 时，
         // 全栋按同一高度（轮廓采样最低点）只压低不抬高；原先 spec.flatten 按每块轮廓各自的平均高度压平，同一栋的柱子/体块互相不齐。
-        const gp = R.parts.filter((P) => P.base <= 0.5).map((P) => P.pts);
+        const gp = R.parts.filter((P) => P.base <= 0.5 && P.part.kind !== 'pave').map((P) => P.pts); // 铺装贴地形，不压平
         if (gp.length) {
           let lo = Infinity, hi = -Infinity;
           for (const p of gp)
@@ -89,8 +89,8 @@ export default {
     const fmat = createFacadeMaterial(ctx);
     const mats = solidMats(ctx);
     mats.heli.userData.ownUV = true;
-    // 招牌图集：各片区 spec 招牌合计上百条，4096×1024（行高 150）只装得下约 36 条；改为 4096×2048、行高 110（约 140 条）
-    const signs = new SignAtlas(ctx, 4096, 2048, { rowH: 110 });
+    // 招牌图集：4096×2048、行高 110（每页约 140 条），写满自动开新页；字牌双面正读（背面不是镜像字）
+    const signs = new SignAtlas(ctx, 4096, 2048, { rowH: 110, tag: 'dossier' });
     const beacons = new Beacons(ctx);
     const envs = new Map();
     const env = (x, z) => {
@@ -139,7 +139,7 @@ export default {
       /** 诊断（tools/check_overlap.mjs）：各体块世界轮廓与底/顶高度（R.ground 由 buildDossier 写入） */
       diag: () =>
         RESOLVED.filter((R) => Number.isFinite(R.ground)).flatMap((R) =>
-          R.parts.map((P) => ({ id: R.spec.id, name: R.spec.name, part: P.name, pts: P.pts, bot: R.ground + P.base, top: R.ground + P.top, ground: P.base <= 0.5 }))
+          R.parts.filter((P) => P.part.kind !== 'pave').map((P) => ({ id: R.spec.id, name: R.spec.name, part: P.name, pts: P.pts, bot: R.ground + P.base, top: R.ground + P.top, ground: P.base <= 0.5 })) // 铺装贴地形，不按建筑体块诊断
         ),
       update() {
         beacons.update(ctx.renderer, ctx.camera);

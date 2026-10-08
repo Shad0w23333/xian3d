@@ -96,9 +96,11 @@ const jinjiang = {
   fp: '081b2e98',
   parts: [
     {
+      // 2026-10 审查 g8：原 media 立面白天是几百米长、窗户一模一样的方格墙（像写字楼/停车楼），屋面发青。
+      // 改为度假酒店常见的米色涂料/石材墙 + 竖向壁柱分段（每 4.2 m 一窗、1.6 m 壁柱）、首层外廊柱（columns），屋面暖灰绿（卫星浅绿压低饱和）
       name: 'main', kind: 'podium', fp: '081b2e98', base: 0, top: 22.5,
-      style: { pattern: 'media', tint: '#3c4c58', spd: '#d9d2c3', floorH: 4.5, colW: 2.2, spandrel: 0.36, mullW: 0.45, lit: 0.5 },
-      roofMat: { color: '#9dbcae', roughness: 0.8 },
+      style: { pattern: 'stoneWindows', tint: '#34414b', spd: '#e0d6c4', floorH: 4.5, colW: 4.2, spandrel: 0.4, mullW: 1.6, lit: 0.55 },
+      roofMat: { color: '#9aa392', roughness: 0.85 },
     },
     {
       name: 'hall', // 南端圆形会议厅 + 穹顶（卫星：直径约 44 m）；档案“五层穹顶会议厅”
@@ -115,6 +117,9 @@ const jinjiang = {
       crown: [{ type: 'dome', r: 7.5, h: 4, mat: { color: '#9dbcae', roughness: 0.7 } }],
     })),
   ],
+  columns: [{ part: 'main', out: 2.2, step: 6.3, r: 0.36, from: 0, to: 5.0, mat: '#ece6d8' }], // 首层外廊柱（长边上，短碎边自动跳过）
+  // 夜景：照片为檐口与立面的灯光线条 → 檐口一圈暖白线灯 + 墙脚投光（原整面 LED 线条立面白天不像酒店，改掉）
+  night: { outline: [{ part: 'main', color: '#ffe2b0', w: 0.35, strength: 1.4 }], floodlight: [{ part: 'main', color: '#ffd9a0', strength: 0.18, fall: 2.0, spot: 8.4 }] },
   supersede: { keys: ['jinjiang'], names: ['西安锦江国际酒店', '锦江国际酒店', '西安锦江国际酒店（原西安中新凯宾斯基酒店）'] },
   meta: {
     dossier: 'east_west.json#西安锦江国际酒店（原西安中新凯宾斯基酒店）',
@@ -122,7 +127,7 @@ const jinjiang = {
     photos: ['scratchpad/dossier_east_west/photos/chanba_riverfront_night_qq1.jpg', 'scratchpad/ew/sat/jinjiang.jpg'],
     confidence: 'low（层数有出处；米数按 5 层 × 约 4.5 m 推算）',
     notes: '高度米数未查到：按档案 5 层 × 约 4.5 m → 22.5 m。圆形会议厅与两端角楼位置、直径按卫星量取（±3 m）；角楼高出 3.5 m 与穹顶尺寸按卫星阴影/形态估计。'
-      + '白天立面无照片，颜色取中性石材 + 玻璃；夜间按照片为整面 LED（media 模式）。原 sky-data2 的“锦江国际酒店”招牌无依据，不建。',
+      + '白天立面无照片，颜色取米色石材 + 竖向壁柱分段、首层外廊柱（2026-10 改：原整面 LED media 立面白天像写字楼）；夜间改为檐口线灯 + 墙脚投光。原 sky-data2 的“锦江国际酒店”招牌无依据，不建。',
   },
 };
 

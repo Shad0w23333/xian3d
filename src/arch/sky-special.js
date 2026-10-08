@@ -50,8 +50,10 @@ const ringPts = (cx, cz, r, y, n, a0 = 0) => {
 const flat = (ring) => ring.flatMap((p) => [p[0], p[2]]);
 
 // ================= 陕西广播电视塔（设计 245 m，塔总高 249 m：zh.wikipedia / 本地宝“设计高度 245 米，塔总高 249 米”） =================
-// 1987 年建成；塔身白色八棱柱收分，约 147~176 m 为八角形玻璃塔楼（菱形钢框），其上观景檐、小塔楼，
-// 186 m 以上钢桅杆至 249 m。夜间塔楼通亮、塔身竖向灯带、桅杆红色障碍灯。
+// 1987 年建成；塔身白色八棱柱收分，其上八角形玻璃塔楼（菱形钢框）、观景檐、小塔楼，钢桅杆至 249 m。夜间塔楼通亮、塔身竖向灯带、桅杆红色障碍灯。
+// 2026-10 下移 16 m：维基信息框“顶楼 160 m”、旅游资料“塔楼在 132~153 m 之间”，原模型塔楼 155~171.5 m、观景小塔楼到约 180 m，
+// 塔身显得过长、塔楼偏上。现漏斗 131~139 m、玻璃塔楼 139~155.5 m、观景檐与小塔楼 155.5~164 m，桅杆起点随之下移，总高 249 m 不变。
+const TV_Y1 = 131; // 塔身顶 / 塔楼下漏斗起点（离地米）
 export function buildTVTower(env, { cx, cz, basePts }) {
   const { ctx, fb, solid, detail, mats, beacons } = env;
   const base = groundMin(ctx, basePts);
@@ -63,16 +65,16 @@ export function buildTVTower(env, { cx, cz, basePts }) {
   const n = 8, a0 = Math.PI / 8;
   const shaftSt = mkStyle({ mode: 8, floorH: 3.6, colW: 7.0, mullW: 6.1, spandrel: 0.45, tint: '#2e3a44', spd: '#a9aaa6', lit: 0.25, seed: 11 });
   const oct = (r, y) => G.circle(cx, cz, r, n, a0).map((v) => v);
-  fb.ring(oct(9.8), oct(6.4), base - 2, base + 147, shaftSt, { vBase: base });
+  fb.ring(oct(9.8), oct(6.4), base - 2, base + TV_Y1, shaftSt, { vBase: base });
   // 塔身棱线灯带（夜间蓝色）
   for (let i = 0; i < n; i++) {
     const a = a0 + (i / n) * TAU;
     const p0 = new THREE.Vector3(cx + Math.cos(a) * 9.95, base + 14, cz + Math.sin(a) * 9.95);
-    const p1 = new THREE.Vector3(cx + Math.cos(a) * 6.55, base + 146, cz + Math.sin(a) * 6.55);
+    const p1 = new THREE.Vector3(cx + Math.cos(a) * 6.55, base + TV_Y1 - 1, cz + Math.sin(a) * 6.55);
     detail.add(strut(p0, p1, 0.35), mats.ledBlue);
   }
   // 塔楼下漏斗
-  const y1 = base + 147, y2 = base + 155, y3 = base + 171.5;
+  const y1 = base + TV_Y1, y2 = y1 + 8, y3 = y2 + 16.5; // 漏斗 8 m、玻璃塔楼 16.5 m
   solid.add(loft(ringPts(cx, cz, 6.4, y1, n, a0), ringPts(cx, cz, 15.5, y2, n, a0), cx, cz), mats.white);
   // 玻璃塔楼（八角，菱形钢框）
   const podGlass = mkStyle({ mode: 0, floorH: 5.5, colW: 3.0, spandrel: 0.0, mullW: 0.18, tint: '#4a6c80', spd: '#d8dadc', lit: 0.85, seed: 21 });
@@ -100,8 +102,8 @@ export function buildTVTower(env, { cx, cz, basePts }) {
   solid.add(G.annulus(G.circle(cx, cz, 13, n, a0), G.circle(cx, cz, 4, n, a0), y3 + 8.8), mats.white);
   solid.add(loft(ringPts(cx, cz, 11.5, y3 + 8.6, n, a0), ringPts(cx, cz, 13, y3 + 8.8, n, a0), cx, cz), mats.white);
   solid.add(G.cyl(cx, y3 + 8.8, cz, 6.5, 5.5, 6.5, 8), mats.white);
-  // 桅杆 186→249 m
-  const m0 = base + 186.8;
+  // 桅杆（小塔楼帽顶 → 249 m）
+  const m0 = y3 + 15.3; // 顶部小塔楼帽顶（y3 + 8.8 + 6.5）
   solid.add(G.cyl(cx, m0, cz, 3.0, 2.2, 20, 8), mats.metal);
   solid.add(G.cyl(cx, m0 + 20, cz, 2.2, 1.4, 20, 8), mats.metal);
   solid.add(G.cyl(cx, m0 + 40, cz, 1.2, 0.35, base + 249 - m0 - 40, 8), mats.metal);
