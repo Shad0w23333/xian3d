@@ -19,7 +19,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { shadowReach } from '../arch/perf-lod.js';
 
 const LAMPL = 2048, LAMPR = 4096, LAMPM = 8192;
-const KIND_SLAB = 6, KIND_MEDIAN = 3, KIND_HEDGE = 8, KIND_FENCE = 9, KIND_XWALK = 10;
+const KIND_SLAB = 6, KIND_MEDIAN = 3, KIND_HEDGE = 8, KIND_FENCE = 9, KIND_XWALK = 10, KIND_GRASS = 11;
 const T_MAJOR = 5000, T_MINOR = 5000, T_FAR = 10000; // 核心区外路面 10 km 分块（原 30 km：从任何视角都整块在视锥内）
 const T_STRUCT = 2500; // 桥梁/高架结构分块
 const T_SUB = 2500; // 人行道/路缘石/分隔带/钢轨（细小附属，只在相机附近显示）分块
@@ -516,8 +516,9 @@ export default {
      * 中央分隔带（实体构件，人眼高度有体积）。每幅路从自己的左路缘建到局部中分带中线（另一半由对向一幅建），
      * 中分带宽 g 逐断面用 pairGapAt 求（同一条边上宽度可从 0.2 m 变到 4 m）：
      *   g < 1.3 m：混凝土隔离墩 + 中线金属护栏（护栏面朝本幅，两幅各画一面）；
-     *   1.3~12 m：花岗岩路缘 + 绿篱（箱形修剪灌木，高 0.7~0.85 m）；
-     *   ≥ 12 m：宽绿化带只做路缘 + 1.5 m 宽的边缘绿篱，中间交给影像/植被。
+     *   1.3~4 m：花岗岩路缘 + 绿篱（箱形修剪灌木，高约 0.7 m）；
+     *   ≥ 4 m：路缘 + 1.2 m 宽、0.6 m 高的边缘绿篱，中间是与路缘顶齐平的草坪（植被模块在上面种树/灌木球）。
+     *   （此前 4~12 m 也是整块 0.9 m 高的实心绿篱：人眼高度看对向车道的车下半截被挡住，像开在绿篱上。）
      */
     function buildMedian(E, f, ch, tot, stepFn, grid, lb, S, lvl) {
       // 有人行横道的进口：分隔带在斑马线外断开（行人安全岛开口），不让绿篱/隔离墩横在斑马线上
@@ -535,7 +536,7 @@ export default {
       for (let i = 0; i < n; i++) {
         const g = pairGapAt(net, E, s2.x[i], s2.z[i], s2.rx[i], s2.rz[i]);
         gap[i] = g ?? -1;
-        type[i] = g === null || g < 0.25 || g > 70 ? -1 : g < 1.3 ? 0 : g < 12 ? 1 : 2;
+        type[i] = g === null || g < 0.25 || g > 70 ? -1 : g < 1.3 ? 0 : g < 4 ? 1 : 2;
         if (type[i] < 0) y2.valid[i] = 0;
       }
       attrS[1] = (lb & LAMPL ? S << 4 : 0) | (lvl << 10);
@@ -573,7 +574,7 @@ export default {
             return;
           }
           const Hh = t === 2 ? 0.6 : 0.7; // 绿篱高（路缘顶以上）
-          const hedgeW = (i) => (t === 2 ? 1.5 : Math.max(gap[i] / 2, 0.36)); // 本幅一侧绿篱外缘到其内缘（中线）
+          const hedgeW = (i) => (t === 2 ? 1.5 : Math.max(gap[i] / 2, 0.36)); // 本幅一侧：绿篱外缘到其内缘（窄带到中线；宽带为 0.25 m 路缘 + 1.2 m 绿篱）
           attrS[3] = Math.round(Math.min(gap[iA], 99) * 100);
           // 路缘立面 + 路缘顶（0.25 m 花岗岩）
           face(KIND.CURB, [-1, 0], (i, q) => { q[0].o = hw; q[0].dy = Hc; q[1].o = hw; q[1].dy = 0; });
@@ -592,13 +593,22 @@ export default {
           for (const [i, sg] of [[A, -1], [B, 1]]) {
             const e = hw + Math.min(hedgeW(i), Math.max(gap[i] / 2, 0.36));
             endCap(w, s2, i, sg, hw, hw + 0.25, y2.ys[i], 0, Hc, KIND.CURB);
-            endCap(w, s2, i, sg, hw + 0.25, e, y2.ys[i], t === 2 ? -0.3 : 0, Hc + Hh, KIND_HEDGE);
+            endCap(w, s2, i, sg, hw + 0.25, e, y2.ys[i], t === 2 ? Hc : 0, Hc + Hh, KIND_HEDGE);
+          }
+          // 宽带：绿篱内侧到中线铺草坪（路缘顶高），草坪端头立面
+          if (t === 2) {
+            face(KIND_GRASS, TOP, (i, q) => {
+              const c = hw + Math.max(gap[i] / 2, 1.6), e = hw + 1.5;
+              q[0].o = c; q[0].dy = Hc - 0.02; q[0].u = c - hw;
+              q[1].o = e; q[1].dy = Hc - 0.02; q[1].u = e - hw;
+            });
+            for (const [i, sg] of [[A, -1], [B, 1]]) endCap(w, s2, i, sg, hw + 1.5, hw + Math.max(gap[i] / 2, 1.6), y2.ys[i], 0, Hc - 0.02, KIND.CURB);
           }
           // 内侧面：宽带落到地面；窄带只在对向一幅没有配对回来时在中线处封口（不露空）
           if (t === 1 && backed) return;
           face(KIND_HEDGE, [1, 0], (i, q) => {
             const e = hw + Math.min(hedgeW(i), Math.max(gap[i] / 2, 0.36));
-            q[0].o = e; q[0].dy = t === 2 ? -0.3 : 0; q[0].u = 0;
+            q[0].o = e; q[0].dy = t === 2 ? Hc - 0.02 : 0; q[0].u = 0;
             q[1].o = e; q[1].dy = Hc + Hh; q[1].u = Hh;
           });
         });

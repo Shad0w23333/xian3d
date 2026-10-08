@@ -571,6 +571,14 @@ const GLSL_SURFACE = /* glsl */ `
     col = mix(col, vec3(0.06, 0.05, 0.04) * (0.8 + 0.4 * n2), smoothstep(0.24, 0.27, u));
     rough = 0.8;
     lampL = u + 1.0;
+  } else if (kind == 11) {
+    // ===== 宽中央分隔带草坪：低频深浅 + 细碎草叶噪声，远处回到平均色 =====
+    vec2 gc = vec2(s, vUV.x);
+    float g1 = texture2D(uRNoise, gc / 7.0 + 0.13).r, g2 = texture2D(uRNoise, gc / 1.3 + 0.57).g;
+    col = mix(vec3(0.045, 0.075, 0.025), vec3(0.085, 0.11, 0.04), g1) * (0.82 + 0.36 * mix(g2, 0.5, smoothstep(0.03, 0.15, pix)));
+    col = mix(col, vec3(0.11, 0.1, 0.06), smoothstep(0.7, 0.9, g1) * 0.35);
+    rough = 0.95;
+    lampL = 1.2;
   } else if (kind == 8) {
     // ===== 绿篱（箱形修剪灌木，黄杨/冬青）：叶片(~4 cm) + 叶簇(~25 cm) + 修剪起伏(~1 m) 三级明暗，
     //       叶簇间缝隙压暗（模拟自遮蔽），侧面下部偏暗，顶面受光偏黄绿；每 6~9 m 一段换个色相 =====
