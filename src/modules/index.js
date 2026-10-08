@@ -24,6 +24,7 @@ export const MODULES = [
   { id: 'streetscape', load: () => import('./streetscape.js') },
   // 地面停车场（OSM amenity=parking）：须在 streetscape 之后（精建片区的停车场不重复）、vegetation 之前（停车场内不种树）
   { id: 'parking', load: () => import('./parking.js') },
+  { id: 'streetfurniture', load: () => import('./streetfurniture.js') }, // 全城街道设施（信号灯/路名牌/公交站/人行道小品，相机附近分块流式）
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
