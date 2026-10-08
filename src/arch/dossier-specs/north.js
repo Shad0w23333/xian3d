@@ -574,11 +574,19 @@ const xidigang = {
 // 立面只有 2018 年夜景效果图（沿弧线连续玻璃幕墙 + 横向线条）；招牌位置未确认（只有草坪红色落地字）→ 立面不挂字。
 const darongcheng = {
   id: 'n-darongcheng', name: '西安大融城', fp: '2d48acd6',
-  parts: [{ name: 'mall', kind: 'podium', fp: '2d48acd6', base: 0, top: 28, style: { pattern: 'horizontalBands', tint: '#43586a', spd: '#d6d2c8', floorH: 5.6, colW: 2.6, spandrel: 0.3, lit: 0.85 }, roofMat: { color: '#7d8084', roughness: 0.85 } }],
-  bands: [{ part: 'mall', levels: [11.2, 16.8, 22.4], h: 0.3, depth: 0.2, color: '#dcd8ce', glow: '#e6f0ff', strength: 1.2 }],
+  // 2026-10 审查 g2/g8：原 horizontalBands 立面每层通长带形窗、屋面光秃，像立体停车楼。改为商业综合体做法：
+  // 浅色金属板实墙为主（窗槛墙 0.7、窄竖窗），首层通透店面（facade 罩面），西北弧面主立面保留铝板横带灯；屋顶设备屏风 + 女儿墙。
+  parts: [
+    { name: 'mall', kind: 'podium', fp: '2d48acd6', base: 0, top: 28, style: { pattern: 'grid', tint: '#3e4f5c', spd: '#d3cfc6', floorH: 5.6, colW: 4.8, spandrel: 0.7, mullW: 0.5, lit: 0.6 }, roofMat: { color: '#8a8b88', roughness: 0.9 },
+      crown: [{ type: 'frame', h: 3.5, inset: 18, step: 4, post: 0.35, mat: 'metal' }] },
+    { name: 'shop', kind: 'facade', fp: '2d48acd6', grow: 0.15, base: 0, top: 6.5, style: { pattern: 'retail', tint: '#33424c', spd: '#5c5852', floorH: 6.5, colW: 3.6, spandrel: 0.1, lit: 0.85 } },
+  ],
+  bands: [{ part: 'mall', levels: [11.2, 16.8, 22.4], h: 0.5, depth: 0.25, color: '#dcd8ce', glow: '#e6f0ff', strength: 1.0 }],
+  signs: [{ text: '西安大融城', part: 'mall', face: 'NW', y: 24.5, h: 4.2, color: '#d8322f' }], // 主招牌：商场名（品牌红），位置按西北弧面主立面推定（未核实）
   supersede: { keys: ['darongcheng'], names: ['西安大融城 IMIX PARK', '西安大融城', '大融城'] },
   meta: { dossier: 'north.json#darongcheng', sources: ['OSM w1373232024', '赢商网 B1–5F（notes.md 引）'], photos: ['scratchpad/dossier_north/art/drc_01.jpg（效果图）', 'drc_05.jpg'], confidence: 'medium（轮廓）；low（立面）',
-    notes: '高度未查到：5 层 × 5.6 m = 28 m。立面按效果图（玻璃 + 横向线条），实景未见。原模型的立面招牌无依据，去掉。' },
+    notes: '高度未查到：5 层 × 5.6 m = 28 m。立面按效果图（玻璃 + 横向线条），实景未见；2026-10 按审查改为金属板实墙 + 首层店面 + 屋顶设备，'
+      + '补西北弧面“西安大融城”主招牌（商场名有出处，位置为推定）。' },
 };
 
 // ═════════════ 22) 西安经开洲际酒店（凤城八路 120 号） ═════════════
@@ -826,9 +834,11 @@ const bzParts = [
   { name: 'hall', shape: 'rect', size: [533, 192], rot: BZ.rot, at: [BZ.cx, BZ.cz], base: 12, top: 29,
     style: { pattern: 'retail', tint: '#6e8596', spd: '#e8e8e8', floorH: 17, colW: 4.5, spandrel: 0.06, mullW: 0.3, lit: 0.85 }, roof: NOROOF,
     crown: [
-      { type: 'hip', over: 12, eave: 2.6, h: 12, ridge: 400, mat: { color: '#4d5358', metalness: 0.55, roughness: 0.4 }, eaveMat: { color: '#eceeee', roughness: 0.5, metalness: 0.2 }, soffit: '#f2f2f0', glow: '#ffe6b8', glowBase: '#eceeee' },
-      // 屋脊 11 个梭形天窗（卫星：约 47 m 间距，横跨屋脊约 120 m 长、34 m 宽）
-      ...Array.from({ length: 11 }, (_, k) => ({ type: 'dome', at: bzAt(0, -235 + k * 47), r: [60, 16], rot: 16.8, h: 9.5, y: 34.5, ring: false, mat: { color: '#eef0ef', roughness: 0.45, metalness: 0.2 } })),
+      // 屋面金属度 0.55 → 0.3：天光反射发白（2026-10 审查 g8）
+      { type: 'hip', over: 12, eave: 2.6, h: 12, ridge: 400, mat: { color: '#4b5156', metalness: 0.3, roughness: 0.55 }, eaveMat: { color: '#eceeee', roughness: 0.5, metalness: 0.2 }, soffit: '#f2f2f0', glow: '#ffe6b8', glowBase: '#eceeee' },
+      // 屋脊 11 个梭形天窗（卫星：约 47 m 间距，横跨屋脊约 120 m 长、34 m 宽）：原为白色椭球（凸出屋面 9.5 m，从低处看连成一条白色大穹顶），
+      // 改为贴两坡屋面铺的梭形玻璃带（白框 + 中间玻璃，最多高出屋面约 1.5 m）；屋脊离地 43.6 m、坡度 12 m / 108 m
+      ...Array.from({ length: 11 }, (_, k) => ({ type: 'ridgeLens', at: bzAt(0, -235 + k * 47), rot: 16.8, L: 120, W: 34, ridgeY: 43.6, fall: 12 / 108, bulge: 1.2 })),
     ] },
 ];
 // 檐下树状钢柱（照片：沿南北立面一排白色 Y 形柱，这里用直柱 + 斜撑近似为白色细柱）
@@ -851,8 +861,9 @@ const beizhan = {
   id: 'n-beizhan', name: '西安北站', center: [BZ.cx, BZ.cz], flatten: true,
   parts: bzParts,
   signs: [
-    { text: '西安北站', part: 'hall', face: 106.8, out: 9, y: 36, h: 8, color: '#d8322f', serif: true, weight: 900 },
-    { text: '西安北站', part: 'hall', face: -73.2, out: 9, y: 36, h: 8, color: '#d8322f', serif: true, weight: 900 },
+    // 照片 beizhan_south.jpg：四个巨大的红色“西安北站”立在南/北屋面坡上（原 8 m 字高远看只是挑檐上一行小字）→ 字高 13 m，字底落在檐口屋面上
+    { text: '西安北站', part: 'hall', face: 106.8, out: 9, y: 38.8, h: 13, color: '#d8322f', serif: true, weight: 900 },
+    { text: '西安北站', part: 'hall', face: -73.2, out: 9, y: 38.8, h: 13, color: '#d8322f', serif: true, weight: 900 },
   ],
   supersede: { keys: ['north'], names: ['西安北站'] },
   label: { priority: 2 },

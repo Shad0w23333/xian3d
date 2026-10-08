@@ -894,7 +894,9 @@ const gwStation = {
 // “银色屋面融合曲线平台”，钢结构双层 / 单层网壳；外形取意“丝绸之路起点上徐徐展开的丝带”；干挂石材（黄土高原气息）+ 玻璃幕墙（凤凰网陕西）。
 // 轮廓：OSM r19396757“陕西奥体中心体育馆”（250×129 m，两个椭圆瓣：东为比赛馆、西为训练馆，中间连接处有椭圆开洞）。
 // 建筑高度 40 m（陕西省建筑业协会 sxjzy.org/h-nd-29961.html）：石材基座约 10 m，比赛馆壳顶 40 m、训练馆按照片比例约 31 m。原 landmarks2026 为 32 m 通用方盒。
-const STG_SILVER = { color: '#d9dcdf', roughness: 0.32, metalness: 0.6 };
+// 2026-10 修正：原三瓣用 metalness 0.6 / roughness 0.32 的光滑椭球，白天成了过曝的镜面铬球、夜里反射漆黑环境成“黑豆”。
+// 改为 ribbonShell（dossier-kit）：扁曲面壳（壳边斜坡）+ 沿“扭转丝带”分条的银白哑光金属板（metalness 0.28 / roughness 0.52），
+// 丝带分缝夜间为冷白 LED 线，壳面有自檐口向上渐弱的泛光；中部椭圆开洞改为深色采光玻璃；基座石材 + 玻璃幕墙，夜间投光改为灯位分明的墙脚投光。
 const shengtiguan = {
   id: 'lm2-shaanxi-oly-gym',
   name: '陕西奥体中心体育馆',
@@ -903,15 +905,15 @@ const shengtiguan = {
     { name: 'plinth', fp: 'b24cc210-cee2-46eb-9246-5e4527b5e6ad', base: 0, top: 10, roof: { mech: false, parapet: 0.1 },
       style: { pattern: 'stoneWindows', spd: '#cdb89a', tint: '#3a5566', floorH: 5, colW: 3.4, spandrel: 0.4, mullW: 0.8, lit: 0.7 },
       crown: [
-        { type: 'dome', at: [-5470, 6236], r: [44, 38], h: 12, mat: STG_SILVER, ring: false },
-        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 13.2, mat: { color: '#28323a', roughness: 0.2, metalness: 0.5 }, ring: false }, // 中部椭圆开洞（深色，略高出连接壳以便可见）
-        { type: 'dome', at: [-5398, 6253], r: [52, 64], h: 30, mat: STG_SILVER, ring: false }, // 10 + 30 = 40 m（协会页建筑高度）
-        { type: 'dome', at: [-5545, 6246], r: [52, 43], h: 21, mat: STG_SILVER, ring: false },
+        { type: 'ribbonShell', at: [-5470, 6236], r: [44, 38], h: 12, n: 10, twist: 40, wash: 0.12 },
+        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 12.8, mat: { color: '#34424c', roughness: 0.3, metalness: 0.35 }, ring: false }, // 中部椭圆开洞（深色采光玻璃，略高出连接壳以便可见）
+        { type: 'ribbonShell', at: [-5398, 6253], r: [52, 64], h: 30, n: 18, twist: 80 }, // 10 + 30 = 40 m（协会页建筑高度）
+        { type: 'ribbonShell', at: [-5545, 6246], r: [52, 43], h: 21, n: 14, twist: -70 },
       ] },
   ],
-  bands: [{ part: 'plinth', levels: [9.4], h: 0.6, depth: 0.8, color: '#e6e8ea', glow: '#bfe0ff', strength: 1.2 }],
+  bands: [{ part: 'plinth', levels: [9.4], h: 0.6, depth: 0.8, color: '#e6e8ea', glow: '#bfe0ff', strength: 0.8 }],
   signs: [{ text: '陕西奥体中心体育馆', part: 'plinth', face: 'E', y: 7, h: 1.8, color: '#6e5a3e' }],
-  night: { floodlight: [{ part: 'plinth', color: '#d8ecff', strength: 0.35 }] },
+  night: { floodlight: [{ part: 'plinth', color: '#e2eeff', strength: 0.3, fall: 1.6, spot: 6.8 }] },
   supersede: { names: ['陕西奥体中心体育馆（陕西省体育馆·唐延路）', '陕西奥体中心体育馆'] },
   meta: {
     category: 'sports',
@@ -919,7 +921,9 @@ const shengtiguan = {
     sources: ['https://www.sxjzy.org/h-nd-29961.html（建筑高度 40 米、6954 座）', 'https://sn.ifeng.com/a/20200701/14378330_0.shtml', 'https://archina.com/index.php?a=show&g=works&id=10286&m=index', 'Overture building r19396757（陕西奥体中心体育馆）'],
     photos: ['http://www.bilibili.com/video/av243736147', 'https://xian.qinfeng.gov.cn/info/1250/22930.htm', 'https://news.sina.com.cn/o/2020-08-29/doc-iivhvpwy3804790.shtml'],
     confidence: 'high（轮廓、形体、材质、总高）；medium（两瓣分高按照片比例）',
-    notes: '两瓣银色网壳用椭圆穹顶近似（比赛馆 104×128 m、矢高 30 m，壳顶 40 m 与协会页一致；训练馆 104×86 m、矢高 21 m），中间连接壳与椭圆开洞按卫星位置。',
+    notes: '两瓣银色网壳（比赛馆 104×128 m、矢高 30 m，壳顶 40 m 与协会页一致；训练馆 104×86 m、矢高 21 m），中间连接壳与椭圆开洞按卫星位置。'
+      + '2026-10：椭球改为 ribbonShell 扁曲面壳（剖面 (1−s^1.8)^0.9，壳边斜坡）+ 扭转丝带分条（比赛馆 18 条、训练馆 14 条、连接壳 10 条），银白哑光金属板 metalness 0.28 / roughness 0.58；'
+      + '丝带条数与扭转角按“徐徐展开的丝带”造型意向推定，非实测。',
   },
 };
 
