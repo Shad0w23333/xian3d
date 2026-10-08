@@ -4,13 +4,16 @@
 //     （按路宽 + 人行道宽偏移；单行道只取右侧，对应分幅道路的外侧），居住区道路两侧少量；桥梁/隧道不放人。
 //   · 热点：钟楼、鼓楼·回民街、大唐不夜城、大雁塔、小寨、永宁门、曲江池等处密度加倍，夜里更热闹（夜间照样有人）。
 //   · 气泡：只在相机附近（离地 < 数百米）仿真，半径随高度变化；出圈的人回收并在视野外/远处补人，维持目标密度。
-//   · 渲染：一个 InstancedMesh（复用不夜城游客几何），腿/手臂摆动在顶点着色器里完成；CPU 只做沿折线行走。
+//   · 渲染：arch/people-geo.js 的人形（真实比例、男女老少体型、10 月衣着/发型/帽子/背包挎包/手机，顶点着色器骨骼动画：
+//     摆臂、步幅随速度、屈膝、骨盆起伏扭转、看手机低头）。近处（< 60 m）细模并投影，远处简模，各一个 InstancedMesh；
+//     CPU 只做沿折线行走。
 //   · 开关：setLayer('people', false) 时整个系统停更新、不绘制；同时隐藏大唐不夜城的游客人流（'不夜城人流'）。
 import * as THREE from 'three';
-import { personGeometry } from '../arch/datang-props.js';
+import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, setPeopleLit } from '../arch/people-geo.js';
 import { LIFT, roadY } from '../core/roadheight.js';
 import { pointInPoly } from '../core/util.js';
 import { markParkWalkways } from '../arch/roads_net.js';
+import { featureWidth } from '../arch/vehicle-parking.js';
 
 // 各画质档：最大人数 / 活动半径上限 / 绘制距离 / 生效的最大离地高度
 const CAP = [500, 1000, 1800, 2800];
@@ -18,7 +21,7 @@ const R_MAX = [420, 600, 800, 1000];
 const DRAW_D = [180, 260, 340, 430];
 const AGL_MAX = [320, 480, 650, 850];
 const CELL = 200; // 空间网格（米）
-const BASE_DENSITY = 0.022; // 人 / 米路径（热点 ×，时段 ×，密度设置 ×）
+const BASE_DENSITY = 0.028; // 人 / 米路径（热点 ×，时段 ×，密度设置 ×）
 
 // 热点：[lon, lat, 半径 m, 倍率]
 const HOTSPOTS = [
@@ -61,7 +64,8 @@ function hourFactor(h) {
 const MIN_W = [7.5, 7, 7, 6.5, 6, 5, 3.5, 5, 4.5, 4.5, 4.5, 4, 4, 2];
 const SIDEWALK = [0, 4.5, 5, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-const COLORS = ['#2b2f38', '#e8e4dc', '#6d7a8a', '#3a4a5e', '#8a3a32', '#c9b79c', '#1f1f22', '#5a6b4a', '#b04a3a', '#d8d2c4', '#f0f0ee', '#344a78', '#c8312a', '#e0b050', '#9ec3d6', '#d8667a'];
+const NEAR_D = 60; // 细模距离
+const NEAR_CAP = 700;
 
 let seed = 987654;
 function rnd() {
@@ -70,58 +74,6 @@ function rnd() {
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-
-function crowdMaterial(ctx) {
-  // 夜间不再用统一的灰白自发光（0x2a2724 × uNight × 0.9 → 黑暗街道里一个个发光的鬼影）：
-  // 改为“被路灯/店面灯从上方照亮”的补光 = 反照率 × 暖色 × 强度（深色衣服仍然是深色），头肩亮、腿脚暗
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0 });
-  const uLit = { value: 0 };
-  mat.userData.uLit = uLit;
-  mat.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = ctx.uniforms.uTime;
-    sh.uniforms.uLit = uLit;
-    sh.vertexShader = sh.vertexShader
-      .replace(
-        '#include <common>',
-        `#include <common>
-        attribute vec2 aAnim; attribute float tint;
-        uniform float uTime;
-        varying float vPedH;`
-      )
-      .replace(
-        '#include <begin_vertex>',
-        `#include <begin_vertex>
-        {
-          float wMov = step(0.05, aAnim.y);
-          float wPh = uTime * (2.2 + aAnim.y * 1.9) + aAnim.x * 40.0;
-          float legK = max(0.0, 0.84 - transformed.y) * step(0.03, abs(transformed.x));
-          transformed.z += sin(wPh) * sign(transformed.x) * legK * 0.55 * wMov;
-          float armK = step(0.2, abs(transformed.x)) * step(0.78, transformed.y) * max(0.0, 1.42 - transformed.y);
-          transformed.z -= sin(wPh) * sign(transformed.x) * armK * 0.5 * wMov;
-          transformed.y += abs(sin(wPh)) * 0.035 * wMov;
-          vPedH = transformed.y;
-        }`
-      )
-      .replace(
-        '#include <color_vertex>',
-        `#include <color_vertex>
-        #ifdef USE_INSTANCING_COLOR
-          vColor.rgb = mix(color.rgb, color.rgb * instanceColor.rgb, tint);
-        #endif`
-      );
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uLit;\nvarying float vPedH;')
-      // 衣物反照率上限 0.6（纯白 0.8 的衣服在近处点光源下过曝、被泛光放大成一个发光的三角）
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = min(diffuseColor.rgb, vec3(0.6));')
-      .replace(
-        '#include <emissivemap_fragment>',
-        `#include <emissivemap_fragment>
-        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.78, 0.55) * uLit * (0.3 + 0.7 * smoothstep(0.3, 1.6, vPedH));`
-      );
-  };
-  mat.customProgramCacheKey = () => 'xianPeds|v3';
-  return mat;
 }
 
 export default {
@@ -159,8 +111,9 @@ export default {
         const o = W / 2 + sw * 0.5;
         sides = f.o ? [[o, sw * 0.6, 1]] : [[o, sw * 0.6, 1], [-o, sw * 0.6, 1]];
       } else if (c === 5) {
-        const o = W / 2 - 0.7;
-        sides = [[o, 0.8, 0.3], [-o, 0.8, 0.3]];
+        // 小区路/支路没有人行道：走在路缘外侧（路面上有行车与路边停车）
+        const o = featureWidth(f) / 2 + 0.7;
+        sides = [[o, 0.4, 0.3], [-o, 0.4, 0.3]];
       }
       if (!sides) continue;
       const src = f.p;
@@ -219,26 +172,21 @@ export default {
 
     // —— 渲染 ——
     const MAXN = CAP[3];
-    const geo = personGeometry('modern').clone();
-    const aAnim = new THREE.InstancedBufferAttribute(new Float32Array(MAXN * 2), 2);
-    aAnim.setUsage(THREE.DynamicDrawUsage);
-    geo.setAttribute('aAnim', aAnim);
-    const mat = crowdMaterial(ctx);
-    const mesh = new THREE.InstancedMesh(geo, mat, MAXN);
-    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAXN * 3), 3);
-    mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
-    mesh.count = 0;
-    mesh.frustumCulled = false;
-    mesh.castShadow = false;
-    mesh.receiveShadow = true;
-    mesh.name = '行人';
-    ctx.scene.add(mesh);
+    const geoNear = peopleGeometry(0), geoFar = peopleGeometry(1);
+    const mat = peopleMaterial(ctx);
+    const WN = createPeopleMesh(ctx, geoNear, mat, NEAR_CAP, '行人（近景）');
+    const WF = createPeopleMesh(ctx, geoFar, mat, MAXN, '行人');
+    WN.mesh.customDepthMaterial = peopleDepthMaterial(ctx);
+    const shadowsOn = () => !!Q.shadows && level >= 1;
+    WN.mesh.castShadow = shadowsOn();
+    WF.mesh.castShadow = false;
+    for (const w of [WN, WF]) { w.mesh.receiveShadow = true; ctx.scene.add(w.mesh); }
+    geoNear.dispose(); geoFar.dispose();
 
     // —— 行人状态（SoA） ——
     const wPath = new Int32Array(MAXN), wSeg = new Int32Array(MAXN);
     const wS = new Float32Array(MAXN), wDir = new Int8Array(MAXN), wSpd = new Float32Array(MAXN), wOff = new Float32Array(MAXN);
-    const wPh = new Float32Array(MAXN), wCol = new Uint8Array(MAXN), wScale = new Float32Array(MAXN), wYaw = new Float32Array(MAXN);
+    const wPh = new Float32Array(MAXN), wLook = new Array(MAXN), wScale = new Float32Array(MAXN), wYaw = new Float32Array(MAXN);
     const wY = new Float32Array(MAXN), wX = new Float32Array(MAXN), wZ = new Float32Array(MAXN), wTimer = new Float32Array(MAXN);
     const wHid = new Uint8Array(MAXN); // 上次检查时是否已在隐藏区内（区分“走进去”与“生成/卡在里面”）
     let N = 0;
@@ -251,7 +199,8 @@ export default {
     const frustum = new THREE.Frustum();
     const projM = new THREE.Matrix4();
     const sphere = new THREE.Sphere(new THREE.Vector3(), 1.2);
-    const palette = COLORS.map((h) => new THREE.Color(h));
+    // 步行速度：成年人 1.1~1.6 m/s，老人慢、看手机的人慢
+    const walkSpeed = (i) => (0.95 + rnd() * 0.6) * (wLook[i]?.speedK ?? 1) * (wLook[i] && wLook[i].mask & 1024 ? 0.82 : 1);
 
     const locate = (i) => {
       const p = paths[wPath[i]];
@@ -304,7 +253,8 @@ export default {
         wS[i] = p.cum[g] + rnd() * (p.cum[g + 1] - p.cum[g]);
         wOff[i] = p.off + (rnd() - 0.5) * p.jit;
         const stand = rnd() < 0.12;
-        wSpd[i] = stand ? 0 : 0.9 + rnd() * 0.7;
+        wLook[i] = randomLook(rnd);
+        wSpd[i] = stand ? 0 : walkSpeed(i);
         wDir[i] = rnd() < 0.5 ? 1 : -1;
         wYaw[i] = rnd() * Math.PI * 2;
         wTimer[i] = stand ? 5 + rnd() * 25 : 20 + rnd() * 60;
@@ -319,8 +269,7 @@ export default {
         if (d > bub.R * 0.55 || !frustum.intersectsSphere(sphere)) break;
       }
       wPh[i] = rnd();
-      wCol[i] = (rnd() * palette.length) | 0;
-      wScale[i] = 0.9 + rnd() * 0.18;
+      wScale[i] = wLook[i].height / 1.7;
       wHid[i] = 0;
       groundY(i);
       return true;
@@ -329,7 +278,7 @@ export default {
       const j = --N;
       if (i === j) return;
       wPath[i] = wPath[j]; wSeg[i] = wSeg[j]; wS[i] = wS[j]; wDir[i] = wDir[j]; wSpd[i] = wSpd[j]; wOff[i] = wOff[j];
-      wPh[i] = wPh[j]; wCol[i] = wCol[j]; wScale[i] = wScale[j]; wYaw[i] = wYaw[j]; wY[i] = wY[j]; wX[i] = wX[j]; wZ[i] = wZ[j]; wTimer[i] = wTimer[j]; wHid[i] = wHid[j];
+      wPh[i] = wPh[j]; wLook[i] = wLook[j]; wScale[i] = wScale[j]; wYaw[i] = wYaw[j]; wY[i] = wY[j]; wX[i] = wX[j]; wZ[i] = wZ[j]; wTimer[i] = wTimer[j]; wHid[i] = wHid[j];
     };
 
     let density = Q.peopleDensity ?? 1;
@@ -390,9 +339,6 @@ export default {
     // —— 帧更新 ——
     let enabled = true;
     let refreshT = 0, frame = 0, first = true;
-    const M = mesh.instanceMatrix.array;
-    const C = mesh.instanceColor.array;
-    const A = aAnim.array;
     const crowdMeshes = [];
     let crowdScanned = false;
     const scanCrowds = () => {
@@ -415,17 +361,16 @@ export default {
           first = false;
           refreshT = 0.6;
         }
-        if (!bub.on || !N) { mesh.count = 0; mesh.visible = false; return; }
-        mesh.visible = true;
-        const drawD2 = DRAW_D[level] ** 2;
-        let n = 0;
+        if (!bub.on || !N) { for (const w of [WN, WF]) { w.reset(); w.commit(); } return; }
+        const drawD2 = DRAW_D[level] ** 2, nearD2 = NEAR_D * NEAR_D;
+        WN.reset(); WF.reset();
         for (let i = 0; i < N; i++) {
           const p = paths[wPath[i]];
           // 状态机：走一段 ↔ 驻足
           wTimer[i] -= dt;
           if (wTimer[i] <= 0) {
             if (wSpd[i] > 0 && rnd() < 0.3) { wSpd[i] = 0; wTimer[i] = 3 + rnd() * 12; }
-            else { wSpd[i] = 0.9 + rnd() * 0.7; wTimer[i] = 20 + rnd() * 60; if (rnd() < 0.25) wDir[i] = -wDir[i]; }
+            else { wSpd[i] = walkSpeed(i); wTimer[i] = 20 + rnd() * 60; if (rnd() < 0.25) wDir[i] = -wDir[i]; }
           }
           if (wSpd[i] > 0) {
             let s = wS[i] + wDir[i] * wSpd[i] * dt;
@@ -444,36 +389,23 @@ export default {
             }
           }
           const dx = wX[i] - cp.x, dy = wY[i] - cp.y, dz = wZ[i] - cp.z;
-          if (dx * dx + dy * dy + dz * dz > drawD2) continue;
+          const d2 = dx * dx + dy * dy + dz * dz;
+          if (d2 > drawD2) continue;
           sphere.center.set(wX[i], wY[i] + 0.9, wZ[i]);
           sphere.radius = 1.2;
           if (!frustum.intersectsSphere(sphere)) continue;
-          const sc = wScale[i], cy = Math.cos(wYaw[i]) * sc, sy = Math.sin(wYaw[i]) * sc;
-          const o = n * 16;
-          M[o] = cy; M[o + 1] = 0; M[o + 2] = -sy; M[o + 3] = 0;
-          M[o + 4] = 0; M[o + 5] = sc; M[o + 6] = 0; M[o + 7] = 0;
-          M[o + 8] = sy; M[o + 9] = 0; M[o + 10] = cy; M[o + 11] = 0;
-          M[o + 12] = wX[i]; M[o + 13] = wY[i]; M[o + 14] = wZ[i]; M[o + 15] = 1;
-          const col = palette[wCol[i]];
-          C[n * 3] = col.r; C[n * 3 + 1] = col.g; C[n * 3 + 2] = col.b;
-          A[n * 2] = wPh[i]; A[n * 2 + 1] = wSpd[i];
-          n++;
+          const w = d2 < nearD2 && !WN.full() ? WN : WF;
+          if (w.full()) continue;
+          w.put(wX[i], wY[i], wZ[i], wYaw[i], wScale[i], wLook[i], wPh[i], wSpd[i], 0);
         }
-        mesh.count = n;
-        mesh.visible = n > 0;
-        const im = mesh.instanceMatrix;
-        im.clearUpdateRanges(); im.addUpdateRange(0, Math.max(1, n) * 16); im.needsUpdate = true;
-        const ic = mesh.instanceColor;
-        ic.clearUpdateRanges(); ic.addUpdateRange(0, Math.max(1, n) * 3); ic.needsUpdate = true;
-        aAnim.clearUpdateRanges(); aAnim.addUpdateRange(0, Math.max(1, n) * 2); aAnim.needsUpdate = true;
+        WN.commit(); WF.commit();
         // 夜里：路灯/店面补光（反照率比例，强度低，不再整体发灰白光）
-        mat.userData.uLit.value = ctx.uniforms.uNight.value * 0.14;
+        setPeopleLit(ctx.uniforms.uNight.value * 0.14);
       },
       setLayer(name, on) {
         if (name !== 'people') return;
         enabled = !!on;
-        mesh.visible = enabled && mesh.count > 0;
-        if (!enabled) { mesh.count = 0; N = 0; bub.on = false; }
+        if (!enabled) { for (const w of [WN, WF]) { w.reset(); w.commit(); } N = 0; bub.on = false; }
         else first = true;
         if (!crowdScanned) scanCrowds();
         for (const m of crowdMeshes) m.visible = enabled;
@@ -481,15 +413,15 @@ export default {
       setQuality(q) {
         level = Math.max(0, Math.min(3, q.level ?? level));
         density = q.peopleDensity ?? density;
+        WN.mesh.castShadow = shadowsOn();
         refreshT = 0;
       },
       stats() {
-        return { walkers: N, drawn: mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, cand: nCand };
+        return { walkers: N, drawn: WN.mesh.count + WF.mesh.count, near: WN.mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, cand: nCand };
       },
       dispose() {
-        geo.dispose();
+        for (const w of [WN, WF]) { w.mesh.geometry.dispose(); ctx.scene.remove(w.mesh); }
         mat.dispose();
-        ctx.scene.remove(mesh);
       },
     };
     if (typeof window !== 'undefined') window.__peds = inst;
