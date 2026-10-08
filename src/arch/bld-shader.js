@@ -123,6 +123,11 @@ float bLines(float x, float per, float d, float w) {
   float ib = fb * d + min(b - fb * per, d);
   return clamp((ib - ia) / w, 0.0, 1.0);
 }
+// 带限版周期线：像素足迹接近周期时盒式滤波的残余起伏会形成摩尔纹（中远距离砖缝/瓦垄/分格缝），
+// 足迹达到周期的 0.3~0.9 倍时淡化为覆盖率均值 d/per
+float bLinesF(float x, float per, float d, float w) {
+  return mix(bLines(x, per, d, w), d / per, smoothstep(0.3, 0.9, w / per));
+}
 vec3 bUnpack(float f) {
   float r = floor(f / 65536.0); float g = floor((f - r * 65536.0) / 256.0); float b = f - r * 65536.0 - g * 256.0;
   return pow(vec3(r, g, b) / 255.0, vec3(2.2));
@@ -160,9 +165,14 @@ vec3 bInterior(vec2 p, vec2 sz, float sill, float fH, float D, vec3 rd, float rn
       if (h.y < y0 + 0.55 + 0.35 * rnd && fx > 0.25) col *= 0.35;
       if (abs(h.y - (y0 + 1.6)) < 0.3 && abs(fract(h.x * 0.3 + rnd * 3.0) - 0.5) < 0.12) col = mix(col, vec3(0.25, 0.3, 0.35), 0.8);
     } else if (kind == 2) {
-      // 商铺：货架色条
-      float sh = step(0.5, fract(h.y * 2.2));
-      col = mix(vec3(0.9), mix(vec3(0.85, 0.35, 0.2), vec3(0.2, 0.45, 0.8), step(0.5, fract(h.x * 0.7 + rnd * 5.0))), sh * step(h.y, y1 - 0.8) * 0.7);
+      // 商铺：浅色后墙 + 一组组货柜（层板 + 低饱和的货品色块，按 0.9 m 柜格随机有无），不再是整面红蓝白横条（像旗子）
+      col = mix(vec3(0.84, 0.82, 0.78), vec3(0.76, 0.79, 0.8), rnd);
+      float cell = floor(h.x / 0.9);
+      float shelfOn = step(0.3, bRand(int(cell) + 4096, int(rnd * 997.0), 91)) * step(y0 + 0.1, h.y) * step(h.y, y1 - 0.45);
+      float boards = bLines(h.y - y0, 0.42, 0.035, 0.01);
+      float gn = bNoise(vec2(h.x * 5.0, h.y * 3.0 + rnd * 40.0));
+      vec3 goods = mix(vec3(0.62, 0.56, 0.48), vec3(0.48, 0.52, 0.56), fract(rnd * 7.0 + cell * 0.37)) * (0.65 + 0.6 * gn);
+      col = mix(col, mix(goods, vec3(0.34, 0.32, 0.3), boards), shelfOn * 0.85);
     } else {
       col = mix(wallC, vec3(0.5), 0.3);
       if (h.y < y0 + 0.8) col *= 0.6;   // 工位隔板
@@ -238,10 +248,11 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
 #ifdef BLD_HI
   bPart = int(vPart + 0.5);
 #endif
-  // 楼顶亮化（约 1/3 的高层与写字楼）：顶部 1.5 层泛光 + 女儿墙顶轮廓灯带；远近景一致，夜景天际线有层次
-  bool crownLit = !estF && uBDetail > 0.5 && (st == 0 || st == 2 || st == 3 || st == 8) && H >= 45.0 && bRand(sd, 61, 3) < 0.36;
+  // 楼顶亮化：只给少数高层写字楼/酒店/商业（约 3 成、≥ 60 m）——顶部 1.5 层泛光 + 女儿墙顶细轮廓灯带；
+  // 普通住宅楼不亮化（审查 p5_night：住宅楼顶一圈很粗的金色轮廓线）
+  bool crownLit = !estF && uBDetail > 0.5 && (st == 2 || st == 3 || st == 8 || st == 4) && H >= 60.0 && bRand(sd, 61, 3) < 0.32;
   float crR = bRand(sd, 62, 3);
-  vec3 crownC = crR < 0.5 ? vec3(1.0, 0.7, 0.34) : crR < 0.78 ? vec3(0.78, 0.86, 1.0) : crR < 0.9 ? vec3(0.3, 0.5, 1.0) : vec3(0.95, 0.32, 0.55);
+  vec3 crownC = crR < 0.55 ? vec3(1.0, 0.74, 0.42) : crR < 0.88 ? vec3(0.82, 0.88, 1.0) : vec3(0.45, 0.62, 1.0);
   wallC *= estF ? (0.95 + 0.1 * bRand(sd, 3, 1)) * (oldB ? 0.93 : 1.0) : (0.86 + 0.24 * bRand(sd, 3, 1)) * (oldB ? 0.9 : 1.0);   // 每栋明度差异 + 老楼积灰（同一小区同一涂料，差异小）
   eTrim *= 0.72; eBaseC *= 0.66; eCrownC *= 0.66; eBandC *= 0.72; eAcc2 *= 0.7;
   float u = vFac.x;
@@ -274,6 +285,7 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     else if (st == 6) { bayW = 6.0; margin = 0.0; dep = 0.08; }
     else if (st == 7) { bayW = 3.6 + 0.6 * r0; margin = 0.8; dep = 0.25; }
     else if (st == 8) { bayW = 3.9 + 0.3 * r0; margin = 0.9; dep = 0.3; }
+    else if (st == 10) { bayW = 3.6 + 0.6 * r0; margin = 0.45; dep = 0.16; }
     else { bayW = 3.6; margin = 1.0; dep = 0.25; }
     if (estF) { bayW = (eSch == 5 ? 3.0 : 3.3) + 0.3 * r0; margin = 0.75; dep = eSch == 3 ? 0.32 : 0.25; }
 
@@ -299,6 +311,12 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
 #endif
     int kBay = bi + 997 * eIdx;
     float rb = bRand(sd, kBay, 11);
+    // 住宅山墙（板楼短边）：实墙 + 少量小窗，不画阳台/封闭阳台（审查 st_res_street：同一栋楼长边是推拉窗 + 防盗网，
+    // 短边却是一整条通高玻璃，像幕墙）。按边长与楼体外接半径判定（近景才有逐边边长）
+    bool gable = false;
+#ifdef BLD_HI
+    gable = !estF && (st == 0 || st == 1) && vB3.z > 8.0 && len < 0.62 * vB3.z;
+#endif
 
     // —— 楼层 ——
     float roofV = H - ph;
@@ -316,40 +334,40 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     bool brick = estF ? eFin == 2 : (wallC.r > 1.6 * wallC.b && wallC.r < 0.45);
     bool tile = estF ? eFin == 1 : ((st == 1 || st == 5 || (st == 0 && oldB)) && wallC.g > 0.55 && !brick);
     bool stoneF = estF && eFin == 3;
-    float jDet = 1.0 - smoothstep(0.012, 0.04, max(fwp.x, fwp.y));
+    float jDet = 1.0 - smoothstep(0.008, 0.026, max(fwp.x, fwp.y));   // 逐砖色差、灰缝法线：砖高 6.3 cm，足迹超过约 2 cm 就淡出（否则 2~3 像素一行的随机色差闪烁成噪点）
     if (estF && brick) {
       // 小区砖墙：红砖面砖为浅灰勾缝，青砖为深灰勾缝（240×53 顺砖错缝）
       float row = floor(v / 0.063);
       float bu = u + mod(row, 2.0) * 0.125;
-      float jh = bLines(v, 0.063, 0.01, fwp.y);
-      float jv = bLines(bu, 0.25, 0.01, fwp.x) * (1.0 - jh);
+      float jh = bLinesF(v, 0.063, 0.01, fwp.y);
+      float jv = bLinesF(bu, 0.25, 0.01, fwp.x) * (1.0 - jh);
       float bc = bRand(int(floor(bu / 0.25)) + 65536, int(row) + 65536, 5);
       alb *= mix(1.0, 0.86 + 0.28 * bc, jDet);
       bool redB = wallC.r > 1.3 * wallC.b;
       alb = mix(alb, redB ? vec3(0.42, 0.4, 0.37) : wallC * 0.62, (jh + jv) * 0.8 * (0.35 + 0.65 * jDet));
-      nT.y += (jh * 2.0 - bLines(v - 0.012, 0.063, 0.01, fwp.y)) * 0.22 * jDet;
+      nT.y += (jh * 2.0 - bLinesF(v - 0.012, 0.063, 0.01, fwp.y)) * 0.22 * jDet;
       rou = 0.9;
-    } else if (st == 9 || brick) {
+    } else if (st == 9 || brick || (st == 10 && dot(wallC, vec3(0.333)) < 0.2)) {
       // 砖：240×53 mm 顺砖错缝，10 mm 灰缝
       float row = floor(v / 0.063);
       float bu = u + mod(row, 2.0) * 0.125;
-      float jh = bLines(v, 0.063, 0.011, fwp.y);
-      float jv = bLines(bu, 0.25, 0.011, fwp.x) * (1.0 - jh);
+      float jh = bLinesF(v, 0.063, 0.011, fwp.y);
+      float jv = bLinesF(bu, 0.25, 0.011, fwp.x) * (1.0 - jh);
       float bc = bRand(int(floor(bu / 0.25)) + 65536, int(row) + 65536, 5);
       alb *= mix(1.0, 0.82 + 0.36 * bc, jDet);
       alb = mix(alb, (st == 9 ? vec3(0.42, 0.41, 0.39) : vec3(0.5, 0.47, 0.43)), (jh + jv) * 0.85);
-      nT.y += (jh * 2.0 - bLines(v - 0.012, 0.063, 0.011, fwp.y)) * 0.25 * jDet;
+      nT.y += (jh * 2.0 - bLinesF(v - 0.012, 0.063, 0.011, fwp.y)) * 0.25 * jDet;
       rou = 0.92;
     } else if (tile) {
       // 外墙面砖 240×60
-      float jh = bLines(v, 0.065, 0.006, fwp.y);
-      float jv = bLines(u + mod(floor(v / 0.065), 2.0) * 0.12, 0.24, 0.006, fwp.x);
+      float jh = bLinesF(v, 0.065, 0.006, fwp.y);
+      float jv = bLinesF(u + mod(floor(v / 0.065), 2.0) * 0.12, 0.24, 0.006, fwp.x);
       alb = mix(alb, alb * 0.72, max(jh, jv) * 0.9);
       rou = 0.55;
     } else if (st == 3 || st == 8 || (st == 4 && (variant & 1) == 1) || stoneF) {
       // 石材幕墙 1.2×0.6 分格
-      float jh = bLines(v, 0.6, 0.012, fwp.y);
-      float jv = bLines(u, 1.2, 0.012, fwp.x);
+      float jh = bLinesF(v, 0.6, 0.012, fwp.y);
+      float jv = bLinesF(u, 1.2, 0.012, fwp.x);
       float pc = bRand(int(floor(u / 1.2)) + 65536, int(floor(v / 0.6)) + 65536, 9);
       alb *= mix(1.0, 0.94 + 0.12 * pc, jDet);
       alb = mix(alb, alb * 0.55, max(jh, jv) * 0.9);
@@ -439,6 +457,28 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       if (!inBay && (variant & 1) == 1) alb = mix(alb, accC, 0.6);   // 转角壁柱
 #endif
     }
+    // 仿古商业：每开间两侧赭红檐柱（转角留柱）、楼层间额枋（木色 + 一道青绿彩画）、檐下深色斗拱带
+    float antCol = 0.0;
+    if (st == 10) {
+      float cw0 = 0.34;
+#ifdef BLD_HI
+      antCol = (ul < 0.0 || ul > usable) ? 1.0 : (inBay ? max(bPulse(-0.01, cw0, bx, fwp.x), bPulse(bw - cw0, bw + 0.01, bx, fwp.x)) : 0.0);
+#else
+      antCol = max(bPulse(-0.01, cw0, bx, fwp.x), bPulse(bw - cw0, bw + 0.01, bx, fwp.x));
+#endif
+      antCol *= step(0.45, v) * (1.0 - step(H - 0.7, v));
+      alb = mix(alb, accC * (0.86 + 0.18 * wn), antCol);
+      nT.x += (bx < bw * 0.5 ? 1.0 : -1.0) * antCol * (1.0 - antCol) * 1.4 * jDet;
+      float beam = bPulse(fH - 0.42, fH + 0.01, fy, fwp.y) * float(fTop < roofV - 0.3) * float(v > 0.5);
+      vec3 beamC = mix(accC * 0.78, vec3(0.07, 0.15, 0.13), bPulse(fH - 0.31, fH - 0.19, fy, fwp.y));
+      alb = mix(alb, beamC, beam * 0.95);
+      float eaveB = bPulse(H - 0.72, H + 0.05, v, fwp.y);
+      float brk = bLinesF(u + 0.31, 0.62, 0.26, fwp.x) * bPulse(H - 0.58, H - 0.16, v, fwp.y);
+      vec3 brkC = mix(vec3(0.3, 0.085, 0.05), vec3(0.06, 0.17, 0.15), step(0.5, fract(u / 1.24)));
+      alb = mix(alb, mix(vec3(0.055, 0.04, 0.032), brkC, brk * 0.85), eaveB);
+      ao *= 1.0 - 0.3 * eaveB;
+      rou = mix(rou, 0.75, max(antCol, beam));
+    }
     // 楼板线、勒脚、女儿墙压顶带
     if (st == 0 || st == 1 || st == 5 || st == 7 || st == 8) alb *= 1.0 - 0.07 * bPulse(0.0, 0.16, fy, fwp.y) * float(fi > 0);
     if (st == 1 && brick) alb = mix(alb, vec3(0.5, 0.49, 0.46) * (0.9 + 0.2 * wn), bPulse(fh - 0.42, fh, fy, fwp.y) * float(fi > 0 || gf > 2.0));   // 圈梁
@@ -473,7 +513,7 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     // 老式多层北向单元入口（与 bld-gen.js facadeParts 的入口雨棚同一规则）：首层单元门，以上楼梯间半层窗
     bool entBay = false;
 #ifdef BLD_HI
-    entBay = st == 1 && !estF && Nh.z < -0.4 && !eStreet && nb >= 4.0 && (bi % 4) == 1 + (variant & 1) && bPart == 0
+    entBay = st == 1 && !estF && !gable && Nh.z < -0.4 && !eStreet && nb >= 4.0 && (bi % 4) == 1 + (variant & 1) && bPart == 0
       && H >= 6.0 && gf >= 2.7 && (roofV - gf) / fh >= 1.6 && uBDetail > 0.5;
 #endif
 
@@ -511,7 +551,7 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       float gz = topBand ? 0.0 : bPulse(railH, headH, fy, fwp.y);
       bool litH = bRand(sd, kS, 29) < litP;
       float rc = bRand(sd, kS, 31);
-      vec3 lampH = rc < 0.45 ? vec3(1.0, 0.62, 0.3) : rc < 0.62 ? vec3(1.0, 0.8, 0.55) : vec3(0.8, 0.88, 1.0);
+      vec3 lampH = rc < 0.5 ? vec3(1.0, 0.74, 0.46) : rc < 0.75 ? vec3(1.0, 0.86, 0.68) : vec3(0.85, 0.91, 1.0);
       float lampIH = 0.85 * (0.6 + 0.7 * bRand(sd, kS, 33)) * nightOn;
       if (gz > 0.0) {
         float lx = sx - x0, ly = fy - railH, gh = headH - railH;
@@ -529,7 +569,7 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
         } else {
           // 每扇推拉窗玻璃的色差 / 粗糙度略有不同（新旧、贴膜、开启扇）
           float pv = bRand(sd, kS * 13 + int(floor(lx / mw)), 87);
-          ga = (glassT * 0.35 + 0.01) * (0.8 + 0.4 * pv); gr = 0.04 + 0.08 * pv; gm = 0.0;
+          ga = (glassT * 0.35 + 0.01) * (0.8 + 0.4 * pv); gr = (oldB ? 0.12 : 0.04) + 0.1 * pv; gm = 0.0;   // 老楼封阳台玻璃积灰，不再镜面反出一整条蓝天
           // 窗帘 / 室内：白天略透出室内暗色，夜间亮灯
           float cu = bRand(sd, kS, 35);
           vec3 inC = cu < 0.3 ? vec3(0.62, 0.58, 0.5) : cu < 0.45 ? vec3(0.66, 0.66, 0.64) : vec3(0.16, 0.15, 0.14);
@@ -568,6 +608,8 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       emi = vec3(1.0, 0.82, 0.6) * 0.15 * nightOn * step(0.25, uLit.z);
     }
 
+    // 窗户之前的墙面（远景/掠射角平均用：不拿已经混叠的窗格像素去平均）
+    vec3 albW = alb; float rouW = rou, metW = met;
     if (!partDone) {
     // —— 立面构件选择：主构件 et/wr，副构件 et2/wr2 ——
     // 1 凹窗 2 凹阳台 3 空调百叶 4 橱窗 5 幕墙玻璃 6 广告位 7 卷帘门 8 外挂空调 9 封闭阳台 10 层间窗槛墙 11 高侧窗 12 招牌带 13 单元门
@@ -607,6 +649,9 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       if (fi == 0) {
         if (eStreet) { et = 4; wr = vec4(0.12, 0.25, bw - 0.12, gf - 1.1); et2 = 12; wr2 = vec4(0.0, gf - 0.95, bw, gf - 0.2); }
         else { et = 1; wr = vec4(cx - 0.9, 0.9, cx + 0.9, min(2.6, gf - 0.4)); }
+      } else if (gable) {
+        if (rb < 0.45) { et = 1; wr = vec4(cx - 0.45, 1.05, cx + 0.45, 2.25); et2 = 3; wr2 = vec4(cx + 0.6, 0.2, min(cx + 1.35, bw - 0.1), 0.95); }
+        else if (rb < 0.75) { et = 1; wr = vec4(cx - 0.75, 0.9, cx + 0.75, 2.4); }
       } else if (k == 0 && P > 3) {
         et = 1; wr = vec4(cx - 0.35, 1.0, cx + 0.35, 2.2);
       } else if ((south && rb < 0.62) || rb < 0.16) {
@@ -627,9 +672,14 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       } else if (entBay) {
         if (fi == 0) { et = 13; wr = vec4(cx - 0.62, 0.0, cx + 0.62, min(2.35, gf - 0.3)); }        // 单元门（上方有雨棚）
         else { et = 1; eyo = 0.5 * fH; wr = vec4(cx - 0.5, 0.95, cx + 0.5, 1.95); }                 // 楼梯间半层窗
+      } else if (gable) {
+        if (rb < 0.5) {
+          et = 1; wr = vec4(cx - 0.45, 1.0, cx + 0.45, 2.1);
+          if (bRand(sd, kWin, 5) < 0.3) { et2 = 8; wr2 = vec4(cx + 0.58, 0.5, min(cx + 1.36, bw), 1.05); }
+        }
       } else if (rb < 0.13) {
         et = 1; eyo = 0.5 * fH; wr = vec4(cx - 0.5, 0.95, cx + 0.5, 1.95);   // 楼梯间半层错位窗
-      } else if (south && rb < 0.55) {
+      } else if (south && rb < 0.55 && vB3.z >= 8.0) {   // 封闭阳台（小点式楼不做，与 bld-gen.js facadeParts 一致）
         et = 9; wr = vec4(0.12, 0.05, bw - 0.12, fH - 0.3);
       } else {
         et = 1; wr = vec4(cx - 0.75, 0.9, cx + 0.75, 2.4);
@@ -674,9 +724,21 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     } else if (st == 8) {
       if (fi == 0) { et = 4; wr = vec4(0.2, 0.3, bw - 0.2, gf - 0.6); }
       else { et = 1; wr = vec4(cx - 0.8, 0.55, cx + 0.8, fH - 0.5); }
+    } else if (st == 10) {
+      // 仿古商业：首层整开间木格门面（上部格心 + 匾额），上层木格窗（约 1/8 开间为实墙）
+      if (fi == 0) {
+        float dh = min(gf - 0.66, 3.5);   // 单层殿/铺面（首层很高）门高封顶，门上留墙放匾额
+        et = 14; wr = vec4(0.4, 0.0, bw - 0.4, dh);
+        if (bRand(sd, kBay, 73) < 0.7) { et2 = 16; wr2 = vec4(cx - min(1.25, bw * 0.34), dh + 0.08, cx + min(1.25, bw * 0.34), dh + 0.54); }
+      } else if (rb > 0.12) {
+        et = 15; wr = vec4(0.72, 0.85, bw - 0.72, fH - 0.72);
+      }
     } else {
       et = 1; wr = vec4(cx - 0.7, 1.0, cx + 0.7, min(fH - 0.6, 2.6));
     }
+    // 底商门：约每 2~3 开间一樘落地玻璃门（门洞从地面起，中缝 + 拉手 + 亮子横档）（审查 st_sajinqiao：整栋楼没有门）
+    bool shopDoor = et == 4 && fi == 0 && (bRand(sd, kBay, 75) < 0.38 || bi % 3 == 1);
+    if (shopDoor) wr.y = 0.0;
     if (eyo > 0.0) ey = mod(fy + eyo, fH);
     vec2 p = vec2(bx, ey);
     vec2 p2 = vec2(bx, fy);
@@ -695,14 +757,17 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     if (stairW) lit = bRand(sd, kWin, 57) < 0.34;
     float rc = bRand(sd, litCls == 0 ? kHouse : kWin, 31);
     vec3 lampC;
-    // 灯色：住宅暖白（白炽/3000K）与冷白（LED 吸顶灯 6500K）混杂，少量彩色氛围灯；办公以冷白为主
-    if (litCls == 1) lampC = rc < 0.7 ? vec3(0.78, 0.88, 1.0) : vec3(1.0, 0.86, 0.66);
-    else lampC = rc < 0.45 ? vec3(1.0, 0.62, 0.3) : rc < 0.62 ? vec3(1.0, 0.8, 0.55) : rc < 0.95 ? vec3(0.8, 0.88, 1.0) : rc < 0.975 ? vec3(1.0, 0.4, 0.6) : vec3(0.55, 0.45, 1.0);
+    // 灯色：住宅以暖白（3000K）为主、冷白（LED 吸顶灯）为辅，不再有粉/紫彩灯（审查 p5_night：窗户紫橙蓝五颜六色像夜店）；
+    // 办公以冷白为主；仿古商业暖黄
+    if (litCls == 1) lampC = rc < 0.7 ? vec3(0.82, 0.9, 1.0) : vec3(1.0, 0.87, 0.7);
+    else lampC = rc < 0.5 ? vec3(1.0, 0.74, 0.46) : rc < 0.75 ? vec3(1.0, 0.86, 0.68) : vec3(0.85, 0.91, 1.0);
+    if (st == 10) lampC = vec3(1.0, 0.74, 0.44);
     float lampI = (litCls == 1 ? 0.58 : 0.9) * (0.6 + 0.7 * bRand(sd, kWin, 33)) * nightOn;
     if (stairW) { lampC = rc < 0.6 ? vec3(0.95, 0.88, 0.7) : vec3(0.85, 0.9, 1.0); lampI = 0.45 * nightOn; }
     float curtain = bRand(sd, kWin, 35);
-    vec3 curtainC = curtain < 0.15 ? vec3(0.85, 0.8, 0.68) : curtain < 0.25 ? vec3(0.9, 0.9, 0.88) : curtain < 0.3 ? vec3(0.75, 0.3, 0.25) : vec3(0.7, 0.75, 0.8);
-    vec3 frameC = st == 2 ? wallC : (st == 9 ? vec3(0.28, 0.09, 0.06) : (oldB ? vec3(0.7, 0.7, 0.68) : (st == 0 && (variant & 1) == 1 ? vec3(0.85, 0.85, 0.83) : vec3(0.32, 0.33, 0.34))));
+    // 窗帘：米色 / 白 / 浅驼 / 浅灰（低饱和，亮灯后整体仍是暖白）
+    vec3 curtainC = curtain < 0.15 ? vec3(0.85, 0.8, 0.68) : curtain < 0.25 ? vec3(0.9, 0.9, 0.88) : curtain < 0.3 ? vec3(0.8, 0.72, 0.6) : vec3(0.78, 0.77, 0.74);
+    vec3 frameC = st == 2 ? wallC : (st == 9 ? vec3(0.28, 0.09, 0.06) : st == 10 ? accC * 0.85 : (oldB ? vec3(0.7, 0.7, 0.68) : (st == 0 && (variant & 1) == 1 ? vec3(0.85, 0.85, 0.83) : vec3(0.32, 0.33, 0.34))));
     if (estF) frameC = eFrameSet ? eFrame : (eSch == 5 ? vec3(0.66, 0.66, 0.64) : eSch == 7 ? vec3(0.8, 0.79, 0.76) : vec3(0.27, 0.27, 0.28));
 
     if (estF && et > 0 && winFloor) {
@@ -732,7 +797,8 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     if (c1 > 0.0) {
       BSurf s; s.alb = alb; s.rou = rou; s.met = met; s.nT = vec3(0.0, 0.0, 1.0); s.emi = vec3(0.0); s.ao = 1.0;
       vec2 ws = wr.zw - wr.xy;
-      bool glassy = et == 1 || et == 2 || et == 4 || et == 5 || et == 9 || et == 11;
+      bool glassy = et == 1 || et == 2 || et == 4 || et == 5 || et == 9 || et == 11 || et == 14 || et == 15;
+      bool shopLike = et == 4 || et == 14;   // 14 仿古木格门面：按店铺橱窗处理室内与夜间灯光
       if (et == 3) {
         // 空调百叶（与主构件共用时作为主构件出现的情况很少）
         s.alb = accC;
@@ -790,9 +856,11 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
           q = g;
         }
 #endif
-        if (estF && et == 9 && p.y < 0.95) {
-          // 小区：封闭凸阳台下部实心栏板（老式住宅常刷点缀色，如太白小区红褐色）
-          vec3 sp = eSch == 5 ? accC : mix(wallC * 1.05, eTrim, (eFl & 1) != 0 ? 0.6 : 0.0);
+        if (et == 9 && p.y < 0.95) {
+          // 封闭阳台下部实心栏板（老式住宅常刷点缀色，如太白小区红褐色）；通用楼也有栏板——
+          // 原来通高玻璃，小楼南面一两个开间看起来像一条玻璃幕墙（审查 st_res_street）
+          vec3 sp = estF ? (eSch == 5 ? accC : mix(wallC * 1.05, eTrim, (eFl & 1) != 0 ? 0.6 : 0.0))
+                         : (oldB ? mix(wallC, vec3(0.55, 0.54, 0.5), 0.3) : mix(wallC * 1.03, accC, 0.3));
           s.alb = sp * (0.95 + 0.1 * wn); s.rou = 0.85; s.met = 0.0;
           s.alb = mix(s.alb, s.alb * 0.7, bPulse(0.88, 0.95, p.y, fwp.y));
           s.ao = 1.0 - 0.25 * bPulse(0.0, 0.08, p.y, fwp.y);
@@ -818,7 +886,7 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
         } else {
           vec2 lq = q - wr.xy;
           // 框料：外框 + 中梃/横档
-          float fwid = et == 5 ? 0.05 : (et == 4 ? 0.07 : 0.06);
+          float fwid = et == 5 ? 0.05 : (et == 4 ? 0.07 : et >= 14 ? 0.1 : 0.06);
           float inner = bRect(vec4(fwid, fwid, ws.x - fwid, ws.y - fwid), lq, fwp);
           float mull = 0.0;
           if (et == 1) {
@@ -826,6 +894,24 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
             if (ws.y > 1.6) mull = max(mull, bPulse(ws.y * 0.72 - 0.03, ws.y * 0.72 + 0.03, lq.y, fwp.y));
           } else if (et == 4) {
             mull = max(bLines(lq.x, 2.0, 0.07, fwp.x), bPulse(ws.y - 0.9, ws.y - 0.83, lq.y, fwp.y));
+            if (shopDoor) {
+              // 对开玻璃门：中缝 + 门顶亮子横档 + 两根竖拉手
+              float dc0 = ws.x * 0.5;
+              mull = max(mull, bPulse(dc0 - 0.04, dc0 + 0.04, lq.x, fwp.x) * step(lq.y, 2.45));
+              mull = max(mull, bPulse(2.4, 2.48, lq.y, fwp.y));
+              mull = max(mull, (bPulse(dc0 - 0.2, dc0 - 0.15, lq.x, fwp.x) + bPulse(dc0 + 0.15, dc0 + 0.2, lq.x, fwp.x)) * bPulse(0.85, 1.4, lq.y, fwp.y));
+              mull = max(mull, bPulse(-0.01, 0.1, lq.y, fwp.y));   // 门槛
+            }
+          } else if (et == 14) {
+            // 仿古木格门：每 0.9 m 一扇（门梃），中部腰板横档，上部 0.62 以上为方格心
+            float leaf = bLinesF(lq.x, 0.9, 0.08, fwp.x);
+            float rail = bPulse(ws.y * 0.58, ws.y * 0.58 + 0.09, lq.y, fwp.y) + bPulse(-0.01, 0.18, lq.y, fwp.y);
+            float latt = max(bLinesF(lq.x, 0.18, 0.024, fwp.x), bLinesF(lq.y, 0.18, 0.024, fwp.y)) * step(ws.y * 0.62, lq.y);
+            mull = max(max(leaf, min(rail, 1.0)), latt * 0.9);
+          } else if (et == 15) {
+            // 仿古木格窗：双扇（中梃）+ 方格心
+            float latt = max(bLinesF(lq.x, 0.17, 0.022, fwp.x), bLinesF(lq.y, 0.17, 0.022, fwp.y));
+            mull = max(bPulse(ws.x * 0.5 - 0.04, ws.x * 0.5 + 0.04, lq.x, fwp.x), latt * 0.85);
           } else if (et == 9) {
             mull = max(bLines(lq.x, 0.62, 0.05, fwp.x), bPulse(0.9, 0.96, lq.y, fwp.y));
           } else if (et == 2) {
@@ -842,12 +928,12 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
           else { gAlb = glassT * 0.35 + 0.01; gRou = 0.05; gMet = 0.0; }
           float F = 0.04 + 0.96 * pow(1.0 - clamp(Vt.z, 0.0, 1.0), 5.0);
           // 室内
-          vec3 inAlb = et == 4 ? vec3(0.55) : vec3(0.22);
+          vec3 inAlb = shopLike ? vec3(0.55) : vec3(0.22);
           float lampK = 0.8;
-          int ik = et == 4 ? 2 : (litCls == 1 ? 1 : 0);
+          int ik = shopLike ? 2 : (litCls == 1 ? 1 : 0);
 #ifdef BLD_HI
           if (nearK > 0.0 && et != 11) {
-            float D = et == 4 ? 7.0 : (litCls == 1 ? 9.0 : 3.8 + 2.0 * bRand(sd, kWin, 37));
+            float D = shopLike ? 7.0 : (litCls == 1 ? 9.0 : 3.8 + 2.0 * bRand(sd, kWin, 37));
             vec3 ia = bInterior(lq, ws, wr.y - (et == 2 ? 0.0 : 0.0), fH, D, -Vt, bRand(sd, kWin, 39), ik, lampK);
             inAlb = mix(inAlb, ia, nearK);
           }
@@ -860,12 +946,12 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
             lampK = mix(lampK, 0.62, cov);
           }
           float trans = (1.0 - F) * (reflective ? 0.35 : 1.0);
-          vec3 dayIn = inAlb * (et == 4 ? 0.25 : 0.045) * (1.0 - uNight);
+          vec3 dayIn = inAlb * (shopLike ? 0.25 : 0.045) * (1.0 - uNight);
           vec3 nightIn = vec3(0.0);
-          if (et == 4) {
+          if (shopLike) {
             float shopOn = step(bRand(sd, kWin, 45), uLit.z * 1.1);
             float shopK = 0.55 + 0.6 * bRand(sd, kWin, 47);
-            vec3 shopC = bRand(sd, kWin, 49) < 0.7 ? vec3(1.0, 0.84, 0.62) : vec3(0.85, 0.92, 1.0);
+            vec3 shopC = (st == 10 || bRand(sd, kWin, 49) < 0.7) ? vec3(1.0, 0.84, 0.62) : vec3(0.85, 0.92, 1.0);
             nightIn = inAlb * shopC * 0.5 * shopK * lampK * shopOn * nightOn;
           } else if (et == 11) {
             nightIn = lit ? vec3(0.9, 0.95, 1.0) * 0.5 * nightOn : vec3(0.0);
@@ -930,6 +1016,20 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
         r2 = 0.45; m2 = 0.0;
         float on = step(bRand(sd, shop, 55), uLit.z * 1.2) * nightOn;
         e2 = (bc * 0.45 + tc * gx * 1.5) * 1.0 * on;
+      } else if (et2 == 16) {
+        // 仿古匾额：黑漆/朱红/藏青底 + 3~4 个金色字块 + 金边，夜间字与边框发光
+        int shop = bi + 997 * eIdx;
+        float r1 = bRand(sd, shop, 51);
+        vec3 bc = r1 < 0.6 ? vec3(0.035, 0.025, 0.02) : r1 < 0.85 ? vec3(0.24, 0.035, 0.025) : vec3(0.03, 0.06, 0.1);
+        float nch = 3.0 + floor(bRand(sd, shop, 52) * 2.0);
+        float cw = ws.x / (nch + 0.6);
+        float gx = bPulse(cw * 0.3, ws.x - cw * 0.3, lq.x, fwp.x) * bLines(lq.x - cw * 0.3, cw, cw * 0.66, fwp.x) * bPulse(ws.y * 0.2, ws.y * 0.8, lq.y, fwp.y);
+        float fr = 1.0 - bRect(vec4(0.05, 0.04, ws.x - 0.05, ws.y - 0.04), lq, fwp);
+        vec3 gold = vec3(0.72, 0.52, 0.16);
+        a2 = mix(mix(bc, gold, gx * 0.9 * (0.35 + 0.65 * detail)), gold * 0.75, fr);
+        r2 = 0.35; m2 = 0.55 * max(gx, fr);
+        float on = step(bRand(sd, shop, 55), uLit.z * 1.2) * nightOn;
+        e2 = gold * (gx * 1.3 + fr * 0.4) * on;
       }
       // 外挂空调在墙上的投影
       alb = mix(alb, a2, c2); rou = mix(rou, r2, c2); met = mix(met, m2, c2); nT = normalize(mix(nT, n2, c2));
@@ -944,9 +1044,10 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     float wf = st == 2 ? 0.72 : st == 3 ? 0.45 : st == 0 ? 0.3 : st == 1 ? 0.22 : st == 4 ? 0.22 : st == 5 ? 0.16 : st == 6 ? 0.05 : 0.28;
     if (wfO >= 0.0) wf = wfO;
     vec3 gAvg = (st == 2 || st == 3) ? glassT * 0.7 : glassT * 0.25 + 0.02;
-    vec3 aAvg = mix(alb, gAvg, wf);
-    float rAvg = mix(rou, st == 2 ? 0.12 : 0.3, wf);
-    float mAvg = mix(met, (st == 2 || st == 3) ? 0.55 : 0.0, wf);
+    vec3 aBase = partDone ? alb : albW;
+    vec3 aAvg = mix(aBase, gAvg, wf);
+    float rAvg = mix(partDone ? rou : rouW, st == 2 ? 0.12 : 0.3, wf);
+    float mAvg = mix(partDone ? met : metW, (st == 2 || st == 3) ? 0.55 : 0.0, wf);
     vec3 lampAvg = litCls == 1 ? vec3(0.86, 0.92, 1.0) : vec3(1.0, 0.76, 0.5);
     float iAvg = litCls == 1 ? 0.5 : 0.45;
     // 远看：亮窗按“每层 × 约 3 开间”成组亮灭（矩形块，不是整面墙均匀发光）；块小于约 1 像素时换成期望值（防闪烁）
@@ -954,22 +1055,48 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
     float litPatch = step(bRand(sd, int(floor(u / cellW)) + 4096, int(floor(max(v, 0.0) / cellH)) + 77), litP * 0.8);
     litPatch *= 1.0 - 0.8 * bLines(v, cellH, 0.7, fwp.y);   // 楼板遮挡
     litPatch = mix(litPatch, min(litP, 1.0) * 0.5, smoothstep(0.45, 1.2, max(fwp.y / cellH, fwp.x / cellW)));
-    vec3 eAvg = lampAvg * wf * iAvg * nightOn * litPatch * 0.45;
-    if (st == 4 || street) eAvg += vec3(1.0, 0.8, 0.6) * 0.22 * uLit.z * nightOn * (1.0 - smoothstep(gf - 0.5, gf + 0.5, v)) * float(v > 0.0);
-    if (!inBay && detail < 1.0 && wfO < 0.0) { aAvg = alb; eAvg *= 0.0; }
-    alb = mix(aAvg, alb, detail);
-    rou = mix(rAvg, rou, detail);
-    met = mix(mAvg, met, detail);
-    emi = mix(eAvg, emi, detail);
+    // 远处的城区：单栋楼只剩几个像素，亮窗平均值换算到屏幕上过暗（审查 p1_night：全城像停电）——按视距抬高平均亮窗
+    float camD = length(cameraPosition - vWPos);
+    float farBoost = 1.0 + 1.8 * smoothstep(900.0, 6000.0, camD);
+    vec3 eAvg = lampAvg * wf * iAvg * nightOn * litPatch * 0.45 * farBoost;
+    if (st == 4 || st == 10 || street) eAvg += vec3(1.0, 0.8, 0.6) * 0.22 * uLit.z * nightOn * (1.0 - smoothstep(gf - 0.5, gf + 0.5, v)) * float(v > 0.0);
+    // 掠射角（开间方向已混叠、楼层方向还看得清）：按“楼层窗带”横向平均，窗不会整片消失成一堵实墙（审查 st_walltop）
+    vec3 aRow = aAvg; vec3 eRow = eAvg; float rRow = rAvg, mRow = mAvg;
+    float detailY = 1.0 - smoothstep(0.3, 0.85, fwp.y / max(fH, 0.5));
+    if (!partDone && wfO < 0.0 && detailY > detail + 0.01) {
+      vec3 rw = st == 0 || estF ? vec3(0.85, 2.45, 0.5) : st == 1 ? vec3(0.9, 2.4, 0.45) : st == 2 ? vec3(0.9, fH - 0.06, 0.95)
+              : st == 3 ? vec3(0.95, fH - 0.55, 0.7) : st == 4 ? vec3(0.8, fH - 0.6, 0.55) : st == 5 ? vec3(1.0, 2.35, 0.35)
+              : st == 6 ? vec3(0.0) : st == 7 ? vec3(0.9, fH - 0.85, 0.7) : st == 8 ? vec3(0.55, fH - 0.5, 0.4)
+              : st == 10 ? vec3(0.85, fH - 0.72, 0.6) : vec3(1.0, min(fH - 0.6, 2.6), 0.38);
+      if (fi == 0) rw = (eStreet || st == 4 || st == 10) ? vec3(0.25, gf - 0.7, 0.85) : vec3(0.9, min(2.6, gf - 0.4), 0.45);
+      float rowWin = bPulse(rw.x, rw.y, fy, fwp.y) * rw.z * float(winFloor) * float(inBay);
+      float litRow = step(bRand(sd, int(floor(u / cellW)) + 4096, fi + 77), litP * 0.8);
+      litRow = mix(litRow, min(litP, 1.0) * 0.5, smoothstep(0.45, 1.2, fwp.x / cellW));
+      aRow = mix(albW, gAvg, rowWin);
+      rRow = mix(rouW, st == 2 ? 0.12 : 0.1, rowWin);
+      mRow = mix(metW, (st == 2 || st == 3) ? 0.55 : 0.0, rowWin);
+      eRow = (fi == 0 && (eStreet || st == 4 || st == 10) ? vec3(1.0, 0.84, 0.62) * 0.3 * step(0.25, uLit.z) : lampAvg * iAvg * 0.45 * litRow) * rowWin * nightOn * farBoost;
+    }
+    if (!inBay && detail < 1.0 && wfO < 0.0) { aAvg = aRow = alb; eAvg *= 0.0; eRow *= 0.0; }
+    alb = mix(mix(aAvg, aRow, detailY), alb, detail);
+    rou = mix(mix(rAvg, rRow, detailY), rou, detail);
+    met = mix(mix(mAvg, mRow, detailY), met, detail);
+    emi = mix(mix(eAvg, eRow, detailY), emi, detail);
     nT = normalize(mix(vec3(0.0, 0.0, 1.0), nT, detail));
 
-    // 夜间墙面：底部路灯/店招反射 + 城市天光（很弱，只为勾出体量）
-    emi += alb * (vec3(1.0, 0.78, 0.55) * 0.05 * exp(-max(v, 0.0) / 14.0) + vec3(0.55, 0.6, 0.75) * 0.012) * nightOn;
-    // 楼顶亮化：顶部约 1.5 层向上渐强的泛光 + 女儿墙顶轮廓灯带（构架一起亮）
+    // 夜间墙面：底部路灯/店招反射 + 城市天光（很弱，只为勾出体量；临街/商业更亮，城区有成片暖光）
+    float spill = (street || st == 4 || st == 10) ? 0.09 : 0.05;
+    emi += alb * (vec3(1.0, 0.78, 0.55) * spill * exp(-max(v, 0.0) / 14.0) + vec3(0.55, 0.6, 0.75) * 0.012) * nightOn;
+    // 楼顶亮化：顶部约 1.5 层向上渐强的泛光 + 女儿墙顶细轮廓灯带（构架一起亮）
     if (crownLit && nightOn > 0.0) {
       float kc = smoothstep(roofV - 1.6 * fh, H + 0.05, v);
-      float strip = bPulse(H - 0.3, H + 0.02, v, fwp.y) * float(bPart == 0);
-      emi += crownC * nightOn * (kc * kc * (bPart == 4 ? 0.8 : 0.45) + strip * 2.0);
+      float strip = bPulse(H - 0.16, H + 0.02, v, fwp.y) * float(bPart == 0);
+      emi += crownC * nightOn * (kc * kc * (bPart == 4 ? 0.8 : 0.4) + strip * 1.2);
+    }
+    // 仿古商业：檐口暖色轮廓灯（西大街、书院门夜景的金色檐线），约 3/4 的楼、随商业亮灯率
+    if (st == 10 && nightOn > 0.0 && bRand(sd, 66, 3) < 0.75) {
+      float eaveL = bPulse(H - 0.12, H + 0.02, v, fwp.y) + (H >= gf + 2.6 ? bPulse(gf + 0.2, gf + 0.32, v, fwp.y) : 0.0);
+      emi += vec3(1.0, 0.68, 0.32) * eaveL * 1.1 * nightOn * step(0.25, uLit.z);
     }
     // 玻璃幕墙写字楼竖向 LED 线条灯（约 1/4）
     if (!estF && uBDetail > 0.5 && (st == 2 || st == 3) && H >= 60.0 && bRand(sd, 63, 3) < 0.25 && v > gf) {
@@ -1012,40 +1139,51 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
         bldSpecK = 0.6;
       }
     } else if ((est || pitched) && Nw.y < -0.3) {
-      // 挑檐 / 檐口底面
-      alb = (estF ? mix(wallC, eTrim, 0.4) : vec3(0.3)) * 0.7; rou = 0.9;
-    } else if (pitched && v > H - 0.1) {
-      // ===== 坡屋面（小区 + 通用平改坡）：红/橙色为筒瓦（纵向瓦垄），灰色为平瓦（错缝），颜色取卫星逐栋取样、照片目测或平改坡色库 =====
+      // 挑檐 / 檐口底面（仿古：深赭色椽望，“深色檐下”）
+      alb = (st == 10 ? vec3(0.11, 0.05, 0.035) : estF ? mix(wallC, eTrim, 0.4) : vec3(0.3)) * 0.7; rou = 0.9;
+      if (st == 10) {
+        float raf = max(bLinesF(wp.x, 0.32, 0.12, fwr.x), bLinesF(wp.y, 0.32, 0.12, fwr.y));   // 椽子（两向近似）
+        alb *= 1.0 + 0.6 * raf;
+        emi = vec3(1.0, 0.7, 0.4) * 0.12 * nightOn * step(0.25, uLit.z);   // 檐下被檐灯/店铺灯照亮
+      }
+    } else if (pitched && (v > H - 0.1 || st == 10)) {
+      // ===== 坡屋面（小区 + 通用平改坡 + 仿古腰檐）：红/橙色为筒瓦（纵向瓦垄），灰色为平瓦（错缝），颜色取卫星逐栋取样、照片目测或色库 =====
+      // 审查 st_eastgate：近看满屏噪点、背光坡水平摩尔纹 → 逐瓦色差减弱并提早淡出、瓦垄/瓦行线改带限版、法线扰动减半
       float sinS = length(Nw.xz);
       vec2 T = sinS > 0.05 ? normalize(vec2(-Nw.z, Nw.x)) : vec2(1.0, 0.0);
       float tu = dot(wp, T);
       float sv = (v - H) / max(sinS, 0.25);
       vec2 fwt = vec2(length(vec2(dFdx(tu), dFdy(tu))), length(vec2(dFdx(sv), dFdy(sv)))) + 1e-4;
-      float det = 1.0 - smoothstep(0.015, 0.07, max(fwt.x, fwt.y));
-      bool clay = roofTile.r > roofTile.b * 1.5 || !est;   // 通用平改坡 / 城内仿古一律按筒瓦（纵向瓦垄）
+      float det = 1.0 - smoothstep(0.01, 0.045, max(fwt.x, fwt.y));
+      bool redT = roofTile.r > roofTile.b * 1.5;
+      bool clay = redT || !est;   // 通用平改坡 / 城内仿古一律按筒瓦（纵向瓦垄）
       float tid = bRand(int(floor(tu / 0.25)) + 65536, int(floor(sv / 0.3)) + 65536, 13);
-      alb = roofTile * 0.62 * (0.88 + 0.18 * tid * det + 0.12 * rn);
-      alb *= 1.0 - 0.32 * bLines(sv, 0.3, 0.05, fwt.y) * det;
+      // 灰瓦色板本身已是“印象色”，不再 ×0.62（原来折算后接近纯黑）
+      alb = roofTile * (redT ? 0.62 : 0.95) * (0.9 + 0.08 * tid * det + 0.12 * rn);
+      alb *= 1.0 - 0.26 * bLinesF(sv, 0.3, 0.05, fwt.y);
       if (clay) {
+        float rk = 1.0 - smoothstep(0.3, 0.9, fwt.x / 0.25);
         float rid = cos(tu / 0.25 * 6.2831853);
-        alb *= 1.0 + 0.14 * rid * det;
-        vec3 tw = vec3(T.x, 0.0, T.y) * sin(tu / 0.25 * 6.2831853) * 0.35 * det;
+        alb *= 1.0 + 0.12 * rid * rk;
+        vec3 tw = vec3(T.x, 0.0, T.y) * sin(tu / 0.25 * 6.2831853) * 0.18 * det * det;
         normal = normalize(normal + (viewMatrix * vec4(tw, 0.0)).xyz);
         rou = 0.72;
       } else {
-        float jv = bLines(tu + mod(floor(sv / 0.3), 2.0) * 0.15, 0.3, 0.025, fwt.x);
+        float jv = bLinesF(tu + mod(floor(sv / 0.3), 2.0) * 0.15, 0.3, 0.025, fwt.x);
         alb *= 1.0 - 0.25 * jv * det;
         rou = 0.62;
       }
       alb *= 1.0 - 0.12 * smoothstep(0.55, 0.85, bNoise(wp * 0.13 + 11.0));   // 积灰/雨渍
+      bldSpecK = redT ? 0.7 : 0.45;   // 灰瓦：掠射角下不反出一片天空蓝（原来灰瓦顶远看发藏青）
     } else if (coping) {
       alb = mix(wallC, vec3(0.42, 0.41, 0.39), 0.55) * (0.9 + 0.2 * rn); rou = 0.8;
     } else {
       float rt = bRand(sd, 5, 1);
       vec3 rc;
-      // 屋面：沥青卷材/水泥砂浆/彩钢板/绿色防水涂料（线性反照率）
-      if (st == 6) rc = rt < 0.5 ? vec3(0.2, 0.3, 0.42) : rt < 0.8 ? vec3(0.42, 0.44, 0.45) : vec3(0.3, 0.12, 0.09);
-      else if (oldB) rc = rt < 0.45 ? vec3(0.1, 0.1, 0.1) : rt < 0.8 ? vec3(0.2, 0.19, 0.18) : vec3(0.14, 0.17, 0.15);
+      // 屋面：沥青卷材/水泥砂浆/彩钢板/绿色防水涂料（线性反照率）；彩钢板为褪色的灰蓝（审查 g8/g9：饱和宝蓝像占位色块）；
+      // 老楼卷材不再是近黑的 0.1（老城俯视一片黑）
+      if (st == 6) rc = rt < 0.4 ? vec3(0.2, 0.25, 0.31) : rt < 0.8 ? vec3(0.42, 0.44, 0.45) : vec3(0.3, 0.14, 0.11);
+      else if (oldB) rc = rt < 0.45 ? vec3(0.15, 0.148, 0.143) : rt < 0.8 ? vec3(0.21, 0.2, 0.19) : vec3(0.15, 0.17, 0.155);
       else rc = rt < 0.45 ? vec3(0.24, 0.235, 0.22) : rt < 0.7 ? vec3(0.16, 0.16, 0.17) : rt < 0.85 ? vec3(0.3, 0.29, 0.27) : vec3(0.12, 0.2, 0.15);
       // 老楼约 1/5 刷银色反光防水涂料（西安老旧小区屋面常见）
       bool silver = oldB && st != 6 && bRand(sd, 6, 1) < 0.2;
@@ -1058,10 +1196,10 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       // 屋面分格缝 / 彩钢板肋
       float jd = 1.0 - smoothstep(0.02, 0.08, max(fwr.x, fwr.y));
       if (st == 6) {
-        alb *= 1.0 - 0.18 * bLines(wp.x + wp.y, 1.0, 0.2, max(fwr.x, fwr.y) * 1.4);
+        alb *= 1.0 - 0.18 * bLinesF(wp.x + wp.y, 1.0, 0.2, max(fwr.x, fwr.y) * 1.4);
         rou = 0.5; met = 0.3; bldSpecK = 1.0;
       } else if (rt < 0.45 || rt > 0.7) {
-        float jg = max(bLines(wp.x, 1.0, 0.02, fwr.x), bLines(wp.y, 1.0, 0.02, fwr.y));
+        float jg = max(bLinesF(wp.x, 1.0, 0.02, fwr.x), bLinesF(wp.y, 1.0, 0.02, fwr.y));
         alb *= 1.0 - 0.3 * jg;
       }
       if (st != 6) {
@@ -1069,10 +1207,33 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
         float pc = bRand(int(floor(wp.x / 2.3)) + 65536, int(floor(wp.y / 1.5)) + 65536, sd & 1023);
         float pk = 1.0 - smoothstep(0.6, 1.6, max(fwr.x, fwr.y));
         alb *= mix(1.0, pc < 0.16 ? 0.62 : pc > 0.9 ? 1.28 : 1.0, pk);
-        alb *= 1.0 - 0.12 * bLines(wp.y + 0.3 * float(sd & 7), 1.0, 0.05, fwr.y) * jd * float(oldB);
+        alb *= 1.0 - 0.12 * bLinesF(wp.y + 0.3 * float(sd & 7), 1.0, 0.05, fwr.y) * jd * float(oldB);
       }
       // 积水 / 污斑
       alb *= 1.0 - 0.15 * smoothstep(0.55, 0.8, bNoise(wp * 0.09 + 30.0));
+      // 夜间屋面：商场/写字楼/公建屋顶的采光天窗与设备灯、住宅楼梯间出屋面门灯（俯视夜景不再是死黑一片）。
+      // 灯点远看小于像素时换成期望值（按覆盖率平均），远近一致不闪
+      if (nightOn > 0.0) {
+        bool comm = st == 2 || st == 3 || st == 4 || st == 7 || st == 8;
+        float cs = comm ? 9.0 : 14.0;
+        vec2 cq = wp / cs;
+        vec2 ci2 = floor(cq);
+        float lr2 = bRand(int(ci2.x) + 65536, int(ci2.y) + 65536, 97 + (sd & 255));
+        float pOn = comm ? 0.24 * uLit.z : 0.12 * uLit.x;
+        vec2 fq = (cq - ci2) * cs;
+        vec2 sz2 = comm ? vec2(3.2, 1.6) : vec2(0.9, 0.9);
+        vec2 o2 = vec2(1.2 + 3.0 * bRand(int(ci2.x), int(ci2.y), 98), 1.2 + 5.0 * bRand(int(ci2.y), int(ci2.x), 99)) * (comm ? 1.0 : 1.4);
+        float spot = bRect(vec4(o2, o2 + sz2), fq, fwr) * step(lr2, pOn);
+        float spotAvg = (sz2.x * sz2.y) / (cs * cs) * pOn;
+        float fk = smoothstep(0.25, 0.9, max(fwr.x, fwr.y) / min(sz2.x, sz2.y));
+        vec3 sc2 = comm ? vec3(1.0, 0.8, 0.56) : vec3(1.0, 0.76, 0.48);
+        float I2 = comm ? 0.7 : 1.4;
+        emi += sc2 * I2 * mix(spot, spotAvg, fk) * nightOn;
+        // 城市天光：屋面被路灯与霓虹的散射微微染暖（极弱）
+        emi += alb * vec3(1.0, 0.8, 0.6) * 0.035 * nightOn;
+        // 远看（几公里外）：城区屋面一层很淡的暖色（路灯与亮窗的散射，成片城区不再是死黑；近处不加）
+        emi += vec3(1.0, 0.72, 0.42) * 0.012 * nightOn * smoothstep(2500.0, 8000.0, length(cameraPosition - vWPos));
+      }
     }
   }
   diffuseColor.rgb = alb * mix(1.0, ao, 0.5);
@@ -1148,7 +1309,7 @@ export function createFacadeMaterials(ctx, dataTex) {
           '#include <aomap_fragment>\nreflectedLight.indirectDiffuse = mix(reflectedLight.indirectDiffuse, vec3(dot(reflectedLight.indirectDiffuse, vec3(0.2126, 0.7152, 0.0722))), 0.5) * bldAO * bldIndK;\nreflectedLight.indirectSpecular *= bldAOS;'
         );
     };
-    m.customProgramCacheKey = () => (hi ? 'xian-bld-hi-v4' : 'xian-bld-lo-v4');
+    m.customProgramCacheKey = () => (hi ? 'xian-bld-hi-v5' : 'xian-bld-lo-v5');
     m.name = hi ? '通用建筑立面（近景）' : '通用建筑立面（远景）';
     return m;
   };

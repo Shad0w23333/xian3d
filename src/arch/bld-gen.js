@@ -31,8 +31,8 @@ export const LO_QXZ = 5; // 远景 x/z 量化：每米 5 单位（0.2 m），(8 
 const HI_MARGIN = 2000;
 
 // ———— 风格 ————
-export const STYLE = { TOWER: 0, MID: 1, GLASS: 2, STONE: 3, COMM: 4, VILLAGE: 5, INDUS: 6, PUBLIC: 7, HOTEL: 8, HIST: 9 };
-export const STYLE_NAMES = ['高层住宅', '老式多层', '玻璃幕墙办公', '石材办公', '商业裙房', '城中村自建房', '工业厂房', '公共建筑', '酒店', '传统风貌'];
+export const STYLE = { TOWER: 0, MID: 1, GLASS: 2, STONE: 3, COMM: 4, VILLAGE: 5, INDUS: 6, PUBLIC: 7, HOTEL: 8, HIST: 9, ANTIQUE: 10 };
+export const STYLE_NAMES = ['高层住宅', '老式多层', '玻璃幕墙办公', '石材办公', '商业裙房', '城中村自建房', '工业厂房', '公共建筑', '酒店', '传统风貌', '仿古商业'];
 
 /**
  * 风格参数（调研依据，见 research/refs/buildings/）：
@@ -44,6 +44,9 @@ export const STYLE_NAMES = ['高层住宅', '老式多层', '玻璃幕墙办公'
  *  · 商业裙房：首层 5.5~6 m 通透橱窗 + 门头招牌带，上层实墙与广告位。
  *  · 城中村：4~8 层自建房，层高 3.0~3.3 m，小窗不规则、蓝色镀膜玻璃、白瓷砖/水泥/红砖混杂，底层卷帘门。
  *  · 工业厂房：单层 6~15 m，彩钢板（蓝/白/灰），1.2 m 砖砌勒脚，通长高侧窗，大卷帘门。
+ *  · 仿古商业（style 功能位 9，tools/buildings_patch.py 标定：西大街“仿古一条街”、顺城巷、书院门、北院门外围、大雁塔北广场两侧……）：
+ *    2~5 层唐风仿古商业楼，层高 3.6~3.9 m，首层 4.2~4.6 m 木格门面 + 匾额，上层木格窗，开间 3.6~4.2 m 立赭红檐柱，
+ *    浅灰/米白抹灰或青砖墙，楼层间额枋，檐下深色斗拱带，灰色筒瓦坡顶大挑檐（多层加一道腰檐）。
  */
 const STYLE_P = [
   { fh: [2.9, 3.05], gf: [3.3, 3.6], gfShop: 4.5, ph: 1.3 }, // TOWER
@@ -56,9 +59,10 @@ const STYLE_P = [
   { fh: [3.7, 3.9], gf: [4.0, 4.5], gfShop: 4.5, ph: 1.1 }, // PUBLIC
   { fh: [3.2, 3.4], gf: [4.6, 5.4], gfShop: 5.4, ph: 1.2 }, // HOTEL
   { fh: [3.4, 3.8], gf: [3.6, 4.0], gfShop: 4.0, ph: 0.8 }, // HIST
+  { fh: [3.6, 3.9], gf: [4.2, 4.6], gfShop: 4.6, ph: 0 }, // ANTIQUE（坡屋面，无女儿墙）
 ];
 // 室内亮灯类别：0 住宅 1 办公 2 商业
-export const LIT_CLASS = [0, 0, 1, 1, 2, 0, 1, 1, 0, 0];
+export const LIT_CLASS = [0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 2];
 /**
  * 近景附属构件类型（写在近景顶点 idHi 的高 8 位，着色器 vPart 分支，见 bld-shader.js）：
  * 0 外墙/女儿墙/屋面；1 凸阳台正面 2 凸阳台侧面；3 底商雨棚；4 顶部构架；5 单元入口雨棚；6 凸窗正面 7 凸窗侧面
@@ -85,8 +89,10 @@ const PAL = [
   ['#d9c9a8', '#e3ddd0', '#bdb8ae', '#a35e48', '#cfbfa2', '#c8c0b4', '#e0d6c2', '#b06a50'],
   // HOTEL
   ['#cdb896', '#bfae90', '#d8cbb2', '#a89a86', '#8f8378', '#ddd3c0'],
-  // HIST
-  ['#6f6c68', '#7a756d', '#66625c', '#5e5b57'],
+  // HIST（青砖 / 灰色抹灰）
+  ['#8f8c86', '#9a958d', '#86827c', '#7e7b77'],
+  // ANTIQUE：浅灰/米白抹灰为主，少量青砖
+  ['#ddd7cb', '#d4cdbf', '#cdc7bc', '#e2dccf', '#d8cfbd', '#c7c2b8', '#9b9893', '#a19d96'],
 ];
 // 副色（塔楼皇冠/竖向色带/基座、窗框、招牌等）
 const ACC = [
@@ -100,6 +106,8 @@ const ACC = [
   ['#8a8a84', '#6e6a64', '#c7bba4'],
   ['#6d5e50', '#8f8374', '#4f4944'],
   ['#5a2a22', '#3d3a36'],
+  // ANTIQUE：檐柱/门窗木作（赭红、栗褐）
+  ['#7a2e22', '#6a2a1e', '#5c3324', '#823a26'],
 ];
 // 按年代细分的主色库（住宅：多层 / 高层）。依据：80 年代砖混楼多为清水红砖 + 水泥砂浆；90 年代白色/米色小面砖；
 // 2000 年代米黄、浅橙、浅粉涂料；2010 年后浅灰、暖灰、灰白真石漆（research/refs/buildings/ 街景照片）
@@ -112,7 +120,8 @@ const PAL_MID_AGE = [
   ['#dcd6cc', '#cfc7ba', '#d8cfc0', '#bdb5a9', '#e0d6c4', '#c9bca8', '#b8b0a4'],
 ];
 const PAL_TOWER_OLD = ['#dccbaa', '#d6c3a0', '#e2d6bf', '#d9c1a8', '#cdb89c', '#e0c9b0', '#d2bfa4', '#e3c7b0', '#d8cfc0', '#c9b9a6'];
-const PAL_TOWER_NEW = ['#cfc7ba', '#c7c3bc', '#e6e1d6', '#bdb5a9', '#d8cfc0', '#c9b9a6', '#b8b2aa', '#dcd6cc', '#a9a49b', '#d2c8b8'];
+// 2010 年后高层：浅灰/暖灰真石漆为主，掺米黄、浅驼（审查 st_changan：外围新区一律浅灰白火柴盒，单调）
+const PAL_TOWER_NEW = ['#cfc7ba', '#c7c3bc', '#e6e1d6', '#bdb5a9', '#d8cfc0', '#c9b9a6', '#b8b2aa', '#dcd6cc', '#a9a49b', '#d2c8b8', '#dbc6a4', '#d1b896', '#e2d0b2', '#c8b59c'];
 function palOf(st, age) {
   if (st === STYLE.MID && age && PAL_MID_AGE[age]) return PAL_MID_AGE[age];
   if (st === STYLE.TOWER && age) return age <= 3 ? PAL_TOWER_OLD : PAL_TOWER_NEW;
@@ -120,8 +129,10 @@ function palOf(st, age) {
 }
 // 平改坡屋面色（sRGB）：红陶瓦、橙红瓦、灰蓝/深灰彩钢瓦或水泥瓦，按权重
 const ROOF_GEN = ['#a0452f', '#b3553a', '#9a4632', '#c0643f', '#a85a3c', '#8f3e2e', '#5e6b78', '#6b7580', '#55585c', '#7a4a36'];
-// 城墙内青灰瓦（仿古筒瓦 / 小青瓦）
-const ROOF_GRAY = ['#4a4d52', '#55585c', '#3f4246', '#5a5d60', '#4d5054'];
+// 城墙内灰瓦（小青瓦 / 水泥瓦）：中灰（审查：原 #4a4d52 一档在着色器 ×0.62 后接近纯黑，老城成片“黑压压”）
+const ROOF_GRAY = ['#6b6f72', '#73777a', '#65696c', '#7a7e81', '#606467'];
+// 仿古筒瓦（略深的青灰）
+const ROOF_ANTIQUE = ['#6c7174', '#757a7d', '#666b6f', '#7d8285'];
 // 玻璃色调（sRGB）：住宅透明（偏绿灰）、幕墙蓝灰/绿/银灰/茶色、城中村蓝色镀膜
 const GLASS_RES = ['#3a4a4c', '#34444a', '#40504e', '#3c4550'];
 const GLASS_CW = ['#5a7389', '#4a6275', '#4f6d66', '#6a7680', '#6d5a44', '#3f5a6b', '#7d8e98', '#587a8c'];
@@ -291,6 +302,7 @@ export function parseBuildings(buffer) {
  * v2 style 字节（见 tools/build_buildings_v2.py assign_kind_style）：
  *   bits0-3 年代：0 未知 1 1990 前 2 1990s 3 2000s 4 2010s 5 2020+
  *   bits4-7 功能：0 未知 1 居住高层塔楼 2 居住多层板楼 3 别墅/低层 4 城中村自建房 5 办公 6 商业综合体 7 工业厂房 8 公共
+ *                9 仿古商业（tools/buildings_patch.py 按街道/片区标定）
  * 返回 -1 表示按 kind/高度/面积推断。
  */
 function mapStyleByte(sb, kind, H, area, r) {
@@ -307,6 +319,8 @@ function mapStyleByte(sb, kind, H, area, r) {
       if (H >= 24 && area < 2500) return r < 0.5 ? STYLE.STONE : STYLE.GLASS;
       return STYLE.COMM;
     case 7: return H > 30 ? STYLE.STONE : STYLE.INDUS;
+    case 9:
+      return STYLE.ANTIQUE;
     case 8:
       if (kind === 5) return STYLE.HIST;
       if (kind === 6) return H > 25 ? STYLE.GLASS : STYLE.COMM;
@@ -570,7 +584,7 @@ function roadDist(R, x, z, out) {
 // ———— 生成器 ————
 export function createGenerator() {
   let P = null, base = null, ga = null, skip = null, R = null;
-  let styleA, fhA, gfA, phA, hA, flagA, colA, accA, chunkLists;
+  let styleA, fhA, gfA, phA, hA, flagA, colA, accA, radA, chunkLists;
   let EST = null, estSid, estRoof, estRoofCol, estFloors, estFA, joinedA;
   const rd = { d: 0, dx: 0, dz: 0 };
 
@@ -620,6 +634,7 @@ export function createGenerator() {
     R = buildRoadIndex(msg.roads);
     const N = P.count;
     styleA = new Uint8Array(N);
+    radA = new Float32Array(N);
     fhA = new Float32Array(N);
     gfA = new Float32Array(N);
     phA = new Float32Array(N);
@@ -637,7 +652,7 @@ export function createGenerator() {
     const lights = [];
     const blocks = new Map();
     chunkLists = new Map();
-    const stat = { built: 0, skipped: 0, styles: new Array(10).fill(0), tall: 0, loVerts: 0, loTris: 0, estates: 0, estRoofs: 0, estNames: new Set(), genRoofs: 0 };
+    const stat = { built: 0, skipped: 0, styles: new Array(STYLE_NAMES.length).fill(0), tall: 0, loVerts: 0, loTris: 0, estates: 0, estRoofs: 0, estNames: new Set(), genRoofs: 0 };
 
     // —— 预处理：平改坡按“连成一条的楼”统一决定 ——
     // OSM/CMAB 常把同一条板楼切成几段，逐栋随机会一段红瓦四坡、一段平顶女儿墙。6–30 m 的楼按共用轮廓顶点（0.1 m）并查集成组：
@@ -752,15 +767,19 @@ export function createGenerator() {
       const inWall = P.anchorX[i] > -1960 && P.anchorX[i] < 2200 && P.anchorZ[i] > -1835 && P.anchorZ[i] < 820;
       if (!es && st === STYLE.MID && H >= 8 && H <= 26 && area >= 120 && area <= 4000 && n <= 16 && pr.W >= 7 && pr.L >= 10) {
         const r = pitchRoot[i], ageR = P.style ? P.style[r] & 15 : 0;
-        const pAge = ageR === 1 ? 0.5 : ageR === 2 ? 0.42 : ageR === 3 ? 0.14 : ageR === 0 ? 0.26 : 0.05;
+        let pAge = ageR === 1 ? 0.5 : ageR === 2 ? 0.42 : ageR === 3 ? 0.14 : ageR === 0 ? 0.26 : 0.05;
+        // 城墙内老旧多层以平屋面 + 水箱为主，平改坡只是零星（审查 st_eastgate）
+        if (inWall) pAge *= 0.3;
         if (candA[i] && !compBad[r] && hash01(r, 13) < pAge) genPitch = true;
       }
-      if (!es && inWall && (st === STYLE.PUBLIC || st === STYLE.COMM || st === STYLE.HOTEL) && H >= 7 && H <= 36 && area >= 100 && area <= 6000 && n <= 16 && pr.W >= 7 && pr.L >= 9) {
-        if (rectK >= 0.74 && hash01(i, 13) < 0.35) genPitch = genEave = true;
+      // 城内临街公建零星灰瓦大屋檐（只给中小体量，大院整块轮廓不加）
+      if (!es && inWall && (st === STYLE.PUBLIC || st === STYLE.COMM || st === STYLE.HOTEL) && H >= 7 && H <= 30 && area >= 100 && area <= 2500 && n <= 16 && pr.W >= 7 && pr.L >= 9) {
+        if (rectK >= 0.74 && hash01(i, 13) < 0.1) genPitch = genEave = true;
       }
-      // 传统风貌（OSM/CMAB 历史建筑类，绝大多数在城墙内：书院门、德福巷、湘子庙街一带的民居与仿古铺面）：青灰瓦坡顶，
-      // 不规则轮廓沿轮廓内缩成坡
+      // 传统风貌（OSM 历史/宗教建筑：寺庙、殿堂……）：灰瓦坡顶，不规则轮廓沿轮廓内缩成坡
       if (!es && st === STYLE.HIST && H <= 24 && area >= 25 && area <= 4000 && pr.W >= 4 && hash01(i, 13) < 0.85) genPitch = genEave = true;
+      // 仿古商业：一律灰色筒瓦坡顶大挑檐（超大轮廓也沿轮廓内缩成坡）
+      if (!es && st === STYLE.ANTIQUE && area >= 15 && area <= 12000 && pr.W >= 3) genPitch = genEave = true;
       let ph = sp.ph;
       if (H < 5 || area < 40) ph = 0;
       else if (H < 9) ph = Math.min(ph, 0.7);
@@ -773,7 +792,16 @@ export function createGenerator() {
         if (H < gf + fh * 0.8) gf = Math.max(2.8, Math.min(gf, H - ph - 0.3));
         // 调整层高，使顶层恰好收于女儿墙下
         const avail = H - ph - 0.3 - gf;
-        if (avail > fh * 0.8) {
+        if (st === STYLE.ANTIQUE) {
+          // 仿古：层高按实际楼高均分（限高 8 m 的顺城巷铺面原先顶层差一点放不下而整层无窗）；放不下第二层的按单层铺面/殿堂
+          if (avail < 2.6) {
+            gf = Math.max(2.8, H - 0.3);
+            fh = 3.6;
+          } else {
+            const nf = Math.max(1, Math.round(avail / fh));
+            fh = Math.min(4.6, Math.max(2.9, avail / nf));
+          }
+        } else if (avail > fh * 0.8) {
           const nf = Math.max(1, Math.round(avail / fh));
           const f2 = avail / nf;
           if (f2 > fh * 0.88 && f2 < fh * 1.12) fh = f2;
@@ -830,8 +858,8 @@ export function createGenerator() {
         estFloors[i] = Math.min(255, Math.max(1, Math.round(H / 3.0)));
         // 城内：仿古公建一律青灰瓦，多层住宅平改坡灰瓦多于红瓦
         const hr = genEave ? i : pitchRoot[i]; // 平改坡：同一条楼同色
-        const gray = genEave || (inWall && hash01(hr, 15) < 0.6);
-        genRoofCol = packRGB(hexRGB(pick(gray ? ROOF_GRAY : ROOF_GEN, hash01(hr, 14))));
+        const gray = genEave || (inWall && hash01(hr, 15) < 0.8);
+        genRoofCol = packRGB(hexRGB(pick(st === STYLE.ANTIQUE ? ROOF_ANTIQUE : gray ? ROOF_GRAY : ROOF_GEN, hash01(hr, 14))));
         stat.genRoofs++;
       }
       styleA[i] = st;
@@ -863,6 +891,7 @@ export function createGenerator() {
       tex[t + 12] = P.anchorX[i];
       tex[t + 13] = P.anchorZ[i];
       tex[t + 14] = rad;
+      radA[i] = rad;
       // 小区楼：玻璃色由 style 参数纹理给出，这一格改存坡屋面颜色
       // 通用平改坡楼同样改存屋面颜色（着色器按 flags bit 14 判定，住宅玻璃色取默认）
       tex[t + 15] = es ? (estPitched ? es.roofCol : packRGB(hexRGB(es.s.glass || '#3a4a4c'))) : genPitch ? genRoofCol : packRGB(glass);
@@ -1048,6 +1077,7 @@ export function createGenerator() {
     return {
       /** 近景附属构件类型（写进 idHi 的高 8 位，见 PART）；远景不用 */
       part: 0,
+      hi,
       v(x, y, z, u = 0, len = 0, meta = 0) {
         if (nv >= 32768) return base0 + nv - 1;
         V.reserve(S);
@@ -1179,15 +1209,19 @@ export function createGenerator() {
     e.t(a, b, c, 0, 1, 0);
     e.t(a, c, d, 0, 1, 0);
   }
-  /** 四坡顶（外接矩形 + 挑檐）：屋脊沿长向，坡度 pitch 度 */
-  function hipRoof(e, pr, y0, pitch, over) {
+  /**
+   * 四坡顶（外接矩形 + 挑檐）：屋脊沿长向，坡度 pitch 度，起坡高度不超过 maxRise。
+   * 檐下只画“挑檐外框减去楼体轮廓”的部分（earcut 带洞），不再整块封底：
+   * 相机落进楼体时（低空飞行 / 返回视角）原先会看到一整块朝下的“天花板”。
+   */
+  function hipRoof(e, pr, y0, pitch, over, maxRise = 9, xs = null, zs = null, n = 0) {
     let a0 = pr.s0 - over, a1 = pr.s1 + over, b0 = pr.t0 - over, b1 = pr.t1 + over;
     let swap = false;
     if (b1 - b0 > a1 - a0) swap = true;
     const P2 = (s, t) => (swap ? pAt(pr, t, s, [0, 0]) : pAt(pr, s, t, [0, 0]));
     if (swap) [a0, a1, b0, b1] = [b0, b1, a0, a1];
     const hw = (b1 - b0) / 2, bc = (b0 + b1) / 2;
-    const rise = Math.min(9, hw * Math.tan(pitch * D2R));
+    const rise = Math.min(maxRise, hw * Math.tan(pitch * D2R));
     const r0 = Math.min(a0 + hw, (a0 + a1) / 2), r1 = Math.max(a1 - hw, (a0 + a1) / 2);
     const pts = [P2(a0, b0), P2(a1, b0), P2(a1, b1), P2(a0, b1), P2(r0, bc), P2(r1, bc)];
     const v = pts.map((p, k) => e.v(p[0], k < 4 ? y0 : y0 + rise, p[1]));
@@ -1198,10 +1232,46 @@ export function createGenerator() {
     e.t(E11, R0, R1, 0, 1, 0);
     e.t(E01, E00, R0, 0, 1, 0);
     e.t(E10, E11, R1, 0, 1, 0);
-    // 檐下（挑檐底面）
-    e.t(E00, E10, E11, 0, -1, 0);
-    e.t(E00, E11, E01, 0, -1, 0);
+    // 檐下（挑檐底面）：外框减去楼体轮廓（凹口处也封住，从下面看不到屋面背面）
+    if (xs && n >= 3) {
+      // 无挑檐且轮廓基本就是矩形：檐下完全藏在楼体里，不画
+      if (over <= 0.05 && ringArea(xs, zs, n) >= 0.97 * pr.L * pr.W) return rise;
+      flat.length = (4 + n) * 2;
+      for (let k = 0; k < 4; k++) {
+        flat[k * 2] = pts[k][0] - pts[0][0];
+        flat[k * 2 + 1] = pts[k][1] - pts[0][1];
+      }
+      for (let j = 0; j < n; j++) {
+        flat[(4 + j) * 2] = xs[j] - pts[0][0];
+        flat[(4 + j) * 2 + 1] = zs[j] - pts[0][1];
+      }
+      const tris = earcut(flat, [4], 2);
+      if (tris.length) {
+        const vi = [E00, E10, E11, E01];
+        for (let j = 0; j < n; j++) vi.push(e.v(xs[j], y0, zs[j]));
+        for (let k = 0; k < tris.length; k += 3) e.t(vi[tris[k]], vi[tris[k + 1]], vi[tris[k + 2]], 0, -1, 0);
+      }
+    } else {
+      e.t(E00, E10, E11, 0, -1, 0);
+      e.t(E00, E11, E01, 0, -1, 0);
+    }
     return rise;
+  }
+  /** 腰檐（仿古多层首层顶的一圈披檐）：贴墙 yW 处向外伸 out 米、降到 yW - drop，上表面瓦面 + 下表面檐底 */
+  function pentEave(e, xs, zs, n, yW, out, drop) {
+    insetRing(xs, zs, n, -out, RX0, RZ0);
+    for (let j = 0; j < n; j++) {
+      const k = (j + 1) % n;
+      if (Math.hypot(xs[k] - xs[j], zs[k] - zs[j]) < 1.5) continue;
+      const a = e.v(xs[j], yW, zs[j]), b = e.v(xs[k], yW, zs[k]);
+      const c = e.v(RX0[k], yW - drop, RZ0[k]), d = e.v(RX0[j], yW - drop, RZ0[j]);
+      e.t(a, b, c, 0, 1, 0);
+      e.t(a, c, d, 0, 1, 0);
+      const a2 = e.v(xs[j], yW - 0.18, zs[j]), b2 = e.v(xs[k], yW - 0.18, zs[k]);
+      const c2 = e.v(RX0[k], yW - drop - 0.06, RZ0[k]), d2 = e.v(RX0[j], yW - drop - 0.06, RZ0[j]);
+      e.t(a2, b2, c2, 0, -1, 0);
+      e.t(a2, c2, d2, 0, -1, 0);
+    }
   }
   /** 沿轮廓的“内缩坡顶”（非矩形轮廓）：外环（挑檐）→ 内缩 d 处升高 rise，顶面平 */
   function insetRoof(e, xs, zs, n, y0, d, rise, over) {
@@ -1245,15 +1315,21 @@ export function createGenerator() {
     if (L < 4 || W < 3) return;
     const sc = (pr.s0 + pr.s1) / 2, tc = (pr.t0 + pr.t1) / 2;
     if (roof === EST_ROOF.HIP || roof === EST_ROOF.STEEP || roof === EST_ROOF.EAVE) {
-      // 坡屋顶：矩形度高用外接矩形四坡顶，否则沿轮廓内缩成坡（EAVE：城内仿古灰瓦，坡缓、挑檐 1 m）
-      const pitch = roof === EST_ROOF.STEEP ? 50 : roof === EST_ROOF.EAVE ? 27 : estFloors[i] >= 8 ? 34 : 30;
+      // 坡屋顶：矩形度高用外接矩形四坡顶，否则沿轮廓内缩成坡（EAVE：城内仿古灰瓦，坡缓、挑檐 1 m；仿古商业挑檐 1.2 m）
+      const antique = styleA[i] === STYLE.ANTIQUE;
+      const pitch = roof === EST_ROOF.STEEP ? 50 : roof === EST_ROOF.EAVE ? (antique ? 28 : 27) : estFloors[i] >= 8 ? 34 : 30;
+      // 起坡高度上限（审查：平改坡占到楼高 1/3；真实平改坡 3~4 m）
+      const maxRise = roof === EST_ROOF.STEEP ? Math.max(3, Math.min(6, 0.25 * H)) : roof === EST_ROOF.EAVE ? Math.max(2.2, Math.min(4.2, 0.3 * H)) : Math.max(2.5, Math.min(4.2, 0.2 * H));
       const rect = ringArea(xs, zs, n) / Math.max(1, L * W);
       // 与邻楼共点（同一条板楼被切成几段）的四坡顶不出挑檐，免得插进相邻那段
-      if (rect >= 0.72 && n <= 16) hipRoof(e, pr, yt + 0.03, pitch, joinedA[i] && roof === EST_ROOF.HIP ? 0 : roof === EST_ROOF.STEEP ? 0.35 : roof === EST_ROOF.EAVE ? 1.0 : 0.5);
+      if (rect >= 0.72 && n <= 16)
+        hipRoof(e, pr, yt + 0.03, pitch, joinedA[i] && roof === EST_ROOF.HIP ? 0 : roof === EST_ROOF.STEEP ? 0.35 : roof === EST_ROOF.EAVE ? (antique ? 1.2 : 1.0) : 0.5, maxRise, xs, zs, n);
       else {
         const d = Math.min(W * 0.42, rect < 0.55 ? 2.4 : 4.0);
-        insetRoof(e, xs, zs, n, yt + 0.03, d, Math.min(7, d * Math.tan(pitch * D2R)), roof === EST_ROOF.EAVE ? 0.7 : 0.4);
+        insetRoof(e, xs, zs, n, yt + 0.03, d, Math.min(maxRise, d * Math.tan(pitch * D2R)), roof === EST_ROOF.EAVE ? (antique ? 0.9 : 0.7) : 0.4);
       }
+      // 仿古多层：首层顶一圈腰檐（近景）
+      if (antique && e.hi && H >= gfA[i] + 2.6) pentEave(e, xs, zs, n, ga[i] + gfA[i] + 0.3, 0.95, 0.42);
     } else if (roof === EST_ROOF.MANSARD) {
       insetRoof(e, xs, zs, n, yt + 0.03, Math.min(1.4, W * 0.3), 1.7, 0.35);
     } else if (roof === EST_ROOF.DECO) {
@@ -1378,6 +1454,8 @@ export function createGenerator() {
     // 底商雨棚：老式多层 / 城中村 / 高层住宅的临街边（首层橱窗、卷帘门上方的采光板或彩钢雨棚）
     if (detail >= 2 && (resi || st === STYLE.VILLAGE) && fl & 1) awnings(i, n, e, st, old);
     if (!resi) return;
+    // 小点式楼（外接半径 < 8 m，七八米见方）不加凸阳台/凸窗叠柱：半个立面是一整条玻璃，看起来像幕墙（审查 st_res_street）
+    if (radA[i] < 8) return;
     const roofV = H - ph;
     if ((roofV - gf) / fh < 1.6) return; // 首层以上不足两层
     const sd = Math.floor(hash01(i, 9) * 16777216);
@@ -1408,6 +1486,8 @@ export function createGenerator() {
       const nb = Math.max(1, Math.floor(usable / bayW + 0.4));
       const bw = Math.max(usable / nb, 0.5);
       const south = nzO > 0.4, north = nzO < -0.4;
+      // 山墙（短边，与着色器 gable 同一判定）：不加凸阳台/凸窗/入口雨棚
+      if (radA[i] > 8 && Lq < 0.62 * radA[i]) continue;
       const meta = (ed & 31) << 8;
       const px = SX[ed], pz = SZ[ed];
       for (let bi = 0; bi < nb; bi++) {
@@ -1628,6 +1708,16 @@ export function createGenerator() {
       out.n += 9;
       return true;
     };
+    /** 主轴对齐的盒体四角都落在屋面（女儿墙内侧）以内才放（彩钢棚等大构件：不规则轮廓上只测中心会悬出墙外） */
+    const boxIn = (s, t, sx, sz) => {
+      for (const [a, b] of [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]]) {
+        const [x, z] = at(s + a * sx, t + b * sz);
+        if (!pointInRing(x, z, QX, QZ, n)) return false;
+      }
+      return true;
+    };
+    // 彩钢棚：褪色的灰蓝 / 浅灰（审查：原来饱和钴蓝 0x3d6fb0、占半个屋面，俯视像撒了一把蓝色贴纸）
+    const shedCol = (k) => (rnd(k) < 0.6 ? 0x7a8a9a : rnd(k + 1) < 0.5 ? 0xa8acae : 0x8e9aa4);
     const rnd = (k) => hash01(i, 100 + k);
     const L = pr.L, W = pr.W;
     const ageB = P.style ? P.style[i] & 15 : 0;
@@ -1694,18 +1784,22 @@ export function createGenerator() {
       // 太阳能热水器（朝南）：老楼 1~3 排、新楼 0~1 排；远处散置的单台
       solarRows(oldB || ageB === 1 || ageB === 2 ? 1 + Math.floor(rnd(7) * 2.2) : Math.floor(rnd(7) * 1.8), Math.max(1, Math.min(4 + Math.floor(rnd(22) * 9), Math.floor(L / 1.9))));
       if (rnd(16) < 0.35) push(3, pr.s0 + 1.5 + rnd(17) * (L - 3), pr.t0 + 1.5 + rnd(18) * (W - 3), yr, 1.0, 1.0, 1.0, 0, 0xffffff);
-      if (rnd(8) < 0.22) {
-        // 彩钢棚（蓝）
-        const sx = L * (0.25 + rnd(9) * 0.3), s = pr.s0 + sx / 2 + rnd(11) * (L - sx);
-        push(0, s, tc, yr, sx, 2.4, W * 0.75, rot, rnd(12) < 0.75 ? 0x3d6fb0 : 0xb8bcc0);
+      if (rnd(8) < 0.1) {
+        // 彩钢棚（小块，只占屋面一角）
+        const sx = Math.min(9, L * (0.16 + rnd(9) * 0.18)), sz = Math.min(6, W * 0.5), s = pr.s0 + 1 + sx / 2 + rnd(11) * Math.max(0, L - sx - 2);
+        const t = pr.t1 - 1 - sz / 2;
+        if (boxIn(s, t, sx, sz)) push(0, s, t, yr, sx, 2.3, sz, rot, shedCol(12));
       }
-      if (rnd(13) < 0.35) push(1, pr.s0 + 2 + rnd(14) * (L - 4), tc, yr, 1.2, 1.3, 1.2, 0, rnd(15) < 0.5 ? 0x3a70b4 : 0xd8d8d4);
+      if (rnd(13) < 0.35) push(1, pr.s0 + 2 + rnd(14) * (L - 4), tc, yr, 1.2, 1.3, 1.2, 0, rnd(15) < 0.5 ? 0x4a72a0 : 0xd0d0cc);
     } else if (st === STYLE.VILLAGE) {
       push(0, pr.s0 + Math.min(2, L * 0.25), pr.t0 + Math.min(1.8, W * 0.3), yr, 2.4, 2.6, 3.0, rot, dark(col, 0.9));
       const m = 1 + Math.floor(rnd(7) * 3);
-      for (let c = 0; c < m; c++) push(1, pr.s0 + 1 + rnd(20 + c) * (L - 2), pr.t0 + 1 + rnd(40 + c) * (W - 2), yr, 1.1, 1.1, 1.1, 0, rnd(50 + c) < 0.55 ? 0x2f6db5 : 0xdcdcd6);
+      for (let c = 0; c < m; c++) push(1, pr.s0 + 1 + rnd(20 + c) * (L - 2), pr.t0 + 1 + rnd(40 + c) * (W - 2), yr, 1.1, 1.1, 1.1, 0, rnd(50 + c) < 0.55 ? 0x46709f : 0xd0d0cc);
       if (rnd(9) < 0.45) solarRows(1, 1 + Math.floor(rnd(21) * 3));
-      if (rnd(10) < 0.18) push(0, sc, tc, yr, L * 0.6, 2.3, W * 0.7, rot, 0x3d6fb0);
+      if (rnd(10) < 0.1) {
+        const sx = L * 0.38, sz = W * 0.5, t = pr.t1 - 0.6 - sz / 2;
+        if (boxIn(sc, t, sx, sz)) push(0, sc, t, yr, sx, 2.3, sz, rot, shedCol(10));
+      }
     } else if (st === STYLE.INDUS) {
       const nv = Math.floor(L / 9);
       for (let c = 0; c < nv; c++) push(0, pr.s0 + 4.5 + c * 9, tc, yr, 1.2, 0.9, 1.2, rot, 0x9ea3a8);
