@@ -23,7 +23,7 @@ if (only) spots = spots.filter((s) => only.has(s.id));
 fs.mkdirSync(outDir, { recursive: true });
 
 const mac = process.platform === 'darwin' && !process.env.SWIFTSHADER;
-const server = await createServer({ root, logLevel: 'error', server: { port: 0, host: '127.0.0.1' } });
+const server = await createServer({ root, logLevel: 'error', server: { port: 0, host: '127.0.0.1', hmr: false, watch: { ignored: ['**/*'] } } }); // 不热更新、不监听：拍摄中改代码不会重载页面
 await server.listen();
 const port = server.httpServer.address().port;
 const browser = await chromium.launch({

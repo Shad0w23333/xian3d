@@ -113,7 +113,9 @@ class PlanarReflection {
     if (frame - this._hideScan > 240 || !this.items) {
       this._hideScan = frame;
       this.items = [];
+      this.shadowLights = [];
       scene.traverse((o) => {
+        if (o.isLight && o.castShadow) this.shadowLights.push(o);
         if (o.name === '湖面倒影' || (o.userData && o.userData.noReflect)) { this.items.push({ o, always: true }); return; }
         if (!(o.isMesh || o.isLine || o.isPoints) || !o.geometry) return;
         const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -121,6 +123,9 @@ class PlanarReflection {
         this.items.push({ o, always: overlay });
       });
     }
+    // 主渲染还没生成过阴影贴图（加载阶段的头几帧）时不画倒影：倒影这一遍关了阴影更新，阴影采样器会绑到空纹理，
+    // 每次绘制都报 GL_INVALID_OPERATION（2026-10-08 定位：加载阶段 247 次，全部来自这里）
+    for (const L of this.shadowLights) if (L.visible && !L.shadow.map) return false;
     const hidden = [];
     const cx = _pv.x, cy = _pv.y, cz = _pv.z;
     for (const it of this.items) {
@@ -511,9 +516,8 @@ export default {
     const cam = ctx.camera;
     // 近景平面倒影：画质“中”以上启用（低画质不额外渲染一遍场景）；分辨率按画质取主画面的 0.35~0.6（运行中切换画质即时生效，贴图按需创建）
     const qNow = () => (ctx.quality && ctx.quality.level != null ? ctx.quality.level : level);
-    // 近景镜面倒影默认关闭：倒影那一遍里方向光阴影贴图与采样器类型不匹配，每秒上百条 GL_INVALID_OPERATION
-    // （2026-10-07 定位：关掉倒影即消失；阴影类型 PCFSoftShadowMap 下程序声明的是 sampler2D）。修好前用 ?refl=1 手动开启
-    const reflOn = new URLSearchParams(location.search).get('refl') === '1';
+    // 近景镜面倒影：?refl=0 可关闭
+    const reflOn = new URLSearchParams(location.search).get('refl') !== '0';
     const planar = ctx.renderer && reflOn ? new PlanarReflection(ctx.renderer, 0.5) : null;
     const reflPolys = polys.filter((p) => Number.isFinite(p.planeY));
     const WU = mat.userData.uniforms;
