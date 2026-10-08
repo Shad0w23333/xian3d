@@ -60,89 +60,109 @@ function speckle(g, S, r, n, a) {
 }
 
 /**
- * 城砖立面：明代城砖约 0.48×0.24×0.12 m，顺砌错缝；1024 px = 2.4 m（20 皮 × 5 块）。
- * 颜色：青灰为主，夹杂旧砖（偏黄褐）与修补新砖（偏青），灰缝白灰。
+ * 城砖立面：明代城砖约 0.48×0.24×0.12 m，一顺一丁（顺砖层露 0.48 m 长面、丁砖层露 0.24 m 端面，上下错缝）；
+ * 1024 px = 2.4 m（20 皮，每皮 0.12 m）。颜色：青灰为主、色差小，夹杂少量旧砖（偏黄褐）与修补新砖（偏青），灰缝细、白灰略脏。
+ * （旧版全顺砌 + 大色差 + 强法线，近看每块砖像一块积木，审查误读为每皮 0.25 m）
  */
 const TEX = new Map();
 export function wallBrickTex() {
   if (TEX.has('brick')) return TEX.get('brick');
-  const S = 1024, rows = 20, cols = 5;
+  const S = 1024, rows = 20;
   const c = cnv(S), hc = cnv(S);
   const g = c.getContext('2d'), hg = hc.getContext('2d');
   const r = rng(1378);
-  g.fillStyle = '#9d988d';
+  g.fillStyle = '#8e8a82';
   g.fillRect(0, 0, S, S);
-  hg.fillStyle = '#3a3a3a';
+  hg.fillStyle = '#4a4a4a';
   hg.fillRect(0, 0, S, S);
-  const bh = S / rows, bw = S / cols, m = 5;
+  const bh = S / rows, m = 3.5;
   for (let y = 0; y < rows; y++) {
-    const off = (y % 2) * bw * 0.5 + (r() - 0.5) * 6;
+    const header = y % 2 === 1; // 丁砖层
+    const cols = header ? 10 : 5, bw = S / cols;
+    const off = (header ? bw * 0.5 : (y % 4 === 0 ? 0 : bw * 0.25)) + (r() - 0.5) * 4;
     for (let x = -1; x <= cols; x++) {
-      const x0 = x * bw + off + m / 2 + (r() - 0.5) * 3, w = bw - m + (r() - 0.5) * 6;
+      const x0 = x * bw + off + m / 2 + (r() - 0.5) * 2, w = bw - m + (r() - 0.5) * 3;
       const t = r();
       let R, G, B;
-      if (t < 0.12) [R, G, B] = [128, 120, 106]; // 旧砖偏黄褐
-      else if (t < 0.24) [R, G, B] = [104, 108, 108]; // 修补新砖偏青
-      else [R, G, B] = [118, 115, 108];
-      const k = 0.86 + r() * 0.24;
+      if (t < 0.08) [R, G, B] = [122, 116, 104]; // 旧砖偏黄褐
+      else if (t < 0.16) [R, G, B] = [104, 107, 107]; // 修补新砖偏青
+      else [R, G, B] = [112, 110, 104];
+      const k = 0.92 + r() * 0.13;
       g.fillStyle = `rgb(${(R * k) | 0},${(G * k) | 0},${(B * k) | 0})`;
       g.fillRect(x0, y * bh + m / 2, w, bh - m);
-      // 砖面微起伏 + 缺角
-      const hv = (175 + r() * 60) | 0;
+      // 砖面微起伏 + 缺角（起伏比旧版小，近看不再像积木）
+      const hv = (190 + r() * 30) | 0;
       hg.fillStyle = `rgb(${hv},${hv},${hv})`;
       hg.fillRect(x0 + 1, y * bh + m / 2 + 1, w - 2, bh - m - 2);
-      if (r() < 0.25) {
-        hg.fillStyle = '#707070';
-        const cx = r() < 0.5 ? x0 : x0 + w - 8;
-        hg.fillRect(cx, y * bh + m / 2 + (r() < 0.5 ? 0 : bh - m - 7), 8 + r() * 8, 6);
+      if (r() < 0.2) {
+        hg.fillStyle = '#808080';
+        const cx = r() < 0.5 ? x0 : x0 + w - 6;
+        hg.fillRect(cx, y * bh + m / 2 + (r() < 0.5 ? 0 : bh - m - 5), 6 + r() * 6, 4);
       }
     }
   }
-  speckle(g, S, r, 9000, 0.12);
-  speckle(hg, S, r, 12000, 0.35);
+  speckle(g, S, r, 12000, 0.1);
+  speckle(hg, S, r, 12000, 0.3);
   // 泛碱/水渍
   for (let i = 0; i < 26; i++) {
-    g.fillStyle = r() < 0.5 ? `rgba(215,210,198,${0.05 + r() * 0.07})` : `rgba(40,38,34,${0.04 + r() * 0.06})`;
+    g.fillStyle = r() < 0.5 ? `rgba(205,200,188,${0.04 + r() * 0.06})` : `rgba(40,38,34,${0.05 + r() * 0.07})`;
     g.beginPath();
     g.ellipse(r() * S, r() * S, 30 + r() * 160, 10 + r() * 50, 0, 0, Math.PI * 2);
     g.fill();
   }
-  const res = { map: toTex(c), normalMap: toTex(heightToNormal(hc, 3.2), false), size: 2.4 };
+  const res = { map: toTex(c), normalMap: toTex(heightToNormal(hc, 2.2), false), size: 2.4 };
   TEX.set('brick', res);
   return res;
 }
 
-/** 墙顶海墁：方砖 0.45 m 对缝铺，1024 px = 2.7 m（6×6） */
+/**
+ * 墙顶海墁：灰色老城砖平铺，砖 0.48×0.24 m 顺着城墙走向成行错缝（u 沿墙、v 横向），颜色统一偏暗、色差小，
+ * 砖缝深、局部碎裂补砖，中间走人处磨得更光更浅、两侧积灰更暗。1024 px = 2.88 m（每行 6 块 × 12 行）。
+ * （旧版 0.45 m 方砖对缝 + 大色差，像棋盘格拼花）
+ */
 export function pavingTex() {
   if (TEX.has('pave')) return TEX.get('pave');
-  const S = 1024, n = 6;
+  const S = 1024, rows = 12, cols = 6;
   const c = cnv(S), hc = cnv(S);
   const g = c.getContext('2d'), hg = hc.getContext('2d');
   const r = rng(91);
-  g.fillStyle = '#8c887e';
+  g.fillStyle = '#5e5c58';
   g.fillRect(0, 0, S, S);
-  hg.fillStyle = '#404040';
+  hg.fillStyle = '#3a3a3a';
   hg.fillRect(0, 0, S, S);
-  const b = S / n, m = 4;
-  for (let y = 0; y < n; y++)
-    for (let x = 0; x < n; x++) {
-      const k = 0.84 + r() * 0.26;
-      const warm = r() < 0.2 ? 8 : 0;
-      g.fillStyle = `rgb(${((122 + warm) * k) | 0},${((119 + warm * 0.6) * k) | 0},${(112 * k) | 0})`;
-      g.fillRect(x * b + m / 2, y * b + m / 2, b - m, b - m);
-      const hv = (190 + r() * 40) | 0;
+  const bh = S / rows, bw = S / cols, m = 4;
+  for (let y = 0; y < rows; y++) {
+    const off = (y % 2) * bw * 0.5 + (r() - 0.5) * 10;
+    for (let x = -1; x <= cols; x++) {
+      const x0 = x * bw + off + m / 2, w = bw - m + (r() - 0.5) * 4;
+      const k = 0.93 + r() * 0.1;
+      const v = 108 + (r() - 0.5) * 6;
+      g.fillStyle = `rgb(${(v * k) | 0},${((v - 2) * k) | 0},${((v - 6) * k) | 0})`;
+      g.fillRect(x0, y * bh + m / 2, w, bh - m);
+      const hv = (185 + r() * 35) | 0;
       hg.fillStyle = `rgb(${hv},${hv},${hv})`;
-      hg.fillRect(x * b + m / 2 + 1, y * b + m / 2 + 1, b - m - 2, b - m - 2);
+      hg.fillRect(x0 + 1, y * bh + m / 2 + 1, w - 2, bh - m - 2);
+      // 碎裂砖（一道斜裂缝）与磨圆的砖角
+      if (r() < 0.12) {
+        hg.strokeStyle = '#5a5a5a';
+        hg.lineWidth = 2;
+        hg.beginPath(); hg.moveTo(x0 + w * r(), y * bh + m); hg.lineTo(x0 + w * r(), (y + 1) * bh - m); hg.stroke();
+        g.strokeStyle = 'rgba(30,28,26,0.5)';
+        g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(x0 + w * r(), y * bh + m); g.lineTo(x0 + w * r(), (y + 1) * bh - m); g.stroke();
+      }
     }
-  speckle(g, S, r, 12000, 0.1);
-  speckle(hg, S, r, 8000, 0.25);
-  for (let i = 0; i < 18; i++) {
-    g.fillStyle = `rgba(50,46,40,${0.04 + r() * 0.06})`;
+  }
+  speckle(g, S, r, 16000, 0.08);
+  speckle(hg, S, r, 10000, 0.25);
+  // 污渍、积水印、磨损
+  for (let i = 0; i < 12; i++) {
+    g.fillStyle = r() < 0.6 ? `rgba(30,28,25,${0.025 + r() * 0.035})` : `rgba(170,166,158,${0.02 + r() * 0.03})`;
     g.beginPath();
-    g.ellipse(r() * S, r() * S, 40 + r() * 200, 20 + r() * 80, r() * 3, 0, Math.PI * 2);
+    g.ellipse(r() * S, r() * S, 60 + r() * 260, 25 + r() * 90, r() * 3, 0, Math.PI * 2);
     g.fill();
   }
-  const res = { map: toTex(c), normalMap: toTex(heightToNormal(hc, 2.2), false), size: 2.7 };
+  const res = { map: toTex(c), normalMap: toTex(heightToNormal(hc, 2.4), false), size: 2.88 };
   TEX.set('pave', res);
   return res;
 }
