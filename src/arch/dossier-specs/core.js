@@ -67,7 +67,8 @@ const kaiyuan = {
     { text: '开元商城', part: 'mall', face: 'NW', y: 18.5, h: 5.2, color: '#d4a64a', serif: true }, // 西北主入口上方金色书法字
   ],
   bands: [{ part: 'drumA', levels: [36.2], h: 1.2, depth: 0.3, color: '#bfa988' }, { part: 'drumB', levels: [36.2], h: 1.2, depth: 0.3, color: '#bfa988' }],
-  night: { floodlight: [{ part: 'mall', color: '#ffe0b0', strength: 0.34 }, { part: 'drumA', color: '#ffe0b0', strength: 0.3 }, { part: 'drumB', color: '#ffe0b0', strength: 0.3 }] },
+  // 泛光改为墙脚投光（光锥 + 自下而上衰减），强度约减 1/3：原均匀光幕让整栋像灯箱，夜景亮度与钟楼本体抢主体（2026-10）
+  night: { floodlight: [{ part: 'mall', color: '#ffe0b0', strength: 0.24, fall: 2.2, spot: 7 }, { part: 'drumA', color: '#ffe0b0', strength: 0.2, fall: 2.2, spot: 5.5 }, { part: 'drumB', color: '#ffe0b0', strength: 0.2, fall: 2.2, spot: 5.5 }] },
   supersede: { keys: ['kaiyuan'], names: ['开元商城', '开元商城（钟楼店）', '开元商城(钟楼店)'] },
   meta: {
     dossier: 'core_south.json#开元商城（钟楼店）',
@@ -93,20 +94,21 @@ const belltower = {
     {
       name: 'body', // 7 层：首层约 4.7 m + 6 × 3.3 m = 24.5 m（按照片数层）
       fp: '5a869da7', base: 0, top: 24.5,
-      style: { pattern: 'stoneWindows', tint: '#5d5a4e', spd: '#c8b594', floorH: 3.3, colW: 2.1, spandrel: 0.44, mullW: 0.45, lit: 0.55 },
+      style: { pattern: 'stoneWindows', tint: '#5d5a4e', spd: '#c8b594', floorH: 3.3, colW: 2.1, spandrel: 0.44, mullW: 0.45, lit: 0.42 },
       roof: { mech: false, parapet: 1.0 },
     },
     {
       name: 'arcade', // 首层石材方柱柱廊 + 商铺
       kind: 'facade', fp: '5a869da7', grow: 0.15, base: 0, top: 4.7,
-      style: { pattern: 'stoneLit', tint: '#3d3a33', spd: '#bba786', floorH: 4.7, colW: 4.2, spandrel: 0.12, mullW: 1.1, lit: 0.85 },
+      style: { pattern: 'stoneLit', tint: '#3d3a33', spd: '#bba786', floorH: 4.7, colW: 4.2, spandrel: 0.12, mullW: 1.1, lit: 0.6 },
     },
     // 两端玻璃塔屋 + 两层大出挑薄屋檐（照片 belltowerhotel_0/1）
     ...[['pavNW', -46], ['pavSE', 46]].map(([name, u]) => ({
       name, shape: 'rect', size: [14, 12], at: BT(u, -2), rot: -43, base: 24.5, top: 28.6,
       style: { pattern: 'curtain', tint: '#6b6450', spd: '#b9a88a', floorH: 4.1, colW: 1.6, spandrel: 0.1, mullW: 0.14, lit: 0.8 },
       roof: { mech: false, parapet: 0.3 },
-      crown: [{ type: 'slab', ov: 2.8, h: 0.55, mat: '#d8cfbd', glow: '#ffcf7a' }, { type: 'slab', ov: 0.6, h: 0.8, mat: '#cfc6b3' }],
+      // 挑檐口一道细暖光（原默认强度 2.4 远看成一圈粗金线、亮过钟楼本体）
+      crown: [{ type: 'slab', ov: 2.8, h: 0.55, mat: '#d8cfbd', glow: '#ffcf7a', strength: 0.45 }, { type: 'slab', ov: 0.6, h: 0.8, mat: '#cfc6b3' }],
     })),
     { name: 'signbar', kind: 'solid', shape: 'rect', size: [30, 0.5], at: BT(0, 4), rot: -43, base: 24.5, top: 25.4, mat: '#3a3833' }, // 字牌支架
   ],
@@ -116,7 +118,9 @@ const belltower = {
     { text: 'BELL TOWER HOTEL XIAN', part: 'signbar', face: 'NE', y: 25.9, h: 0.95, color: '#b08a3a' },
     { text: '鐘樓飯店', part: 'body', face: 'NE', y: 6.2, h: 1.3, color: '#c9a646', serif: true }, // 主入口门楼额枋
   ],
-  night: { floodlight: [{ part: 'body', color: '#ffc060', strength: 0.5 }] }, // 档案：整体暖黄色泛光
+  // 档案：整体暖黄色泛光。改为墙脚投光灯自下而上照（每 4.2 m 一盏、光锥之间留暗缝、上部明显减弱），
+  // 强度约为原来的一半：原 0.5 的均匀光幕让整面墙像灯箱，夜景亮度压过钟楼本体
+  night: { floodlight: [{ part: 'body', color: '#ffc27a', strength: 0.3, fall: 2.4, spot: 4.2 }] },
   supersede: { names: ['西安钟楼饭店', '钟楼饭店', '钟楼饭店城市航站楼（机场巴士乘车点）'] },
   meta: {
     dossier: 'core_south.json#西安钟楼饭店',
@@ -223,7 +227,8 @@ const zhonghuan = {
   parts: [
     {
       name: 'body', pts: R(-441, 55, -345, 114), base: 0, top: 32, style: ZH_ST, // 主体（北立面在角楼之间后退约 12 m，航拍 zhonghuan_2）
-      crown: [{ type: 'eave', ov: 2.0, depth: 3.0, h: 1.8, mat: TILE }, { type: 'pyramid', inset: 16, h: 4.5, mat: { color: '#4f8f86', metalness: 0.5, roughness: 0.2 } }],
+      // 采光顶：原饱和青蓝色（metalness 0.5 / roughness 0.2）俯视像楼顶游泳池 → 低饱和灰绿玻璃 + 2.4 m 竖框分格（2026-10 审查 g1）
+      crown: [{ type: 'eave', ov: 2.0, depth: 3.0, h: 1.8, mat: TILE }, { type: 'pyramid', inset: 16, h: 4.5, mat: { color: '#6f7d7a', metalness: 0.3, roughness: 0.38 }, ribs: 2.4, ribMat: '#8a8f8f' }],
     },
     // 两座角楼：18×18 m，墙身至 40 m + 下檐，再上一层红柱外廊 + 歇山顶
     ...[['towerW', -432], ['towerE', -354]].flatMap(([name, x]) => [

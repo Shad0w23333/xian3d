@@ -8,6 +8,7 @@
 // 渲染：沿用 skyline 的共享幕墙着色器（sky-facade.js 模式 0–9）、buildTower / buildPodium（sky-towers.js）与招牌图集，
 //       塔冠 / 桅杆 / 飞碟圆盘 / 装饰线条 / 泛光 / 媒体屏由本库补充。
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as G from './sky-geom.js';
 import { buildTower, buildPodium, groundMin } from './sky-towers.js';
 import { style as mkStyle } from './sky-facade.js';
@@ -208,6 +209,8 @@ export function roundCorners(p, r, seg = 5) {
 // sky-facade 模式：0 幕墙 1 LED 线条媒体幕墙 2 楼层线灯 3 横向白色百叶/横带 4 塔冠玻璃 5 LED 大屏 6 商业裙房 7 石材+窗洞 8 彩色泛光 9 石材+暖色基座泛光
 export const PATTERNS = {
   curtain: { mode: 0, floorH: 4.0, colW: 1.5, spandrel: 0.22, mullW: 0.1 }, // 普通隐框/明框玻璃幕墙
+  // 办公楼玻璃幕墙：白天同 curtain；夜间按整层成片亮冷白灯（lit = 亮灯楼层比例），暗处玻璃保留深蓝灰反光底色
+  office: { mode: 10, floorH: 4.0, colW: 1.5, spandrel: 0.22, mullW: 0.1, lit: 0.6 },
   grid: { mode: 0, floorH: 4.0, colW: 1.6, spandrel: 0.3, mullW: 0.2 }, // 明显网格（明框 + 窗槛墙）
   verticalFins: { mode: 0, floorH: 4.0, colW: 1.2, spandrel: 0.1, mullW: 0.34 }, // 竖向金属/石材肋
   horizontalBands: { mode: 3, floorH: 3.8, colW: 3.0, spandrel: 0.3, mullW: 0.05 }, // 横向带窗 / 白色横带
@@ -255,28 +258,41 @@ export function solidMat(env, m) {
 function glowMat(env, color, { base, day = 0, night = 2.6 } = {}) {
   return solidMat(env, { color: base ?? color, glow: color, glowDay: day, glowNight: night, metalness: 0.3, roughness: 0.45 });
 }
-/** 泛光（floodlight）：贴着立面的加色半透明“光幕”，自下而上渐隐，只在夜间出现 */
-function washMat(env, color, strength) {
-  const key = 'wash:' + color + strength;
+/** 泛光（floodlight）：贴着立面的加色半透明“光幕”，自下而上渐隐，只在夜间出现。
+ *  fall：竖向衰减指数（默认 1.7；越大越集中在墙脚）；spot > 0：墙脚投光灯间距（米）——每盏灯一个自下而上张开的光锥，
+ *  灯与灯之间留暗缝（uv.x 为沿周长米数），立面有明暗层次而不是整面均匀发亮 */
+function washMat(env, color, strength, { fall = 1.7, spot = 0 } = {}) {
+  const key = 'wash:' + color + strength + ':' + fall + ':' + spot;
   env.dk ??= new Map();
   if (env.dk.has(key)) return env.dk.get(key);
   const m = new THREE.ShaderMaterial({
-    uniforms: { uNight: env.ctx.uniforms.uNight, uColor: { value: new THREE.Color(color) }, uK: { value: strength } },
+    uniforms: { uNight: env.ctx.uniforms.uNight, uColor: { value: new THREE.Color(color) }, uK: { value: strength }, uFall: { value: fall }, uSpot: { value: spot } },
     vertexShader: /* glsl */ `
       #include <common>
       #include <logdepthbuf_pars_vertex>
-      varying float vT;
+      varying float vT; varying float vU;
       void main(){
-        vT = uv.y;
+        vT = uv.y; vU = uv.x;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         #include <logdepthbuf_vertex>
       }`,
     fragmentShader: /* glsl */ `
       #include <logdepthbuf_pars_fragment>
-      uniform float uNight; uniform vec3 uColor; uniform float uK; varying float vT;
+      uniform float uNight; uniform vec3 uColor; uniform float uK; uniform float uFall; uniform float uSpot;
+      varying float vT; varying float vU;
       void main(){
         #include <logdepthbuf_fragment>
-        float a = pow(1.0 - clamp(vT, 0.0, 1.0), 1.7) * uK * uNight;
+        float t = clamp(vT, 0.0, 1.0);
+        float a = pow(1.0 - t, uFall) * uK * uNight;
+        if (uSpot > 0.0) {
+          // 光锥：灯位在每格中心，光斑半宽随高度从 0.22 格张开到 0.5 格；远处（亚像素）退化为平均亮度，不闪
+          float f = abs(fract(vU / uSpot + 0.5) - 0.5) * 2.0; // 0 = 灯位（边中点起每 uSpot 米一盏）
+          float w = 0.22 + 0.3 * sqrt(t);
+          float fw = fwidth(vU / uSpot) * 2.0;
+          float cone = 1.0 - smoothstep(w - 0.18 - fw, w + fw, f);
+          cone = mix(cone, w, smoothstep(0.25, 0.6, fw));
+          a *= 0.3 + 1.05 * cone * (1.0 - 0.35 * t);
+        }
         if (a < 0.004) discard;
         gl_FragColor = vec4(uColor * a, 1.0);
       }`,
@@ -443,8 +459,7 @@ function placeFlat(signs, text, cx, y, cz, h, rotDeg, maxW, opts) {
   if (maxW && w > maxW) { h *= maxW / w; w = maxW; }
   const [ux, uz] = dirOf(rotDeg), [vx, vz] = dirOf(rotDeg + 90);
   const P = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => [cx + (ux * w * a + vx * h * b) / 2, y, cz + (uz * w * a + vz * h * b) / 2]);
-  const U = [[e.u0, e.v0], [e.u1, e.v0], [e.u1, e.v1], [e.u0, e.v1]];
-  for (const k of [0, 1, 2, 0, 2, 3]) { signs.pos.push(...P[k]); signs.uv.push(...U[k]); }
+  signs.quad(e, P); // 图集分页 + 双面正读（从上方看哪一面朝上都是正字）
 }
 
 /** 沿轮廓的水平带（装饰线条 / 灯带 / 轮廓灯）：y(u) 可随周长 u 波动；返回非索引几何（朝外竖面 + 顶面） */
@@ -475,14 +490,37 @@ function ribbon(poly, yFn, hgt, depth, step = 2) {
   g.computeVertexNormals();
   return g;
 }
-/** 立面泛光光幕：沿轮廓外 0.6 m 的竖直环带，uv.y 自下(0)而上(1) */
+/** 贴地铺装：轮廓外接框按 step 米分格，格心在轮廓内的格子取四角地形高 + lift（朝上，非索引） */
+function paveGeometry(ctx, poly, step, lift) {
+  const b = G.bbox(poly), pos = [];
+  const nx = Math.max(1, Math.ceil((b.x1 - b.x0) / step)), nz = Math.max(1, Math.ceil((b.z1 - b.z0) / step));
+  const dx = (b.x1 - b.x0) / nx, dz = (b.z1 - b.z0) / nz;
+  const hs = new Float32Array((nx + 1) * (nz + 1));
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) hs[j * (nx + 1) + i] = ctx.terrain.heightAt(b.x0 + i * dx, b.z0 + j * dz) + lift;
+  for (let j = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++) {
+      if (!G.pointIn(b.x0 + (i + 0.5) * dx, b.z0 + (j + 0.5) * dz, poly)) continue;
+      const V = (a, c) => [b.x0 + (i + a) * dx, hs[(j + c) * (nx + 1) + i + a], b.z0 + (j + c) * dz];
+      const p00 = V(0, 0), p10 = V(1, 0), p11 = V(1, 1), p01 = V(0, 1);
+      // 世界 z 朝南：(p00, p01, p11) 逆时针（从上往下看）→ 法线朝上
+      pos.push(...p00, ...p01, ...p11, ...p00, ...p11, ...p10);
+    }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+/** 立面泛光光幕：沿轮廓外 0.6 m 的竖直环带，uv.y 自下(0)而上(1)，uv.x 为沿周长米数（投光灯光锥定位用） */
 function washShell(poly, y0, y1, off = 0.6) {
   const p = G.inset(poly, -off), n = p.length / 2, pos = [], uv = [];
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
     const a = [p[i * 2], p[i * 2 + 1]], b = [p[j * 2], p[j * 2 + 1]];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    // 每条边从边中点向两侧计米：灯位关于边中点对称，转角处不会切出半个光锥
+    const u0 = -L / 2, u1 = L / 2;
     pos.push(a[0], y0, a[1], b[0], y0, b[1], b[0], y1, b[1], a[0], y0, a[1], b[0], y1, b[1], a[0], y1, a[1]);
-    uv.push(0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1);
+    uv.push(u0, 0, u1, 0, u1, 1, u0, 0, u1, 1, u0, 1);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -849,6 +887,25 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
         for (let i = 0; i < pa.length; i += 9) if (na[i + 1] < 0) for (let k = 0; k < 3; k++) { const t = pa[i + 3 + k]; pa[i + 3 + k] = pa[i + 6 + k]; pa[i + 6 + k] = t; }
         g.computeVertexNormals();
         solid.add(g, solidMat(env, cr.mat || 'glassRoof'));
+        if (cr.ribs) {
+          // 采光顶竖框（2026-10）：每个坡面按 ribs 米间距从底边连到顶点的细框 + 每 ribs 米一道水平横框，浮在玻璃面外 0.08 m
+          const step = cr.ribs, w = cr.ribW ?? 0.18, bars = [], up = 0.08;
+          for (let i = 0; i < tp.length; i += 2) {
+            const j = (i + 2) % tp.length, ax = tp[i], az = tp[i + 1], bx = tp[j], bz = tp[j + 1];
+            const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / step));
+            for (let k = 0; k <= n; k++) {
+              const t = k / n, px = ax + (bx - ax) * t, pz = az + (bz - az) * t;
+              bars.push(beam(px, yb + up, pz, apex[0], apex[1] + up, apex[2], w));
+            }
+            const sl = Math.hypot(cr.h, Math.hypot((ax + bx) / 2 - c.x, (az + bz) / 2 - c.z)), m = Math.max(1, Math.round(sl / step));
+            for (let k = 1; k < m; k++) {
+              const s = k / m, y = yb + cr.h * s + up;
+              bars.push(beam(ax + (apex[0] - ax) * s, y, az + (apex[2] - az) * s, bx + (apex[0] - bx) * s, y, bz + (apex[2] - bz) * s, w));
+            }
+          }
+          const mg = mergeGeometries(bars.map((b) => (b.index ? b.toNonIndexed() : b)), false);
+          if (mg) detail.add(mg, solidMat(env, cr.ribMat || '#8d9396'));
+        }
         if (cr.spire) {
           detail.add(G.cyl(c.x, apex[1] - 2, c.z, 1.0, 0.2, cr.spire + 2, 8), mats.metal);
           beacons.add(c.x, apex[1] + cr.spire, c.z, 0, 5);
@@ -1109,6 +1166,29 @@ function buildCrowns(env, R, P, crowns, yTop, handled) {
       }
       case 'sphere': { // 整球（球幕影院 / 网壳球体）：r 半径，cy 球心离地高（默认 r，即球底落地），at/offset 定中心
         const r = cr.r ?? 10, cy = g0 + (cr.cy ?? r);
+        if (cr.grid === 'tri') {
+          // 测地线三角网壳（2026-10，陕西自然博物馆“银灰三角分格网壳”）：二十面体细分的平面三角板（逐面法线，反光一格一格变化）
+          // + 沿三角形边的细钢杆；不再用经线圆环（远看像洋葱/迪斯科球的竖条）
+          const ico = new THREE.IcosahedronGeometry(r, cr.detail ?? 6); // detail n：每条棱分 n+1 段（20(n+1)² 块三角板）
+          ico.translate(c.x, cy, c.z);
+          const flat = ico.index ? ico.toNonIndexed() : ico;
+          flat.computeVertexNormals();
+          solid.add(flat, solidMat(env, cr.mat || 'glassRoof'));
+          if (cr.ribs !== false) {
+            const eg = new THREE.EdgesGeometry(ico, 1), ep = eg.attributes.position.array, w = cr.ribW ?? 0.16, rm = solidMat(env, cr.ribMat || '#b9bec2'), pos = [];
+            const k = (r + w * 0.6) / r; // 杆件略外移，压在板面上
+            for (let i = 0; i < ep.length; i += 6) {
+              const a = [c.x + (ep[i] - c.x) * k, cy + (ep[i + 1] - cy) * k, c.z + (ep[i + 2] - c.z) * k];
+              const b = [c.x + (ep[i + 3] - c.x) * k, cy + (ep[i + 4] - cy) * k, c.z + (ep[i + 5] - c.z) * k];
+              if (a[1] < g0 - 0.5 && b[1] < g0 - 0.5) continue; // 埋在地下的杆件不建
+              pos.push(beam(...a, ...b, w));
+            }
+            const mg = mergeGeometries(pos.map((g) => (g.index ? g.toNonIndexed() : g)), false);
+            if (mg) detail.add(mg, rm);
+          }
+          if (cr.stack) yNext = cy + r;
+          break;
+        }
         const g = new THREE.SphereGeometry(r, cr.seg ?? 40, Math.max(12, Math.round((cr.seg ?? 40) / 2)));
         g.translate(c.x, cy, c.z);
         solid.add(g, solidMat(env, cr.mat || 'glassRoof'));
@@ -1171,6 +1251,123 @@ function triGeomO(pos, orient = null) {
   return g;
 }
 const EXT_CROWNS = {
+  /**
+   * ridgeLens 跨屋脊的梭形天窗（2026-10，西安北站）：贴着两坡屋面铺的梭形玻璃带，不再是凸出屋面近 10 m 的白色椭球。
+   * 平面：沿 rot（地图角）方向长 L、最宽 W 的梭形（半宽 W/2·(1−t²)）；高度 = 屋脊离地 ridgeY − fall×离屋脊距离 + lift + bulge×(1−t²)(1−v²)，
+   * 外圈白色框（|v| ≥ band）+ 中间玻璃带。参数：at、rot、L、W、ridgeY（离地米）、fall（每米落差）、lift（0.25）、bulge（1.2）、band（0.38）、mat、frameMat。
+   */
+  ridgeLens(env, R, P, cr, yb, c) {
+    const L = cr.L ?? 100, W = cr.W ?? 20, ry = R.ground + (cr.ridgeY ?? 0), fall = cr.fall ?? 0.1;
+    const lift = cr.lift ?? 0.25, bulge = cr.bulge ?? 1.2, band = cr.band ?? 0.38, rot = (cr.rot ?? 0) * D;
+    const ua = [Math.cos(rot), -Math.sin(rot)], va = [-Math.sin(rot), -Math.cos(rot)];
+    const NT = 28;
+    const pt = (t, v) => {
+      const a = (t * L) / 2, b = v * (W / 2) * (1 - t * t);
+      return [c.x + a * ua[0] + b * va[0], ry - fall * Math.abs(a) + lift + bulge * (1 - t * t) * (1 - v * v), c.z + a * ua[1] + b * va[1]];
+    };
+    const strip = (v0, v1, nv) => {
+      const pos = [];
+      for (let i = 0; i < NT; i++)
+        for (let j = 0; j < nv; j++) {
+          const t0 = -1 + (2 * i) / NT, t1 = -1 + (2 * (i + 1)) / NT, a0 = v0 + ((v1 - v0) * j) / nv, a1 = v0 + ((v1 - v0) * (j + 1)) / nv;
+          pos.push(...pt(t0, a0), ...pt(t1, a0), ...pt(t1, a1), ...pt(t0, a0), ...pt(t1, a1), ...pt(t0, a1));
+        }
+      return triGeom(pos);
+    };
+    const glass = solidMat(env, cr.mat || { color: '#7f97a6', metalness: 0.45, roughness: 0.2 });
+    const frame = solidMat(env, cr.frameMat || { color: '#e9ebea', metalness: 0.15, roughness: 0.5 });
+    env.solid.add(strip(-band, band, 4), glass);
+    env.solid.add(strip(-1, -band, 3), frame);
+    env.solid.add(strip(band, 1, 3), frame);
+    return yb;
+  },
+  /**
+   * ribbonShell 丝带网壳屋面（2026-10，陕西奥体中心体育馆）：椭圆平面上的扁曲面壳，剖面 y = h·(1−s^p)^q（默认 p 1.8、q 0.9）
+   * （s 为归一化半径；壳边是斜坡，不是椭球那样竖直鼓起的“气球”），屋面沿 n 条“扭转的丝带”分条：每条丝带从壳边出发、
+   * 随半径向壳顶扭转 twist 度，丝带之间是深色分缝（夜间为 LED 线）；整个壳面夜间有一层自檐口向上渐弱的冷白泛光。
+   * 参数：r:[第一轴, 第二轴] 半径（米）、h 矢高、at/offset、rot（第一轴的地图方位角，度）、n 丝带数（默认 16）、twist（度，默认 75）、
+   *       seam 分缝占比（默认 0.1）、color 屋面色、seamColor、glow 分缝夜间色（false 不亮）、strength、wash 屋面泛光强度（默认 0.13）、
+   *       rim 檐口金属带高（默认 0.9）。屋面类（不抬高度游标）。
+   */
+  ribbonShell(env, R, P, cr, yb, c) {
+    const [rx, rz] = [].concat(cr.r ?? 30).length > 1 ? cr.r : [cr.r ?? 30, cr.r ?? 30];
+    const h = cr.h ?? Math.min(rx, rz) * 0.3, n = cr.n ?? 16, tw = (cr.twist ?? 75) * D, rot = (cr.rot ?? 0) * D;
+    const seam = cr.seam ?? 0.1, NS = 24, NVp = 6, NVs = 1;
+    const ca = Math.cos(rot), sa = Math.sin(rot);
+    const pP = cr.p ?? 1.8, pQ = cr.q ?? 0.9; // 剖面 y = h·(1−s^p)^q：p 小、q 大 → 壳面更扁、檐口坡度更缓
+    const f = (s) => h * Math.pow(Math.max(0, 1 - Math.pow(s, pP)), pQ);
+    // 局部 (θ, s) → 世界：第一轴地图方向 (cos rot, sin rot) 即世界 (ca, −sa)，第二轴 (−sa, −ca)
+    const pt = (th, s, lift = 0) => {
+      const a = s * rx * Math.cos(th), b = s * rz * Math.sin(th);
+      return [c.x + a * ca - b * sa, yb + f(s) + lift, c.z - a * sa - b * ca];
+    };
+    const nrm = (th, s) => {
+      const e = 1e-3, s0 = Math.max(e, Math.min(1 - e, s));
+      const p = pt(th, s0), pa = pt(th + e, s0), ps = pt(th, s0 + e);
+      const ux = pa[0] - p[0], uy = pa[1] - p[1], uz = pa[2] - p[2], vx = ps[0] - p[0], vy = ps[1] - p[1], vz = ps[2] - p[2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+      const L = Math.hypot(nx, ny, nz) || 1;
+      return [nx / L, ny / L, nz / L];
+    };
+    /** 一条丝带上 v∈[v0,v1]（以丝带周期为单位）的曲面片 */
+    const strip = (k, v0, v1, nv, lift = 0) => {
+      const pos = [], nor = [], idx = [], per = TAU / n;
+      for (let i = 0; i <= NS; i++) {
+        const s = Math.max(0.002, i / NS);
+        for (let j = 0; j <= nv; j++) {
+          const th = (k + v0 + ((v1 - v0) * j) / nv) * per + tw * (1 - s);
+          pos.push(...pt(th, s, lift));
+          nor.push(...nrm(th, s));
+        }
+      }
+      for (let i = 0; i < NS; i++)
+        for (let j = 0; j < nv; j++) {
+          const a = i * (nv + 1) + j, b = a + nv + 1;
+          idx.push(a, a + 1, b + 1, a, b + 1, b);
+        }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      g.setIndex(idx);
+      // 绕向：保证三角面朝上（与解析法线一致）
+      const p = g.attributes.position.array, ia = g.index.array;
+      for (let t = 0; t < ia.length; t += 3) {
+        const A = ia[t] * 3, B = ia[t + 1] * 3, C = ia[t + 2] * 3;
+        const cy = (p[B + 2] - p[A + 2]) * (p[C] - p[A]) - (p[B] - p[A]) * (p[C + 2] - p[A + 2]);
+        if (cy < 0) { const tmp = ia[t + 1]; ia[t + 1] = ia[t + 2]; ia[t + 2] = tmp; }
+      }
+      return g;
+    };
+    const panel = solidMat(env, { color: cr.color || '#b9bec3', metalness: 0.28, roughness: 0.58 });
+    const seamM = cr.glow === false ? solidMat(env, { color: cr.seamColor || '#6f777e', metalness: 0.3, roughness: 0.6 })
+      : glowMat(env, cr.glow || '#d6ecff', { base: cr.seamColor || '#6f777e', night: cr.strength ?? 0.7 });
+    for (let k = 0; k < n; k++) {
+      env.solid.add(strip(k, 0, 1 - seam, NVp), panel);
+      env.detail.add(strip(k, 1 - seam, 1, NVs, 0.06), seamM);
+    }
+    // 檐口金属带：壳边一圈竖向窄带（接石材基座）
+    const rimH = cr.rim ?? 0.9, ring = [];
+    for (let i = 0; i < 96; i++) { const q = pt((i / 96) * TAU, 1); ring.push(q[0], q[2]); }
+    const rp = G.ccw(ring);
+    env.solid.add(G.wallGeometry(G.inset(rp, -0.25), G.inset(rp, -0.25), yb - 0.2, yb + rimH), solidMat(env, { color: '#d9dcdf', metalness: 0.35, roughness: 0.45 }));
+    // 夜间泛光：贴壳面外 0.35 m 的加色光幕，uv.y 自檐口(0)向壳顶(1)
+    if ((cr.wash ?? 0.13) > 0) {
+      const pos = [], uv = [], NA = 64;
+      for (let i = 0; i < NS; i++)
+        for (let j = 0; j < NA; j++) {
+          const s0 = Math.max(0.002, i / NS), s1 = (i + 1) / NS, t0 = (j / NA) * TAU, t1 = ((j + 1) / NA) * TAU;
+          const q = [[t0, s0], [t1, s0], [t1, s1], [t0, s1]].map(([th, s]) => { const p = pt(th, s), nn = nrm(th, s); return [p[0] + nn[0] * 0.35, p[1] + nn[1] * 0.35, p[2] + nn[2] * 0.35, 1 - s]; });
+          for (const v of [0, 1, 2, 0, 2, 3]) { pos.push(q[v][0], q[v][1], q[v][2]); uv.push(0, q[v][3]); }
+        }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      g.computeVertexNormals();
+      env.detail.add(g, washMat(env, cr.washColor || '#dce8ff', cr.wash ?? 0.13, { fall: 1.4 }));
+    }
+    return cr.stack ? yb + h : yb;
+  },
   /**
    * flyEave 挑檐板：沿体块顶轮廓外挑 out 米、厚 h 米的檐板，转角起翘 lift 米（丝路会议中心“上月牙”、唐风挑檐）。
    * 参数：out、h、lift、span（起翘范围占边长比例，默认 0.35）、step（细分步长）、mat（檐面）、under（檐底）、glow（夜间檐口线灯色）
@@ -1430,6 +1627,11 @@ function buildPart(env, R, P) {
     solid.add(G.capGeometry(P.topPts || P.pts, base + H - 0.05), env.mats.roof);
   } else if (kind === 'lattice') {
     buildLattice(env, P, base, base + H);
+  } else if (kind === 'pave') {
+    // 铺装（2026-10）：贴地形的铺地面（step 米网格逐点取地形高 + lift），盖住过时卫星影像里的旧平房；
+    // 不参与本栋地面高度与地形压平（见 buildDossier / dossier.prepare），落地排除区照常（通用建筑、树木让位）
+    env.solid.add(paveGeometry(env.ctx, P.pts, part.step ?? 6, part.lift ?? 0.12), solidMat(env, part.mat || 'granite'), null, { worldUV: 1 });
+    return;
   } else throw new Error('未知体块 kind ' + kind);
   buildCrowns(env, R, P, crowns, yTop, handled);
 }
@@ -1584,7 +1786,7 @@ function buildNight(env, R) {
   for (const f of [].concat(N.floodlight || [])) {
     const P = findPart(R, f.part ?? 0);
     const y0 = R.ground + (f.from ?? P.base), y1 = R.ground + (f.to ?? P.top);
-    env.detail.add(washShell(P.pts, y0, y1, f.offset ?? 0.6), washMat(env, f.color || '#ffd9a0', f.strength ?? 0.6));
+    env.detail.add(washShell(P.pts, y0, y1, f.offset ?? 0.6), washMat(env, f.color || '#ffd9a0', f.strength ?? 0.6, { fall: f.fall ?? 1.7, spot: f.spot ?? 0 }));
   }
   for (const b of [].concat(N.beams || [])) {
     // 竖向光束（楼顶上照灯）：at 世界坐标点列 [[x,z]…]，或 offsets 相对体块质心 [[东,北]…]，缺省取 from 高度处轮廓的角点（转角 > 25°）；
@@ -1640,7 +1842,7 @@ export function buildDossier(env, spec) {
   const S = R.spec;
   // 落地体块逐块取最低点（顶点 + 各自质心）。原先把各体块顶点串成一个“多边形”求质心，多体块时质心可能落到楼外很远的低处，
   // 整栋楼随之下沉（交大主楼曾因此比周围地面低 4.2 m）
-  const gps = R.parts.filter((p) => p.base <= 0.5).map((p) => p.pts);
+  const gps = R.parts.filter((p) => p.base <= 0.5 && p.part.kind !== 'pave').map((p) => p.pts); // 铺装贴地形，不参与定地面
   R.ground = S.ground ?? Math.min(...(gps.length ? gps : [R.parts[0].pts]).map((pts) => groundMin(env.ctx, pts)));
   for (const P of R.parts) buildPart(env, R, P);
   buildSigns(env, R);
