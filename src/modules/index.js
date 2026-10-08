@@ -23,6 +23,7 @@ export const MODULES = [
   // 片区街景（未央/凤城七路、曲江、浐灞、回坊）：须在 buildings / vegetation 之前（prepare 登记广场与停车场排除区）、signage 之前
   { id: 'streetscape', load: () => import('./streetscape.js') },
   { id: 'buildings', load: () => import('./buildings.js') },
+  { id: 'compounds', load: () => import('./compounds.js') }, // 小区与校园内部：须在 vegetation 之前（prepare 登记车行道/车位/园路的“只让树”排除区）
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
