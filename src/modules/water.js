@@ -34,6 +34,137 @@ function typeOf(p) {
   return 6; // pond / basin
 }
 
+// ---------- 近景平面倒影 ----------
+// 相机低空靠近某块水面时，按该水面的镜面高度把场景镜像渲染到一张半分辨率贴图（斜裁剪近平面 = 水面，水下的东西不进倒影），
+// 水面着色器在镜面高度附近用它代替天空环境反射。远处/高空仍用环境反射 + 曲江模块的投影倒影（近景渲染期间隐藏，免得重复）。
+const _pv = new THREE.Vector3(), _pf = new THREE.Vector3(), _pu = new THREE.Vector3(), _pl = new THREE.Plane(), _pq = new THREE.Vector4();
+const _pc = new THREE.Vector4(), _pm = new THREE.Matrix4(), _fr = new THREE.Frustum(), _pb = new THREE.Box3(), _ps = new THREE.Vector3();
+const REFL_FAR = 2500; // 倒影里只画这个距离内的物体（米）
+class PlanarReflection {
+  constructor(renderer, scale) {
+    this.renderer = renderer;
+    this.scale = scale;
+    this.cam = new THREE.PerspectiveCamera();
+    this.cam.matrixAutoUpdate = true;
+    this.texMat = new THREE.Matrix4();
+    this.rt = null;
+    this.items = null;
+    this._hideScan = -1e9;
+  }
+
+  _ensureTarget() {
+    const r = this.renderer;
+    const s = r.getDrawingBufferSize(new THREE.Vector2());
+    const w = Math.max(64, Math.round(s.x * this.scale)), h = Math.max(64, Math.round(s.y * this.scale));
+    if (this.rt && this.rt.width === w && this.rt.height === h) return;
+    if (this.rt) this.rt.dispose();
+    this.rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: 0, depthBuffer: true });
+    this.rt.texture.generateMipmaps = false;
+    this.rt.texture.minFilter = THREE.LinearFilter;
+    // 反向深度：需要浮点深度缓冲（与主渲染目标一致）
+    if (r.state.buffers.depth.getReversed()) this.rt.depthTexture = new THREE.DepthTexture(w, h, THREE.FloatType);
+  }
+
+  /** 镜面 y = h；返回是否渲染成功 */
+  render(scene, camera, h, frame, skip) {
+    const r = this.renderer;
+    this._ensureTarget();
+    const cam = this.cam;
+    // 镜像相机：位置、视线、上方向都按水平镜面翻转
+    camera.getWorldPosition(_pv);
+    camera.getWorldDirection(_pf);
+    _pu.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    cam.position.set(_pv.x, 2 * h - _pv.y, _pv.z);
+    cam.up.set(_pu.x, -_pu.y, _pu.z);
+    cam.lookAt(cam.position.x + _pf.x, cam.position.y - _pf.y, cam.position.z + _pf.z);
+    // 视野放宽 8%：波浪扰动取样会越出画面边缘，留一圈余量（否则画面两侧的水面退回环境反射，出现竖向亮边）
+    cam.fov = (2 * Math.atan(Math.tan((camera.fov * Math.PI) / 360) * 1.08) * 180) / Math.PI;
+    cam.aspect = camera.aspect;
+    cam.near = Math.max(0.1, camera.near);
+    cam.far = Math.min(camera.far, REFL_FAR);
+    cam._reversedDepth = !!camera.reversedDepth;
+    cam.updateProjectionMatrix();
+    cam.updateMatrixWorld(true);
+    // 投影矩阵（斜裁剪之前）→ 世界到倒影贴图的投影矩阵
+    this.texMat.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
+    this.texMat.multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+    // 斜裁剪：近平面换成水面（略低 2 cm，岸边不露缝），水下的地形/湖底不进倒影
+    _pl.set(_pu.set(0, 1, 0), -(h - 0.02)).applyMatrix4(cam.matrixWorldInverse);
+    const P = cam.projectionMatrix, e = P.elements;
+    const C = _pc.set(_pl.normal.x, _pl.normal.y, _pl.normal.z, _pl.constant);
+    if (cam._reversedDepth) {
+      // 反向深度（z_ndc：近 1 → 远 0）：z' = w − a·(C·P)，远平面过原视锥远角
+      const qx = (Math.sign(C.x) + e[8]) / e[0], qy = (Math.sign(C.y) + e[9]) / e[5];
+      const den = C.x * qx + C.y * qy - C.z + C.w / cam.far;
+      if (Math.abs(den) < 1e-9) return false;
+      const a = 1 / den;
+      e[2] = -a * C.x; e[6] = -a * C.y; e[10] = -1 - a * C.z; e[14] = -a * C.w;
+    } else {
+      // 常规深度（three Reflector 同款）
+      _pq.set((Math.sign(C.x) + e[8]) / e[0], (Math.sign(C.y) + e[9]) / e[5], -1, (1 + e[10]) / e[14]);
+      C.multiplyScalar(2 / C.dot(_pq));
+      e[2] = C.x; e[6] = C.y; e[10] = C.z + 1; e[14] = C.w;
+    }
+    cam.projectionMatrixInverse.copy(P).invert();
+    // 倒影里不画的东西（物体表每 240 帧重建一次）：
+    //  · 曲江模块的投影倒影（它本身就是倒影）、标了 userData.noReflect 的物体；
+    //  · 贴地覆盖层（路面、用地色调等 polygonOffset 材质）：从水下的镜像相机看是背面，白白耗顶点；
+    //  · 倒影作用半径外的物体、远处的小物件（行人、车辆、小品）。
+    if (frame - this._hideScan > 240 || !this.items) {
+      this._hideScan = frame;
+      this.items = [];
+      scene.traverse((o) => {
+        if (o.name === '湖面倒影' || (o.userData && o.userData.noReflect)) { this.items.push({ o, always: true }); return; }
+        if (!(o.isMesh || o.isLine || o.isPoints) || !o.geometry) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        const overlay = mats.every((m) => m && m.polygonOffset);
+        this.items.push({ o, always: overlay });
+      });
+    }
+    const hidden = [];
+    const cx = _pv.x, cy = _pv.y, cz = _pv.z;
+    for (const it of this.items) {
+      const o = it.o;
+      if (!o.visible) continue;
+      let hide = it.always;
+      if (!hide) {
+        const g = o.geometry;
+        if (!g.boundingSphere) g.computeBoundingSphere();
+        const bs = o.isInstancedMesh ? o.boundingSphere || (o.computeBoundingSphere(), o.boundingSphere) : g.boundingSphere;
+        if (bs && Number.isFinite(bs.radius)) {
+          _ps.copy(bs.center).applyMatrix4(o.matrixWorld);
+          const rad = bs.radius * o.matrixWorld.getMaxScaleOnAxis();
+          const d = Math.hypot(_ps.x - cx, _ps.y - cy, _ps.z - cz);
+          // 地形瓦片只留近岸的（驳岸、坡地）；远处地形在倒影里只是地平线附近的一条细线
+          hide = d - rad > (o.userData.terrain ? 500 : REFL_FAR) || (rad < 3 && d > 180) || (rad < 12 && d > 700);
+        }
+      }
+      if (hide) { o.visible = false; hidden.push(o); }
+    }
+    for (const o of skip) if (o.visible) { o.visible = false; hidden.push(o); }
+    const prevRT = r.getRenderTarget();
+    const prevShadow = r.shadowMap.autoUpdate;
+    const prevXr = r.xr.enabled;
+    r.xr.enabled = false;
+    r.shadowMap.autoUpdate = false;
+    r.setRenderTarget(this.rt);
+    r.state.buffers.depth.setMask(true);
+    r.clear();
+    const c0 = r.info.render.calls, t0 = r.info.render.triangles;
+    r.render(scene, cam);
+    this.stats = { calls: r.info.render.calls - c0, tris: r.info.render.triangles - t0, hidden: hidden.length };
+    r.setRenderTarget(prevRT);
+    r.shadowMap.autoUpdate = prevShadow;
+    r.xr.enabled = prevXr;
+    for (const o of hidden) o.visible = true;
+    return true;
+  }
+
+  dispose() {
+    if (this.rt) this.rt.dispose();
+  }
+}
+
 function urbanOf(x, z, type) {
   const r = Math.hypot(x, z);
   let u = 1 - THREE.MathUtils.smoothstep(r, 9000, 26000);
@@ -208,6 +339,12 @@ export default {
       }
       for (let i = 0; i < tri.tris.length; i++) I.push(tri.tris[i] + base);
       verts += nv;
+      // 镜面高度：本块水面顶点高度的中位数（水面按地形有限贴地，大多数顶点在水位 +0.15 m）
+      const ys = [];
+      const stepY = Math.max(1, Math.floor(nv / 256));
+      for (let i = 0; i < nv; i += stepY) ys.push(P[(base + i) * 3 + 1]);
+      ys.sort((a, b) => a - b);
+      p.planeY = ys[ys.length >> 1];
     }
 
     // ---------- 5. 小河/渠（lines）：3 列条带，落在水面多边形内的段剔除 ----------
@@ -372,17 +509,80 @@ export default {
     console.info(`[water] ${polys.length} 块水面, ${verts} 顶点, ${I.length / 3} 三角形; 小河渠 ${LP.length / 3} 顶点; 护城河边 ${edges.length}; 剔除 ${log.dropped.length}${log.dropped.length ? '（' + log.dropped.slice(0, 8).join('；') + '）' : ''}; 水位回退 ${log.relevel}; 泾渭交汇 ${mouth ? Math.round(mouth.x) + ',' + Math.round(mouth.z) : '未找到'}; ${ms.toFixed(0)} ms`);
 
     const cam = ctx.camera;
+    // 近景平面倒影：画质“中”以上启用（低画质不额外渲染一遍场景）；分辨率按画质取主画面的 0.35~0.6（运行中切换画质即时生效，贴图按需创建）
+    const qNow = () => (ctx.quality && ctx.quality.level != null ? ctx.quality.level : level);
+    const planar = ctx.renderer ? new PlanarReflection(ctx.renderer, 0.5) : null;
+    const reflPolys = polys.filter((p) => Number.isFinite(p.planeY));
+    const WU = mat.userData.uniforms;
+    const skipRefl = [surface, ...(streams ? [streams] : [])];
+    let frame = 0, lastP = null, lastFrame = -9;
+    const pickWater = () => {
+      // 相机附近（包围盒 600 m 内）、相机在水面以上 0.3~250 m 的水体：取最近的一块（包含相机时优先面积大的）
+      const cp = cam.position;
+      let best = null, bestS = Infinity;
+      for (const p of reflPolys) {
+        const b = p.bb;
+        const dx = Math.max(b.x0 - cp.x, 0, cp.x - b.x1), dz = Math.max(b.z0 - cp.z, 0, cp.z - b.z1);
+        const d = Math.hypot(dx, dz);
+        if (d > 600) continue;
+        const hy = cp.y - p.planeY;
+        if (hy < 0.3 || hy > 250) continue;
+        const sc = d - Math.min(Math.sqrt(p.area), 400) * 0.25;
+        if (sc < bestS) { bestS = sc; best = p; }
+      }
+      return best;
+    };
     return {
       update() {
+        frame++;
         if (edgeGroup) {
           const d = Math.hypot(cam.position.x - 100, cam.position.z + 500);
           edgeGroup.visible = root.visible && d < 5500 && cam.position.y < 2200;
         }
+        let on = false;
+        const qLevel = qNow();
+        if (planar && qLevel >= 1 && root.visible && surface.visible) {
+          planar.scale = qLevel >= 3 ? 0.6 : qLevel >= 2 ? 0.5 : 0.35;
+          const p = pickWater();
+          if (p) {
+            // 水面在画面里才渲染倒影
+            _pb.min.set(p.bb.x0, p.planeY - 2, p.bb.z0);
+            _pb.max.set(p.bb.x1, p.planeY + 2, p.bb.z1);
+            _pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+            _fr.setFromProjectionMatrix(_pm, THREE.WebGLCoordinateSystem, !!cam.reversedDepth);
+            if (_fr.intersectsBox(_pb)) {
+              // 降频渲染（超高每 2 帧、高每 3 帧、中每 4 帧一次）：倒影贴图按渲染当帧的镜像相机投影取样（uPlanarMat 随贴图一起保存），
+              // 相机移动时静态景物的倒影位置仍然正确，只是动态物体慢一两帧；换了水体或刚开启时立即渲染
+              const every = qLevel >= 3 ? 2 : qLevel >= 2 ? 3 : 4;
+              const fresh = lastP === p && frame - lastFrame < every;
+              if (fresh) on = true;
+              else {
+                try {
+                  on = planar.render(ctx.scene, cam, p.planeY, frame, skipRefl);
+                } catch (e) {
+                  console.warn('[water] 平面倒影渲染失败，关闭', e);
+                  planar.render = () => false;
+                }
+                if (on) {
+                  lastP = p;
+                  lastFrame = frame;
+                  WU.uPlanar.value = planar.rt.texture;
+                  WU.uPlanarMat.value.copy(planar.texMat);
+                  WU.uPlanarY.value = p.planeY;
+                }
+              }
+            }
+          }
+        }
+        WU.uPlanarOn.value = on ? 1 : 0;
       },
       setLayer(layer, visible) { if (layer === 'water') root.visible = visible; },
+      /** 近景平面倒影统计（诊断）：是否开启、上一次倒影渲染的 draw call 与三角形数 */
+      planarStats: () => ({ on: WU.uPlanarOn.value > 0, ...(planar && planar.stats) }),
       setQuality() {},
       dispose() {
         root.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+        if (planar) planar.dispose();
         mat.dispose();
         ctx.scene.remove(root);
       },
