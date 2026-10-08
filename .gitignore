@@ -12,3 +12,4 @@ __pycache__/
 .env*
 tiles/
 .claude/worktrees/
+tiles_next/
