@@ -230,7 +230,8 @@ class Signage {
     this.inCampus = landIndex(ctx.data.landuse, new Set(['university', 'military']));
     this.buildSubway(ctx.data.rail, ctx.data.amapExtra?.metro);
     this.bucketPOIs((ctx.data.pois && ctx.data.pois.pois) || []);
-    this.bucketBus(ctx.data.roads);
+    // 街道设施模块已按 OSM 真实公交站点放候车亭时，这里不再沿主干道每 ~520 m 放“示意”候车亭（两套并存会重复）
+    if (!(ctx.modules && ctx.modules.streetfurniture)) this.bucketBus(ctx.data.roads);
     this.bucketNamed(ctx.data.buildingNames || {});
     this.initRender();
     this.initShared();
