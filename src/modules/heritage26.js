@@ -14,7 +14,7 @@
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang, yardWall, balustrade } from '../arch/chinese.js';
-import { denseEavePagoda, ruinTerrace, whiteBlock } from '../arch/heritage-parts.js';
+import { denseEavePagoda, ruinTerrace, whiteBlock, roofMaterials } from '../arch/heritage-parts.js';
 import { isSuperseded } from '../arch/dossier-kit.js';
 import { shadowReach } from '../arch/perf-lod.js';
 
@@ -383,7 +383,7 @@ function buildSite(ctx, s, detail) {
     building(b, it.q, plan.style, it.q._fit, y);
   }
   buildWall(b, s, plan);
-  return b.build({ name: s.key + '@' + detail });
+  return b.build({ name: s.key + '@' + detail, materials: roofMaterials(ctx) }); // 瓦面少天光（否则读成藏青）
 }
 
 /** 供体检脚本：建筑实际落位（世界 y）与台基补足底 */

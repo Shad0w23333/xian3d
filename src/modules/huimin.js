@@ -96,19 +96,32 @@ export default {
     } catch (e) {
       console.warn('[huimin] 牌楼构建失败', e);
     }
-    // 北院门夜间暖光（少量真实点光源；LightPool 强度单位为坎德拉，与其他街灯同量级）
-    const lane = data.lanes.find((l) => l.n === '北院门');
-    if (lane) {
-      const p = lane.p;
+    // 主街夜间暖光（真实点光源，LightPool 只点亮离相机最近的几盏；强度单位坎德拉，与其他街灯同量级）：
+    //   沿主街中线每 ~14 m 一盏、离中线 1~1.5 m 左右交替、高 4.6 m（模拟头顶灯笼串与两侧店招把石板路照亮；
+    //   贴着铺面放会把摊位白色棚布照成一团过曝）。旧版按折线顶点放，北院门整条街只有 1~2 盏
+    let nLights = 0;
+    const LIT = { 北院门: 1, 西羊市: 1, 大皮院: 1, 北广济街: 1, 洒金桥: 1, 化觉巷: 1, 大麦市街: 0.7, 庙后街: 0.7, 大学习巷: 0.7 };
+    for (const lane of data.lanes) {
+      const k = LIT[lane.n];
+      if (!k) continue;
+      const p = lane.p, hw = Math.min(1.5, (lane.w || 6) / 6);
+      let s0 = 0, next = 7, side = 1;
       for (let i = 0; i + 3 < p.length; i += 2) {
-        const x = p[i], z = p[i + 1];
-        if (i % 6 === 0) ctx.lights.add({ position: new THREE.Vector3(x, ctx.terrain.heightAt(x, z) + 5, z), color: 0xffa860, intensity: 400, distance: 26, nightOnly: true });
+        const ax = p[i], az = p[i + 1], dx = p[i + 2] - ax, dz = p[i + 3] - az, L = Math.hypot(dx, dz);
+        for (; next < s0 + L; next += 14) {
+          const s = next - s0;
+          const x = ax + (dx * s) / L - (dz / L) * hw * side, z = az + (dz * s) / L + (dx / L) * hw * side;
+          ctx.lights.add({ position: new THREE.Vector3(x, ctx.terrain.heightAt(x, z) + 4.6, z), color: 0xffa860, intensity: 110 * k, distance: 26, nightOnly: true, priority: 0.8 });
+          side = -side;
+          nLights++;
+        }
+        s0 += L;
       }
     }
     const c = new THREE.Vector3(-800, ctx.terrain.heightAt(-800, -500), -500);
     ctx.labels.add('回民街', new THREE.Vector3(-420, c.y + 30, -420), { category: 'district', priority: 1.5, minDist: 80, maxDist: 5000 });
     ctx.labels.add('洒金桥', new THREE.Vector3(-1320, c.y + 25, -760), { category: 'district', priority: 1.2, minDist: 80, maxDist: 4000 });
-    console.warn(`[huimin] ${data.b.length} 栋，${JSON.stringify({ ...stats, ownPois: this.nOwnPois })}，${(performance.now() - t0).toFixed(0)} ms`);
+    console.warn(`[huimin] ${data.b.length} 栋，${JSON.stringify({ ...stats, ownPois: this.nOwnPois, lights: nLights })}，${(performance.now() - t0).toFixed(0)} ms`);
     const tmp = new THREE.Vector3();
     let frame = 0;
     return {

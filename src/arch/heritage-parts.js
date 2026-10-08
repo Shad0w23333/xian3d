@@ -1,7 +1,53 @@
 // 历史文化地标专用构件（heritage 模块）：唐代密檐砖塔（小雁塔）、唐代城门遗址保护建筑（丹凤门）、
 // 夯土遗址台基、夯土宫墙、现代仿唐体块（白墙 + 窗带）。全部写入 chinese-core 的 ArchBuilder（按材质合并）。
 // 坐标约定同构件库：局部原点 = 平面中心地面，正面朝 +Z（南），Y 向上。
-import { steps, balustrade, glowQuad, hall } from './chinese.js';
+import * as THREE from 'three';
+import { steps, balustrade, glowQuad, hall, getKit } from './chinese.js';
+
+/**
+ * 天光去蓝的标准材质：晴天阴影里的物体只受天光（偏蓝的 IBL 环境贴图 + 半球光）照明，深灰瓦面、灰平顶会被染成藏青。
+ * 注意 three r186 用 scene.environment 时材质的 envMapIntensity 不起作用（统一取 scene.environmentIntensity），
+ * 所以在着色器里把间接光（半球光 + IBL 漫反射 + IBL 镜面）按亮度去饱和并略压低。写在原型方法里，clone()（泛光着色会克隆材质）后仍生效。
+ */
+export class NeutralSkyMaterial extends THREE.MeshStandardMaterial {
+  onBeforeCompile(shader) {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <lights_fragment_maps>',
+      `#include <lights_fragment_maps>
+      {
+        const vec3 LW = vec3( 0.2126, 0.7152, 0.0722 );
+        irradiance = mix( irradiance, vec3( dot( irradiance, LW ) ), 0.7 );
+        iblIrradiance = mix( iblIrradiance, vec3( dot( iblIrradiance, LW ) ), 0.75 ) * 0.85;
+        radiance = mix( radiance, vec3( dot( radiance, LW ) ), 0.75 ) * 0.6;
+      }`
+    );
+  }
+  customProgramCacheKey() {
+    return 'neutralSky';
+  }
+}
+/** 把普通 MeshStandardMaterial 复制成去蓝版本 */
+export function neutralSky(m) {
+  const n = new NeutralSkyMaterial();
+  n.copy(m);
+  return n;
+}
+
+/** 古建瓦面 / 屋脊材质的去蓝版本（ArchBuilder.build 的 materials 覆盖，供 heritage、heritage26、citywall 用），每个 ctx 一套 */
+const _roofMats = new WeakMap();
+export function roofMaterials(ctx) {
+  let R = _roofMats.get(ctx);
+  if (R) return R;
+  const kit = getKit(ctx);
+  R = {};
+  for (const k of ['tile', 'tileFlat', 'ridge']) {
+    const m = neutralSky(kit.mat(k));
+    m.name = kit.mat(k).name + '.neutralSky';
+    R[k] = m;
+  }
+  _roofMats.set(ctx, R);
+  return R;
+}
 
 const rnd = (s) => {
   let t = s >>> 0;
@@ -50,19 +96,20 @@ export function denseEavePagoda(b, o = {}) {
   const PW = o.podium?.w ?? 23.38, PH = o.podium?.h ?? 3.2;
   const y0 = o.y0 ?? 0;
   const R = rnd(7);
-  // —— 台基：砖表土心方台 + 压沿石 + 南北踏步 ——
-  b.box('stone', -PW / 2 - 0.3, y0 - 0.2, -PW / 2 - 0.3, PW / 2 + 0.3, y0 + 0.35, PW / 2 + 0.3, 0xbab2a4, { skip: 'bottom' });
-  b.box('brick', -PW / 2, y0 + 0.35, -PW / 2, PW / 2, y0 + PH - 0.28, PW / 2, colDark, { skip: 'bottom' });
-  b.box('stone', -PW / 2 - 0.12, y0 + PH - 0.28, -PW / 2 - 0.12, PW / 2 + 0.12, y0 + PH, PW / 2 + 0.12, 0xc4bcae, { skip: 'bottom' });
+  // —— 台基：砖表土心方台 + 压沿石 + 南北踏步（青灰砖、灰石；旧配色 0xbab2a4~0xc9c2b4 近白，日光下像白塑料台座） ——
+  const podBrick = o.podiumColor ?? 0x76736d, podStone = o.podiumStone ?? 0x9a958c;
+  b.box('stone', -PW / 2 - 0.3, y0 - 0.2, -PW / 2 - 0.3, PW / 2 + 0.3, y0 + 0.35, PW / 2 + 0.3, podStone, { skip: 'bottom' });
+  b.box('brick', -PW / 2, y0 + 0.35, -PW / 2, PW / 2, y0 + PH - 0.28, PW / 2, podBrick, { skip: 'bottom' });
+  b.box('stone', -PW / 2 - 0.12, y0 + PH - 0.28, -PW / 2 - 0.12, PW / 2 + 0.12, y0 + PH, PW / 2 + 0.12, podStone, { skip: 'bottom' });
   for (const [z, yaw] of [[PW / 2, 0], [-PW / 2, Math.PI]]) {
     b.push(0, 0, z, yaw);
-    steps(b, { w: 4.2, h: PH, y0, color: 0xc2baac });
+    steps(b, { w: 4.2, h: PH, y0, color: 0x96918a });
     b.pop();
   }
   if (b.detail >= 1) {
     const e = PW / 2 - 0.3, g = 2.8;
-    balustrade(b, [[g, y0 + PH, e], [e, y0 + PH, e], [e, y0 + PH, -e], [g, y0 + PH, -e]], { kind: 'stone', h: 0.9, color: 0xc9c2b4 });
-    balustrade(b, [[-g, y0 + PH, -e], [-e, y0 + PH, -e], [-e, y0 + PH, e], [-g, y0 + PH, e]], { kind: 'stone', h: 0.9, color: 0xc9c2b4 });
+    balustrade(b, [[g, y0 + PH, e], [e, y0 + PH, e], [e, y0 + PH, -e], [g, y0 + PH, -e]], { kind: 'stone', h: 0.9, color: 0xa49f96 });
+    balustrade(b, [[-g, y0 + PH, -e], [-e, y0 + PH, -e], [-e, y0 + PH, e], [-g, y0 + PH, e]], { kind: 'stone', h: 0.9, color: 0xa49f96 });
   }
   // —— 塔身：底层高大，二层以上高、宽递减（卷刹：下缓上急的凸曲线） ——
   const firstH = o.firstH ?? 6.83;
@@ -354,7 +401,8 @@ export function danfengGate(b, o = {}) {
   b.push(0, H, 0, 0, 1.5);
   const info = hall(b, {
     style: 'tang', bays: 11, bayW: 3.95, depthBays: 4, depthW: 3.7, colH: 4.9,
-    roof: 'wudian', roofColor: { tile: 0xb89a70, tube: 0xb09268, ridge: 0x9a7e5a, glazed: false },
+    // 瓦色按瓦面贴图亮度（约 0.45 线性）校正：0xb89a70 乘上贴图后只剩深褐灰，远看是深灰屋面（审查 g8）；真实为淡棕黄
+    roof: 'wudian', roofColor: { tile: 0xf2d6a4, tube: 0xeccf9c, ridge: 0xd2b486, glazed: false },
     pal: monoPalette(T), platform: 'plain', platformH: 0.35, platformColor: 0xcfb48a, steps: 'none',
     front: 'zhiling', back: 'zhiling', sides: 'wall', plaque: o.plaque ?? '丹鳳門', plaqueVertical: false,
   });

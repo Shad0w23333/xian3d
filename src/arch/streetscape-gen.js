@@ -6,6 +6,7 @@ import { chainage, roadY } from '../core/roadheight.js';
 import { CFG } from './roads_net.js';
 import { pointInPoly, polyBBox, rectPoly, toShape } from '../core/util.js';
 import { canvas as mkCanvas, rng as mkRng } from '../core/textures.js';
+import { lanternGroup, groundGlow } from './streetscape-lantern.js';
 
 const D2R = Math.PI / 180;
 const _ax = { ux: 1, uz: 0, vx: 0, vz: 1 };
@@ -380,6 +381,9 @@ export class StreetscapeBuilder {
     this.W = new Map(); // 材质键 -> GeoWriter
     this.I = {}; // 实例收集
     this.lightPts = [];
+    this.lanternPts = []; // 灯笼串（[x,y,z,...]，灯身中心）
+    this.smallLanterns = []; // 摊位棚角的小灯笼
+    this.glowPts = []; // 夜间地面暖光斑 [x,y,z,直径,拉伸,偏航]
     this.stats = {};
   }
   w(key) { let w = this.W.get(key); if (!w) this.W.set(key, (w = new GeoWriter())); return w; }
@@ -986,9 +990,11 @@ export class StreetscapeBuilder {
           const [cx, cz, dx, dz] = pointOn(R, s);
           const side = k % 2 ? 1 : -1;
           const rx = -dz * side, rz = dx * side;
-          // 摊位贴着铺面摆：从路边向街心找第一个不压在逐户轮廓上的位置（OSM 轮廓常比路幅宽度更靠近街心）
-          let o = Math.max(1.6, hw - 1.5), x = 0, z = 0, ok = false;
-          for (; o >= 1.6; o -= 0.4) {
+          // 摊位贴着铺面摆：从路边向街心找第一个不压在逐户轮廓上的位置（OSM 轮廓常比路幅宽度更靠近街心）；
+          // 最多退到离中线 0.45 个半幅（北院门约 2.7 m）：再往里就挡在街中央了，宁可不摆
+          const oMin = Math.max(1.6, hw * 0.45);
+          let o = Math.max(oMin, hw - 1.5), x = 0, z = 0, ok = false;
+          for (; o >= oMin; o -= 0.4) {
             x = cx + rx * o; z = cz + rz * o;
             if (!this.excluded(x, z) && !this.excluded(cx + rx * (o + 0.6), cz + rz * (o + 0.6))) { ok = true; break; }
           }
@@ -1017,40 +1023,81 @@ export class StreetscapeBuilder {
       }
     }
   }
+  /**
+   * 回坊小吃摊（局部 -Z 朝街心，x 沿街）：不锈钢售卖车 / 木推车 + 正面印字板、台面货品（蒸笼摞 / 炭火烤炉 / 玻璃罩 / 大锅），
+   * 四根方管撑起的人字布棚（条纹布 + 前后垂边 + 两端山花封口）+ 棚檐灯箱、棚下灯泡、棚角小灯笼、折叠桌与红塑料凳；夜里棚下一圈地面暖光
+   */
   stall(x, y, z, yaw, style, k) {
     const h = hash01(Math.round(x * 3), Math.round(z * 3), 31);
+    const h2 = hash01(Math.round(x * 7), Math.round(z * 5), 37);
     const A = axes(yaw);
     const P = (lx, ly, lz) => [x + A.ux * lx + A.vx * lz, y + ly, z + A.uz * lx + A.vz * lz];
-    const st = this.w('steel'), dk = this.w('dark');
-    // 柜台（不锈钢台面 + 深色柜体）
-    dk.box(...P(0, 0.45, 0.2), 2.2, 0.9, 0.9, yaw, [0.22, 0.2, 0.19]);
-    st.box(...P(0, 0.92, 0.2), 2.3, 0.05, 1.0, yaw, [0.78, 0.8, 0.82]);
-    // 台面上的货品/玻璃罩
-    const gc = [[0.85, 0.55, 0.25], [0.75, 0.2, 0.15], [0.9, 0.8, 0.5], [0.3, 0.5, 0.3]][Math.floor(h * 4)];
-    this.w('goods').box(...P(-0.3, 1.1, 0.2), 1.0, 0.3, 0.5, yaw, gc);
-    this.w('glass').box(...P(0.6, 1.15, 0.15), 0.8, 0.4, 0.6, yaw, null);
-    // 遮阳棚：两根后杆 + 前杆 + 斜棚面
-    for (const [lx, lz, hh] of [[-1.2, 0.7, 2.45], [1.2, 0.7, 2.45], [-1.2, -0.9, 2.15], [1.2, -0.9, 2.15]]) {
-      const p = P(lx, 0, lz);
-      st.cyl(p[0], p[1], p[2], 0.025, 0.025, hh, 6, [0.6, 0.62, 0.64]);
-    }
-    const aw = this.w(style === 'sajinqiao' ? (h < 0.5 ? 'awningB' : 'awningR') : h < 0.3 ? 'awningB' : 'awningR');
-    const a = P(-1.35, 2.15, -1.0), b = P(1.35, 2.15, -1.0), c = P(1.35, 2.48, 0.8), d = P(-1.35, 2.48, 0.8);
-    aw.quad(a, b, c, d, [[0, 0], [2.7, 0], [2.7, 1.8], [0, 1.8]]);
-    aw.quad(b, a, d, c, [[2.7, 0], [0, 0], [0, 1.8], [2.7, 1.8]]);
-    // 前檐垂帘
-    aw.quad(P(-1.35, 1.85, -1.0), P(1.35, 1.85, -1.0), P(1.35, 2.15, -1.0), P(-1.35, 2.15, -1.0), [[0, 0], [2.7, 0], [2.7, 0.3], [0, 0.3]]);
-    // 灯箱招牌（挂在棚前）
+    const st = this.w('steel'), dk = this.w('dark'), gd = this.w('goods');
+    const wood = h2 < 0.35;
+    // 售卖车：柜体（木推车深栗色 / 不锈钢）+ 台面 + 底部小轮
+    (wood ? gd : st).box(...P(0, 0.48, 0.25), 2.2, 0.8, 0.9, yaw, wood ? [0.32, 0.2, 0.12] : [0.7, 0.72, 0.74]);
+    st.box(...P(0, 0.9, 0.22), 2.36, 0.05, 1.02, yaw, [0.82, 0.84, 0.86]);
+    for (const lx of [-0.85, 0.85]) dk.cyl(...P(lx, 0, -0.12), 0.07, 0.07, 0.1, 6, [0.1, 0.1, 0.1]);
+    // 正面印字板（与棚檐灯箱同名）
     const names = style === 'sajinqiao' ? STALL_NAMES_SJQ : STALL_NAMES_HF;
     const name = names[Math.floor(hash01(k, 3, 9) * names.length)];
     const id = this.atlas.add(['stall', 'stall2', 'stall3'][Math.floor(hash01(k, 4) * 3)], name);
     const nw = this.w('names');
-    const e = P(-0.7, 1.95, -1.03), f2 = P(0.7, 1.95, -1.03), g = P(0.7, 2.3, -1.03), hh2 = P(-0.7, 2.3, -1.03);
-    nw.quad(e, f2, g, hh2, this.atlas.quadUV(id, 0.12, 0.88));
-    // 灯泡串（棚下 3 只）
-    for (const lx of [-0.8, 0, 0.8]) this.inst('bulb').add(...P(lx, 2.05, -0.4), 0, 1, null);
-    // 塑料凳
-    for (let i = 0; i < 2; i++) this.w('goods').box(...P(-1.6 + i * 0.5, 0.2, -0.6), 0.32, 0.4, 0.32, yaw, [0.85, 0.2, 0.2]);
+    // 朝街心（局部 -Z）的单面牌：顶点顺序从街上看是左下 → 右下 → 右上 → 左上（局部 +x 在观者左手）
+    nw.quad(P(1.0, 0.18, -0.215), P(-1.0, 0.18, -0.215), P(-1.0, 0.78, -0.215), P(1.0, 0.78, -0.215), this.atlas.quadUV(id, 0.06, 0.94));
+    // 台面货品
+    const kind = Math.floor(h * 4);
+    if (kind === 0) {
+      // 蒸笼摞（甑糕、灌汤包）
+      for (const [lx, n] of [[-0.6, 4], [-0.05, 3], [0.5, 5]]) {
+        for (let i = 0; i < n; i++) gd.cyl(...P(lx, 0.93 + i * 0.12, 0.2), 0.24, 0.24, 0.115, 10, i === n - 1 ? [0.72, 0.56, 0.34] : [0.8, 0.64, 0.4]);
+      }
+    } else if (kind === 1) {
+      // 炭火烤炉（烤肉、羊肉串）：长条炉 + 炭火 + 一排肉串 + 备料盘
+      dk.box(...P(0, 1.04, 0.0), 1.6, 0.22, 0.38, yaw, [0.12, 0.12, 0.12]);
+      this.w('coal').box(...P(0, 1.155, 0.0), 1.5, 0.02, 0.3, yaw, null);
+      for (let i = 0; i < 12; i++) gd.box(...P(-0.66 + i * 0.12, 1.19, 0.0), 0.03, 0.03, 0.42, yaw, [0.45, 0.2, 0.1]);
+      gd.box(...P(0.0, 0.97, 0.45), 1.8, 0.08, 0.3, yaw, [0.85, 0.55, 0.3]);
+    } else if (kind === 2) {
+      // 玻璃罩展柜（凉皮、肉夹馍）+ 卤肉锅
+      const gc = [[0.85, 0.55, 0.25], [0.9, 0.8, 0.5], [0.75, 0.2, 0.15]][Math.floor(h2 * 3)];
+      gd.box(...P(-0.35, 1.0, 0.2), 1.1, 0.14, 0.55, yaw, gc);
+      this.w('glass').box(...P(-0.35, 1.15, 0.2), 1.3, 0.45, 0.7, yaw, null);
+      gd.cyl(...P(0.7, 0.93, 0.2), 0.3, 0.32, 0.32, 10, [0.68, 0.7, 0.72]);
+    } else {
+      // 大锅 + 碗摞 + 酸梅汤桶
+      st.cyl(...P(-0.45, 0.93, 0.2), 0.34, 0.38, 0.36, 12, [0.55, 0.56, 0.58]);
+      gd.cyl(...P(-0.45, 1.27, 0.2), 0.33, 0.33, 0.02, 12, [0.6, 0.35, 0.18]);
+      for (let i = 0; i < 4; i++) gd.cyl(...P(0.35 + (i % 2) * 0.32, 0.93 + Math.floor(i / 2) * 0.09, 0.05), 0.09, 0.11, 0.08, 8, [0.92, 0.9, 0.86]);
+      gd.cyl(...P(0.75, 0.93, 0.35), 0.18, 0.18, 0.5, 10, [0.62, 0.14, 0.12]);
+    }
+    // 棚架：四根方管立柱 + 前后横梁
+    const H0 = 2.3, HR = 2.75; // 檐口高、屋脊高
+    for (const [lx, lz] of [[-1.35, -1.05], [1.35, -1.05], [-1.35, 1.0], [1.35, 1.0]]) st.box(...P(lx, H0 / 2, lz), 0.05, H0, 0.05, yaw, [0.58, 0.6, 0.62]);
+    for (const lz of [-1.05, 1.0]) st.box(...P(0, H0, lz), 2.75, 0.05, 0.05, yaw, [0.58, 0.6, 0.62]);
+    // 人字布棚（屋脊沿街向，出檐 0.15 m）+ 前后垂边 + 两端山花（棚布双面材质）
+    const aw = this.w(style === 'sajinqiao' ? (h < 0.5 ? 'awningB' : 'awningR') : h < 0.3 ? 'awningB' : h < 0.55 ? 'awningG' : 'awningR');
+    const X0 = -1.5, X1 = 1.5, ZF = -1.2, ZB = 1.15, ZR = -0.02;
+    aw.quad(P(X0, H0 - 0.05, ZF), P(X1, H0 - 0.05, ZF), P(X1, HR, ZR), P(X0, HR, ZR), [[0, 0], [3, 0], [3, 1.3], [0, 1.3]]);
+    aw.quad(P(X1, H0 - 0.05, ZB), P(X0, H0 - 0.05, ZB), P(X0, HR, ZR), P(X1, HR, ZR), [[0, 0], [3, 0], [3, 1.3], [0, 1.3]]);
+    aw.quad(P(X0, H0 - 0.33, ZF), P(X1, H0 - 0.33, ZF), P(X1, H0 - 0.05, ZF), P(X0, H0 - 0.05, ZF), [[0, 0], [3, 0], [3, 0.28], [0, 0.28]]);
+    aw.quad(P(X1, H0 - 0.33, ZB), P(X0, H0 - 0.33, ZB), P(X0, H0 - 0.05, ZB), P(X1, H0 - 0.05, ZB), [[0, 0], [3, 0], [3, 0.28], [0, 0.28]]);
+    for (const lx of [X0, X1]) aw.quad(P(lx, H0 - 0.05, ZF), P(lx, H0 - 0.05, ZB), P(lx, HR, ZR + 0.01), P(lx, HR, ZR - 0.01), [[0, 0], [2.3, 0], [1.16, 0.7], [1.14, 0.7]]);
+    // 棚檐灯箱（挂在前垂边外侧）
+    nw.quad(P(0.85, H0 - 0.3, ZF - 0.03), P(-0.85, H0 - 0.3, ZF - 0.03), P(-0.85, H0 + 0.08, ZF - 0.03), P(0.85, H0 + 0.08, ZF - 0.03), this.atlas.quadUV(id, 0.1, 0.9));
+    // 棚下灯泡 + 棚角小灯笼（夜里有光晕）+ 地面暖光
+    for (const lx of [-0.8, 0, 0.8]) this.inst('bulb').add(...P(lx, H0 - 0.15, -0.3), 0, 1, null);
+    if (h2 > 0.4) for (const lx of [-1.3, 1.3]) this.smallLanterns.push(...P(lx, H0 - 0.6, ZF + 0.05));
+    const c = P(0, 0, -0.5);
+    this.glowPts.push([c[0], y + 0.04, c[2], 5.5, 1.2, yaw]);
+    // 折叠桌 + 红塑料凳（摆在摊位朝街一侧）
+    if (h2 < 0.7) {
+      const t = P(-0.2, 0, -1.9);
+      gd.box(t[0], y + 0.7, t[2], 0.7, 0.04, 0.7, yaw, [0.85, 0.82, 0.76]);
+      for (const [a, b] of [[-0.3, -0.3], [0.3, -0.3], [0.3, 0.3], [-0.3, 0.3]]) st.box(...P(-0.2 + a, 0.35, -1.9 + b), 0.03, 0.7, 0.03, yaw, [0.5, 0.5, 0.5]);
+      for (const [a, b] of [[-0.75, 0], [0.35, 0], [-0.2, -0.6]]) gd.box(...P(-0.2 + a, 0.2, -1.9 + b), 0.3, 0.4, 0.3, yaw, [0.82, 0.16, 0.14]);
+    }
+    this.lightPts.push([c[0], y + 2.2, c[2], 0.5]);
     this.count('stall_hf');
   }
   // 横跨街道的灯笼串
@@ -1080,9 +1127,11 @@ export class StreetscapeBuilder {
               lw.quad([prev[0], prev[1] - 0.006, prev[2]], [px, py - 0.006, pz], [px, py + 0.006, pz], [prev[0], prev[1] + 0.006, prev[2]], null, [0.1, 0.1, 0.1]);
               lw.quad([px, py - 0.006, pz], [prev[0], prev[1] - 0.006, prev[2]], [prev[0], prev[1] + 0.006, prev[2]], [px, py + 0.006, pz], null, [0.1, 0.1, 0.1]);
             }
-            if (i % 2 === 1) this.inst('lantern').add(px, py - 0.3, pz, 0, 1, null);
+            if (i % 2 === 1) this.lanternPts.push(px, py - 0.42, pz); // 灯身中心在缆下 0.42 m（提梁顶贴缆）
             prev = [px, py, pz];
           }
+          // 灯笼串下方石板路的夜间暖光（横跨街面拉长）
+          this.glowPts.push([cx, y - S.h + 0.27, cz, 6, Math.max(1, span / 7), yawOf(rx, rz)]);
           this.count('lightString');
         }
       }
@@ -1121,7 +1170,11 @@ export class StreetscapeBuilder {
     add('bollard', G.bollard, M.dark);
     add('car', G.car, M.car);
     add('bulb', G.bulb, M.bulb, { shadow: false });
-    add('lantern', G.lantern, M.lantern, { shadow: false });
+    // 灯笼串与棚角小灯笼：竹骨灯身 + 木托流苏 + 夜间光晕；灯笼串与摊位下方的地面暖光
+    if (this.lanternPts.length) { root.add(lanternGroup(this.ctx, this.lanternPts, { scale: 0.85, halo: 1.5, name: `${name}-灯笼串` })); tris += (this.lanternPts.length / 3) * 120; }
+    if (this.smallLanterns.length) root.add(lanternGroup(this.ctx, this.smallLanterns, { scale: 0.6, halo: 1.2, name: `${name}-摊位灯笼` }));
+    if (this.glowPts.length) root.add(groundGlow(this.ctx, this.glowPts, { color: 0xffa858, night: 0.12, name: `${name}-地面暖光` }));
+    this.stats.lanterns = this.lanternPts.length / 3;
     this.stats.tris = Math.round(tris);
     return this.stats;
   }
@@ -1180,9 +1233,11 @@ export function makeMaterials(ctx) {
   M.glow = new S({ color: 0xfff3dc, emissive: 0xffd9a0, emissiveIntensity: 0, roughness: 0.3 });
   night.register(M.glow, { day: 0.0, night: 2.4 });
   M.bulb = new S({ color: 0xfff1c8, emissive: 0xffc566, emissiveIntensity: 0, roughness: 0.3 });
-  night.register(M.bulb, { day: 0.0, night: 3.0 });
-  M.lantern = new S({ color: 0xc4261d, emissive: 0xff2a10, emissiveIntensity: 0.15, roughness: 0.6 });
-  night.register(M.lantern, { day: 0.15, night: 1.5 });
+  night.register(M.bulb, { day: 0.0, night: 1.6 });
+  M.awningG = new S({ map: tex(stripesMap('#2a7a44', '#f2ece0')), roughness: 0.9, side: THREE.DoubleSide });
+  // 烤炉炭火：白天暗红微亮，夜里橙红
+  M.coal = new S({ color: 0x3a1408, emissive: 0xff5a14, emissiveIntensity: 0.6, roughness: 0.9 });
+  night.register(M.coal, { day: 0.5, night: 1.3 });
   M.leaf = new S({ map: tex(leafCard(17), { repeat: 1 }), transparent: false, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9, color: 0xffffff });
   M.leaf.map.wrapS = M.leaf.map.wrapT = THREE.ClampToEdgeWrapping;
   M.trunk = new S({ color: 0x5a4332, roughness: 0.95 });
@@ -1267,11 +1322,6 @@ function makeGeos() {
     G.car = g;
   }
   G.bulb = new THREE.SphereGeometry(0.06, 6, 5);
-  {
-    const s = new THREE.SphereGeometry(0.22, 10, 8);
-    s.scale(1, 0.8, 1);
-    G.lantern = s;
-  }
   return G;
 }
 function mergeNonIndexed(list) {
