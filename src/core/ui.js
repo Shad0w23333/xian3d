@@ -71,20 +71,20 @@ export class UI {
 
     // —— 右侧：控制面板 ——
     this.panel = h('div', 'panel side');
-    const presetBtns = PRESETS.map((p) => `<button class="preset" data-key="${p.key}"><kbd>${p.key}</kbd>${p.name}</button>`).join('');
-    const extraBtns = PRESETS_EXTRA.map((p) => `<button class="preset" data-key="${p.key}"><kbd>⇧${p.key.slice(1)}</kbd>${p.name}</button>`).join('');
+    const presetBtns = PRESETS.map((p) => `<button class="preset" data-key="${p.key}" title="${p.name}"><kbd>${p.key}</kbd>${p.name}</button>`).join('');
+    const extraBtns = PRESETS_EXTRA.map((p) => `<button class="preset" data-key="${p.key}" title="${p.name}"><kbd>⇧${p.key.slice(1)}</kbd>${p.name}</button>`).join('');
     this.panel.innerHTML = `
       <div class="sec">
         <div class="sec-h">时间 <b class="t-clock">16:00</b><span class="t-phase"></span></div>
         <input type="range" class="t-slider" min="0" max="24" step="0.01" value="16" />
-        <div class="row">
+        <div class="row t-row">
           <button class="t-day">☀ 白天</button>
           <button class="t-night">☾ 夜景</button>
           <button class="t-play">▶ 流逝</button>
-          <select class="t-speed" title="时间流速">
-            <option value="0.0166667">1 分/秒</option>
-            <option value="0.1666667" selected>10 分/秒</option>
-            <option value="1">1 时/秒</option>
+          <select class="t-speed" title="时间流速（场景里每秒走多少时间）">
+            <option value="0.0166667">1分/秒</option>
+            <option value="0.1666667" selected>10分/秒</option>
+            <option value="1">1时/秒</option>
           </select>
         </div>
       </div>
@@ -118,12 +118,18 @@ export class UI {
 
     // —— 底部：按键提示 ——
     this.hints = h('div', 'hints');
-    this.hints.innerHTML = `<span><kbd>单击</kbd>锁定鼠标</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>移动</span><span><kbd>Q</kbd><kbd>E</kbd>降/升</span><span><kbd>Shift</kbd>加速</span><span><kbd>滚轮</kbd>调速</span><span><kbd>1</kbd>~<kbd>0</kbd>视角</span><span><kbd>N</kbd>日夜</span><span><kbd>G</kbd>步行</span><span><kbd>O</kbd>环绕</span><span><kbd>H</kbd>帮助</span>`;
+    // 单行、居中在小地图与右侧面板之间（不再两行折行压住版权栏）
+    this.hints.innerHTML = `<span><kbd>单击</kbd>锁定</span><span><kbd>WASD</kbd>移动</span><span><kbd>Q</kbd><kbd>E</kbd>升降</span><span><kbd>Shift</kbd>加速</span><span><kbd>1</kbd>~<kbd>0</kbd>视角</span><span><kbd>N</kbd>日夜</span><span><kbd>G</kbd>步行</span><span><kbd>V</kbd>俯视</span><span><kbd>H</kbd>帮助</span>`;
     root.appendChild(this.hints);
 
-    // —— 版权 ——
+    // —— 版权（底部居中单行，完整内容见悬停提示） ——
     this.attrib = h('div', 'attrib');
     root.appendChild(this.attrib);
+
+    // —— 建筑分类高亮：屏幕上的常驻图例（开启分类高亮时显示） ——
+    this.clsOverlay = h('div', 'panel cls-overlay');
+    this.clsOverlay.innerHTML = `<b>建筑分类</b>${BLD_CLASSES.map((c, i) => `<span data-cls="${i}"><i style="background:${c.color}"></i>${c.name}</span>`).join('')}`;
+    root.appendChild(this.clsOverlay);
 
     // —— 提示气泡 ——
     this.toastEl = h('div', 'toast');
@@ -165,7 +171,7 @@ export class UI {
           </div>
           <div>
             <h3>时间与显示</h3>
-            <p><kbd>N</kbd> 日/夜切换，<kbd>T</kbd> 时间流逝开关，<kbd>[</kbd> <kbd>]</kbd> 时间 ±30 分钟</p>
+            <p><kbd>N</kbd> 日/夜切换，<kbd>T</kbd> 时间流逝开关，<span class="nowrap"><kbd>[</kbd> <kbd>]</kbd> 时间 ±30 分钟</span></p>
             <p><kbd>L</kbd> 地名标注，<kbd>M</kbd> 小地图，<kbd>P</kbd> 控制面板</p>
             <p><kbd>X</kbd> 地铁透视俯视，<kbd>U</kbd> 进入地铁/返回地面</p>
             <p><kbd>V</kbd> 一键俯视/回到原视角，<kbd>B</kbd> 建筑分类高亮</p>
@@ -260,6 +266,11 @@ export class UI {
     }
   }
 
+  /** 画质切换进行中：按钮置灰、显示“切换中” */
+  setQualityBusy(on) {
+    const row = this.panel?.querySelector('.q-row');
+    if (row) row.classList.toggle('busy', !!on);
+  }
   setQualityActive(i, custom = false) {
     this.panel.querySelectorAll('.q').forEach((b) => b.classList.toggle('on', parseInt(b.dataset.q) === i));
     this.panel.querySelector('.q-custom')?.classList.toggle('on', !!custom);
@@ -269,6 +280,13 @@ export class UI {
     const q = this.panel.querySelector('.q-row')?.closest('.sec');
     if (q) q.after(el);
     else this.panel.insertBefore(el, this.panel.querySelector('.collapse'));
+  }
+  /** 地下浏览中：按钮改为“返回地面” */
+  setMetroUnder(on) {
+    const b = this.panel?.querySelector('.b-metro-under');
+    if (!b) return;
+    b.textContent = on ? '⤒ 返回地面（U）' : '进入地铁·地下浏览（U）';
+    b.classList.toggle('on', !!on);
   }
   setPlaying(p) {
     this.panel.querySelector('.t-play').textContent = p ? '❚❚ 暂停' : '▶ 流逝';
@@ -286,6 +304,14 @@ export class UI {
   }
   setAttribution(list) {
     this.attrib.textContent = list.join(' · ');
+    this.attrib.title = list.join('\n');
+  }
+  /** 分类高亮开关：面板图例展开 + 屏幕常驻图例；sel 为选中的类别集合（null = 全部） */
+  setClassLegend(on, sel = null) {
+    if (this.thematic) this.thematic.classList.toggle('cls-on', !!on);
+    if (!this.clsOverlay) return;
+    this.clsOverlay.classList.toggle('on', !!on);
+    this.clsOverlay.querySelectorAll('span[data-cls]').forEach((e) => e.classList.toggle('off', !!sel && !sel.has(+e.dataset.cls)));
   }
   togglePanel(force) {
     const c = force ?? !this.panel.classList.contains('collapsed');
@@ -319,7 +345,10 @@ export class UI {
       const q = (s) => this.info.querySelector(s);
       q('.i-place').textContent = place || '西安';
       q('.i-ll').textContent = `${ll.lon.toFixed(5)}°E ${ll.lat.toFixed(5)}°N`;
-      q('.i-alt').textContent = `${camera.position.y.toFixed(0)} m（离地 ${Math.max(0, camera.userData.agl || 0).toFixed(0)} m）`;
+      const agl = camera.userData.agl || 0;
+      q('.i-alt').textContent = state.under || agl < -2
+        ? `${camera.position.y.toFixed(0)} m（地下 ${Math.abs(Math.min(0, agl)).toFixed(0)} m）`
+        : `${camera.position.y.toFixed(0)} m（离地 ${Math.max(0, agl).toFixed(0)} m）`;
       q('.i-mode').textContent = { fly: '飞行', walk: '步行', orbit: '环绕' }[mode] + (locked ? ' · 鼠标已锁定' : '');
       q('.i-speed').textContent = `${speed.toFixed(1)} m/s`;
       this.panel.querySelector('.fps').textContent = `${fps.toFixed(0)} fps`;

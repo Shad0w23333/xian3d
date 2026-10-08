@@ -11,6 +11,8 @@ import { parseBuildings } from '../arch/bld-gen.js';
 import { classByName, C } from '../arch/bld-class.js';
 
 const GENERIC = /^(社区|小区|家属|住宅|住宅区|居民区|居住区|家属院|宿舍|新村|生活区|村)$/;
+// 不是小区的 POI / 地块名（屋顶花园、停车场、商业广场等）
+const NOT_ESTATE = /屋顶花园|停车|车库|广场$|商场|购物|市场$|公园$|绿地$|游园$/;
 const TILE = 2000;
 const LINE_R = 2600; // 边界线显示半径
 const BLD_NAME = /^(.{2,24}?)(?:[-—·\s]+[A-Za-z0-9一二三四五六七八九十]*[区期座]?[-—]?)?(?:[A-Za-z]?\d+|[一二三四五六七八九十]+)(?:号楼|栋|幢|座|号|#)$/;
@@ -52,6 +54,7 @@ export class Estates {
   constructor(container, ctx) {
     this.labels = new Labels(container);
     this.labels.root.classList.add('labels-estate');
+    this.labels.capKey = 'estates'; // 与地名、路名共用屏幕占用表时用“小区”类上限
     this.group = new THREE.Group();
     this.group.name = '小区边界';
     ctx.scene.add(this.group);
@@ -80,7 +83,7 @@ export class Estates {
       byNorm.get(k).push(e);
     };
     // 1. 用地
-    const lu = (ctx.data.landuse?.polys || []).filter((p) => p.k === 'residential' && p.n && !GENERIC.test(p.n) && p.outer?.length >= 6);
+    const lu = (ctx.data.landuse?.polys || []).filter((p) => p.k === 'residential' && p.n && !GENERIC.test(p.n) && !NOT_ESTATE.test(p.n) && p.outer?.length >= 6);
     lu.sort((a, b) => (b.a || 0) - (a.a || 0));
     const luNamed = [];
     for (const p of lu) {
@@ -160,7 +163,7 @@ export class Estates {
     // 3. POI
     for (const p of ctx.data.pois?.pois || []) {
       if (p.k !== 'landmark' && p.k !== 'apartment') continue;
-      if (!p.n || /[-—](\d|[A-Z])|号楼$|栋$|座$/.test(p.n) || classByName(p.n) !== C.RES || GENERIC.test(p.n)) continue;
+      if (!p.n || /[-—](\d|[A-Z])|号楼$|栋$|座$/.test(p.n) || classByName(p.n) !== C.RES || GENERIC.test(p.n) || NOT_ESTATE.test(p.n)) continue;
       if (dup(p.n, p.x, p.z)) continue;
       if (luNamed.some((e) => e.area < 150000 && Math.abs(e.x - p.x) < 700 && Math.abs(e.z - p.z) < 700 && inRing(p.x, p.z, e.ring))) continue;
       push({ name: p.n, x: p.x, z: p.z, top: 0, area: 20000, ring: null, src: 2 });
@@ -228,9 +231,9 @@ export class Estates {
     this.group.visible = this.visible && v;
   }
 
-  update(camera, w, h) {
+  update(camera, w, h, space = null) {
     if (!this.visible) return;
-    this.labels.update(camera, w, h);
+    this.labels.update(camera, w, h, space);
     if (!this.showLines) return;
     const cp = camera.position;
     const agl = camera.userData.agl ?? 500;

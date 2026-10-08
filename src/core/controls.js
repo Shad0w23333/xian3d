@@ -1,4 +1,7 @@
 // 漫游控制：飞行模式（WASD + 鼠标，指针锁定）、步行模式（重力贴地）、环绕展示、预设视角平滑飞行
+// 建筑碰撞：solid(x, y, z) 由 main.js 注入（通用建筑真实轮廓 + 精建模块遮挡体）。
+//   · 飞行/步行时不能穿进实体（贴墙滑动）
+//   · 预设视角/ll 机位/俯视返回的落点若在实体内，沿最近的空地推出（找不到就抬到屋顶以上）
 import * as THREE from 'three';
 
 const _v = new THREE.Vector3();
@@ -29,6 +32,9 @@ export class Controls {
     this.onPresetArrive = null;
     this.lookSensitivity = 0.0022;
     this._drag = null;
+    /** 实体判断 (x, y, z) → bool；null 时不做碰撞 */
+    this.solid = null;
+    this._prev = new THREE.Vector3();
     camera.rotation.order = 'YXZ';
 
     this._onKeyDown = (e) => {
@@ -150,6 +156,7 @@ export class Controls {
 
   /** 飞到指定视角：pos / target 为世界坐标 Vector3 */
   flyTo(pos, target, { duration = null, onArrive = null } = {}) {
+    pos = this.resolve(pos, target);
     const from = this.camera.position.clone();
     const dist = from.distanceTo(pos);
     const dur = duration ?? THREE.MathUtils.clamp(1.2 + Math.log10(1 + dist / 50) * 0.9, 1.2, 4.2);
@@ -239,7 +246,9 @@ export class Controls {
       const sp = (run ? 11 : 4.2) * Math.min(this.speedFactor, 3);
       if (move.lengthSq() > 0) move.normalize().multiplyScalar(sp);
       this.velocity.lerp(move, 1 - Math.exp(-dt * 10));
+      this._prev.copy(cam.position);
       cam.position.addScaledVector(this.velocity, dt);
+      this._collide(this._prev);
       this.vy -= 9.8 * dt;
       cam.position.y += this.vy * dt;
       const g = this._groundAt(cam.position.x, cam.position.z, cam.position.y) + this.eye;
@@ -269,12 +278,102 @@ export class Controls {
     if (this._touchMove) m3.addScaledVector(look, this._touchMove);
     if (m3.lengthSq() > 0) m3.normalize().multiplyScalar(sp);
     this.velocity.lerp(m3, 1 - Math.exp(-dt * 6));
+    this._prev.copy(cam.position);
     cam.position.addScaledVector(this.velocity, dt);
     // 活动范围限制
     cam.position.x = THREE.MathUtils.clamp(cam.position.x, -75000, 75000);
     cam.position.z = THREE.MathUtils.clamp(cam.position.z, -75000, 75000);
     cam.position.y = Math.min(cam.position.y, 40000);
     this._clampAboveGround(1.6);
+    this._collide(this._prev);
+  }
+
+  /** 相机（半径约 0.45 m）是否与实体相交 */
+  blocked(x, y, z) {
+    const S = this.solid;
+    if (!S) return false;
+    const r = 0.45;
+    return S(x, y, z) || S(x + r, y, z) || S(x - r, y, z) || S(x, y, z + r) || S(x, y, z - r);
+  }
+
+  /** 点周围 r 米内（8 个方向）是否都不在实体内 */
+  _clear(x, y, z, r) {
+    if (this.blocked(x, y, z)) return false;
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      if (this.solid(x + Math.cos(a) * r, y, z + Math.sin(a) * r)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * 落点在实体内时推出：按同一离地高度向四周找最近的空地（≤ 60 m），优先选周围 1.5 m 都空、且朝 look 方向前方 12 m 不贴墙的位置；
+   * 都找不到就抬高到实体以上。返回新的 Vector3（不在实体内时原样返回副本）。
+   */
+  resolve(pos, look = null) {
+    const p = pos.clone();
+    if (!this.solid || this.groundFn || !this.blocked(p.x, p.y, p.z)) return p;
+    const T = this.terrain;
+    const g0 = T.heightAt(p.x, p.z);
+    const agl = p.y - g0;
+    const keepAgl = agl < 60;
+    let fx = 0, fz = 0;
+    if (look) {
+      fx = look.x - p.x;
+      fz = look.z - p.z;
+      const l = Math.hypot(fx, fz);
+      if (l > 1) (fx /= l), (fz /= l);
+      else fx = fz = 0;
+    }
+    const viewOk = (x, y, z) => {
+      if (!fx && !fz) return true;
+      for (let d = 2; d <= 12; d += 2) if (this.solid(x + fx * d, y, z + fz * d)) return false;
+      return true;
+    };
+    let firstFree = null;
+    const a0 = Math.atan2(p.z, p.x) * 0.37; // 起始角随位置变化，避免总偏向同一方向
+    for (let r = 0.75; r <= 60; r += r < 8 ? 0.75 : r < 30 ? 1.5 : 3) {
+      const n = Math.min(96, Math.max(8, Math.round((2 * Math.PI * r) / 1.2)));
+      for (let k = 0; k < n; k++) {
+        const a = a0 + (k / n) * Math.PI * 2;
+        const x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r;
+        const y = keepAgl ? T.heightAt(x, z) + Math.max(agl, 1.5) : p.y;
+        if (this.blocked(x, y, z)) continue;
+        if (!firstFree) firstFree = new THREE.Vector3(x, y, z);
+        if (this._clear(x, y, z, 1.5) && viewOk(x, y, z)) return p.set(x, y, z);
+      }
+    }
+    if (firstFree) return firstFree;
+    for (let k = 0; k < 120 && this.blocked(p.x, p.y, p.z); k++) p.y += 4;
+    p.y += 2;
+    return p;
+  }
+
+  /** 当前相机若在实体内则立即推出（模块遮挡体就绪后、瞬移机位后调用） */
+  ensureFree() {
+    if (this.tween || this.mode === 'orbit') return false;
+    const c = this.camera.position;
+    if (!this.blocked(c.x, c.y, c.z)) return false;
+    const dir = this.camera.getWorldDirection(new THREE.Vector3());
+    const p = this.resolve(c, c.clone().addScaledVector(dir, 30));
+    c.copy(p);
+    this.velocity.set(0, 0, 0);
+    return true;
+  }
+
+  /** 移动后的碰撞：新位置在实体内则贴墙滑动（分轴回退）；本来就在实体内时不拦（便于走出来） */
+  _collide(prev) {
+    if (!this.solid || this.groundFn) return;
+    const c = this.camera.position;
+    if (c.y - (this.camera.userData.ground ?? 0) > 450) return;
+    if (c.x === prev.x && c.y === prev.y && c.z === prev.z) return;
+    if (!this.blocked(c.x, c.y, c.z)) return;
+    if (this.blocked(prev.x, prev.y, prev.z)) return;
+    if (!this.blocked(c.x, c.y, prev.z)) { c.z = prev.z; this.velocity.z = 0; return; }
+    if (!this.blocked(prev.x, c.y, c.z)) { c.x = prev.x; this.velocity.x = 0; return; }
+    if (!this.blocked(prev.x, c.y, prev.z)) { c.x = prev.x; c.z = prev.z; this.velocity.x = this.velocity.z = 0; return; }
+    c.copy(prev);
+    this.velocity.set(0, 0, 0);
   }
 
   _groundAt(x, z, y) {
