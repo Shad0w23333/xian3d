@@ -13,3 +13,4 @@ __pycache__/
 tiles/
 .claude/worktrees/
 tiles_next/
+tiles_prev/
