@@ -174,11 +174,42 @@ function patchTileMaterial(mat, uvXform, holes) {
           float tl = dot(tc, vec3(0.2126, 0.7152, 0.0722));
           tc = mix(vec3(tl), tc, 1.3);             // 饱和度（冬季影像偏灰，略提）
           tc = pow(max(tc, 0.0), vec3(1.12)) * 1.1; // 对比度
+          // 压蓝：卫星图里的阴影、彩钢瓦和冬季残雪偏蓝紫，放大后整片发蓝（审查 P0）。蓝色明显高于红绿时向灰度收拢
+          float blueEx = max(0.0, tc.b - max(tc.r, tc.g));
+          tc = mix(tc, vec3(dot(tc, vec3(0.2126, 0.7152, 0.0722))) * vec3(1.02, 1.0, 0.97), clamp(blueEx * 7.0, 0.0, 0.75));
           diffuseColor.rgb = tc;
+
+          // —— 近景地面（人眼高度/低空）：卫星图放大后是糊掉的屋顶、车影和偏蓝的阴影，看着像一滩水。
+          //    近处改为“卫星图低频色调 + 程序化铺装/草地/土面细节”，远处保持卫星图。——
+          float nearK = 1.0 - smoothstep(35.0, 320.0, dcam);
+          if (nearK > 0.0) {
+            #ifdef USE_MAP
+              vec3 low = texture2D(map, vMapUv, 5.0).rgb; // 约 32 倍模糊：只留大块色调
+            #else
+              vec3 low = tc;
+            #endif
+            float lumL = dot(low, vec3(0.2126, 0.7152, 0.0722));
+            float grn = clamp((low.g - max(low.r, low.b)) * 9.0, 0.0, 1.0);          // 植被
+            float soil = clamp((low.r - low.b) * 5.0 - grn, 0.0, 1.0) * 0.7;          // 土面/田地
+            vec2 w = vTerrWorld.xz;
+            float n1 = tnoise(w * 0.35), n2 = tnoise(w * 2.3), n3 = tnoise(w * 9.0);
+            // 铺装：中性偏暖的灰（压掉卫星阴影里的蓝），0.6 m 方砖 + 3 m 色差块
+            float pv = clamp(lumL * 1.1, 0.10, 0.30);
+            vec2 tl2 = abs(fract(w / 0.6) - 0.5);
+            float jointFade = 1.0 - smoothstep(12.0, 45.0, dcam);
+            float joint = 1.0 - 0.18 * smoothstep(0.455, 0.49, max(tl2.x, tl2.y)) * jointFade; // 砖缝
+            float blockVar = 0.9 + 0.2 * thash(floor(w / 3.0));
+            vec3 paved = vec3(pv * 1.03, pv, pv * 0.95) * blockVar * joint * (0.9 + 0.12 * n2 + 0.06 * n3);
+            // 草地与土面：保留低频色相，加细节
+            vec3 grass = mix(vec3(0.07, 0.12, 0.04), vec3(0.16, 0.22, 0.08), n1) * (0.85 + 0.3 * n3);
+            vec3 dirt = mix(low * 0.9, vec3(0.20, 0.16, 0.11), 0.5) * (0.85 + 0.25 * n2);
+            vec3 ground = mix(mix(paved, dirt, soil), grass, grn);
+            diffuseColor.rgb = mix(diffuseColor.rgb, ground, nearK * 0.9);
+          }
         }`
       );
   };
-  mat.customProgramCacheKey = () => 'xian-terrain-v4';
+  mat.customProgramCacheKey = () => 'xian-terrain-v6';
 }
 
 const NOISE_GLSL = `
