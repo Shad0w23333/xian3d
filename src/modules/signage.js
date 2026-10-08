@@ -4,16 +4,24 @@
 //  · 文字全部画进 4096² Canvas 图集（signagePaint.js：行段 1024×72 px，按 250 m 区块流式分配/回收），
 //    一个 InstancedMesh（单位盒子 + 每实例 UV 矩形 / 发光 / 模式 / 标志位）画出所有招牌、灯箱、滚动屏、灯带、立柱；
 //    公交候车亭、地铁出入口雨棚各一个 InstancedMesh（合并几何 + 顶点色）。总 draw call = 3（开阴影时 +2）。
-//  · 招牌挂在 POI 最近建筑的“临街”外墙（signageIndex.findFacade：距离 + 外侧到路缘距离评分），
-//    底层门头带高度按 buildings.bin v2 风格（商业裙房 6 m、高层住宅底商 4.5 m、老式多层 3.6 m……）。
-//  · 只在相机 R（画质：0.7/1.1/1.6/2.0 km）内生成；补充的普通小店门头（通用店名，共享图集单元）只在 fillR 内。
-//  · 夜景：灯箱整面发光、发光字仅字形发光、霓虹（闪烁 / 逐字点亮 / 呼吸）、LED 滚动屏（白天也亮），均 × uNight。
+//  · 招牌挂在 POI 最近建筑的“临街”外墙（signageIndex.findFacade：距离 + 外侧到路缘距离评分；首选立面挂不下依次换候选）。
+//  · 门头带：首层高 / 地面基准 / 立面风格直接取 buildings 模块渲染用的参数（nearestFacade：groundFloorH、ground、style、street），
+//    招牌一律挂在首层橱窗之上、二层窗台之下（与立面着色器 bld-shader.js 的“招牌带”同一高度），同一栋楼底商同底同高连成一条，
+//    主次干道的铺面排再衬一条门头底板。不再有“二楼招牌”。
+//  · 店名：真实 POI（pois.json，按重要度排序先占位）优先；补充门头按街道等级选业态——主干道为银行/品牌零售/连锁酒店与餐饮，
+//    次干道一半品牌一半体面小店，支路小巷才是小吃与杂货；3×3 区块内不重名。
+//  · 只在相机 R（画质：0.7/1.1/1.6/2.0 km）内生成；补充门头（通用店名，共享图集单元）只在 fillR 内。
+//  · 夜景：灯箱整面发光、发光字仅字形发光、霓虹（闪烁 / 逐字点亮 / 呼吸）、LED 滚动屏（白天也亮），均 × uNight；
+//    发光强度按招牌自身最亮颜色归一（signageStyle.capGlow），灯箱压在泛光阈值下不糊字，霓虹/发光字略超阈值保留光晕。
+//  · 地铁出入口：通用建筑里落在出入口点上的小体量轮廓（CMAB 把出入口雨棚提取成了“楼”）在 prepare 里登记排除区让位，
+//    由本模块生成标准雨棚；这类小楼也不挂店招。
 //
 // 参考：research/refs/signage/（北院门夜景 LED 竖招、西安地铁出入口与标志、东大街夜景）。
 // 样式约定（银行统一色、品牌配色、回民街黑漆金字 + 红绿 LED 竖招）见 src/arch/signageStyle.js。
 import * as THREE from 'three';
 import { parseBuildings, BuildingIndex, RoadIndex, findFacade } from '../arch/signageIndex.js';
-import { pickStyle, signText, districtOf, hash01, strHash, MALL_RE, ROOF_NAME_RE } from '../arch/signageStyle.js';
+import { pickStyle, signText, districtOf, hash01, strHash, MALL_RE, ROOF_NAME_RE, capGlow, GLOW_CAP, FILL_MAIN, FILL_OK } from '../arch/signageStyle.js';
+import { pointInPoly } from '../core/util.js';
 import {
   SignAtlas, PAGE, ROW, PAD, CH, SEG, STATIC, measureSign, paintSign, paintStatic, staticRect,
   measureMetroHeader, paintMetroHeader, measureExitLetter, paintExitLetter, measureBusName, paintBusName,
@@ -25,11 +33,16 @@ const CAP_SIGN = 20000, CAP_SHELTER = 600, CAP_CANOPY = 600;
 // 实例标志位
 const F_VERT = 1, F_DOUBLE = 2, F_CUT = 4, F_PAGE1 = 8, F_EMIT = 32, F_STRETCH = 64, F_TICKER = 128;
 const GLOW_K = 0.95;
+// 固定样式招牌的夜间发光（按其最亮颜色归一到泛光阈值附近，见 signageStyle.GLOW_CAP）：地铁门头/出口字母（黄字）、
+// 地铁标志（白色垛口）、顶棚灯带（细条，允许光晕）、公交站名与灯箱海报（白字/浅底）
+const G_METRO = 1.15, G_LOGO = 0.95, G_STRIP = 1.35, G_BUS = 0.8;
 
-// buildings.bin v2 风格 → 临街底商层高（与 src/arch/bld-gen.js STYLE_P.gfShop 一致）
-const GF_SHOP = [4.5, 3.6, 6.0, 5.6, 6.0, 3.8, 0, 4.5, 5.4, 4.0];
-// 补充门头概率（按风格）：商业裙房/城中村/传统风貌最密，办公楼少，工业无
-const FILL_P = [0.55, 0.7, 0.22, 0.22, 0.8, 0.85, 0, 0.12, 0.35, 0.85];
+// 补充门头：一条临街立面是“铺面排”的概率（按 buildings 渲染风格 STYLE：0 高层住宅 1 老式多层 2 玻璃幕墙办公 3 石材办公
+// 4 商业裙房 5 城中村 6 工业 7 公共建筑 8 酒店 9 传统风貌；-1 = 未加载通用建筑模块），[主干/次干, 支路/小巷]
+const ROW_P = [[0.9, 0.62], [0.9, 0.7], [0.6, 0.22], [0.6, 0.22], [0.97, 0.85], [0.9, 0.85], [0, 0], [0, 0], [0.5, 0.3], [0.9, 0.85]];
+const ROW_P_UNKNOWN = [0.7, 0.45];
+// 地铁出入口让位：出入口点 EXIT_R 米内、面积 < EXIT_AREA m²、高 < EXIT_H m 的通用建筑轮廓视为被误提取的出入口雨棚
+const EXIT_R = 6, EXIT_AREA = 200, EXIT_H = 8;
 
 // 招牌类型的几何与发光参数（H 高 m，D 厚 m，lit 夜间发光系数，rough 面板粗糙度）
 const TYPE = {
@@ -80,6 +93,34 @@ const col = (hex) => new THREE.Color(hex);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 let preparedBuffer = null;
+let prepared = null; // { P, bi, exitBoxes }
+
+/**
+ * 地铁出入口让位（prepare 阶段，早于通用建筑模块的让位预处理）：OSM 出入口点落在（或紧贴）一栋小体量通用建筑上，
+ * 多半是 CMAB 把出入口雨棚/风亭提取成了“楼”，通用建筑模块会把它画成卷帘门商铺盒子。登记该轮廓为排除区让其让位，
+ * 出入口由本模块生成标准雨棚（planMetro）；同时记下这些楼，万一仍被渲染也不挂店招。
+ */
+function clearMetroExits(ctx) {
+  const P = parseBuildings(preparedBuffer || (ctx.data && ctx.data.buildings));
+  if (!P) return;
+  const bi = new BuildingIndex(P, null);
+  const exitBoxes = new Set();
+  prepared = { P, bi, exitBoxes };
+  const ex = ctx.exclusions;
+  for (const p of (ctx.data.pois && ctx.data.pois.pois) || []) {
+    if (!p || p.k !== 'subway_entrance' || Math.abs(p.x) > 16500 || Math.abs(p.z) > 16500) continue;
+    bi.candidates(p.x, p.z, EXIT_R, (b) => {
+      if (exitBoxes.has(b) || P.minDm[b] !== 0 || P.hDm[b] >= EXIT_H * 10) return;
+      if (bi.area(b) >= EXIT_AREA || bi.distTo(b, p.x, p.z) > EXIT_R) return;
+      exitBoxes.add(b);
+      if (!ex) return;
+      const pts = [];
+      for (let j = 0; j < P.vc[b]; j++) pts.push(bi.vx(b, j), bi.vz(b, j));
+      ex.add({ points: pts, name: 'signage-metro-exit' }, { buildings: true, trees: false, roads: false, pois: false, maxHeight: EXIT_H });
+    }, true);
+  }
+  if (exitBoxes.size) console.log(`[signage] 地铁出入口处 ${exitBoxes.size} 个小体量通用建筑让位给出入口雨棚`);
+}
 
 export default {
   id: 'signage',
@@ -88,6 +129,12 @@ export default {
     // 通用建筑模块可能把 buildings.bin 转交 Worker（ArrayBuffer 被分离），这里先复制一份只读副本
     const buf = ctx.data && ctx.data.buildings;
     if (buf && buf.byteLength) preparedBuffer = buf.slice(0);
+    prepared = null;
+    try {
+      clearMetroExits(ctx);
+    } catch (e) {
+      console.warn('[signage] 地铁出入口让位失败', e);
+    }
   },
   async build(ctx) {
     const s = new Signage(ctx);
@@ -147,16 +194,40 @@ class Signage {
   init() {
     const ctx = this.ctx;
     const t0 = performance.now();
-    this.P = parseBuildings(preparedBuffer || ctx.data.buildings);
-    this.bi = new BuildingIndex(this.P, ctx.exclusions);
+    if (prepared && prepared.P) {
+      // 复用 prepare 阶段建好的索引（prepare 只做几何遍历，未缓存 usable 状态）
+      this.P = prepared.P;
+      this.bi = prepared.bi;
+      this.bi.exclusions = ctx.exclusions;
+    } else {
+      this.P = parseBuildings(preparedBuffer || ctx.data.buildings);
+      this.bi = new BuildingIndex(this.P, ctx.exclusions);
+    }
+    this.exitBoxes = (prepared && prepared.exitBoxes) || new Set();
+    // 通用建筑模块的立面参数查询（首层高、地面基准、风格、临街），与渲染一致；未加载该模块时按默认值估计
+    const bm = ctx.modules && ctx.modules.buildings;
+    this.nf = bm && typeof bm.nearestFacade === 'function' ? bm.nearestFacade : null;
+    this.bcache = new Map();
+    // nearestFacade 首次调用会建全城外墙网格（十几毫秒）：放在加载阶段建好，免得第一次流式规划时卡一帧
+    if (this.nf) this.nf(0, 0, 1);
     this.ri = new RoadIndex(ctx.data.roads);
     const cls = this.ri.cls;
     const bad = new Set([cls.motorway, cls.motorway_link, cls.footway, cls.service]);
     this.acceptMain = (c) => !bad.has(c);
-    const fillCls = new Set(['trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'pedestrian', 'footway', 'primary_link', 'secondary_link'].map((n) => (ctx.data.roads.classes || []).indexOf(n)));
+    const names = ctx.data.roads.classes || [];
+    const ci = (n) => names.indexOf(n);
+    const fillCls = new Set(['trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'pedestrian', 'footway', 'primary_link', 'secondary_link'].map(ci));
     this.acceptFill = (c, b) => fillCls.has(c) && !b;
-    this.groundOK = (b) => this.P.minDm[b] === 0;
-    this.mainCls = new Set([cls.trunk, cls.primary, cls.secondary]);
+    // 与 buildings 模块判定“临街底商边”所用道路一致（src/modules/buildings.js packRoads）
+    const bldCls = new Set(['trunk', 'primary', 'secondary', 'tertiary', 'residential', 'unclassified', 'pedestrian'].map(ci));
+    this.acceptBld = (c) => bldCls.has(c);
+    // 街道等级：0 主干（trunk/primary）1 次干（secondary/匝道）2 支路（tertiary）3 小路（residential/unclassified/footway）4 步行街
+    this.grade = new Map([[ci('trunk'), 0], [ci('primary'), 0], [ci('secondary'), 1], [ci('primary_link'), 1], [ci('secondary_link'), 1], [ci('tertiary'), 2], [ci('pedestrian'), 4]]);
+    this.acceptMajor = (c, b) => !b && this.grade.has(c) && this.grade.get(c) <= 1;
+    this.groundOK = (b) => this.P.minDm[b] === 0 && !this.exitBoxes.has(b);
+    this.clsFootway = ci('footway');
+    // 高校/中小学校园、军事管理区内部：楼前是校园步道，不补沿街门头（只有面向主次干道的楼才可能有底商）
+    this.inCampus = landIndex(ctx.data.landuse, new Set(['university', 'military']));
     this.buildSubway(ctx.data.rail, ctx.data.amapExtra?.metro);
     this.bucketPOIs((ctx.data.pois && ctx.data.pois.pois) || []);
     this.bucketBus(ctx.data.roads);
@@ -172,6 +243,8 @@ class Signage {
       setLayer(name, on) { if (name === 'buildings' || name === 'signage') self.setVisible(on); },
       setVisible(on) { self.setVisible(on); },
       stats() { return self.stats(); },
+      /** 诊断：(x,z) 半径 r 内已上屏的招牌实例 {k 单元键, x, y 离地, z, W, H, g 发光} */
+      diag(x, z, r = 60) { return self.diag(x, z, r); },
       dispose() { self.dispose(); },
     };
   }
@@ -189,8 +262,24 @@ class Signage {
   chunkAt(x, z) {
     return this.chunk(Math.floor(x / C), Math.floor(z / C));
   }
+  /** 点是否只落在 skyline 模块的单栋高楼排除区内（不在其他精建片区/档案建筑里） */
+  inSkyline(x, z) {
+    const ex = this.ctx.exclusions;
+    const list = ex && ex.grid ? ex.grid.get(Math.floor(x / ex.cell) * 100003 + Math.floor(z / ex.cell)) : null;
+    if (!list) return false;
+    let hit = false;
+    for (const it of list) {
+      if (!it.flags.pois) continue;
+      const b = it.bb;
+      if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1 || !pointInPoly(x, z, it.p)) continue;
+      if (it.name !== 'skyline' || (b.x1 - b.x0) * (b.z1 - b.z0) > 40000) return false;
+      hit = true;
+    }
+    return hit;
+  }
   bucketPOIs(pois) {
     const ex = this.ctx.exclusions;
+    this.orphans = new WeakSet();
     let n = 0;
     for (const p of pois) {
       if (!p || !p.n || Math.abs(p.x) > 16500 || Math.abs(p.z) > 16500) continue;
@@ -199,11 +288,19 @@ class Signage {
       const brandLandmark = k === 'landmark' && /银行|中国移动|中国联通|中国电信|邮政|酒店|宾馆|饭店/.test(p.n);
       const roofLandmark = k === 'landmark' && ROOF_NAME_RE.test(p.n) && !NAME_SKIP.test(p.n);
       if (!metro && !SIGN_KINDS.has(k) && !brandLandmark && !roofLandmark) continue;
-      if (ex && ex.test(p.x, p.z, 'pois')) continue;
+      if (ex && ex.test(p.x, p.z, 'pois')) {
+        // 落在现代地标高楼（skyline）轮廓里的底商 POI：高楼模型本身不画沿街门头，原先这些真实店名（南大街百货大厦里的
+        // 中国银行、百货大厦酒店……）整条丢掉，街面只剩随机店名。改为挂到紧邻的临街通用建筑（多为该楼的裙房）上
+        if (metro || !SIGN_KINDS.has(k) || MALL_RE.test(p.n) || !this.inSkyline(p.x, p.z)) continue;
+        this.orphans.add(p);
+      }
       this.chunkAt(p.x, p.z).pois.push(p);
       n++;
     }
     this.nPois = n;
+    // 重要的先占位（地铁口 > 重要度 > 银行/酒店/商场），同一立面挂不下时次要店铺换到旁边的立面
+    const pri = (p) => (p.k === 'subway_entrance' ? 100 : 0) + (p.i || 0) * 10 + (p.k === 'bank' || HOTEL.has(p.k) || MALL_RE.test(p.n) ? 5 : 0);
+    for (const ch of this.chunks.values()) if (ch.pois.length > 1) ch.pois.sort((a, b) => pri(b) - pri(a));
   }
   /** 公交站候选点：沿有名称的主干道（trunk/primary/secondary，非桥非隧）每 ~520 m 一处，双向道路两侧各一 */
   bucketBus(roads) {
@@ -371,10 +468,15 @@ if (sTex) {
     k *= 0.5 + 0.5 * sin(uTime * 2.4 + vFx.z * 6.283);
   }
   if (md > 1.5 && md < 2.5) k = max(k, 0.55);
-  if (sTex || (sfl & 32) != 0) totalEmissiveRadiance = sEm * vFx.x * k;
+  if (sTex || (sfl & 32) != 0) {
+    // 发光强度已按招牌自身最亮颜色归一（CPU 端 capGlow）；这里再按像素亮度兜底钳制，任何像素都不远超泛光阈值
+    vec3 se = sEm * vFx.x * k;
+    float sl = dot(se, vec3(0.2126, 0.7152, 0.0722));
+    totalEmissiveRadiance = se * min(1.0, 1.5 / max(sl, 1e-4));
+  }
 }`);
     };
-    mat.customProgramCacheKey = () => 'signage-v1';
+    mat.customProgramCacheKey = () => 'signage-v2';
     const mesh = new THREE.InstancedMesh(box, mat, CAP_SIGN);
     mesh.count = 0;
     mesh.frustumCulled = false;
@@ -422,9 +524,16 @@ if (sTex) {
       const m = measureSign(s, name, vert);
       return { kind: 'sign', text: name, s, vert, w: m.w, m };
     };
-    this.fillKeys = { food: [], shop: [], huimin: [], vert: [], vhm: [] };
-    FILL_FOOD.forEach((n) => { const k = 'F|f|' + n; add(k, mkSign(n, 'restaurant', 'city', false)); this.fillKeys.food.push(k); });
-    FILL_SHOP.forEach((n) => { const k = 'F|s|' + n; add(k, mkSign(n, 'shop', 'city', false)); this.fillKeys.shop.push(k); });
+    this.fillKeys = { food: [], shop: [], food2: [], shop2: [], main: [], mainHotel: [], mainOffice: [], huimin: [], vert: [], vhm: [] };
+    FILL_FOOD.forEach((n) => { const k = 'F|f|' + n; add(k, mkSign(n, 'restaurant', 'city', false)); this.fillKeys.food.push(k); if (FILL_OK.has(n)) this.fillKeys.food2.push(k); });
+    FILL_SHOP.forEach((n) => { const k = 'F|s|' + n; add(k, mkSign(n, 'shop', 'city', false)); this.fillKeys.shop.push(k); if (FILL_OK.has(n)) this.fillKeys.shop2.push(k); });
+    FILL_MAIN.forEach(([kind, n]) => {
+      const k = 'F|m|' + n;
+      add(k, mkSign(n, kind, 'city', false));
+      this.fillKeys.main.push(k);
+      if (kind === 'hotel') this.fillKeys.mainHotel.push(k);
+      if (kind === 'bank' || kind === 'cafe') this.fillKeys.mainOffice.push(k); // 写字楼底层：银行网点与咖啡
+    });
     FILL_HUIMIN.forEach((n) => { const k = 'F|h|' + n; add(k, mkSign(n, 'restaurant', 'huimin', false)); this.fillKeys.huimin.push(k); });
     FILL_VERT.forEach((n) => { const k = 'F|v|' + n; add(k, mkSign(n, 'shop', 'city', true)); this.fillKeys.vert.push(k); });
     FILL_VERT.forEach((n) => { const k = 'F|vh|' + n; add(k, mkSign(n, 'restaurant', 'huimin', true)); this.fillKeys.vhm.push(k); });
@@ -517,10 +626,69 @@ if (sTex) {
     }
     return r;
   }
-  gfOf(b) {
-    const st = this.P.style ? this.P.style[b] : 255;
-    const g = GF_SHOP[st];
-    return g ? g : 4.5;
+  /**
+   * 通用建筑的立面参数（与 buildings 模块渲染完全一致）：ga 地面基准（立面分层的零点）、gf 首层高、fh 标准层高、
+   * st 渲染风格、street 是否临街、H 楼高。
+   * 旧版按 buildings.bin 的 style 字节直接查表——那个字节是“功能 << 4 | 年代”，查出来多半是默认值，
+   * 门头高度与立面上实际的首层/橱窗对不上，招牌压到二三层窗户上。
+   */
+  binfo(b) {
+    let I = this.bcache.get(b);
+    if (I) return I;
+    const P = this.P;
+    const H = Math.max(3, P.hDm[b] * 0.1);
+    if (this.nf) {
+      // 从最长的几条边中点向楼内 5 cm 查最近外墙：命中本楼即读到其参数（与邻楼共墙的边可能命中邻楼，换下一条）
+      const n = P.vc[b];
+      const es = [];
+      for (let e = 0; e < n; e++) es.push(this.edge(b, e));
+      const order = es.map((E, e) => e).sort((p, q) => es[q].L - es[p].L);
+      for (let k = 0; k < Math.min(4, n) && !I; k++) {
+        const E = es[order[k]];
+        const r = this.nf(E.ax + E.tx * E.L * 0.5 - E.nx * 0.05, E.az + E.tz * E.L * 0.5 - E.nz * 0.05, 1.5);
+        if (r && r.index === b) I = { ga: r.ground, gf: r.groundFloorH, fh: r.floorH, st: r.style, street: !!r.street, H: r.height || H };
+      }
+    }
+    if (!I) I = { ga: this.ctx.terrain.heightAt(P.ax[b], P.az[b]), gf: 4.5, fh: 3.2, st: -1, street: true, H };
+    this.bcache.set(b, I);
+    return I;
+  }
+  /** 该边是否画成“临街底商”（与 bld-gen.js 逐边 EF 判定一致：楼临街 + 边外 2 m 处 18 m 内有道路且立面朝向道路） */
+  edgeStreet(E, I) {
+    if (!I.street || E.L < 3) return false;
+    const mx = E.ax + E.tx * E.L * 0.5 + E.nx * 2, mz = E.az + E.tz * E.L * 0.5 + E.nz * 2;
+    const r = this.ri.nearest(mx, mz, 18, this.acceptBld);
+    if (!r) return false;
+    const dx = r.px - mx, dz = r.pz - mz, dl = Math.hypot(dx, dz) || 1;
+    return (dx * E.nx + dz * E.nz) / dl > 0.25;
+  }
+  /**
+   * 门头带（相对地面基准 ga，米）：首层橱窗/卷帘门/窗洞顶之上、二层窗台之下。各风格首层布局取自 bld-shader.js：
+   * 有“招牌带”的（高层住宅/老式多层临街底商、商业裙房）顶边对齐招牌带，其余贴橱窗顶向上。
+   * 返回 {y0 底, h 标准高, top 可加高到的上限} 或 null（无处可挂）。
+   */
+  band(I, eStreet) {
+    const gf = I.gf, H = I.H;
+    let shopTop, top, fixTop = null;
+    switch (I.st) {
+      case 0: shopTop = eStreet ? gf - 1.1 : Math.min(2.6, gf - 0.4); top = gf + 0.05; if (eStreet) fixTop = gf - 0.15; break;
+      case 1: shopTop = eStreet ? Math.min(gf - 0.35, 2.9) : 2.45; top = gf + 0.1; if (eStreet && gf > 3.3) fixTop = gf - 0.15; break;
+      case 2: shopTop = gf - 0.5; top = gf + 0.75; break;
+      case 3: shopTop = gf - 0.8; top = gf + 0.8; break;
+      case 4: shopTop = gf - 1.35; top = gf + 0.6; fixTop = gf - 0.1; break;
+      case 5: shopTop = Math.min(3.0, gf - 0.3); top = gf + 0.9; break;
+      case 6: shopTop = Math.min(4.9, H - 2.4); top = Math.min(H - 1.2, shopTop + 1.6); break; // 厂房：卷帘门以上、高侧窗以下
+      case 7: shopTop = gf - 0.85; top = gf + 0.8; break;
+      case 8: shopTop = gf - 0.6; top = gf + 0.45; break;
+      case 9: shopTop = Math.min(gf - 0.6, 2.6); top = gf + 0.9; break;
+      default: shopTop = 2.45; top = Math.max(gf, 3.6); break;
+    }
+    const lo = Math.max(2.45, shopTop + 0.06);
+    top = Math.min(top, H - 0.3);
+    if (top - lo < 0.42) return null;
+    const h = Math.min(clamp(gf * 0.26, 0.8, 1.3), top - lo);
+    const y0 = fixTop != null ? clamp(fixTop - h, lo, top - h) : lo;
+    return { y0, h, top };
   }
   edge(b, e) {
     const bi = this.bi, n = this.P.vc[b], j = (e + 1) % n;
@@ -561,12 +729,10 @@ if (sTex) {
     }
     const dist = districtOf(p.x, p.z);
     const s = pickStyle(p, text, dist);
-    const f = findFacade(bi, ri, p.x, p.z, { maxR: 42, filter: this.groundOK });
-    if (!f) return;
-    if (f.inside && f.d > 16 && !s.bank && !HOTEL.has(k) && !isMall && (p.i || 0) < 2) return; // 商场内部店铺
-    const b = f.b, e = f.e;
-    const hgt = bi.height(b);
-    const gf = this.gfOf(b);
+    const cands = findFacade(bi, ri, p.x, p.z, { maxR: 42, filter: this.groundOK, list: 6 });
+    if (!cands.length) return;
+    const f0 = cands[0];
+    if (f0.inside && f0.d > 16 && !s.bank && !HOTEL.has(k) && !isMall && (p.i || 0) < 2) return; // 商场内部店铺
     const T = TYPE[s.type] || TYPE.lightbox;
     const key = `S|${p.n}|${k}|${dist}`;
     const req = this.req(plan, key, () => {
@@ -575,58 +741,64 @@ if (sTex) {
     });
     const Ac = req.w / CH;
     const imp = p.i || 0;
-    let H = T.H * (imp >= 2 ? 1.2 : 1) * (s.bank ? 1.12 : 1) * (isMall ? 1.9 : 1);
-    const E = this.edge(b, e);
-    const L = E.L;
+    const big = imp >= 2 || !!s.bank || HOTEL.has(k) || isMall;
     const r = s.r;
-    let target = s.bank ? 8 + r * 4 : HOTEL.has(k) ? 6 + r * 4 : isMall ? 14 + r * 8 : 3.2 + r * 3.8;
-    H = Math.min(H, Math.max(0.6, hgt - 0.25 - 2.15));
-    let textLen = H * Ac;
-    if (textLen > L - 0.5) { H = (L - 0.5) / Ac; textLen = L - 0.5; }
-    if (H < 0.5) return;
-    let W = clamp(Math.max(textLen, target), textLen, L - 0.5);
-    if (s.type === 'neon' && !s.back) W = textLen; // 无底板霓虹：只占字宽
-    const c0 = f.t * L;
-    let lvl = 0, m = this.slot(b, e, 0, L, W, c0);
-    if (m == null && hgt > gf + 3.4) { lvl = 1; m = this.slot(b, e, 1, L, W, c0); }
-    if (m == null) return;
-    const g0 = this.ctx.terrain.heightAt(E.ax + E.tx * m, E.az + E.tz * m);
-    let bottom;
-    if (lvl === 0) {
-      bottom = Math.max(2.45, gf - 0.2 - H);
-      if (isMall) bottom = Math.max(bottom, Math.min(gf + 1.5, hgt - H - 0.6));
-      if (bottom + H > hgt - 0.25) bottom = hgt - 0.25 - H;
-      if (bottom < 1.9) return;
-    } else {
-      H *= 0.9;
-      bottom = gf + 0.45;
-    }
-    const gap = 0.05;
-    const x = E.ax + E.tx * m + E.nx * gap, z = E.az + E.tz * m + E.nz * gap;
-    const y = g0 + bottom + H / 2;
+    const target = s.bank ? 8 + r * 4 : HOTEL.has(k) ? 6 + r * 4 : isMall ? 14 + r * 8 : 3.2 + r * 3.8;
     const cut = s.type === 'neon' && !s.back;
-    const flags = cut ? F_CUT : 0;
-    const side = col(s.type === 'lightbox' ? '#8e949a' : s.type === 'led' || s.type === 'neon' ? s.back || '#1a1a1a' : s.frame || s.bg || '#333333');
-    const glow = (s.glow || 1.6) * T.lit * GLOW_K;
-    const phase = hash01(s.h + 23);
-    plan.sign(x, y, z, E.nx, E.nz, W, H, T.D, key, glow, s.mode || 0, phase, flags, side, T.rough);
-    if (s.type === 'lightbox' && imp >= 1 && !cut) {
-      // 灯箱顶部的细金属压条（近看有厚度层次）
-      plan.sign(x, y + H / 2 + 0.03, z, E.nx, E.nz, W + 0.06, 0.06, T.D + 0.04, null, 0, 0, 0, 0, col('#5d6166'), 0.4);
+    const orphan = this.orphans.has(p); // 所在高楼不画门头，挂到紧邻的临街裙房/底商上
+    for (const f of cands) {
+      if (f.score > f0.score + 18) break; // 离 POI 太远的立面宁可不挂
+      if (orphan && (f.d > 32 || f.inside)) continue;
+      const b = f.b, e = f.e;
+      const E = this.edge(b, e);
+      const L = E.L;
+      if (L < 2.4) continue;
+      const I = this.binfo(b);
+      const eSt = this.edgeStreet(E, I);
+      if (orphan && !eSt && !this.ri.nearest(E.ax + E.tx * L * 0.5 + E.nx * 3, E.az + E.tz * L * 0.5 + E.nz * 3, 30, this.acceptMajor, E.tx, E.tz, 0.8)) continue;
+      const B = this.band(I, eSt);
+      if (!B) continue;
+      // 门头带：与同楼补充门头同底；银行/酒店/商场/重要店铺向上加高（不超过二层窗台）
+      const H = big ? Math.min(B.top - B.y0, B.h * (isMall ? 1.6 : 1.25)) : B.h;
+      const textLen = H * Ac;
+      let W = cut ? Math.min(textLen, L - 0.5) : clamp(Math.max(textLen, target), 0, L - 0.5);
+      if (W < 1.6) continue;
+      const c0 = f.t * L;
+      let m = this.slot(b, e, 0, L, W, c0);
+      if (m == null && W > Math.min(textLen, L - 0.5) + 0.4) {
+        W = Math.max(1.6, Math.min(textLen, L - 0.5)); // 收窄到字宽再试
+        m = this.slot(b, e, 0, L, W, c0);
+      }
+      if (m == null) continue;
+      const g0 = I.ga;
+      const x = E.ax + E.tx * m + E.nx * 0.05, z = E.az + E.tz * m + E.nz * 0.05;
+      if (bi.inside(x + E.nx * 1.2, z + E.nz * 1.2, b) >= 0) continue; // 招牌前方被相邻（重叠）轮廓挡住
+      const y = g0 + B.y0 + H / 2;
+      const flags = cut ? F_CUT : 0;
+      const side = col(s.type === 'lightbox' ? '#8e949a' : s.type === 'led' || s.type === 'neon' ? s.back || '#1a1a1a' : s.frame || s.bg || '#333333');
+      const glow = capGlow(s, (s.glow || 1.6) * T.lit * GLOW_K);
+      const phase = hash01(s.h + 23);
+      plan.sign(x, y, z, E.nx, E.nz, W, H, T.D, key, glow, s.mode || 0, phase, flags, side, T.rough);
+      if (s.type === 'lightbox' && imp >= 1 && !cut) {
+        // 灯箱顶部的细金属压条（近看有厚度层次）
+        plan.sign(x, y + H / 2 + 0.03, z, E.nx, E.nz, W + 0.06, 0.06, T.D + 0.04, null, 0, 0, 0, 0, col('#5d6166'), 0.4);
+      }
+      // LED 滚动屏（门头下沿）
+      if (s.ticker && B.y0 > 2.9) {
+        const tk = s.bank ? 'T|bank' : k === 'pharmacy' ? 'T|pharm' : HOTEL.has(k) ? 'T|hotel' : 'T|food';
+        const ts = this.permReq.get(tk);
+        const tw = Math.min(3.6, W * 0.7), th = 0.3;
+        plan.sign(x + E.nx * 0.02, g0 + B.y0 - 0.28, z + E.nz * 0.02, E.nx, E.nz, tw, th, 0.06, tk, ts ? capGlow(ts.s, 2.4 * GLOW_K) : 1.0, 2, phase, F_TICKER, col('#0c0c0c'), 0.35);
+      }
+      // 挑出式竖牌（酒店竖向灯箱、药店、回民街 LED 竖招）
+      if (s.blade) this.planBlade(plan, b, e, E, m + (W / 2 + 0.7) * (hash01(s.h + 5) < 0.5 ? 1 : -1), I, B, s, text, key, HOTEL.has(k) || s.vert, `${p.n}|${k}|${dist}`);
+      // 商场：楼顶大字
+      if (isMall) this.planRoof(plan, b, text, s, E);
+      return;
     }
-    // LED 滚动屏
-    if (s.ticker && lvl === 0 && bottom > 2.9) {
-      const tk = s.bank ? 'T|bank' : k === 'pharmacy' ? 'T|pharm' : HOTEL.has(k) ? 'T|hotel' : 'T|food';
-      const tw = Math.min(3.6, W * 0.7), th = 0.3;
-      plan.sign(x + E.nx * 0.02, g0 + bottom - 0.28, z + E.nz * 0.02, E.nx, E.nz, tw, th, 0.06, tk, 2.4 * GLOW_K, 2, phase, F_TICKER, col('#0c0c0c'), 0.35);
-    }
-    // 挑出式竖牌（酒店竖向灯箱、药店、回民街 LED 竖招）
-    if (s.blade && lvl === 0) this.planBlade(plan, b, e, E, m + (W / 2 + 0.7) * (hash01(s.h + 5) < 0.5 ? 1 : -1), g0, gf, hgt, s, text, key, HOTEL.has(k) || s.vert, `${p.n}|${k}|${dist}`);
-    // 商场：楼顶大字
-    if (isMall) this.planRoof(plan, b, text, s, E);
   }
 
-  planBlade(plan, b, e, E, m, g0, gf, hgt, s, text, key, big, id) {
+  planBlade(plan, b, e, E, m, I, B, s, text, key, big, id) {
     const L = E.L;
     m = clamp(m, 0.45, L - 0.45);
     const vt = [...text].slice(0, big ? 8 : 6).join('');
@@ -639,18 +811,21 @@ if (sTex) {
       return { kind: 'sign', text: vt, s: vs, vert: true, w: mm.w, m: mm };
     });
     const Ac = req.w / CH;
+    const hgt = I.H, gf = I.gf;
     let Wb = big ? 1.05 : 0.72;
     let Hb = Wb * Ac;
     const maxH = big ? Math.max(3, Math.min(9, hgt - gf - 1)) : 3.2;
     if (Hb > maxH) { Hb = maxH; Wb = Hb / Ac; }
     if (Wb < 0.35) return;
-    const bottom = big ? gf + 0.3 : Math.max(2.7, gf - 0.1);
+    // 大竖牌（酒店）从二层起挂在楼身上；小竖牌与门头带同底
+    const bottom = big ? gf + 0.3 : B.y0;
     if (bottom + Hb > hgt + (big ? 0 : 0.5)) return;
     const out = 0.32 + Wb / 2;
     const D = big ? 0.3 : 0.16;
+    const g0 = I.ga;
     const cx = E.ax + E.tx * m + E.nx * out - E.tx * (D / 2), cz = E.az + E.tz * m + E.nz * out - E.tz * (D / 2);
     const T = TYPE[vs.type] || TYPE.lightbox;
-    plan.sign(cx, g0 + bottom + Hb / 2, cz, E.tx, E.tz, Wb, Hb, D, vkey, (vs.glow || 1.8) * T.lit * GLOW_K, s.mode || 0, hash01(s.h + 29), F_VERT | F_DOUBLE, col(vs.type === 'lightbox' ? '#8e949a' : vs.back || vs.frame || '#222222'), T.rough);
+    plan.sign(cx, g0 + bottom + Hb / 2, cz, E.tx, E.tz, Wb, Hb, D, vkey, capGlow(vs, (vs.glow || 1.8) * T.lit * GLOW_K), s.mode || 0, hash01(s.h + 29), F_VERT | F_DOUBLE, col(vs.type === 'lightbox' ? '#8e949a' : vs.back || vs.frame || '#222222'), T.rough);
     // 支架（上下两根横撑）
     const bx = E.ax + E.tx * m + E.nx * 0.01 - E.tx * 0.025, bz = E.az + E.tz * m + E.nz * 0.01 - E.tz * 0.025;
     const arm = col('#3b3e42');
@@ -658,7 +833,6 @@ if (sTex) {
       plan.sign(bx + E.nx * 0.18, g0 + yy, bz + E.nz * 0.18, E.tx, E.tz, 0.36, 0.05, 0.05, null, 0, 0, 0, 0, arm, 0.45);
     }
   }
-
   /** 楼顶 / 楼冠发光大字 */
   planRoof(plan, b, name, style, E0 = null) {
     if (!name || this.roofed.has(b) || !this.bi.usable(b)) return;
@@ -685,12 +859,12 @@ if (sTex) {
     if (H < 1.3) return;
     const W = H * Ac;
     const mx = E.ax + E.tx * (E.L / 2), mz = E.az + E.tz * (E.L / 2);
-    const g0 = this.ctx.terrain.heightAt(mx, mz);
+    const g0 = this.binfo(b).ga; // 楼顶 = 地面基准 + 楼高（与通用建筑渲染一致）
     const crown = hgt >= 90;
     const y = crown ? g0 + hgt - H / 2 - 2.2 : g0 + hgt + 0.35 + H / 2;
     const off = crown ? 0.12 : -0.7;
     const phase = hash01(h + 3);
-    plan.sign(mx + E.nx * off, y, mz + E.nz * off, E.nx, E.nz, W, H, 0.25, key, 2.6 * GLOW_K, phase < 0.15 ? 4 : 0, phase, F_CUT | F_DOUBLE, col('#2a2c30'), 0.5);
+    plan.sign(mx + E.nx * off, y, mz + E.nz * off, E.nx, E.nz, W, H, 0.25, key, capGlow(s, 2.6 * GLOW_K, GLOW_CAP.roof), phase < 0.15 ? 4 : 0, phase, F_CUT | F_DOUBLE, col('#2a2c30'), 0.5);
     if (!crown) {
       // 字后钢架（两根横梁 + 立柱，白天可见的楼顶招牌支架）
       const steel = col('#4a4d52');
@@ -752,7 +926,7 @@ if (sTex) {
       const mpos = this.slot(fc.b, fc.e, 0, E.L, Wd, fc.t * E.L);
       if (mpos == null) return;
       const g2 = terrain.heightAt(E.ax + E.tx * mpos, E.az + E.tz * mpos);
-      plan.sign(E.ax + E.tx * mpos + E.nx * 0.06, g2 + 3.3, E.az + E.tz * mpos + E.nz * 0.06, E.nx, E.nz, Wd, 0.85, 0.12, key, 1.5 * GLOW_K, 0, 0, 0, col('#2a2f35'), 0.35);
+      plan.sign(E.ax + E.tx * mpos + E.nx * 0.06, g2 + 3.3, E.az + E.tz * mpos + E.nz * 0.06, E.nx, E.nz, Wd, 0.85, 0.12, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
       this.planTotem(plan, E.ax + E.tx * mpos + E.nx * 2.6, E.az + E.tz * mpos + E.nz * 2.6, g2, E.nx, E.nz, ekey, ereq, logoCol);
       return;
     }
@@ -760,10 +934,13 @@ if (sTex) {
     plan.struct(plan.cn, x, g + 0.05, z, fx, fz);
     const hy = g + 0.05 + 3.12;
     for (const sgn of [1, -1]) {
-      plan.sign(x + fx * sgn * (L / 2 + 0.31), hy, z + fz * sgn * (L / 2 + 0.31), fx * sgn, fz * sgn, W + 0.2, 0.9, 0.08, key, 1.5 * GLOW_K, 0, 0, 0, col('#2a2f35'), 0.35);
+      plan.sign(x + fx * sgn * (L / 2 + 0.31), hy, z + fz * sgn * (L / 2 + 0.31), fx * sgn, fz * sgn, W + 0.2, 0.9, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
+      // 两侧檐口也挂站名门头：从马路上看过去是雨棚的长边，只有开口端有站名时认不出是地铁口
+      const sx = fz * sgn, sz = -fx * sgn;
+      plan.sign(x + sx * (W / 2 + 0.31), g + 0.05 + 3.1, z + sz * (W / 2 + 0.31), sx, sz, L * 0.8, 0.72, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
     }
     // 顶棚灯带
-    plan.sign(x - fx * (L / 2 - 0.6), g + 0.05 + 2.93, z - fz * (L / 2 - 0.6), fx, fz, 2.8, 0.05, L - 1.2, null, 2.4 * GLOW_K, 0, 0, F_EMIT, col('#fff1dc'), 0.5);
+    plan.sign(x - fx * (L / 2 - 0.6), g + 0.05 + 2.93, z - fz * (L / 2 - 0.6), fx, fz, 2.8, 0.05, L - 1.2, null, G_STRIP, 0, 0, F_EMIT, col('#fff1dc'), 0.5);
     // 标识柱：开口前方一侧，面向道路
     const tx = x + fx * (L / 2 + 1.8) + nx * (W / 2 - 0.6), tz = z + fz * (L / 2 + 1.8) + nz * (W / 2 - 0.6);
     this.planTotem(plan, tx, tz, terrain.heightAt(tx, tz), -nx, -nz, ekey, ereq, logoCol);
@@ -771,10 +948,10 @@ if (sTex) {
   planTotem(plan, x, z, g, nx, nz, ekey, ereq, c) {
     const D = 0.36;
     plan.sign(x - nx * D / 2, g + 1.9, z - nz * D / 2, nx, nz, 0.8, 3.8, D, null, 0, 0, 0, 0, c, 0.45);
-    plan.sign(x - nx * (D / 2 + 0.01), g + 3.33, z - nz * (D / 2 + 0.01), nx, nz, 0.66, 0.66, D + 0.02, '@logo', 1.8 * GLOW_K, 0, 0, F_STRETCH | F_DOUBLE, c, 0.35);
+    plan.sign(x - nx * (D / 2 + 0.01), g + 3.33, z - nz * (D / 2 + 0.01), nx, nz, 0.66, 0.66, D + 0.02, '@logo', G_LOGO, 0, 0, F_STRETCH | F_DOUBLE, c, 0.35);
     const Ac = ereq.w / CH;
     const Wl = 0.7, Hl = Math.min(0.62, Wl / Ac);
-    plan.sign(x - nx * (D / 2 + 0.01), g + 2.62, z - nz * (D / 2 + 0.01), nx, nz, Wl, Hl, D + 0.02, ekey, 1.4 * GLOW_K, 0, 0, F_DOUBLE, col('#23272c'), 0.35);
+    plan.sign(x - nx * (D / 2 + 0.01), g + 2.62, z - nz * (D / 2 + 0.01), nx, nz, Wl, Hl, D + 0.02, ekey, G_METRO, 0, 0, F_DOUBLE, col('#23272c'), 0.35);
   }
 
   /** 公交候车亭：顶棚 + 背板玻璃 + 座椅（几何）；站名灯箱、广告灯箱、站牌、顶棚灯带（招牌实例） */
@@ -813,25 +990,72 @@ if (sTex) {
     const blue = col('#1d4f91');
     // 顶部站名灯箱（前后两面）
     let [px, pz] = P(0, 0.93);
-    plan.sign(px, g + 2.45, pz, fx, fz, 8.8, 0.4, 0.06, key, 1.3 * GLOW_K, 0, 0, 0, blue, 0.35);
+    plan.sign(px, g + 2.45, pz, fx, fz, 8.8, 0.4, 0.06, key, G_BUS, 0, 0, 0, blue, 0.35);
     [px, pz] = P(0, -1.01);
-    plan.sign(px, g + 2.45, pz, -fx, -fz, 8.8, 0.4, 0.06, key, 1.3 * GLOW_K, 0, 0, 0, blue, 0.35);
+    plan.sign(px, g + 2.45, pz, -fx, -fz, 8.8, 0.4, 0.06, key, G_BUS, 0, 0, 0, blue, 0.35);
     // 广告灯箱（后墙右端，双面）
     const pk = '@p' + (strHash(name) % 4);
     [px, pz] = P(3.35, -0.92);
-    plan.sign(px, g + 1.32, pz, fx, fz, 1.3, 1.95, 0.24, pk, 1.1 * GLOW_K, 0, 0, F_STRETCH | F_DOUBLE, col('#a7acb1'), 0.3);
+    plan.sign(px, g + 1.32, pz, fx, fz, 1.3, 1.95, 0.24, pk, G_BUS, 0, 0, F_STRETCH | F_DOUBLE, col('#a7acb1'), 0.3);
     // 顶棚灯带
     [px, pz] = P(0, -0.35);
-    plan.sign(px, g + 2.43, pz, fx, fz, 8.0, 0.04, 0.35, null, 2.2 * GLOW_K, 0, 0, F_EMIT, col('#eef4ff'), 0.5);
+    plan.sign(px, g + 2.43, pz, fx, fz, 8.0, 0.04, 0.35, null, G_STRIP, 0, 0, F_EMIT, col('#eef4ff'), 0.5);
     // 站牌立杆 + 竖向站名牌（双面，朝来车方向）
     const Ac = vreq.w / CH;
     let Hb = Math.min(1.9, 0.52 * Ac), Wb = Hb / Ac;
     [px, pz] = P(-5.6, 0.55);
     plan.sign(px, g + 1.55, pz, X.x, X.z, 0.09, 3.1, 0.09, null, 0, 0, 0, 0, col('#9aa0a6'), 0.3);
-    plan.sign(px - X.x * 0.08, g + 3.0 - Hb / 2 - 0.05, pz - X.z * 0.08, X.x, X.z, Wb, Hb, 0.07, vkey, 1.2 * GLOW_K, 0, 0, F_VERT | F_DOUBLE, blue, 0.35);
+    plan.sign(px - X.x * 0.08, g + 3.0 - Hb / 2 - 0.05, pz - X.z * 0.08, X.x, X.z, Wb, Hb, 0.07, vkey, G_BUS, 0, 0, F_VERT | F_DOUBLE, blue, 0.35);
   }
 
-  /** 补充门头：临街底层外墙按“开间”切槽，空位挂通用店名（共享图集单元） */
+  /** 3×3 区块内已用的招牌名（真实 POI 名 + 已排的补充门头名），补充门头据此不重名 */
+  usedNames(ch) {
+    const used = new Set();
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      const nb = this.chunk(ch.cx + dx, ch.cz + dz, false);
+      if (!nb) continue;
+      for (const p of nb.pois) used.add(signText(p.n));
+      if (nb.fillNames) for (const n of nb.fillNames) used.add(n);
+    }
+    return used;
+  }
+  /**
+   * 补充门头店名：按街道等级选业态（主干道 = 银行/品牌零售/连锁酒店餐饮；次干道一半品牌一半体面小店；支路小巷 = 小吃杂货），
+   * 酒店楼优先酒店、写字楼优先银行咖啡；附近已有同名招牌的跳过。返回图集单元键或 null。
+   */
+  pickFill(grade, dist, st, hs, used) {
+    const K = this.fillKeys;
+    const r = hash01(hs + 2), r2 = hash01(hs + 3);
+    let set;
+    if (dist === 'huimin') set = K.huimin;
+    else if (grade <= 1 && st === 8 && r < 0.7) set = K.mainHotel;
+    else if (grade <= 1 && (st === 2 || st === 3) && r < 0.6) set = K.mainOffice;
+    else if (grade === 0) set = r < 0.88 ? K.main : r2 < 0.5 ? K.food2 : K.shop2;
+    else if (grade === 1) set = r < 0.5 ? K.main : r2 < 0.5 ? K.food2 : K.shop2;
+    else if (grade === 2 || grade === 4) set = r < 0.18 ? K.main : r2 < 0.5 ? K.food : K.shop;
+    else set = r2 < 0.5 ? K.food : K.shop;
+    if (!set || !set.length) return null;
+    const brand = set === K.main || set === K.mainHotel || set === K.mainOffice;
+    const i0 = hs >>> 5;
+    for (let t = 0; t < 10; t++) {
+      const key = set[(i0 + t * 7) % set.length];
+      const req = this.permReq.get(key);
+      if (!req || !this.perm.get(key)) continue;
+      if (used.has(req.text)) continue;
+      used.add(req.text);
+      return key;
+    }
+    // 品牌名不重复挂；小店名允许重复（“兰州牛肉拉面”满城都是）
+    if (brand) return null;
+    const key = set[i0 % set.length];
+    return this.perm.get(key) ? key : null;
+  }
+
+  /**
+   * 补充门头：临街底层外墙按“开间”切槽，在 POI 招牌之外的空位挂通用店名（共享图集单元）。
+   * 一条立面要么是铺面排（几乎每个开间都有招牌，连成门头带），要么不挂；招牌统一挂在该楼的门头带（band）上，
+   * 主次干道再在整排招牌后衬一条门头底板。只在画了底商橱窗的立面上挂（与 buildings 立面着色一致）。
+   */
   ensureFill(ch) {
     if (ch.fill) return ch.fill;
     // 先确保本块与相邻块的 POI 招牌已占位
@@ -841,85 +1065,80 @@ if (sTex) {
     }
     const plan = new Plan();
     const bi = this.bi, P = this.P;
+    const used = this.usedNames(ch);
+    const mine = new Set();
     if (P) {
       const x0 = ch.cx * C, z0 = ch.cz * C;
       const ex = this.ctx.exclusions;
+      const FASCIA = ['#2c2e31', '#3a3530', '#45484d', '#2f3437', '#4d4740'];
       bi.candidates(ch.x, ch.z, C * 0.72, (b) => {
         const axb = P.ax[b], azb = P.az[b];
         if (axb < x0 || axb >= x0 + C || azb < z0 || azb >= z0 + C) return;
-        if (P.minDm[b] !== 0) return;
-        const hgt = P.hDm[b] * 0.1;
-        if (hgt < 3.0) return;
-        const st = P.style ? P.style[b] : 255;
-        const prob = st < FILL_P.length ? FILL_P[st] : P.kind[b] === 2 ? 0.7 : P.kind[b] === 3 ? 0 : 0.45;
-        if (!prob) return;
+        if (P.minDm[b] !== 0 || this.exitBoxes.has(b)) return;
+        if (P.hDm[b] < 30) return;
         if (ex && ex.test(axb, azb, 'pois')) return;
+        const I = this.binfo(b);
+        const st = I.st;
+        const rp = st >= 0 && st < ROW_P.length ? ROW_P[st] : ROW_P_UNKNOWN;
+        if (!rp[0] && !rp[1]) return; // 厂房、公共建筑不补门头
         const dist = districtOf(axb, azb);
-        const gf = this.gfOf(b);
+        const campus = this.inCampus(axb, azb);
         const n = P.vc[b];
         for (let e = 0; e < n; e++) {
           const E = this.edge(b, e);
           if (E.L < 4.5) continue;
           const mx = E.ax + E.tx * E.L / 2, mz = E.az + E.tz * E.L / 2;
           if (bi.inside(mx + E.nx * 2, mz + E.nz * 2, b) >= 0) continue;
-          const r = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 26, this.acceptFill, E.tx, E.tz, 0.8);
-          if (!r || r.d > (this.mainCls.has(r.c) ? 32 : 18)) continue;
-          // 临街主次干道两侧更密（东大街、解放路、长安路式的连续门头）
-          // 片区覆盖：用户点名片区（未央/凤城七路、曲江、浐灞）的临街门头密度再 +0.25（街景级打磨）
-          const pe = Math.min(0.97, prob + (this.mainCls.has(r.c) ? (dist === 'wall' ? 0.45 : 0.3) : 0) + (dist !== 'city' ? 0.12 : 0) + (dist === 'street' ? 0.25 : 0));
-          const g0 = this.ctx.terrain.heightAt(mx, mz);
-          let a = 0.35, si = 0;
+          // 街道等级按“临街的最高等级道路”定：主次干道人行道常被 OSM 单独画成 footway，最近的那条线往往是人行道
+          let grade, footOnly = false;
+          const rm = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 32, this.acceptMajor, E.tx, E.tz, 0.8);
+          if (rm) grade = this.grade.get(rm.c);
+          else {
+            const r = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 18, this.acceptFill, E.tx, E.tz, 0.8);
+            if (!r) continue;
+            grade = this.grade.has(r.c) ? this.grade.get(r.c) : 3;
+            footOnly = r.c === this.clsFootway;
+          }
+          if (campus && grade >= 2) continue; // 校园/大院内部步道旁不开店
+          const main = grade <= 1;
+          // 住宅/城中村只在临街底商边（立面画了橱窗/卷帘门）挂；商业/办公/酒店/传统风貌首层本就是铺面
+          const eSt = this.edgeStreet(E, I);
+          if (!eSt && (st === 0 || st === 1 || st === 5)) continue;
           const hb = strHash(`${b}:${e}`);
-          while (a < E.L - 3.3) {
+          let rowP = rp[main ? 0 : 1] + (dist === 'street' ? 0.2 : 0) + (dist === 'wall' && !main ? 0.1 : 0);
+          if (footOnly) rowP *= 0.35; // 只临小区/广场步道（没有车行道）的立面多不是铺面
+          if (hash01(hb + 77) > rowP) continue; // 这条立面不是铺面排
+          const B = this.band(I, eSt);
+          if (!B) continue;
+          const g0 = I.ga, H = B.h;
+          const y = g0 + B.y0 + H / 2;
+          let a = 0.3, si = 0;
+          while (a < E.L - 3.0) {
             const hs = hb + si * 7919;
-            let sw = 3.6 + hash01(hs) * 3.8;
+            // 主次干道铺面开间更宽（品牌店、银行网点）
+            let sw = main ? 4.5 + hash01(hs) * 4.5 : 3.6 + hash01(hs) * 3.8;
             if (a + sw > E.L - 0.3) sw = E.L - 0.3 - a;
-            if (sw < 3.2) break;
+            if (sw < 3.0) break;
             si++;
             const a0 = a;
             a += sw;
-            if (hash01(hs + 1) > pe) continue;
-            const m = a0 + sw / 2, Wt = sw - 0.5;
-            if (!this.occupy(b, e, 0, m - Wt / 2 - 0.1, m + Wt / 2 + 0.1)) continue;
-            const set = dist === 'huimin' ? this.fillKeys.huimin : hash01(hs + 2) < 0.5 ? this.fillKeys.food : this.fillKeys.shop;
-            const key = set[(hs >>> 5) % set.length];
+            if (hash01(hs + 1) > (main ? 0.94 : 0.84)) continue; // 少量空铺 / 无招牌
+            const m = a0 + sw / 2, Wt = sw - 0.3;
+            if (!this.occupy(b, e, 0, m - Wt / 2 - 0.05, m + Wt / 2 + 0.05)) continue;
+            const key = this.pickFill(grade, dist, st, hs, used);
+            if (!key) continue;
             const req = this.permReq.get(key);
-            if (!req || !this.perm.get(key)) continue;
+            mine.add(req.text);
             const s = req.s, T = TYPE[s.type] || TYPE.lightbox;
-            const Ac = req.w / CH;
-            let H = T.H * 0.95;
-            if (H * Ac > Wt) H = Wt / Ac;
-            H = Math.min(H, hgt - 0.25 - 2.15); // 单层铺面：招牌压在檐口下
-            if (H < 0.55) continue;
-            let bottom = Math.max(2.45, gf - 0.2 - H);
-            if (bottom + H > hgt - 0.25) bottom = hgt - 0.25 - H;
-            if (bottom < 2.1) continue;
             const cut = s.type === 'neon' && !s.back;
-            const W = cut ? H * Ac : Wt;
+            const W = cut ? Math.min(H * (req.w / CH), Wt) : Wt;
             const x = E.ax + E.tx * m + E.nx * 0.05, z = E.az + E.tz * m + E.nz * 0.05;
+            if (bi.inside(x + E.nx * 1.2, z + E.nz * 1.2, b) >= 0) continue; // 招牌前方被相邻（重叠）轮廓挡住
             const side = col(s.type === 'lightbox' ? '#8e949a' : s.type === 'led' || s.type === 'neon' ? s.back || '#1a1a1a' : s.frame || s.bg || '#333333');
-            plan.sign(x, g0 + bottom + H / 2, z, E.nx, E.nz, W, H, T.D, key, (s.glow || 1.6) * T.lit * GLOW_K, s.mode || 0, hash01(hs + 3), cut ? F_CUT : 0, side, T.rough);
-            // 二楼招牌（楼上餐馆 / 足疗 / 棋牌等）
-            if (hgt > gf + 3.6 && hash01(hs + 8) < (this.mainCls.has(r.c) ? 0.28 : 0.14) && this.occupy(b, e, 1, m - Wt * 0.42, m + Wt * 0.42)) {
-              const set2 = hash01(hs + 9) < 0.5 ? this.fillKeys.food : this.fillKeys.shop;
-              const k2 = set2[(hs >>> 9) % set2.length];
-              const r2 = this.permReq.get(k2);
-              if (r2 && this.perm.get(k2)) {
-                const s2 = r2.s, T2 = TYPE[s2.type] || TYPE.lightbox;
-                const A2 = r2.w / CH;
-                let H2 = T2.H * 0.8;
-                const W2 = Wt * 0.8;
-                if (H2 * A2 > W2) H2 = W2 / A2;
-                const cut2 = s2.type === 'neon' && !s2.back;
-                if (H2 > 0.5 && gf + 0.5 + H2 < hgt - 0.3) {
-                  plan.sign(x, g0 + gf + 0.5 + H2 / 2, z, E.nx, E.nz, cut2 ? H2 * A2 : W2, H2, T2.D, k2, (s2.glow || 1.6) * T2.lit * GLOW_K, s2.mode || 0, hash01(hs + 10), cut2 ? F_CUT : 0,
-                    col(s2.type === 'lightbox' ? '#8e949a' : s2.type === 'led' || s2.type === 'neon' ? s2.back || '#1a1a1a' : s2.frame || s2.bg || '#333333'), T2.rough);
-                }
-              }
-            }
-            // 竖牌（回民街更多）
-            const pb = dist === 'huimin' ? 0.45 : 0.1;
-            if (hash01(hs + 4) < pb && hgt > gf + 2) {
+            plan.sign(x, y, z, E.nx, E.nz, W, H, T.D, key, capGlow(s, (s.glow || 1.6) * T.lit * GLOW_K), s.mode || 0, hash01(hs + 3), cut ? F_CUT : 0, side, T.rough);
+            // 挑出竖牌：支路小巷与回民街（主次干道沿街整治后多已拆除）
+            const pb = dist === 'huimin' ? 0.45 : main ? 0 : 0.1;
+            if (hash01(hs + 4) < pb && I.H > B.y0 + 2) {
               const vset = dist === 'huimin' ? this.fillKeys.vhm : this.fillKeys.vert;
               const vkey = vset[(hs >>> 7) % vset.length];
               const vreq = this.permReq.get(vkey);
@@ -930,7 +1149,22 @@ if (sTex) {
                 const out = 0.3 + Wb / 2;
                 const vx = E.ax + E.tx * mb + E.nx * out, vz = E.az + E.tz * mb + E.nz * out;
                 const vs = vreq.s, VT = TYPE[vs.type] || TYPE.lightbox;
-                plan.sign(vx, g0 + Math.max(2.7, gf - 0.1) + Hb / 2, vz, E.tx, E.tz, Hb / vA, Hb, 0.14, vkey, (vs.glow || 1.8) * VT.lit * GLOW_K, vs.mode || 0, hash01(hs + 6), F_VERT | F_DOUBLE, col(vs.back || vs.bg || '#222222'), VT.rough);
+                plan.sign(vx, g0 + B.y0 + Hb / 2, vz, E.tx, E.tz, Hb / vA, Hb, 0.14, vkey, capGlow(vs, (vs.glow || 1.8) * VT.lit * GLOW_K), vs.mode || 0, hash01(hs + 6), F_VERT | F_DOUBLE, col(vs.back || vs.bg || '#222222'), VT.rough);
+              }
+            }
+          }
+          // 门头底板：主次干道上把整排招牌（含该立面上的 POI 招牌）连成一条连续的门头带
+          if (main) {
+            const l = this.occ.get(b * 4096 + e * 4);
+            if (l && l.length >= 4) {
+              let lo = Infinity, hi = -Infinity;
+              for (let i = 0; i < l.length; i += 2) { lo = Math.min(lo, l[i]); hi = Math.max(hi, l[i + 1]); }
+              lo = Math.max(0.05, lo - 0.1);
+              hi = Math.min(E.L - 0.05, hi + 0.1);
+              if (hi - lo > 4) {
+                const c = (lo + hi) / 2;
+                const fc = col(FASCIA[hb % FASCIA.length]);
+                plan.sign(E.ax + E.tx * c + E.nx * 0.01, y, E.az + E.tz * c + E.nz * 0.01, E.nx, E.nz, hi - lo, H + 0.24, 0.05, null, 0, 0, 0, 0, fc, 0.6);
               }
             }
           }
@@ -940,9 +1174,9 @@ if (sTex) {
     const fin = plan.finish();
     this.resolve(fin, null);
     ch.fill = fin;
+    ch.fillNames = mine;
     return fin;
   }
-
   // ———————————————————— 流式加载 ————————————————————
   /** 为区块分配图集单元并写入 UV（可分帧）：true 完成 / false 暂停 / null 图集满 */
   goLive(ch, deadline = Infinity) {
@@ -1116,6 +1350,25 @@ if (sTex) {
       shelters: this.shelters.count, canopies: this.canopies.count, pages: this.atlas.pages.length, segs: this.atlas.usedSegs,
     };
   }
+  diag(x, z, r) {
+    const out = [];
+    const T = this.ctx.terrain;
+    for (const ch of this.live) {
+      for (const p of [ch.plan, ch.fillOn ? ch.fill : null]) {
+        if (!p) continue;
+        const a = p.a;
+        for (let i = 0; i < p.n; i++) {
+          const o = i * STRIDE, px = a[o + 12], pz = a[o + 14];
+          if (Math.hypot(px - x, pz - z) > r) continue;
+          out.push({
+            k: p.keys[i], x: +px.toFixed(1), y: +(a[o + 13] - T.heightAt(px, pz)).toFixed(2), z: +pz.toFixed(1),
+            W: +Math.hypot(a[o], a[o + 2]).toFixed(2), H: +a[o + 5].toFixed(2), g: +a[o + 20].toFixed(2),
+          });
+        }
+      }
+    }
+    return out;
+  }
   dispose() {
     this.ctx.scene.remove(this.group);
     this.signs.geometry.dispose();
@@ -1137,6 +1390,35 @@ function paintReq(g, x, y, w, req) {
     case 'busv': paintBusName(g, x, y, w, req.name, true); break;
     default: break;
   }
+}
+
+/** 用地多边形点查询（landuse.json 指定类别；500 m 格网 + 外包盒预筛） → (x, z) => bool */
+function landIndex(lu, kinds) {
+  const grid = new Map(), CELL = 500;
+  for (const p of (lu && lu.polys) || []) {
+    const o = p.outer;
+    if (!kinds.has(p.k) || !o || o.length < 6) continue;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < o.length; i += 2) {
+      if (o[i] < x0) x0 = o[i]; if (o[i] > x1) x1 = o[i];
+      if (o[i + 1] < z0) z0 = o[i + 1]; if (o[i + 1] > z1) z1 = o[i + 1];
+    }
+    if (x1 < -17000 || x0 > 17000 || z1 < -17000 || z0 > 17000 || (x1 - x0) * (z1 - z0) > 9e6) continue;
+    const it = { o, x0, x1, z0, z1 };
+    for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++)
+      for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) {
+        const k = cx * 100003 + cz;
+        let l = grid.get(k);
+        if (!l) grid.set(k, (l = []));
+        l.push(it);
+      }
+  }
+  return (x, z) => {
+    const l = grid.get(Math.floor(x / CELL) * 100003 + Math.floor(z / CELL));
+    if (!l) return false;
+    for (const it of l) if (x >= it.x0 && x <= it.x1 && z >= it.z0 && z <= it.z1 && pointInPoly(x, z, it.o)) return true;
+    return false;
+  };
 }
 
 // ———————————————————— 构筑物几何（合并 + 顶点色） ————————————————————
@@ -1190,7 +1472,7 @@ function shelterGeometry() {
 /** 地铁出入口雨棚（本地：x 横向 ±2.4，z 纵向 ±4.5，+z 为开口）。
  *  参考西安地铁 1/2 号线出入口：深灰金属框架 + 蓝灰玻璃侧墙 + 平顶，开口上方门头（招牌实例）。 */
 function canopyGeometry() {
-  const frame = '#3c4046', glass = '#3e5866', roof = '#565b61', stone = '#8f8d88', voidc = '#1a1b1d';
+  const frame = '#4a5058', glass = '#5f7f8c', roof = '#5d636a', stone = '#8f8d88', voidc = '#1a1b1d';
   const W = 2.4, L = 4.5;
   const B = [];
   B.push([-W - 0.2, 0, -L - 0.2, W + 0.2, 0.15, L + 0.2, stone]); // 台基
