@@ -462,7 +462,7 @@ export default {
         const b = G.bbox(f.outer);
         return !(b.x0 > rb.x0 - 5 && b.x1 < rb.x1 + 5 && b.z0 > rb.z0 - 5 && b.z1 < rb.z1 + 5);
       });
-      lu.polys.push({ k: 'park', n: NAME, a: 5000, outer: plazaPoly, holes: this.pits.map((p) => G.inset(p.rim, -7.5)) });
+      lu.polys.push({ k: 'park', n: NAME, a: 5000, boost: 3, outer: plazaPoly, holes: this.pits.map((p) => G.inset(p.rim, -7.5)) });
     }
     this.field0 = field0;
   },
