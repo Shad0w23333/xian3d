@@ -26,6 +26,7 @@ export const MODULES = [
   { id: 'parking', load: () => import('./parking.js') },
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'vegetation', load: () => import('./vegetation.js') },
+  { id: 'parks', load: () => import('./parks.js') }, // 公园与水岸近景：须在 water（ctx.waterBodies）、buildings（让位表）、vegetation（种植结果）之后
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
   { id: 'amapinfo', load: () => import('./amapinfo.js') },
