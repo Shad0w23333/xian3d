@@ -5,7 +5,7 @@
 //   aMat     (paintMode, roughness, metalness, emissiveKind)
 //             paintMode 0=顶点色 1=车漆(实例色) 2=第二色(车顶黑/货箱色) 3=号牌(蓝/绿) 4=条纹(实例色,列车) 5=车窗玻璃(深色贴膜 + 透见头枕)
 //             emissiveKind 见 EM
-//   aKind    所属车型（-1 = 通用部件；uber 几何按实例车型折叠其它车型的顶点）
+//   aKU      (所属车型 -1 = 通用部件 / uber 几何按实例车型折叠其它车型的顶点, 号牌纹理 u, v)
 // 参考尺寸：
 //   轿车 4.70×1.83×1.46 m（吉利帝豪/比亚迪 e5 级别），SUV 4.75×1.90×1.72 m
 //   西安公交：比亚迪 K9/BYD6122 纯电动 12.0×2.55×3.15 m（顶置电池舱），车身黄绿色、黑色窗带、红色 LED 路牌
@@ -18,18 +18,19 @@ export const EM = { NONE: 0, HEAD: 1, TAIL: 2, TURN_L: 3, TURN_R: 4, INTERIOR: 5
 export const PM = { NONE: 0, BODY: 1, SECOND: 2, PLATE: 3, STRIPE: 4, GLASS: 5 };
 
 // 道路车辆车型编码
-export const VK = { CAR: 0, TAXI: 1, BUS: 2, DUMP: 3, BOXTRUCK: 4, SEMI: 5 };
+// BUS_A = 18 m 铰接公交（前节，后节只在绘制时作为 BUS_R 另放一个实例，随路径折转）
+export const VK = { CAR: 0, TAXI: 1, BUS: 2, DUMP: 3, BOXTRUCK: 4, SEMI: 5, BUS_A: 6, BUS_R: 7 };
 // 车长（米，用于间距/跟驰）
-export const VK_LEN = [4.7, 4.7, 12.0, 8.6, 7.6, 16.5];
+export const VK_LEN = [4.7, 4.7, 12.0, 8.6, 7.6, 16.5, 18.0, 6.0];
 // 列车车辆编码
 export const TK = { HSR_HEAD: 0, HSR_MID: 1, LOCO: 2, COACH: 3, GONDOLA: 4, TANK: 5, METRO_HEAD: 6, METRO_MID: 7 };
 export const TK_LEN = [27.2, 25.0, 20.8, 25.5, 13.9, 12.2, 19.5, 19.0];
 
-const col = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
+export const col = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const lerp = (a, b, t) => a + (b - a) * t;
 
 // —— 常用材质规格 ——
-const M = {
+export const M = {
   paint: { c: [1, 1, 1], paint: PM.BODY, rough: 0.28, metal: 0.45 },
   paintLow: { c: [0.82, 0.82, 0.82], paint: PM.BODY, rough: 0.32, metal: 0.4 },
   roof: { c: [1, 1, 1], paint: PM.SECOND, rough: 0.3, metal: 0.4 },
@@ -56,21 +57,21 @@ const M = {
   greyLight: { c: col(0xc9ccd0), rough: 0.5, metal: 0.2 },
   greyDark: { c: col(0x3a3d41), rough: 0.6, metal: 0.2 },
 };
-const withKind = (m, kind) => ({ ...m, kind });
+export const withKind = (m, kind) => ({ ...m, kind });
 
 // ======================================================================
 // 几何构建器
 // ======================================================================
-class GeoBuilder {
+export class GeoBuilder {
   constructor(replay = null) {
-    this.P = []; this.C = []; this.M = []; this.K = [];
+    this.P = []; this.C = []; this.M = []; this.K = []; this.U = [];
     this.flips = replay || [];
     this.replay = !!replay;
     this.fi = 0;
     this.kind = -1;
   }
   /** 三角形；ref = 内部参考点（数组）或 {n:[外法线]}，自动定向为外法线朝外 */
-  tri(a, b, c, m, ref) {
+  tri(a, b, c, m, ref, uv = null) {
     let flip;
     if (this.replay) flip = this.flips[this.fi++];
     else {
@@ -88,15 +89,58 @@ class GeoBuilder {
       this.flips.push(flip);
     }
     const vs = flip ? [a, c, b] : [a, b, c];
+    const us = uv ? (flip ? [uv[0], uv[2], uv[1]] : uv) : null;
     const k = m.kind !== undefined ? m.kind : this.kind;
-    for (const v of vs) {
+    for (let q = 0; q < 3; q++) {
+      const v = vs[q];
       this.P.push(v[0], v[1], v[2]);
+      if (us) this.U.push(us[q][0], us[q][1]); else this.U.push(-1, -1);
       this.C.push(m.c[0], m.c[1], m.c[2]);
       this.M.push(m.paint || 0, m.rough ?? 0.5, m.metal ?? 0, m.em || 0);
       this.K.push(k);
     }
   }
-  quad(a, b, c, d, m, ref) { this.tri(a, b, c, m, ref); this.tri(a, c, d, m, ref); }
+  quad(a, b, c, d, m, ref, uv = null) { this.tri(a, b, c, m, ref, uv && [uv[0], uv[1], uv[2]]); this.tri(a, c, d, m, ref, uv && [uv[0], uv[2], uv[3]]); }
+  /** 号牌贴面（法线 ±z，带 0..1 纹理坐标，从观看者看去左→右为 u 增大） */
+  plateZ(cx, cy, z, w, h, m, facing) {
+    const n = { n: [0, 0, facing] };
+    const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2;
+    // 正面（+z）观看者的右手 = +x；背面（-z）观看者的右手 = -x
+    const uL = facing > 0 ? 0 : 1, uR = 1 - uL;
+    this.quad([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], m, n, [[uL, 0], [uR, 0], [uR, 1], [uL, 1]]);
+  }
+  /** 两点间圆管（seg 段，caps 封口） */
+  tube(a, b, r, m, seg = 6, caps = false, r2 = r) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+    const L = Math.hypot(dx, dy, dz) || 1e-6;
+    const ax = [dx / L, dy / L, dz / L];
+    const t = Math.abs(ax[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    let u = [ax[1] * t[2] - ax[2] * t[1], ax[2] * t[0] - ax[0] * t[2], ax[0] * t[1] - ax[1] * t[0]];
+    const ul = Math.hypot(...u); u = u.map((v) => v / ul);
+    const v = [ax[1] * u[2] - ax[2] * u[1], ax[2] * u[0] - ax[0] * u[2], ax[0] * u[1] - ax[1] * u[0]];
+    const ring = (c, rr, k) => { const an = (k / seg) * Math.PI * 2, ca = Math.cos(an) * rr, sa = Math.sin(an) * rr; return [c[0] + u[0] * ca + v[0] * sa, c[1] + u[1] * ca + v[1] * sa, c[2] + u[2] * ca + v[2] * sa]; };
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    for (let k = 0; k < seg; k++) {
+      this.quad(ring(a, r, k), ring(a, r, k + 1), ring(b, r2, k + 1), ring(b, r2, k), m, mid);
+      if (caps) {
+        this.tri(a, ring(a, r, k), ring(a, r, k + 1), m, { n: [-ax[0], -ax[1], -ax[2]] });
+        this.tri(b, ring(b, r2, k), ring(b, r2, k + 1), m, { n: ax });
+      }
+    }
+  }
+  /** 绕 x 轴倾斜 tilt 的盒子（中心 c、尺寸 s） */
+  obox(cx, cy, cz, sx, sy, sz, tilt, m, skip = '') {
+    const c = Math.cos(tilt), s = Math.sin(tilt);
+    const P = (x, y, z) => [cx + x, cy + y * c - z * s, cz + y * s + z * c];
+    const x0 = -sx / 2, x1 = sx / 2, y0 = -sy / 2, y1 = sy / 2, z0 = -sz / 2, z1 = sz / 2;
+    const ref = [cx, cy, cz];
+    if (!skip.includes('top')) this.quad(P(x0, y1, z0), P(x1, y1, z0), P(x1, y1, z1), P(x0, y1, z1), m, ref);
+    if (!skip.includes('bottom')) this.quad(P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1), m, ref);
+    if (!skip.includes('front')) this.quad(P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1), m, ref);
+    if (!skip.includes('back')) this.quad(P(x0, y0, z0), P(x1, y0, z0), P(x1, y1, z0), P(x0, y1, z0), m, ref);
+    if (!skip.includes('left')) this.quad(P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1), m, ref);
+    if (!skip.includes('right')) this.quad(P(x0, y0, z0), P(x0, y1, z0), P(x0, y1, z1), P(x0, y0, z1), m, ref);
+  }
   /** 轴对齐盒（中心、尺寸）；skip: 'bottom'/'back' 等可省面 */
   box(cx, cy, cz, sx, sy, sz, m, skip = '') {
     const x0 = cx - sx / 2, x1 = cx + sx / 2, y0 = cy - sy / 2, y1 = cy + sy / 2, z0 = cz - sz / 2, z1 = cz + sz / 2;
@@ -167,14 +211,17 @@ class GeoBuilder {
     g.setAttribute('normal', new THREE.BufferAttribute(smoothNormals(pos, creaseDeg), 3));
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(this.C), 3));
     g.setAttribute('aMat', new THREE.BufferAttribute(new Float32Array(this.M), 4));
-    g.setAttribute('aKind', new THREE.BufferAttribute(new Float32Array(this.K), 1));
+    // aKU = (车型/选项, 号牌纹理 u, v)：合成一个属性（小汽车三目标形变已占 16 个顶点属性槽的大半）
+    const n = this.K.length, ku = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { ku[i * 3] = this.K[i]; ku[i * 3 + 1] = this.U[i * 2]; ku[i * 3 + 2] = this.U[i * 2 + 1]; }
+    g.setAttribute('aKU', new THREE.BufferAttribute(ku, 3));
     if (extra) for (const [k, v] of Object.entries(extra)) g.setAttribute(k, v);
     return g;
   }
 }
 
 /** 折痕角平滑法线：同位置、法线夹角小于 crease 的面参与平均 */
-function smoothNormals(pos, creaseDeg) {
+export function smoothNormals(pos, creaseDeg) {
   const nTri = pos.length / 9;
   const fn = new Float32Array(nTri * 3);
   for (let t = 0; t < nTri; t++) {
@@ -214,191 +261,83 @@ function smoothNormals(pos, creaseDeg) {
 }
 
 // ======================================================================
-// 小汽车（轿车 ↔ SUV 形变，拓扑一致）
+// 大型车：公交 / 渣土车 / 厢式货车 / 半挂（uber 几何，按 aKU.x 车型折叠）
 // ======================================================================
-// 站点：[z, yb(底), ys(裙线), yw(腰线), yt(顶), hw(腰线半宽), hwt(顶半宽)]
-const SEDAN = {
-  st: [
-    [2.36, 0.30, 0.42, 0.60, 0.66, 0.78, 0.70],
-    [2.30, 0.22, 0.38, 0.70, 0.76, 0.87, 0.80],
-    [2.05, 0.19, 0.36, 0.78, 0.84, 0.905, 0.85],
-    [1.45, 0.19, 0.36, 0.86, 0.91, 0.915, 0.87],
-    [0.98, 0.19, 0.36, 0.90, 0.95, 0.915, 0.86],
-    [0.18, 0.19, 0.36, 0.94, 1.43, 0.915, 0.69],
-    [-0.12, 0.19, 0.36, 0.95, 1.46, 0.915, 0.70],
-    [-0.30, 0.19, 0.36, 0.95, 1.46, 0.915, 0.70],
-    [-0.95, 0.19, 0.36, 0.95, 1.44, 0.915, 0.69],
-    [-1.18, 0.19, 0.36, 0.95, 1.40, 0.915, 0.68],
-    [-1.78, 0.20, 0.37, 0.95, 1.02, 0.91, 0.80],
-    [-2.20, 0.24, 0.40, 0.93, 0.99, 0.89, 0.80],
-    [-2.33, 0.28, 0.42, 0.86, 0.92, 0.85, 0.76],
-    [-2.37, 0.34, 0.45, 0.78, 0.82, 0.78, 0.70],
-  ],
-  wheelR: 0.325, axleF: 1.40, axleR: -1.37, track: 0.80, headY: 0.70, tailY: 0.86, plateY: 0.42, rearPlateY: 0.58,
-  frontZ: 2.33, rearZ: -2.35, mirrorY: 1.0, mirrorZ: 0.80, roofY: 1.46,
-};
-const SUV = {
-  st: [
-    [2.38, 0.38, 0.52, 0.72, 0.80, 0.82, 0.74],
-    [2.32, 0.30, 0.48, 0.88, 0.94, 0.91, 0.84],
-    [2.10, 0.27, 0.46, 0.98, 1.04, 0.94, 0.89],
-    [1.55, 0.27, 0.46, 1.04, 1.09, 0.95, 0.91],
-    [1.18, 0.27, 0.46, 1.06, 1.12, 0.95, 0.90],
-    [0.42, 0.27, 0.46, 1.08, 1.68, 0.95, 0.76],
-    [0.08, 0.27, 0.46, 1.08, 1.72, 0.95, 0.78],
-    [-0.12, 0.27, 0.46, 1.08, 1.72, 0.95, 0.78],
-    [-1.15, 0.27, 0.46, 1.08, 1.71, 0.95, 0.78],
-    [-1.95, 0.27, 0.46, 1.08, 1.69, 0.95, 0.77],
-    [-2.27, 0.28, 0.47, 1.06, 1.14, 0.94, 0.84],
-    [-2.33, 0.30, 0.49, 1.02, 1.06, 0.93, 0.85],
-    [-2.37, 0.33, 0.50, 0.92, 0.97, 0.90, 0.82],
-    [-2.40, 0.40, 0.52, 0.82, 0.86, 0.82, 0.74],
-  ],
-  wheelR: 0.37, axleF: 1.45, axleR: -1.40, track: 0.83, headY: 0.90, tailY: 1.05, plateY: 0.52, rearPlateY: 0.70,
-  frontZ: 2.36, rearZ: -2.38, mirrorY: 1.2, mirrorZ: 1.00, roofY: 1.72,
-};
-// 区间类型：[侧面 0 车身 / 1 玻璃 / 2 黑色立柱, 顶面 0 车身(引擎盖/行李箱) / 1 玻璃 / 2 车顶]
-const CAR_INTERVALS = [
-  [0, 0], [0, 0], [0, 0], [0, 0], [1, 1], [1, 2], [2, 2], [1, 2], [1, 2], [0, 1], [0, 0], [0, 0], [0, 0],
-];
-
-function carRing(s) {
-  const [, yb, ys, yw, yt, hw, hwt] = s;
-  // 腰线肩部（车窗下沿向内收 2.5%）：侧面在腰线处有一道折线高光，车身不再是平板盒子
-  const ysh = Math.min(yw + 0.045, yt - 0.06);
-  return [
-    [hw * 0.93, yb], [hw, ys], [hw, yw], [hw * 0.975, ysh], [hwt, yt - 0.05], [hwt * 0.55, yt],
-    [-hwt * 0.55, yt], [-hwt, yt - 0.05], [-hw * 0.975, ysh], [-hw, yw], [-hw, ys], [-hw * 0.93, yb],
-  ];
-}
-/** 站点表在 z 处的腰线半宽（线性插值） */
-function hwAt(P, z) {
-  const st = P.st;
-  for (let i = 0; i + 1 < st.length; i++) {
-    const a = st[i], b = st[i + 1];
-    if ((z <= a[0] && z >= b[0]) || (z >= a[0] && z <= b[0])) return a[5] + ((b[5] - a[5]) * (z - a[0])) / (b[0] - a[0] || 1);
-  }
-  return st[0][5];
-}
-
-function buildCar(B, P) {
-  const secs = P.st.map((s) => ({ z: s[0], ring: carRing(s) }));
-  B.loft(secs, (i, k) => {
-    const [side, top] = CAR_INTERVALS[i];
-    if (k === 11) return M.under;
-    if (k === 0 || k === 10) return M.paintLow;
-    if (k === 1 || k === 9 || k === 2 || k === 8) return M.paint; // 侧板 + 腰线肩部
-    if (k === 3 || k === 7) return side === 1 ? M.glass : side === 2 ? M.trim : M.paint;
-    // 4,5,6：顶面
-    return top === 1 ? M.glass : top === 2 ? M.roof : M.paint;
-  }, { capFront: M.paint, capBack: M.paint, center: () => 0.7 });
-  const fz = P.frontZ, rz = P.rearZ;
-  // 前脸
-  B.box(0, P.headY - 0.17, fz + 0.01, 0.92, 0.2, 0.08, M.trim); // 格栅
-  B.box(0, P.plateY - 0.12, fz + 0.03, 1.2, 0.1, 0.05, M.black); // 下进气
-  for (const sd of [1, -1]) {
-    // 前大灯：深色灯腔（略大、略靠后）+ 发光灯罩 + 下沿日行灯条 → 有进深的灯组，而不是一块贴片
-    B.box(sd * 0.60, P.headY + 0.005, fz - 0.1, 0.46, 0.15, 0.2, M.lamp, 'back');
-    B.box(sd * 0.60, P.headY, fz - 0.06, 0.4, 0.1, 0.2, M.head);
-    B.box(sd * 0.62, P.headY - 0.075, fz - 0.03, 0.40, 0.03, 0.14, M.drl);
-    B.box(sd * 0.83, P.headY, fz - 0.2, 0.08, 0.07, 0.2, sd > 0 ? M.turnL : M.turnR);
-    // 尾灯：深红灯腔 + 内侧亮条
-    B.box(sd * 0.60, P.tailY, rz + 0.06, 0.5, 0.15, 0.12, M.lamp, 'front');
-    B.box(sd * 0.60, P.tailY, rz + 0.04, 0.46, 0.12, 0.12, M.tail);
-    B.box(sd * 0.84, P.tailY - 0.02, rz + 0.12, 0.06, 0.1, 0.12, sd > 0 ? M.turnL : M.turnR);
-    // 后视镜
-    B.box(sd * 0.99, P.mirrorY, P.mirrorZ, 0.16, 0.12, 0.24, M.paint);
-    B.box(sd * 0.99, P.mirrorY, P.mirrorZ - 0.121, 0.13, 0.09, 0.005, M.chrome);
-    // 车轮外侧面与车身侧板齐平（原先整轮缩在车身里，只露底下一条，像方盒在地上滑），
-    // 轮上方贴半圆形暗色轮拱开口（8 个三角形）
-    for (const az of [P.axleF, P.axleR]) {
-      const hwA = hwAt(P, az);
-      B.wheel(sd * (hwA + 0.012 - 0.11), az, P.wheelR, 0.22, sd);
-      const x = sd * (hwA + 0.004), R = P.wheelR + 0.075;
-      for (let k = 0; k < 8; k++) {
-        const a0 = (Math.PI * k) / 8, a1 = (Math.PI * (k + 1)) / 8;
-        B.tri([x, P.wheelR, az], [x, P.wheelR + Math.sin(a0) * R, az + Math.cos(a0) * R], [x, P.wheelR + Math.sin(a1) * R, az + Math.cos(a1) * R], M.under, { n: [sd, 0, 0] });
-      }
-    }
-  }
-  B.box(0, P.tailY + 0.02, rz + 0.01, 0.72, 0.035, 0.06, M.tail); // 贯穿式尾灯
-  B.box(0, P.plateY, fz + 0.06, 0.44, 0.14, 0.02, M.plate);
-  B.box(0, P.rearPlateY, rz - 0.02, 0.44, 0.14, 0.02, M.plate);
-  B.box(0, 0.33, rz - 0.0, 1.3, 0.1, 0.06, M.black);
-  // 接触阴影
-  B.quad([1.0, 0.03, 2.5], [-1.0, 0.03, 2.5], [-1.0, 0.03, -2.5], [1.0, 0.03, -2.5], M.under, { n: [0, 1, 0] });
-  // 出租车顶灯（仅 kind=1 显示）：白色灯箱 + 蓝色字带（西安出租车顶灯为白底蓝字）
-  B.box(0, P.roofY + 0.03, -0.30, 0.82, 0.06, 0.32, withKind(M.black, VK.TAXI));
-  B.box(0, P.roofY + 0.15, -0.30, 0.74, 0.18, 0.26, withKind(M.taxiSign, VK.TAXI));
-  B.box(0, P.roofY + 0.13, -0.30, 0.76, 0.05, 0.28, withKind(M.taxiBand, VK.TAXI));
-}
-
-/** 近景小汽车几何（position = 轿车，position2 = SUV，normal2 = SUV 法线） */
-export function carNearGeometry() {
-  const A = new GeoBuilder();
-  buildCar(A, SEDAN);
-  const Bb = new GeoBuilder(A.flips);
-  buildCar(Bb, SUV);
-  const pos2 = new Float32Array(Bb.P);
-  const g = A.toGeometry(38, {
-    position2: new THREE.BufferAttribute(pos2, 3),
-    normal2: new THREE.BufferAttribute(smoothNormals(pos2, 38), 3),
-  });
-  return g;
-}
-
-// ======================================================================
-// 大型车：公交 / 渣土车 / 厢式货车 / 半挂（uber 几何，按 aKind 折叠）
-// ======================================================================
-function buildBus(B) {
-  B.kind = VK.BUS;
+/**
+ * 公交车身（低地板纯电动）。part：'single' 12 m 单机（z +6 ~ −6）；'front' 铰接前节（z +9 ~ −2.6，车辆中心在铰接车全长中点）；
+ * 'rear' 铰接后节（以铰接点为原点，z 0 ~ −6，含 0 ~ −0.8 的折棚）。
+ * 涂装：车身（实例色，白）+ 下部色带与前脸下裙（第二色，实例打包色：绿/蓝），窗带黑色。
+ */
+function buildBus(B, part = 'single') {
+  B.kind = part === 'single' ? VK.BUS : part === 'front' ? VK.BUS_A : VK.BUS_R;
   const hw = 1.275;
   const ring = [
     [hw - 0.03, 0.32], [hw, 0.62], [hw, 1.05], [hw, 2.72], [hw - 0.08, 3.02], [hw - 0.4, 3.13],
     [-hw + 0.4, 3.13], [-hw + 0.08, 3.02], [-hw, 2.72], [-hw, 1.05], [-hw, 0.62], [-hw + 0.03, 0.32],
   ];
-  // 纵向站点：前门 4.1~5.3、中门 -0.55~0.65，窗柱
-  const zs = [6.0, 5.88, 5.3, 4.1, 3.2, 3.05, 1.9, 1.75, 0.65, -0.55, -1.6, -1.75, -2.9, -3.05, -4.2, -4.35, -5.85, -6.0];
-  const door = (za, zb) => (za <= 5.3 && zb >= 4.1) || (za <= 0.65 && zb >= -0.55);
+  const accent = { c: [1, 1, 1], paint: PM.SECOND, rough: 0.32, metal: 0.35 };
+  let zs, doors, wheels, front = true, rear = true, zF, zR;
+  if (part === 'single') {
+    zs = [6.0, 5.88, 5.3, 4.1, 3.2, 3.05, 1.9, 1.75, 0.65, -0.55, -1.6, -1.75, -2.9, -3.05, -4.2, -4.35, -5.85, -6.0];
+    doors = [[4.1, 5.3], [-0.55, 0.65]]; wheels = [[3.4, 0], [-2.5, 1]]; zF = 6.0; zR = -6.0;
+  } else if (part === 'front') {
+    zs = [9.0, 8.88, 8.3, 7.1, 6.2, 6.05, 4.9, 4.75, 3.65, 2.45, 1.4, 1.25, 0.1, -0.05, -1.2, -1.35, -3.0];
+    doors = [[7.1, 8.3], [2.45, 3.65]]; wheels = [[6.4, 0], [-0.9, 1]]; rear = false; zF = 9.0; zR = -3.0;
+  } else {
+    zs = [-0.8, -0.95, -1.4, -2.6, -3.6, -3.75, -4.9, -5.05, -5.85, -6.0];
+    doors = [[-1.4, -2.6]]; wheels = [[-4.3, 1]]; front = false; zF = -0.8; zR = -6.0;
+  }
+  const isDoor = (za, zb) => doors.some(([d0, d1]) => za <= d1 + 1e-3 && zb >= d0 - 1e-3);
   const secs = zs.map((z, i) => {
-    const sc = i === 0 || i === zs.length - 1 ? 0.97 : 1;
-    return { z, ring: ring.map(([x, y]) => [x * sc, y * (i === 0 ? 0.995 : 1)]) };
+    const endF = front && i === 0, endR = rear && i === zs.length - 1;
+    const sc = endF || endR ? 0.97 : 1;
+    return { z, ring: ring.map(([x, y]) => [x * sc, y * (endF ? 0.995 : 1)]) };
   });
   const paint = M.paint, low = { c: col(0x2b2d30), rough: 0.6, metal: 0.2 };
   B.loft(secs, (i, k) => {
     const za = zs[i], zb = zs[i + 1];
-    const isDoor = door(Math.max(za, zb), Math.min(za, zb)) && Math.abs(za - zb) > 0.5;
-    const pillar = Math.abs(za - zb) < 0.2 || i === 0 || i === zs.length - 2;
+    const door = isDoor(Math.max(za, zb), Math.min(za, zb)) && Math.abs(za - zb) > 0.5;
+    const pillar = Math.abs(za - zb) < 0.2 || (front && i === 0) || (rear && i === zs.length - 2);
     if (k === 11) return M.under;
     if (k === 0 || k === 10) return low;
-    if (k === 1 || k === 9) return isDoor && k === 9 ? M.glassBus : paint; // 右侧（-x）为车门侧
+    if (k === 1 || k === 9) return door && k === 9 ? M.glassBus : accent; // 右侧（-x）为车门侧
     if (k === 2 || k === 8) return pillar ? M.black : M.glassBus;
     return paint;
-  }, { capFront: paint, capBack: paint, center: () => 1.6 });
-  // 前脸：大挡风玻璃、LED 路牌、前灯
-  B.panelZ(0, 1.85, 6.02, 2.3, 1.55, M.glassBus, 1);
-  B.panelZ(0, 2.82, 6.02, 1.8, 0.24, M.led, 1);
-  B.panelZ(0, 0.72, 6.02, 2.4, 0.5, M.paint, 1);
-  for (const sd of [1, -1]) {
-    B.box(sd * 0.92, 0.72, 6.0, 0.42, 0.2, 0.08, M.head);
-    B.box(sd * 0.93, 0.58, 6.0, 0.36, 0.04, 0.08, M.drl);
-    B.box(sd * 1.18, 0.74, 5.95, 0.1, 0.12, 0.12, sd > 0 ? M.turnL : M.turnR);
-    B.box(sd * 1.1, 0.95, -6.0, 0.16, 0.6, 0.06, M.tail);
-    B.box(sd * 1.1, 1.35, -6.0, 0.14, 0.14, 0.06, sd > 0 ? M.turnL : M.turnR);
-    // 羊角后视镜
-    B.box(sd * 1.42, 2.3, 6.15, 0.1, 0.35, 0.18, M.black);
-    // 车轮（后轴双胎）
-    B.wheel(sd * 1.02, 3.4, 0.5, 0.3, sd, 12, 0.55);
-    B.wheel(sd * 0.98, -2.5, 0.5, 0.55, sd, 12, 0.55);
+  }, { capFront: front ? paint : null, capBack: rear ? paint : null, center: () => 1.6 });
+  if (front) {
+    // 前脸：大挡风玻璃、LED 路牌、前灯、下裙色带
+    B.panelZ(0, 1.85, zF + 0.02, 2.3, 1.55, M.glassBus, 1);
+    B.panelZ(0, 2.82, zF + 0.02, 1.8, 0.24, M.led, 1);
+    B.panelZ(0, 0.72, zF + 0.02, 2.4, 0.5, accent, 1);
+    B.plateZ(0, 0.55, zF + 0.04, 0.44, 0.14, M.plate, 1);
+    for (const sd of [1, -1]) {
+      B.box(sd * 0.92, 0.72, zF, 0.42, 0.2, 0.08, M.head);
+      B.box(sd * 0.93, 0.58, zF, 0.36, 0.04, 0.08, M.drl);
+      B.box(sd * 1.18, 0.74, zF - 0.05, 0.1, 0.12, 0.12, sd > 0 ? M.turnL : M.turnR);
+      B.box(sd * 1.42, 2.3, zF + 0.15, 0.1, 0.35, 0.18, M.black); // 羊角后视镜
+    }
   }
-  B.panelZ(0, 2.2, -6.02, 1.9, 0.75, M.glassBus, -1);
-  B.panelZ(0, 2.82, -6.02, 0.9, 0.24, M.led, -1);
-  B.panelZ(0, 0.55, 6.04, 0.44, 0.14, M.plate, 1);
-  B.panelZ(0, 0.6, -6.04, 0.44, 0.14, M.plate, -1);
+  if (rear) {
+    B.panelZ(0, 2.2, zR - 0.02, 1.9, 0.75, M.glassBus, -1);
+    B.panelZ(0, 2.82, zR - 0.02, 0.9, 0.24, M.led, -1);
+    B.plateZ(0, 0.6, zR - 0.04, 0.44, 0.14, M.plate, -1);
+    for (const sd of [1, -1]) {
+      B.box(sd * 1.1, 0.95, zR, 0.16, 0.6, 0.06, M.tail);
+      B.box(sd * 1.1, 1.35, zR, 0.14, 0.14, 0.06, sd > 0 ? M.turnL : M.turnR);
+    }
+  }
+  for (const sd of [1, -1]) for (const [wz, dual] of wheels) B.wheel(sd * (dual ? 0.98 : 1.02), wz, 0.5, dual ? 0.55 : 0.3, sd, 12, 0.55);
+  if (part === 'rear') {
+    // 折棚：黑色波纹段（铰接处）
+    const bell = { c: col(0x1a1b1c), rough: 0.9, metal: 0 };
+    for (let k = 0; k < 4; k++) B.box(0, 1.75, -0.1 - k * 0.2, 2.42 - (k % 2) * 0.08, 2.75, 0.18, bell, 'bottom');
+  }
   // 车顶电池舱 / 空调
-  B.box(0, 3.24, -1.2, 2.0, 0.24, 5.6, M.greyLight, 'bottom');
-  B.box(0, 3.22, 3.4, 1.7, 0.2, 1.8, M.paint, 'bottom');
-  B.quad([1.35, 0.03, 6.2], [-1.35, 0.03, 6.2], [-1.35, 0.03, -6.2], [1.35, 0.03, -6.2], M.under, { n: [0, 1, 0] });
+  if (part !== 'rear') {
+    B.box(0, 3.24, zF - 7.2, 2.0, 0.24, 5.6, M.greyLight, 'bottom');
+    B.box(0, 3.22, zF - 2.6, 1.7, 0.2, 1.8, M.paint, 'bottom');
+  } else B.box(0, 3.24, -3.4, 2.0, 0.22, 3.6, M.greyLight, 'bottom');
+  B.quad([1.35, 0.03, zF + 0.2], [-1.35, 0.03, zF + 0.2], [-1.35, 0.03, zR - 0.2], [1.35, 0.03, zR - 0.2], M.under, { n: [0, 1, 0] });
 }
 
 function truckCab(B, z0, z1, hw, y0, y1, cabMat) {
@@ -414,7 +353,7 @@ function truckCab(B, z0, z1, hw, y0, y1, cabMat) {
     B.box(sd * (hw - 0.08), y0 - 0.2, z1 + 0.16, 0.1, 0.1, 0.04, sd > 0 ? M.turnL : M.turnR);
     B.box(sd * (hw + 0.12), lerp(y0, y1, 0.62), z1 - 0.1, 0.08, 0.4, 0.12, M.black);
   }
-  B.panelZ(0, y0 - 0.02, z1 + 0.16, 0.44, 0.14, M.plate, 1);
+  B.plateZ(0, y0 - 0.02, z1 + 0.16, 0.44, 0.14, M.plate, 1);
 }
 
 function buildDump(B) {
@@ -438,7 +377,7 @@ function buildDump(B) {
     B.wheel(sd * 0.95, -2.85, 0.52, 0.6, sd, 12, 0.5);
   }
   B.box(0, 0.5, -4.3, 2.3, 0.14, 0.1, M.greyDark);
-  B.panelZ(0, 0.72, -4.36, 0.44, 0.22, M.plate, -1);
+  B.plateZ(0, 0.72, -4.36, 0.44, 0.14, M.plate, -1);
   B.quad([1.3, 0.03, 4.5], [-1.3, 0.03, 4.5], [-1.3, 0.03, -4.4], [1.3, 0.03, -4.4], M.under, { n: [0, 1, 0] });
 }
 
@@ -454,7 +393,7 @@ function buildBoxTruck(B) {
     B.wheel(sd * 0.98, 2.95, 0.45, 0.28, sd, 12, 0.5);
     B.wheel(sd * 0.93, -2.1, 0.45, 0.52, sd, 12, 0.5);
   }
-  B.panelZ(0, 0.8, -3.84, 0.44, 0.22, M.plate, -1);
+  B.plateZ(0, 0.8, -3.84, 0.44, 0.14, M.plate, -1);
   B.quad([1.25, 0.03, 4.0], [-1.25, 0.03, 4.0], [-1.25, 0.03, -3.9], [1.25, 0.03, -3.9], M.under, { n: [0, 1, 0] });
 }
 
@@ -475,13 +414,15 @@ function buildSemi(B) {
     B.wheel(sd * 0.95, 3.8, 0.52, 0.6, sd, 12, 0.5);
     for (const z of [-5.0, -6.3, -7.6]) B.wheel(sd * 0.95, z, 0.5, 0.55, sd, 10, 0.5);
   }
-  B.panelZ(0, 0.9, -8.07, 0.44, 0.22, M.plate, -1);
+  B.plateZ(0, 0.9, -8.07, 0.44, 0.14, M.plate, -1);
   B.quad([1.3, 0.03, 8.4], [-1.3, 0.03, 8.4], [-1.3, 0.03, -8.3], [1.3, 0.03, -8.3], M.under, { n: [0, 1, 0] });
 }
 
 export function heavyNearGeometry() {
   const B = new GeoBuilder();
-  buildBus(B);
+  buildBus(B, 'single');
+  buildBus(B, 'front');
+  buildBus(B, 'rear');
   buildDump(B);
   buildBoxTruck(B);
   buildSemi(B);
@@ -822,7 +763,8 @@ export function pickCarColor(r) {
 export const TAXI_GREEN = 0x8ccb8c;
 export const TAXI_YELLOW = 0xeea21f;
 // 西安公交：黄绿色为主（比亚迪/宇通纯电动）
-export const BUS_COLORS = [0x8dc63f, 0x7fbf3a, 0x9ccc3c, 0x6fb43f, 0x2f86c8];
+// 西安公交（纯电动，比亚迪 K8/K9 等）：[车身, 色带, 权重]。具体涂装未查到权威资料，按推测：白车身绿色带为主，另有蓝色带、通体黄绿
+export const BUS_LIVERIES = [[0xeeeee8, 0x2f9e4a, 5], [0xeeeee8, 0x1f6fb8, 2], [0x8dc63f, 0x4f9a2a, 3]];
 export const DUMP_GREEN = 0x3faa4f; // 渣土车“活力绿”
 export const TRUCK_CAB_COLORS = [0x1e5bb5, 0x2a67c4, 0xeeeeea, 0xc0302b, 0x2f8f5a, 0xe6b12e];
 // 第二色调色板（索引 0..7）：货箱/集装箱颜色；小汽车 twoTone 时车顶用黑色
