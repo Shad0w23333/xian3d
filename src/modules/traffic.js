@@ -20,12 +20,17 @@
 import * as THREE from 'three';
 import { buildRoadGraph, blockEdges, resampleFeature, buildRailStrokes, resampleStroke, RAIL_KIND } from '../arch/traffic_net.js';
 import {
-  carNearGeometry, heavyNearGeometry, farVehicleGeometry, trainNearGeometry, trainFarGeometry,
-  VK, VK_LEN, TK, TK_LEN, pickCarColor, TAXI_GREEN, TAXI_YELLOW, BUS_COLORS, DUMP_GREEN,
+  heavyNearGeometry, farVehicleGeometry, trainNearGeometry, trainFarGeometry,
+  VK, VK_LEN, TK, TK_LEN, pickCarColor, TAXI_GREEN, TAXI_YELLOW, BUS_LIVERIES, DUMP_GREEN,
   TRUCK_CAB_COLORS, SECOND_COLORS, METRO_LINE_COLORS,
 } from '../arch/traffic_models.js';
+import { carGeometry, CAR_LEN, CAR_SHAPES } from '../arch/vehicle-cars.js';
+import { nearMaterial, depthMaterial, packRGB } from '../arch/vehicle-mats.js';
+import { bikeGeometries, BIKE, OPT, SEAT, BIKE_LEN, SCOOTER_COLORS, SHARED_BIKES, PRIVATE_BIKES, COURIER, EXPRESS_BOX } from '../arch/vehicle-bikes.js';
+import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, SEAT_H, MODE } from '../arch/people-geo.js';
 import * as roadsNet from '../arch/roads_net.js';
-import { BRIDGE_UNIT } from '../core/roadheight.js';
+import { BRIDGE_UNIT, LIFT } from '../core/roadheight.js';
+import { parkingPlan, parkHash, featureWidth } from '../arch/vehicle-parking.js';
 
 // ======================================================================
 // 参数
@@ -33,6 +38,7 @@ import { BRIDGE_UNIT } from '../core/roadheight.js';
 const CAP_BY_LEVEL = [2600, 4600, 7000, 9000]; // 同时仿真的最大车辆数
 const NEAR_CAR = [110, 180, 250, 330]; // 近景小汽车距离
 const NEAR_HEAVY = [150, 240, 330, 430];
+const FINE_CAR = [35, 50, 70, 90]; // 小汽车细模距离
 const RADIUS_MAX = [2000, 3000, 4200, 5200]; // 活动气泡最大半径
 const NEAR_TRAIN = [350, 520, 720, 950];
 const TRAIN_FAR = 14000;
@@ -68,6 +74,14 @@ function hash(n) {
   x ^= x >>> 15;
   return (x >>> 0) / 4294967296;
 }
+/** 加权抽取：list = [[..., weight], ...]（权重为最后一项），返回下标 */
+function pickW(r, list) {
+  let s = 0;
+  for (const it of list) s += it[it.length - 1];
+  let x = r * s;
+  for (let k = 0; k < list.length; k++) { x -= list[k][list[k].length - 1]; if (x <= 0) return k; }
+  return list.length - 1;
+}
 let rngState = 12345;
 function rnd() {
   rngState = (rngState + 0x6d2b79f5) | 0;
@@ -86,147 +100,21 @@ const FAR_T = [
   { A: [1.25, 1.2, 1.5, 0], Y: [0.55, 1.95, 2.95, 3.35], Z: [4.3, -4.3, 4.28, -4.28], Z2: [4.05, -4.25, 0, 0] },
   { A: [1.2, 1.2, 1.4, 1], Y: [0.5, 1.7, 2.8, 3.35], Z: [3.8, -3.8, 3.78, -3.78], Z2: [3.55, -3.75, 0, 0] },
   { A: [1.27, 1.25, 1.5, 1], Y: [0.6, 2.0, 3.7, 3.95], Z: [8.25, -8.25, 8.2, -8.2], Z2: [7.95, -8.2, 0, 0] },
+  { A: [1.27, 1.25, 1.5, 0], Y: [0.3, 1.15, 2.75, 3.22], Z: [9.0, -9.0, 8.98, -8.98], Z2: [8.95, -8.95, 0, 0] },
+  { A: [1.27, 1.25, 1.5, 0], Y: [0.3, 1.15, 2.75, 3.22], Z: [3.0, -3.0, 2.98, -2.98], Z2: [2.95, -2.95, 0, 0] },
 ];
 const FAR_SUV = { Y: [0.28, 1.07, 1.66, 1.72], Z: [2.38, -2.38, 1.18, -1.95], Z2: [0.42, -1.9, 0, 0] };
+const FAR_MPV = { Y: [0.24, 1.05, 1.72, 1.785], Z: [2.5, -2.55, 1.45, -2.44], Z2: [0.65, -2.3, 0, 0] };
 // 车灯精灵参数：(灯半距, 前灯 z, 尾灯 z, 灯高)
-const LIGHT_T = [[0.62, 2.28, -2.32, 0.72], [0.62, 2.28, -2.32, 0.72], [0.95, 6.0, -6.0, 0.82], [0.95, 4.3, -4.3, 1.0], [0.95, 3.8, -3.8, 0.95], [0.95, 8.25, -8.25, 1.0]];
-const IS_HEAVY = [0, 0, 1, 1, 1, 1];
+const LIGHT_T = [[0.62, 2.28, -2.32, 0.72], [0.62, 2.28, -2.32, 0.72], [0.95, 6.0, -6.0, 0.82], [0.95, 4.3, -4.3, 1.0], [0.95, 3.8, -3.8, 0.95], [0.95, 8.25, -8.25, 1.0], [0.95, 9.0, -9.0, 0.82], [0.95, 3.0, -3.0, 0.82]];
+const IS_HEAVY = [0, 0, 1, 1, 1, 1, 1, 1];
+const isBus = (t) => t === VK.BUS || t === VK.BUS_A;
 // 列车远景尺寸 (宽, 高)
 const TRAIN_WH = [[3.36, 4.05], [3.36, 4.05], [3.1, 4.3], [3.1, 4.3], [3.2, 3.1], [2.9, 3.9], [2.8, 3.75], [2.8, 3.75]];
 
 // ======================================================================
 // 着色器注入
 // ======================================================================
-const PLATE_GLSL = /* glsl */ `
-vec3 trPlate(float p) {
-  if (p < 0.5) return vec3(0.02, 0.09, 0.42);
-  if (p < 1.5) return vec3(0.18, 0.55, 0.22);
-  if (p < 2.5) return vec3(0.85, 0.6, 0.03);
-  return vec3(0.42, 0.66, 0.12);
-}
-float trBit(float f, float b) { return mod(floor(f / b), 2.0); }
-`;
-
-/** 近景车辆/列车材质：逐顶点材质参数 + 实例车漆色 + 车型折叠 + 夜间灯光 */
-function nearMaterial(ctx, { morph = false, train = false, secondLin }) {
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.0 });
-  const decl = /* glsl */ `
-attribute vec4 aMat;
-attribute float aKind;
-attribute vec4 iColor;
-attribute vec4 iData;
-${morph ? 'attribute vec3 position2;\nattribute vec3 normal2;' : ''}
-varying vec4 vTrMat;
-varying vec3 vTrBody;
-varying vec4 vTrInfo;
-varying vec3 vTrLocal;
-`;
-  mat.onBeforeCompile = (sh) => {
-    sh.uniforms.uNight = ctx.uniforms.uNight;
-    sh.uniforms.uTime = ctx.uniforms.uTime;
-    sh.uniforms.uSecond = { value: secondLin };
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\n' + decl)
-      .replace('#include <beginnormal_vertex>', morph
-        ? 'vec3 objectNormal = normalize(mix(normal, normal2, iData.z));'
-        : '#include <beginnormal_vertex>')
-      .replace('#include <begin_vertex>', /* glsl */ `
-vec3 transformed = ${morph ? 'mix(position, position2, iData.z)' : 'vec3(position)'};
-if (aKind > -0.5 && abs(aKind - iData.x) > 0.5) transformed = vec3(0.0);
-vTrMat = aMat; vTrBody = iColor.rgb; vTrInfo = iData; vTrLocal = transformed;`);
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', /* glsl */ `#include <common>
-uniform float uNight;
-uniform float uTime;
-uniform vec3 uSecond[8];
-varying vec4 vTrMat;
-varying vec3 vTrBody;
-varying vec4 vTrInfo;
-varying vec3 vTrLocal;
-${PLATE_GLSL}`)
-      .replace('#include <color_fragment>', /* glsl */ `#include <color_fragment>
-{
-  float pm = vTrMat.x;
-  if (pm > 0.5 && pm < 1.5) diffuseColor.rgb = vTrBody * vColor.rgb;
-  else if (pm > 1.5 && pm < 2.5) { float sc = mod(vTrInfo.w, 16.0); diffuseColor.rgb = (sc > 7.5 ? vTrBody : uSecond[int(sc)]) * vColor.rgb; }
-  else if (pm > 2.5 && pm < 3.5) diffuseColor.rgb = trPlate(floor(vTrInfo.w / 16.0));
-  else if (pm > 4.5) {
-    // 车窗：深色贴膜，隐约透见座椅头枕（局部坐标；侧窗按 z-y 平面、前后挡按 x-y 平面投影），
-    // 金属度 0 + 低粗糙度，反射由环境贴图按菲涅耳给出
-    vec3 lp = vTrLocal;
-    float hy = mix(1.17, 1.33, vTrInfo.z);
-    float hr = 0.0;
-    if (abs(lp.x) > 0.62) {
-      for (int k = 0; k < 2; k++) {
-        float sz = k == 0 ? 0.02 : -0.86;
-        hr = max(hr, smoothstep(1.0, 0.55, length(vec2((lp.z - sz) / 0.15, (lp.y - hy) / 0.13))));
-      }
-    } else {
-      hr = smoothstep(1.0, 0.55, length(vec2((abs(lp.x) - 0.4) / 0.14, (lp.y - hy) / 0.13)));
-    }
-    float lowK = smoothstep(hy + 0.25, hy - 0.35, lp.y); // 窗下部看到车内座椅/门板，略亮
-    diffuseColor.rgb = vec3(0.012, 0.015, 0.018) + vec3(0.03, 0.028, 0.026) * max(hr, 0.35 * lowK);
-  }
-  else if (pm > 3.5) diffuseColor.rgb = vTrBody;
-}`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = vTrMat.y;')
-      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = vTrMat.z;')
-      .replace('#include <emissivemap_fragment>', /* glsl */ `#include <emissivemap_fragment>
-{
-  float em = floor(vTrMat.w + 0.5);
-  float fl = vTrInfo.y;
-  float nt = uNight;
-  vec3 E = vec3(0.0);
-  ${train ? /* glsl */ `
-  if (em > 7.5 && em < 8.5) {
-    if (trBit(fl, 1.0) > 0.5) E = vec3(1.0, 0.95, 0.86) * (0.6 + nt * 9.0);
-    else if (trBit(fl, 2.0) > 0.5) E = vec3(1.0, 0.05, 0.03) * (0.3 + nt * 4.0);
-  } else if (em > 9.5 && em < 10.5) {
-    E = vec3(1.0, 0.9, 0.72) * nt * 0.6;
-  } else if (em > 4.5 && em < 5.5) {
-    E = vec3(1.0, 0.9, 0.72) * nt * 0.5;
-  }` : /* glsl */ `
-  float blink = step(0.5, fract(uTime * 1.4 + vTrInfo.w * 0.013));
-  if (em > 0.5 && em < 1.5) E = vec3(1.0, 0.95, 0.85) * (nt * 7.0);
-  else if (em > 1.5 && em < 2.5) E = vec3(1.0, 0.03, 0.015) * (trBit(fl, 1.0) > 0.5 ? 7.0 : 0.05 + nt * 3.2);
-  else if (em > 2.5 && em < 3.5) E = vec3(1.0, 0.45, 0.04) * (trBit(fl, 2.0) * blink * 7.0);
-  else if (em > 3.5 && em < 4.5) E = vec3(1.0, 0.45, 0.04) * (trBit(fl, 4.0) * blink * 7.0);
-  else if (em > 4.5 && em < 5.5) E = vec3(1.0, 0.88, 0.68) * nt * 0.22;
-  else if (em > 5.5 && em < 6.5) {
-    // 公交 LED 线路牌：程序化点阵“字”
-    vec2 q = vec2(vTrLocal.x * 13.0, vTrLocal.y * 16.0);
-    vec2 c = floor(q);
-    float glyph = step(0.42, fract(sin(dot(floor(q / vec2(3.0, 4.0)), vec2(12.9898, 78.233))) * 43758.5453));
-    float dotm = step(0.25, fract(q.x)) * step(0.25, fract(q.y));
-    float on = max(glyph * step(0.35, fract(sin(dot(c, vec2(39.3, 11.7))) * 9631.7)), 0.12);
-    E = vec3(1.0, 0.28, 0.04) * on * dotm * (2.0 + nt * 4.0);
-  }
-  else if (em > 6.5 && em < 7.5) E = vec3(0.92, 0.96, 1.0) * (0.25 + nt * 2.6);
-  else if (em > 8.5 && em < 9.5) E = vec3(1.0, 0.98, 0.95) * (1.6 + nt * 2.5);`}
-  totalEmissiveRadiance = E;
-}`);
-  };
-  mat.customProgramCacheKey = () => 'traffic-near2-' + (morph ? 'm' : '') + (train ? 't' : '');
-  return mat;
-}
-
-/** 阴影深度材质：同样做车型折叠与形变，避免 uber 几何投出重叠阴影 */
-function depthMaterial(morph) {
-  const m = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
-  m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', `#include <common>
-attribute float aKind;
-attribute vec4 iData;
-${morph ? 'attribute vec3 position2;' : ''}`)
-      .replace('#include <begin_vertex>', `
-vec3 transformed = ${morph ? 'mix(position, position2, iData.z)' : 'vec3(position)'};
-if (aKind > -0.5 && abs(aKind - iData.x) > 0.5) transformed = vec3(0.0);`);
-  };
-  m.customProgramCacheKey = () => 'traffic-depth-' + (morph ? 'm' : '');
-  return m;
-}
-
 /** 远景车辆代理材质：顶点按车型参数化，平面着色 */
 function farVehicleMaterial(ctx, secondLin, pixelU) {
   const mat = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.2, flatShading: true });
@@ -242,6 +130,9 @@ function farVehicleMaterial(ctx, secondLin, pixelU) {
     sh.uniforms.uSuvY = { value: new THREE.Vector4(...FAR_SUV.Y) };
     sh.uniforms.uSuvZ = { value: new THREE.Vector4(...FAR_SUV.Z) };
     sh.uniforms.uSuvZ2 = { value: new THREE.Vector4(...FAR_SUV.Z2) };
+    sh.uniforms.uMpvY = { value: new THREE.Vector4(...FAR_MPV.Y) };
+    sh.uniforms.uMpvZ = { value: new THREE.Vector4(...FAR_MPV.Z) };
+    sh.uniforms.uMpvZ2 = { value: new THREE.Vector4(...FAR_MPV.Z2) };
     sh.uniforms.uPixel = pixelU;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', /* glsl */ `#include <common>
@@ -249,13 +140,16 @@ attribute vec4 aFar;
 attribute vec3 aFarOff;
 attribute vec4 iColor;
 attribute vec4 iData;
-uniform vec4 uFA[6];
-uniform vec4 uFY[6];
-uniform vec4 uFZ[6];
-uniform vec4 uFZ2[6];
+uniform vec4 uFA[8];
+uniform vec4 uFY[8];
+uniform vec4 uFZ[8];
+uniform vec4 uFZ2[8];
 uniform vec4 uSuvY;
 uniform vec4 uSuvZ;
 uniform vec4 uSuvZ2;
+uniform vec4 uMpvY;
+uniform vec4 uMpvZ;
+uniform vec4 uMpvZ2;
 uniform float uPixel;
 varying vec4 vFar;
 varying vec3 vTrBody;
@@ -264,7 +158,9 @@ varying float vFront;`)
       .replace('#include <begin_vertex>', /* glsl */ `
 int ty = int(iData.x + 0.5);
 vec4 A = uFA[ty]; vec4 Y = uFY[ty]; vec4 Z = uFZ[ty]; vec4 Z2 = uFZ2[ty];
-if (ty <= 1) { Y = mix(Y, uSuvY, iData.z); Z = mix(Z, uSuvZ, iData.z); Z2 = mix(Z2, uSuvZ2, iData.z); }
+if (ty <= 1 && iData.z > 0.5) {
+  if (iData.z < 1.5) { Y = uSuvY; Z = uSuvZ; Z2 = uSuvZ2; } else { Y = uMpvY; Z = uMpvZ; Z2 = uMpvZ2; }
+}
 float sx = aFar.x; int lv = int(aFar.y + 0.5); int zc = int(aFar.z + 0.5); float mt = aFar.w;
 float hw = abs(sx) > 1.5 ? A.y : A.x;
 float y = lv == 0 ? Y.x : lv == 1 ? Y.y : lv == 2 ? Y.z : Y.w;
@@ -299,13 +195,14 @@ if (trMt > 0.5 && trMt < 1.5 && !trGlass) diffuseColor.rgb = trPaint * 0.8;`)
       .replace('#include <emissivemap_fragment>', /* glsl */ `#include <emissivemap_fragment>
 {
   vec3 E = vec3(0.0);
-  if (trMt > 2.5 && trMt < 3.5) E = vec3(1.0, 0.95, 0.85) * (0.6 + uNight * 7.0);
-  else if (trMt > 3.5) E = vec3(1.0, 0.03, 0.015) * (trBit(vTrInfo.y, 1.0) > 0.5 ? 7.0 : 0.05 + uNight * 3.5);
+  float trOn = 1.0 - trBit(vTrInfo.y, 16.0); // 16 = 路边停车（熄火）
+  if (trMt > 2.5 && trMt < 3.5) E = vec3(1.0, 0.95, 0.85) * (0.6 + uNight * 7.0) * trOn;
+  else if (trMt > 3.5) E = vec3(1.0, 0.03, 0.015) * (trBit(vTrInfo.y, 1.0) > 0.5 ? 7.0 : (0.05 + uNight * 3.5) * trOn);
   else if (trGlass && trTy == 2) E = vec3(1.0, 0.88, 0.68) * uNight * 0.3;
   totalEmissiveRadiance = E;
 }`);
   };
-  mat.customProgramCacheKey = () => 'traffic-farveh';
+  mat.customProgramCacheKey = () => 'traffic-farveh2';
   return mat;
 }
 
@@ -370,7 +267,7 @@ if (tk < 1.5 && mt < 0.5 && vFar.x > 0.5 && vFar.x < 1.5) diffuseColor.rgb = mix
   return mat;
 }
 
-/** 车灯精灵几何：每实例 5 个四边形（左右前灯、左右尾灯、路面光斑） */
+/** 车灯精灵几何：每实例 6 个四边形（左右前灯、左右尾灯、前大灯路面光斑、尾灯路面红晕） */
 function lightGeometry() {
   const P = [], L = [], I = [];
   let v = 0;
@@ -379,7 +276,7 @@ function lightGeometry() {
     I.push(v, v + 1, v + 2, v, v + 2, v + 3);
     v += 4;
   };
-  quad(0, 1); quad(0, -1); quad(1, 1); quad(1, -1); quad(2, 0);
+  quad(0, 1); quad(0, -1); quad(1, 1); quad(1, -1); quad(2, 0); quad(3, 0);
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
   g.setAttribute('aL', new THREE.Float32BufferAttribute(L, 4));
@@ -411,6 +308,7 @@ void main() {
   float which = aL.x;
   float fl = iLF.x;
   bool big = trBit(fl, 8.0) > 0.5;
+  float ks = iLF.y > 0.0 ? iLF.y : 1.0; // 尺寸系数（两轮车 0.3 左右）
   vUv = aL.zw;
   vKind = which;
   vec3 wp;
@@ -423,27 +321,38 @@ void main() {
     vec3 V = toCam / max(d, 1e-3);
     float facing = dot(Fz, V) * (head ? 1.0 : -1.0);
     float vis = smoothstep(-0.12, 0.45, facing) * on;
-    float worldR = big ? 0.32 : (head ? 0.16 : 0.13);
-    float pixR = uPixel * d * (head ? 1.5 : 1.45);
+    float worldR = (big ? 0.32 : (head ? 0.16 : 0.13)) * ks;
+    float pixR = uPixel * d * (head ? 1.5 : 1.45) * sqrt(ks);
     float r = max(worldR, pixR);
     float e = clamp(worldR * worldR / (r * r), 0.0, 1.0);
     e = mix(0.6, 1.0, e);
     float brake = trBit(fl, 1.0);
-    vec3 col = head ? vec3(1.0, 0.9, 0.74) * (big ? 7.0 : 3.4) : vec3(1.0, 0.07, 0.03) * (brake > 0.5 ? 5.0 : 2.6);
+    vec3 col = (head ? vec3(1.0, 0.9, 0.74) * (big ? 7.0 : 3.4) : vec3(1.0, 0.07, 0.03) * (brake > 0.5 ? 5.0 : 2.6)) * mix(0.6, 1.0, ks);
     vCol = col * vis * e * uNight;
     vec3 camR = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
     vec3 camU = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
     wp = c + V * min(0.6, d * 0.02) + (camR * aL.z + camU * aL.w) * r * 2.6;
-  } else {
-    // 前大灯在路面上的淡光斑（近处才有）
+  } else if (which < 2.5) {
+    // 前大灯在路面上的光斑（近处才有）：两束近光叠成前窄后宽的扇形，近处亮
     float on = trBit(fl, 2.0) * (big ? 0.0 : 1.0);
     float d = distance(cameraPosition, O);
-    float fade = 1.0 - smoothstep(180.0, 320.0, d);
-    vec3 c = O + Fz * (iLight.y + 7.5);
+    float fade = 1.0 - smoothstep(160.0, 300.0, d);
+    float L = 9.0 * ks;
+    vec3 c = O + Fz * (iLight.y + L);
     vec3 Lh = normalize(vec3(Lx.x, 0.0, Lx.z));
     vec3 Fh = normalize(vec3(Fz.x, 0.0, Fz.z));
-    wp = c + Lh * aL.z * 2.4 + Fh * aL.w * 7.5 + vec3(0.0, 0.12, 0.0);
-    vCol = vec3(1.0, 0.86, 0.66) * 0.26 * on * fade * uNight;
+    wp = c + Lh * aL.z * 3.0 * ks * (0.75 + 0.25 * aL.w) + Fh * aL.w * L + vec3(0.0, 0.12, 0.0);
+    vCol = vec3(1.0, 0.86, 0.66) * 0.34 * on * fade * uNight * mix(0.5, 1.0, ks);
+  } else {
+    // 尾灯在路面上的红晕（刹车时更亮）
+    float on = trBit(fl, 4.0) * (big ? 0.0 : 1.0);
+    float d = distance(cameraPosition, O);
+    float fade = 1.0 - smoothstep(90.0, 180.0, d);
+    vec3 c = O + Fz * (iLight.z - 1.4 * ks);
+    vec3 Lh = normalize(vec3(Lx.x, 0.0, Lx.z));
+    vec3 Fh = normalize(vec3(Fz.x, 0.0, Fz.z));
+    wp = c + Lh * aL.z * 1.3 * ks + Fh * aL.w * 1.6 * ks + vec3(0.0, 0.11, 0.0);
+    vCol = vec3(1.0, 0.05, 0.02) * (trBit(fl, 1.0) > 0.5 ? 0.22 : 0.08) * on * fade * uNight;
   }
   vec4 mvPosition = viewMatrix * vec4(wp, 1.0);
   if (which > 1.5) mvPosition.xyz *= 0.996;
@@ -465,9 +374,13 @@ void main() {
   if (vKind < 1.5) {
     float r2 = dot(vUv, vUv) * 6.76;
     a = exp(-r2 * 3.2) + 0.1 * exp(-r2 * 0.6);
-  } else {
+  } else if (vKind < 2.5) {
     vec2 q = vUv;
-    a = (1.0 - smoothstep(0.1, 1.0, length(vec2(q.x, q.y * 0.9)))) * smoothstep(-1.0, -0.4, q.y);
+    // 近亮远暗、边缘柔和
+    a = (1.0 - smoothstep(0.15, 1.0, length(vec2(q.x, q.y * 0.9)))) * smoothstep(-1.0, -0.55, q.y) * (1.25 - 0.5 * (q.y * 0.5 + 0.5));
+  } else {
+    a = 1.0 - smoothstep(0.0, 1.0, length(vUv));
+    a *= a;
   }
   vec3 c = vCol * a;
   gl_FragColor = vec4(c, 1.0);
@@ -556,10 +469,25 @@ export default {
     const secondLin = SECOND_COLORS.map((h) => new THREE.Color(h));
     const pixelU = { value: 0.001 }; // 每像素对应的世界尺寸（距离 1 m 处）
     const CAPMAX = CAP_BY_LEVEL[3];
-    const carMesh = instanced(carNearGeometry(), nearMaterial(ctx, { morph: true, secondLin }), 2600, ['iColor', 'iData'], '近景小汽车');
-    carMesh.customDepthMaterial = depthMaterial(true);
+    // 小汽车两级：细模（近，约 1700 三角形）/ 中景模（约 800）；远处统一代理盒
+    const carMat = nearMaterial(ctx, { morph: true, secondLin });
+    const carFineMesh = instanced(carGeometry(0), carMat, 900, ['iColor', 'iData'], '近景小汽车（细）');
+    const carMesh = instanced(carGeometry(1), carMat, 2600, ['iColor', 'iData'], '近景小汽车');
+    carFineMesh.customDepthMaterial = carMesh.customDepthMaterial = depthMaterial({ morph: true });
     const heavyMesh = instanced(heavyNearGeometry(), nearMaterial(ctx, { secondLin }), 900, ['iColor', 'iData'], '近景大型车');
-    heavyMesh.customDepthMaterial = depthMaterial(false);
+    heavyMesh.customDepthMaterial = depthMaterial();
+    // 两轮/三轮车（踏板电动车、自行车、快递三轮各一个网格）+ 骑手（近景细模 / 远景简模）
+    const bikeMat = nearMaterial(ctx, { bike: true, secondLin });
+    const bikeDepth = depthMaterial({ bike: true });
+    const bikeMeshes = bikeGeometries().map((g, k) => {
+      const m = instanced(g, bikeMat, [800, 450, 140][k], ['iColor', 'iData'], ['电动车', '自行车', '快递三轮'][k]);
+      m.customDepthMaterial = bikeDepth;
+      return m;
+    });
+    const riderMat = peopleMaterial(ctx);
+    const RN = createPeopleMesh(ctx, peopleGeometry(0), riderMat, 260, '骑手（近景）');
+    const RF = createPeopleMesh(ctx, peopleGeometry(1), riderMat, 1000, '骑手');
+    RN.mesh.customDepthMaterial = peopleDepthMaterial(ctx);
     const farMesh = instanced(farVehicleGeometry(), farVehicleMaterial(ctx, secondLin, pixelU), CAPMAX, ['iColor', 'iData'], '远景车辆');
     const lightMat = lightMaterial(ctx);
     lightMat.uniforms.uPixel = pixelU;
@@ -567,14 +495,20 @@ export default {
     const lightMesh = instanced(lightGeometry(), lightMat, CAPMAX + 400, ['iLight', 'iLF'], '车灯');
     lightMesh.renderOrder = 8;
     const trainNearMesh = instanced(trainNearGeometry(), nearMaterial(ctx, { train: true, secondLin }), 700, ['iColor', 'iData'], '近景列车');
-    trainNearMesh.customDepthMaterial = depthMaterial(false);
+    trainNearMesh.customDepthMaterial = depthMaterial();
     const trainFarMesh = instanced(trainFarGeometry(), farTrainMaterial(ctx, pixelU), 2400, ['iColor', 'iData'], '远景列车');
     const shadowsOn = () => !!Q.shadows && level >= 1;
-    for (const m of [carMesh, heavyMesh, trainNearMesh]) { m.castShadow = shadowsOn(); m.receiveShadow = true; }
+    const shadowCasters = [carFineMesh, carMesh, heavyMesh, trainNearMesh, ...bikeMeshes, RN.mesh];
+    for (const m of shadowCasters) { m.castShadow = shadowsOn(); m.receiveShadow = true; }
     farMesh.receiveShadow = true;
-    root.add(carMesh, heavyMesh, farMesh, trainNearMesh, trainFarMesh, lightMesh);
+    RF.mesh.receiveShadow = true;
+    root.add(carFineMesh, carMesh, heavyMesh, farMesh, trainNearMesh, trainFarMesh, lightMesh, ...bikeMeshes, RN.mesh, RF.mesh);
     const W = {
+      carFine: new Writer(carFineMesh, ['iColor', 'iData']),
       car: new Writer(carMesh, ['iColor', 'iData']),
+      bike0: new Writer(bikeMeshes[0], ['iColor', 'iData']),
+      bike1: new Writer(bikeMeshes[1], ['iColor', 'iData']),
+      bike2: new Writer(bikeMeshes[2], ['iColor', 'iData']),
       heavy: new Writer(heavyMesh, ['iColor', 'iData']),
       far: new Writer(farMesh, ['iColor', 'iData']),
       light: new Writer(lightMesh, ['iLight', 'iLF']),
@@ -582,6 +516,7 @@ export default {
       tFar: new Writer(trainFarMesh, ['iColor', 'iData']),
     };
     const WL = Object.values(W);
+    const WB = [W.bike0, W.bike1, W.bike2];
 
     // —— 路网 ——
     // 景区/公园里的无名支路（大慈恩寺绕三藏院的环路等）按步行道处理，不进车行路网（与 roads 同一规则）
@@ -603,7 +538,27 @@ export default {
     const qStamp = new Uint32Array(NE);
     let qStampN = 1, actStampN = 1;
     let activeList = [];
-    const laneOffset = (e, lane) => (e.twoWay ? (e.lanes - lane - 0.5) * e.lw : ((e.lanes - 1) / 2 - lane) * e.lw);
+    // 车道中心偏移（右正）；有路边停车的一侧整体向中线让出 parkShift
+    const laneOffset = (e, lane) => (e.twoWay ? (e.lanes - lane - 0.5) * e.lw : ((e.lanes - 1) / 2 - lane) * e.lw) - e.parkShift;
+    // —— 路边停车方案（按要素；停车一侧的行车道向中线让位）——
+    const parkPlans = new Array(feats.length);
+    let nParkFeat = 0;
+    for (let fi = 0; fi < feats.length; fi++) {
+      const f = feats[fi];
+      if (!f || !f.p) continue;
+      const pl = parkingPlan(f, fi);
+      if (pl) { parkPlans[fi] = pl; nParkFeat++; }
+    }
+    for (const e of edges) {
+      e.parkShift = 0;
+      const pl = parkPlans[e.f];
+      if (!pl) continue;
+      // 有向边的右侧 = 要素右侧（正向）或左侧（反向）
+      const sideOn = e.dir > 0 ? pl.side[0] : pl.side[1];
+      if (!sideOn) continue;
+      const base = e.twoWay ? (e.lanes - 0.5) * e.lw : ((e.lanes - 1) / 2) * e.lw;
+      e.parkShift = Math.max(0, base - pl.minLane);
+    }
     // 城区（出租车更多）：大致二环以内
     const inCity = (x, z) => x > -4300 && x < 4600 && z > -4700 && z < 4400;
     const inWall = (x, z) => Math.abs(x) < 1500 && Math.abs(z + 150) < 1350;
@@ -616,7 +571,7 @@ export default {
     const vType = new Uint8Array(CAP), vLen = new Float32Array(CAP);
     const vLat = new Float32Array(CAP), vPrevLat = new Float32Array(CAP);
     const vNextA = new Float32Array(CAP), vPrevA = new Float32Array(CAP);
-    const vCol = new Float32Array(CAP * 3), vPack = new Float32Array(CAP), vSuv = new Uint8Array(CAP);
+    const vCol = new Float32Array(CAP * 3), vPack = new Float32Array(CAP), vSuv = new Uint8Array(CAP), vSec = new Float32Array(CAP);
     const vStuck = new Float32Array(CAP), vHold = new Uint8Array(CAP), vGhost = new Float32Array(CAP);
     const vFlags = new Uint8Array(CAP);
     const vPose = new Float32Array(CAP * 6);
@@ -648,7 +603,8 @@ export default {
       }
       if (inWall(x, z)) { pSemi = 0; pDump = 0; pBox *= 0.5; }
       const pTaxi = (inWall(x, z) ? 0.24 : city ? 0.16 : 0.06) * (night ? 1.5 : 1) * (cls === 0 || cls === 8 ? 0.35 : 1);
-      if ((r -= pBus) < 0) return VK.BUS;
+      // 铰接公交：主干道上约占公交的 12%
+      if ((r -= pBus) < 0) return (cls === 2 || cls === 1) && r + pBus < pBus * 0.12 ? VK.BUS_A : VK.BUS;
       if ((r -= pDump) < 0) return VK.DUMP;
       if ((r -= pBox) < 0) return VK.BOXTRUCK;
       if ((r -= pSemi) < 0) return VK.SEMI;
@@ -659,31 +615,41 @@ export default {
       vType[i] = type;
       vLen[i] = VK_LEN[type];
       vSuv[i] = 0;
+      vSec[i] = 1;
       let second = 0, plate = 0;
       const r = rnd();
       switch (type) {
         case VK.CAR: {
           setColor(i, pickCarColor(rnd()));
-          vSuv[i] = r < 0.42 ? 1 : 0;
+          // 轿车约一半、SUV 约四成、MPV 约一成
+          vSuv[i] = r < 0.5 ? 0 : r < 0.88 ? 1 : 2;
           second = rnd() < 0.08 ? 7 : -1;
-          plate = rnd() < 0.3 ? 1 : 0;
+          plate = rnd() < 0.32 ? 1 : 0; // 新能源绿牌约三成
           break;
         }
         case VK.TAXI: {
+          // 西安纯电动出租车（比亚迪 e5）：荷叶绿车身 + 黑色车顶、绿牌；其余为甲醇车（车身色按推测取琉璃黄）
           const green = r < 0.74;
           setColor(i, green ? TAXI_GREEN : TAXI_YELLOW);
-          vSuv[i] = green && rnd() < 0.35 ? 1 : 0;
-          second = green && rnd() < 0.45 ? 7 : -1;
+          vSuv[i] = green && rnd() < 0.12 ? 1 : 0;
+          second = green ? 7 : -1;
           plate = green ? 1 : 0;
           break;
         }
-        case VK.BUS: setColor(i, BUS_COLORS[(r * BUS_COLORS.length) | 0]); plate = 3; second = 8; break;
+        case VK.BUS: case VK.BUS_A: {
+          const lv = BUS_LIVERIES[pickW(r, BUS_LIVERIES)];
+          setColor(i, lv[0]);
+          vSec[i] = packRGB(lv[1]);
+          plate = 3; second = 8;
+          break;
+        }
         case VK.DUMP: setColor(i, DUMP_GREEN); plate = 2; second = 8; break;
         case VK.BOXTRUCK: setColor(i, TRUCK_CAB_COLORS[(r * TRUCK_CAB_COLORS.length) | 0]); second = [0, 0, 1, 2, 5, 6][(rnd() * 6) | 0]; plate = 2; break;
         case VK.SEMI: setColor(i, TRUCK_CAB_COLORS[(r * TRUCK_CAB_COLORS.length) | 0]); second = [2, 3, 4, 5, 6, 1, 0][(rnd() * 7) | 0]; plate = 2; break;
       }
       if (second < 0) second = 8; // 8 = 车顶与车身同色
-      vPack[i] = second + plate * 16;
+      vPack[i] = second + plate * 16 + ((rnd() * 12) | 0) * 64;
+      if (type <= 1) vLen[i] = CAR_LEN[vSuv[i]];
       vVf[i] = 0.86 + rnd() * 0.28;
     }
 
@@ -696,7 +662,7 @@ export default {
       const k = Math.min(R.n - 1, Math.max(0, Math.round(u / R.st)));
       const type = pickType(rnd(), e.cls, R.xyz[k * 3], R.xyz[k * 3 + 2]);
       dressVehicle(i, type);
-      if (IS_HEAVY[type] && e.lanes > 1) lane = Math.min(lane, type === VK.BUS ? 0 : 1);
+      if (IS_HEAVY[type] && e.lanes > 1) lane = Math.min(lane, isBus(type) ? 0 : 1);
       vEdge[i] = eid; vLane[i] = lane; vS[i] = s; vV[i] = v; vAcc[i] = 0;
       vPrev[i] = -1; vLat[i] = laneOffset(e, lane); vStuck[i] = 0; vHold[i] = 0; vGhost[i] = 0; vFlags[i] = 0;
       chooseNext(i);
@@ -743,13 +709,13 @@ export default {
       if (a > 0.5) lane = 0;
       else if (a < -0.5 && !heavy) lane = e.lanes - 1;
       else if (e.lanes > 1 && rnd() < 0.15) lane = (rnd() * e.lanes) | 0;
-      if (heavy) lane = Math.min(lane, vType[i] === VK.BUS ? 0 : 1);
+      if (heavy) lane = Math.min(lane, isBus(vType[i]) ? 0 : 1);
       vLane[i] = Math.min(lane, e.lanes - 1);
       let nlane;
       if (a > 0.5) nlane = 0;
       else if (a < -0.5) nlane = nl - 1;
       else nlane = e.lanes > 1 ? Math.round((vLane[i] * (nl - 1)) / (e.lanes - 1)) : Math.min(vLane[i], nl - 1);
-      if (heavy) nlane = Math.min(nlane, vType[i] === VK.BUS ? 0 : 1);
+      if (heavy) nlane = Math.min(nlane, isBus(vType[i]) ? 0 : 1);
       vNextLane[i] = Math.max(0, Math.min(nl - 1, nlane));
     }
 
@@ -874,6 +840,7 @@ export default {
         if (!active[vEdge[i]]) despawn(i);
       }
       for (const id of toFill) fillEdge(id);
+      bikeRefresh(dens);
     }
     function fillEdge(id) {
       const e = edges[id];
@@ -953,7 +920,7 @@ export default {
         const type = vType[i], heavy = IS_HEAVY[type];
         const v = vV[i], s = vS[i], L = e.L, rem = L - s;
         const aMax = heavy ? 0.85 : 1.5, bC = 2.2, s0 = heavy ? 3.0 : 2.2, T = heavy ? 1.6 : 1.25;
-        let v0 = e.speed * vVf[i] * (type === VK.BUS ? 0.78 : heavy ? 0.86 : 1);
+        let v0 = e.speed * vVf[i] * (isBus(type) ? 0.78 : heavy ? 0.86 : 1);
         if (e.cls >= 2 && e.cls <= 4) v0 *= 1 - 0.28 * pk;
         const R = resOf(e.f);
         if (R.vcap < v0) v0 = Math.max(R.vcap, v0 * 0.6);
@@ -1114,11 +1081,459 @@ export default {
       balCursor = (balCursor + cnt) % Math.max(1, n);
     }
 
+    // ==================================================================
+    // 两轮/三轮车：电动车（含外卖骑手）、共享单车/自行车、快递三轮。在非机动车道（车道外有富余时）或最右车道外缘骑行，
+    // 12~20 km/h，遵守信号灯（右转不受限），路口红灯时排队停在停止线后；只在相机附近的活动边上仿真。
+    // ==================================================================
+    const BIKE_CAP = [260, 450, 680, 900];
+    const BIKE_DRAW = [140, 190, 240, 300];
+    const BIKE_R = [450, 600, 750, 900];
+    const RIDER_NEAR = 60;
+    //                 0  1  2   3   4   5  6  7  8  9  10 11   （每向每公里，高峰）
+    const BIKE_DENS = [0, 0, 30, 26, 20, 8, 0, 9, 0, 0, 10, 9];
+    const BIKE_HOURS = [[0, 0.12], [5, 0.06], [6.5, 0.35], [7.5, 1.0], [9, 0.72], [11, 0.66], [12, 0.92], [13.5, 0.75], [16, 0.72], [17.5, 1.0], [19, 0.9], [20.5, 0.68], [22, 0.42], [24, 0.12]];
+    const bikeHour = (h) => {
+      h = ((h % 24) + 24) % 24;
+      for (let k = 1; k < BIKE_HOURS.length; k++) {
+        const [h1, v1] = BIKE_HOURS[k];
+        if (h <= h1) { const [h0, v0] = BIKE_HOURS[k - 1]; return v0 + ((v1 - v0) * (h - h0)) / (h1 - h0); }
+      }
+      return 0.12;
+    };
+    // 外卖骑手占电动车比例：饭点高、深夜高
+    const courierShare = (h) => 0.1 + 0.18 * Math.max(bump(h, 10.8, 13.2), bump(h, 17.0, 20.2)) + (h >= 21.5 || h < 1.5 ? 0.15 : 0);
+    const BMAX = BIKE_CAP[3];
+    let bikeCapNow = BIKE_CAP[level];
+    const bEdge = new Int32Array(BMAX).fill(-1), bNext = new Int32Array(BMAX).fill(-1), bPrev = new Int32Array(BMAX).fill(-1);
+    const bS = new Float32Array(BMAX), bV = new Float32Array(BMAX), bVf = new Float32Array(BMAX), bAcc = new Float32Array(BMAX);
+    const bLat = new Float32Array(BMAX), bPrevLat = new Float32Array(BMAX), bNextA = new Float32Array(BMAX), bPrevA = new Float32Array(BMAX);
+    const bSlot = new Int8Array(BMAX), bType = new Uint8Array(BMAX), bOpt = new Uint8Array(BMAX), bFl = new Uint8Array(BMAX), bStuck = new Float32Array(BMAX);
+    const bCol = new Float32Array(BMAX * 3), bSec = new Float32Array(BMAX), bPh = new Float32Array(BMAX), bPose = new Float32Array(BMAX * 6);
+    const bLook = new Array(BMAX);
+    const bAlive = new Int32Array(BMAX), bWhere = new Int32Array(BMAX).fill(-1), bFree = new Int32Array(BMAX);
+    let nB = 0, nBFree = BMAX;
+    for (let k = 0; k < BMAX; k++) bFree[k] = BMAX - 1 - k;
+    const bCount = new Uint16Array(NE), bTarget = new Float32Array(NE), bActive = new Uint8Array(NE);
+    let bikeList = [];
+    const bikeOK = (e) => !e.blocked && BIKE_DENS[e.cls] > 0 && !feats[e.f].b;
+    // 骑行横向位置：车道外有 ≥ 1.3 m 富余 → 富余带中间（非机动车道）；否则最右车道外缘；该侧有路边停车 → 停车带内侧
+    const bLatCache = new Float32Array(NE).fill(NaN);
+    function bikeLatOf(e) {
+      let v = bLatCache[e.id];
+      if (v === v) return v;
+      const f = feats[e.f];
+      const half = featureWidth(f) / 2;
+      const carEdge = e.twoWay ? e.lanes * e.lw : (e.lanes * e.lw) / 2;
+      const spare = half - carEdge;
+      const pl = parkPlans[e.f];
+      const parkedHere = pl && (e.dir > 0 ? pl.side[0] : pl.side[1]);
+      if (parkedHere) v = pl.lat - 0.92 - 0.55;
+      else v = spare >= 1.3 ? carEdge + Math.min(spare * 0.5, 1.4) : Math.max(carEdge - 0.45, half - 0.75);
+      bLatCache[e.id] = v;
+      return v;
+    }
+    const colTmp2 = new THREE.Color();
+    const setBikeColor = (b, hex) => { colTmp2.setHex(hex); bCol[b * 3] = colTmp2.r; bCol[b * 3 + 1] = colTmp2.g; bCol[b * 3 + 2] = colTmp2.b; };
+    function dressBike(b) {
+      const h = hoursNow;
+      const day = h >= 7 && h < 20;
+      const r = rnd();
+      let type = r < (day ? 0.05 : 0.015) ? BIKE.TRICYCLE : r < 0.34 ? BIKE.BICYCLE : BIKE.SCOOTER;
+      let opt = 0, courier = null, sec = 1, speed;
+      if (type === BIKE.SCOOTER) {
+        setBikeColor(b, SCOOTER_COLORS[pickW(rnd(), SCOOTER_COLORS)][0]);
+        if (rnd() < courierShare(h)) {
+          courier = rnd() < 0.6 ? 'meituan' : 'eleme';
+          opt |= OPT.BOX;
+          sec = packRGB(COURIER[courier]);
+        } else {
+          if (rnd() < 0.35) opt |= OPT.BASKET;
+          if (rnd() < 0.08) opt |= OPT.SHIELD;
+        }
+        speed = courier ? 4.6 + rnd() * 0.95 : 3.9 + rnd() * 1.5;
+      } else if (type === BIKE.BICYCLE) {
+        if (rnd() < 0.85) { setBikeColor(b, SHARED_BIKES[pickW(rnd(), SHARED_BIKES)][0]); opt |= OPT.BASKET; }
+        else { setBikeColor(b, PRIVATE_BIKES[(rnd() * PRIVATE_BIKES.length) | 0]); if (rnd() < 0.4) opt |= OPT.BASKET; }
+        speed = 3.3 + rnd() * 1.3;
+      } else {
+        setBikeColor(b, rnd() < 0.6 ? 0xe8e8e4 : 0x8a8d92);
+        sec = packRGB(EXPRESS_BOX[pickW(rnd(), EXPRESS_BOX)][0]);
+        speed = 3.6 + rnd() * 1.2;
+      }
+      bType[b] = type; bOpt[b] = opt; bSec[b] = sec; bVf[b] = speed;
+      const look = randomLook(rnd, { rider: type !== BIKE.BICYCLE, courier });
+      // 骑电动车约八成戴头盔；骑共享单车的人不拿手机
+      if (type !== BIKE.BICYCLE && !courier && rnd() < 0.2) look.mask &= ~64;
+      look.mask &= ~1024;
+      bLook[b] = look;
+      bPh[b] = rnd();
+      const sr = rnd();
+      bSlot[b] = sr < 0.5 ? 0 : sr < 0.78 ? 1 : -1;
+    }
+    function bikeSpawn(eid, s, v) {
+      if (!nBFree || nB >= bikeCapNow) return -1;
+      const b = bFree[--nBFree];
+      const e = edges[eid];
+      dressBike(b);
+      bEdge[b] = eid; bS[b] = s; bV[b] = Math.min(v, bVf[b]); bAcc[b] = 0; bPrev[b] = -1; bStuck[b] = 0;
+      bLat[b] = bikeLatOf(e) + bSlot[b] * 0.42;
+      bikeChooseNext(b);
+      bCount[eid]++;
+      bWhere[b] = nB; bAlive[nB++] = b;
+      return b;
+    }
+    function bikeDespawn(b) {
+      const e = bEdge[b];
+      if (e < 0) return;
+      if (bCount[e] > 0) bCount[e]--;
+      bEdge[b] = -1;
+      const w = bWhere[b], last = bAlive[--nB];
+      bAlive[w] = last; bWhere[last] = w; bWhere[b] = -1;
+      bFree[nBFree++] = b;
+    }
+    function bikeChooseNext(b) {
+      const e = edges[bEdge[b]];
+      const nx = e.next;
+      bNext[b] = -1;
+      if (!nx.length) return;
+      let tot = 0;
+      for (let k = 0; k < nx.length && k < 16; k++) {
+        const o = edges[nx[k].e], a = nx[k].a;
+        let w = Math.abs(a) < 0.35 ? 4 : a > 0 ? 1.3 : 0.7;
+        if (!bikeOK(o)) w = 0;
+        else if (!bActive[o.id]) w *= 0.04;
+        wTmp[k] = w; tot += w;
+      }
+      if (tot <= 0) return;
+      let r = rnd() * tot, pick = -1;
+      for (let k = 0; k < nx.length && k < 16; k++) { r -= wTmp[k]; if (r <= 0 && wTmp[k] > 0) { pick = k; break; } }
+      if (pick < 0) return;
+      bNext[b] = nx[pick].e;
+      bNextA[b] = nx[pick].a;
+    }
+    function bikeRefresh(dens) {
+      const cp = camera.position;
+      const R = BIKE_R[level];
+      const hk = bikeHour(hoursNow) * dens;
+      const list = [];
+      const fill = [];
+      for (const id of activeList) {
+        const e = edges[id];
+        if (!bikeOK(e)) continue;
+        const d = Math.hypot(Math.max(e.x0 - cp.x, 0, cp.x - e.x1), Math.max(e.z0 - cp.z, 0, cp.z - e.z1));
+        if (d > R) continue;
+        bTarget[id] = (e.L * BIKE_DENS[e.cls] * hk) / 1000;
+        list.push(id);
+        if (!bActive[id]) fill.push(id);
+      }
+      for (const id of bikeList) bActive[id] = 0;
+      for (const id of list) bActive[id] = 1;
+      bikeList = list;
+      for (let k = nB - 1; k >= 0; k--) { const b = bAlive[k]; if (!bActive[bEdge[b]]) bikeDespawn(b); }
+      for (const id of fill) {
+        const e = edges[id];
+        let n = Math.floor(bTarget[id] + rnd());
+        for (let q = 0; q < n; q++) if (bikeSpawn(id, (q + 0.2 + rnd() * 0.6) * (e.L / n), 2 + rnd() * 3) < 0) break;
+      }
+    }
+    // 排序键：(边×4 + 车位) → 里程 → 车号
+    const bKeys = new Float64Array(BMAX + 8);
+    const bLaneKey = (k) => Math.floor(k / 33554432);
+    function bikeSim(dt, t) {
+      let nk = 0;
+      for (let q = 0; q < nB; q++) {
+        const b = bAlive[q];
+        const sq = Math.max(0, Math.min(32767, Math.round((bS[b] + 20) * 20)));
+        bKeys[nk++] = ((bEdge[b] * 4 + bSlot[b] + 1) * 32768 + sq) * 1024 + q;
+      }
+      const ks = bKeys.subarray(0, nk);
+      ks.sort();
+      for (let p = 0; p < nk; p++) {
+        const q = ks[p] % 1024, b = bAlive[q];
+        const e = edges[bEdge[b]];
+        const v = bV[b], s = bS[b], L = e.L, rem = L - s;
+        const len = BIKE_LEN[bType[b]];
+        let v0 = bVf[b];
+        if (bNext[b] >= 0 && Math.abs(bNextA[b]) > 0.5) v0 = Math.min(v0, Math.sqrt(9 + 2 * 1.2 * Math.max(0, rem - 3)));
+        let acc = 1.1 * (1 - Math.pow(v / v0, 4));
+        if (p + 1 < nk && bLaneKey(ks[p + 1]) === bLaneKey(ks[p])) {
+          const j = bAlive[ks[p + 1] % 1024];
+          const gap = bS[j] - s - (BIKE_LEN[bType[j]] + len) * 0.5;
+          const sStar = 1.1 + Math.max(0, v * 0.9 + (v * (v - bV[j])) / 3.0);
+          acc -= 1.1 * (sStar / Math.max(gap, 0.05)) ** 2;
+        }
+        if (e.junction >= 0) {
+          const stopAt = L - Math.max(1.2, (STOP_BACK[e.cls] || 6) - 1.2);
+          const dStop = stopAt - s - len * 0.5;
+          if (dStop > -0.5 && dStop < 60) {
+            const st = signal(e, t);
+            const rightTurn = bNext[b] >= 0 && bNextA[b] > 0.5;
+            if (st !== 0 && !rightTurn && !(st === 1 && dStop < (v * v) / 5)) {
+              const g = Math.max(dStop, 0.05);
+              const sStar = 0.6 + v * 0.9 + (v * v) / 3.0;
+              const a2 = 1.1 * (1 - (sStar / g) ** 2);
+              if (a2 < acc) acc = a2;
+            }
+          }
+        }
+        if (acc < -5) acc = -5;
+        bAcc[b] = acc;
+        bV[b] = Math.max(0, v + acc * dt);
+        if (bV[b] < 0.1) { bStuck[b] += dt; if (bStuck[b] > 60) bS[b] += 0.5; } else bStuck[b] = 0;
+      }
+      for (let q = nB - 1; q >= 0; q--) {
+        const b = bAlive[q];
+        let eid = bEdge[b], e = edges[eid];
+        let s = bS[b] + bV[b] * dt;
+        let dead = false;
+        while (s >= e.L) {
+          const nx = bNext[b];
+          if (nx < 0 || !bActive[nx]) { dead = true; break; }
+          s -= e.L;
+          bPrev[b] = eid; bPrevLat[b] = bLat[b]; bPrevA[b] = bNextA[b];
+          if (bCount[eid] > 0) bCount[eid]--;
+          bCount[nx]++;
+          eid = nx; e = edges[nx]; bEdge[b] = nx;
+          bLat[b] = bikeLatOf(e) + bSlot[b] * 0.42;
+          bikeChooseNext(b);
+        }
+        if (dead) { bikeDespawn(b); continue; }
+        bS[b] = s;
+        const inA = bNext[b] >= 0 && s > e.L - junctionR(bNextA[b], e.L);
+        const inB = bPrev[b] >= 0 && s < junctionR(bPrevA[b], e.L);
+        if (!inA && !inB) {
+          const d = bikeLatOf(e) + bSlot[b] * 0.42 - bLat[b];
+          const mx = 0.5 * dt;
+          bLat[b] += d > mx ? mx : d < -mx ? -mx : d;
+          if (bPrev[b] >= 0 && s > 25) bPrev[b] = -1;
+        }
+        bFl[b] = bAcc[b] < -0.8 || bV[b] < 0.3 ? 1 : 0;
+      }
+    }
+    let bBalCursor = 0;
+    function bikeBalance() {
+      const n = bikeList.length;
+      if (!n) return;
+      const cnt = Math.min(n, 200);
+      for (let q = 0; q < cnt; q++) {
+        const id = bikeList[(bBalCursor + q) % n];
+        const e = edges[id];
+        const tg = bTarget[id], c = bCount[id];
+        if (c < tg * 0.7 - 0.3 && e.L > 16 && nB < bikeCapNow) {
+          const s = 4 + rnd() * (e.L - 8);
+          edgePose(id, s, bikeLatOf(e), tmpPose, 0);
+          if (hidden(tmpPose[0], tmpPose[1], tmpPose[2])) bikeSpawn(id, s, 4);
+        } else if (c > tg * 1.6 + 1) {
+          for (let k = 0; k < nB; k++) {
+            const b = bAlive[k];
+            if (bEdge[b] !== id) continue;
+            const o = b * 6;
+            if (hidden(bPose[o], bPose[o + 1], bPose[o + 2])) { bikeDespawn(b); break; }
+          }
+        }
+      }
+      bBalCursor = (bBalCursor + cnt) % Math.max(1, n);
+    }
+    function bikePose(b) {
+      const eid = bEdge[b], e = edges[eid], s = bS[b], off = b * 6;
+      const nx = bNext[b];
+      if (nx >= 0) {
+        const rA = junctionR(bNextA[b], e.L), rB = junctionR(bNextA[b], edges[nx].L);
+        if (s > e.L - rA) { blendPose(eid, nx, bLat[b], bikeLatOf(edges[nx]) + bSlot[b] * 0.42, rA, rB, (s - (e.L - rA)) / (rA + rB), bPose, off); return; }
+      }
+      const pv = bPrev[b];
+      if (pv >= 0) {
+        const rA = junctionR(bPrevA[b], edges[pv].L), rB = junctionR(bPrevA[b], e.L);
+        if (s < rB) { blendPose(pv, eid, bPrevLat[b], bLat[b], rA, rB, (rA + s) / (rA + rB), bPose, off); return; }
+      }
+      edgePose(eid, s, bLat[b], bPose, off);
+    }
+    const m16 = new Float32Array(16);
+    function drawBikes(night) {
+      const cp = camera.position;
+      const maxD = BIKE_DRAW[level];
+      const lightsOn = night > 0.02;
+      for (let q = 0; q < nB; q++) {
+        const b = bAlive[q];
+        bikePose(b);
+        const o = b * 6;
+        const x = bPose[o], y = bPose[o + 1], z = bPose[o + 2];
+        const d = Math.hypot(x - cp.x, y - cp.y, z - cp.z);
+        if (d > maxD || !inFrustum(x, y + 1, z, 2)) continue;
+        let fx = bPose[o + 3], fy = bPose[o + 4], fz = bPose[o + 5];
+        const fl = Math.hypot(fx, fy, fz) || 1;
+        fx /= fl; fy /= fl; fz /= fl;
+        const type = bType[b];
+        const w = WB[type];
+        if (w.full()) continue;
+        const idx = w.put(x, y, z, fx, fy, fz);
+        w.set4(0, idx, bCol[b * 3], bCol[b * 3 + 1], bCol[b * 3 + 2], bSec[b]);
+        w.set4(1, idx, type, bFl[b], bOpt[b], 8);
+        // 骑手：坐在座面上（实例矩阵 = 车辆朝向 × 身高缩放，原点下移到脚底）
+        const look = bLook[b];
+        const sc = look.height / 1.7;
+        let lx = fz, lz = -fx;
+        const ll = Math.hypot(lx, lz) || 1;
+        lx /= ll; lz /= ll;
+        const Ux = fy * lz, Uy = fz * lx - fx * lz, Uz = -fy * lx;
+        const seat = SEAT[type];
+        const up = seat[0] - SEAT_H * sc, fw = seat[1] + 0.03;
+        m16[0] = lx * sc; m16[1] = 0; m16[2] = lz * sc; m16[3] = 0;
+        m16[4] = Ux * sc; m16[5] = Uy * sc; m16[6] = Uz * sc; m16[7] = 0;
+        m16[8] = fx * sc; m16[9] = fy * sc; m16[10] = fz * sc; m16[11] = 0;
+        m16[12] = x + Ux * up + fx * fw; m16[13] = y + Uy * up + fy * fw; m16[14] = z + Uz * up + fz * fw; m16[15] = 1;
+        const rw = d < RIDER_NEAR && !RN.full() ? RN : RF;
+        if (!rw.full()) rw.putMatrix(m16, look, bPh[b], bV[b], type === BIKE.BICYCLE ? MODE.BICYCLE : MODE.SCOOTER);
+        if (lightsOn && !W.light.full()) {
+          const li = W.light.put(x, y, z, fx, fy, fz);
+          W.light.set4(0, li, 0, type === BIKE.TRICYCLE ? 1.0 : 0.62, type === BIKE.TRICYCLE ? -1.36 : -0.9, type === BIKE.BICYCLE ? 0.9 : 0.8);
+          W.light.set4(1, li, bFl[b] | 2 | 4, 0.3, 0, 0);
+        }
+      }
+    }
+
+    // ==================================================================
+    // 路边停车（支路/小区路/三级路，静态，按 200 m 网格懒生成；离路口 11 m 内、桥隧、排除区不停）
+    // ==================================================================
+    const PARK_CELL = 200;
+    const PARK_R = [350, 500, 650, 800];
+    const PARK_NEAR = [70, 110, 150, 190];
+    const parkFeatGrid = new Map();
+    for (let fi = 0; fi < feats.length; fi++) {
+      if (!parkPlans[fi]) continue;
+      const p = feats[fi].p;
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+      for (let k = 0; k < p.length; k += 2) { x0 = Math.min(x0, p[k]); x1 = Math.max(x1, p[k]); z0 = Math.min(z0, p[k + 1]); z1 = Math.max(z1, p[k + 1]); }
+      for (let cx = Math.floor((x0 - 6) / PARK_CELL); cx <= Math.floor((x1 + 6) / PARK_CELL); cx++)
+        for (let cz = Math.floor((z0 - 6) / PARK_CELL); cz <= Math.floor((z1 + 6) / PARK_CELL); cz++) {
+          const k = cx * 100003 + cz;
+          let a = parkFeatGrid.get(k);
+          if (!a) parkFeatGrid.set(k, (a = []));
+          a.push(fi);
+        }
+    }
+    // 路口节点网格（两条以上不同道路交汇的节点）
+    const JN_CELL = 40, jnGrid = new Map();
+    for (const nd of G.nodes) {
+      const fs = new Set();
+      for (const id of nd.inE) fs.add(edges[id].f);
+      for (const id of nd.outE) fs.add(edges[id].f);
+      if (fs.size < 2) continue;
+      const k = Math.floor(nd.x / JN_CELL) * 100003 + Math.floor(nd.z / JN_CELL);
+      let a = jnGrid.get(k);
+      if (!a) jnGrid.set(k, (a = []));
+      a.push(nd.x, nd.z);
+    }
+    const nearJunction = (x, z, r) => {
+      const gx = Math.floor(x / JN_CELL), gz = Math.floor(z / JN_CELL);
+      for (let dx = -1; dx <= 1; dx++)
+        for (let dz = -1; dz <= 1; dz++) {
+          const a = jnGrid.get((gx + dx) * 100003 + gz + dz);
+          if (a) for (let k = 0; k < a.length; k += 2) if (Math.hypot(a[k] - x, a[k + 1] - z) < r) return true;
+        }
+      return false;
+    };
+    const parkCells = new Map();
+    const PSTRIDE = 12; // x y z fx fy fz r g b shape pack len
+    function genParkCell(cx, cz) {
+      const out = [];
+      const list = parkFeatGrid.get(cx * 100003 + cz);
+      const night = hoursNow < 7 || hoursNow > 20;
+      if (list) for (const fi of list) {
+        const f = feats[fi], pl = parkPlans[fi], p = f.p;
+        const occ = Math.min(0.85, pl.occ * (night && f.c >= 5 ? 1.35 : 1));
+        let acc = 0;
+        for (let k = 2; k < p.length; k += 2) {
+          const ax = p[k - 2], az = p[k - 1], bx = p[k], bz = p[k + 1];
+          const sl = Math.hypot(bx - ax, bz - az);
+          if (sl < 7) { acc += sl; continue; }
+          const hx = (bx - ax) / sl, hz = (bz - az) / sl;
+          const n = Math.floor((sl - 4) / 6.4);
+          for (let q = 0; q < n; q++) {
+            const t = 2 + 3.2 + q * 6.4;
+            for (let sd = 0; sd < 2; sd++) {
+              if (!pl.side[sd]) continue;
+              const key = fi * 8191 + Math.round(acc + t) * 2 + sd;
+              if (parkHash(key) > occ) continue;
+              const lat = sd === 0 ? pl.lat : -pl.lat;
+              const jit = (parkHash(key + 7) - 0.5) * 0.5;
+              const x = ax + hx * (t + jit) - hz * lat, z = az + hz * (t + jit) + hx * lat;
+              if (Math.floor(x / PARK_CELL) !== cx || Math.floor(z / PARK_CELL) !== cz) continue;
+              if (nearJunction(x, z, 11)) continue;
+              if (EX && (EX.test(x, z, 'roads') || EX.test(x + hx * 2.3, z + hz * 2.3, 'roads') || EX.test(x - hx * 2.3, z - hz * 2.3, 'roads'))) continue;
+              if (terrain.inHole?.(x, z)) continue;
+              const rev = parkHash(key + 3) < 0.08;
+              const dir = (sd === 0) !== rev ? 1 : -1;
+              const fxx = hx * dir, fzz = hz * dir;
+              const y0 = terrain.heightAt(x, z) + LIFT;
+              const yf = terrain.heightAt(x + fxx * 2.2, z + fzz * 2.2), yb = terrain.heightAt(x - fxx * 2.2, z - fzz * 2.2);
+              const fy = (yf - yb) / 4.4;
+              const h2 = parkHash(key + 11);
+              const shape = h2 < 0.52 ? 0 : h2 < 0.88 ? 1 : 2;
+              colTmp.setHex(pickCarColor(parkHash(key + 13)));
+              const plate = parkHash(key + 17) < 0.3 ? 1 : 0;
+              const pack = 8 + plate * 16 + ((parkHash(key + 19) * 12) | 0) * 64;
+              out.push(x, y0, z, fxx, fy, fzz, colTmp.r, colTmp.g, colTmp.b, shape, pack, CAR_LEN[shape]);
+            }
+          }
+          acc += sl;
+        }
+      }
+      return Float32Array.from(out);
+    }
+    let parkCount = 0;
+    function drawParked() {
+      const cp = camera.position;
+      const R = PARK_R[level], nearD = Math.min(PARK_NEAR[level], nearCar()), fineD = FINE_CAR[level];
+      const agl = cp.y - terrain.heightAt(cp.x, cp.z);
+      if (agl > 900) return;
+      const c0x = Math.floor((cp.x - R) / PARK_CELL), c1x = Math.floor((cp.x + R) / PARK_CELL);
+      const c0z = Math.floor((cp.z - R) / PARK_CELL), c1z = Math.floor((cp.z + R) / PARK_CELL);
+      let budget = 3; // 每帧最多新生成 3 格，避免卡顿
+      parkCount = 0;
+      for (let cx = c0x; cx <= c1x; cx++)
+        for (let cz = c0z; cz <= c1z; cz++) {
+          const k = cx * 100003 + cz;
+          if (!parkFeatGrid.has(k)) continue;
+          let cell = parkCells.get(k);
+          if (!cell) {
+            if (budget <= 0) continue;
+            budget--;
+            cell = { cx, cz, a: genParkCell(cx, cz) };
+            parkCells.set(k, cell);
+          }
+          const a = cell.a;
+          for (let q = 0; q < a.length; q += PSTRIDE) {
+            const x = a[q], y = a[q + 1], z = a[q + 2];
+            const d = Math.hypot(x - cp.x, y - cp.y, z - cp.z);
+            if (d > R || !inFrustum(x, y + 0.8, z, 3)) continue;
+            const w = d < fineD && !W.carFine.full() ? W.carFine : d < nearD ? W.car : W.far;
+            if (w.full()) continue;
+            const idx = w.put(x, y, z, a[q + 3], a[q + 4], a[q + 5]);
+            w.set4(0, idx, a[q + 6], a[q + 7], a[q + 8], 1);
+            w.set4(1, idx, VK.CAR, 16, a[q + 9], a[q + 10]);
+            parkCount++;
+          }
+        }
+      // 缓存过大时丢弃远处的格子
+      if (parkCells.size > 600) {
+        for (const [k, c] of parkCells) if (Math.hypot((c.cx + 0.5) * PARK_CELL - cp.x, (c.cz + 0.5) * PARK_CELL - cp.z) > R * 2) parkCells.delete(k);
+      }
+    }
+    // 铰接公交后节：铰接点（车辆中心后 3.0 m）与后轴（后 7.3 m）沿路径取样，后节朝向随之折转
+    const PJ = new Float32Array(6), PR = new Float32Array(6);
+    function poseAt(i, ds, out) {
+      let eid = vEdge[i], s = vS[i] + ds, lat = vLat[i];
+      if (s < 0 && vPrev[i] >= 0) { eid = vPrev[i]; s += edges[eid].L; lat = vPrevLat[i]; }
+      else if (s > edges[eid].L && vNext[i] >= 0) { s -= edges[eid].L; eid = vNext[i]; lat = laneOffset(edges[eid], vNextLane[i]); }
+      edgePose(eid, Math.max(0, Math.min(edges[eid].L, s)), lat, out, 0);
+    }
+
     // —— 绘制道路车辆 ——
     const nearCar = () => NEAR_CAR[level], nearHeavy = () => NEAR_HEAVY[level];
     function drawVehicles(night) {
       const cp = camera.position;
-      const nc = nearCar(), nh = nearHeavy();
+      const nc = nearCar(), nh = nearHeavy(), fineD = FINE_CAR[level];
       const farMax = bubble.R + 400;
       const lightsOn = night > 0.02;
       for (let k = 0; k < nAlive; k++) {
@@ -1136,12 +1551,22 @@ export default {
         fx /= fl; fy /= fl; fz /= fl;
         const heavy = IS_HEAVY[type];
         let w;
-        if (heavy ? d < nh : d < nc) w = heavy ? W.heavy : W.car;
-        else w = W.far;
+        if (heavy) w = d < nh ? W.heavy : W.far;
+        else w = d < fineD && !W.carFine.full() ? W.carFine : d < nc ? W.car : W.far;
         if (!w.full()) {
           const idx = w.put(x, y, z, fx, fy, fz);
-          w.set4(0, idx, vCol[i * 3], vCol[i * 3 + 1], vCol[i * 3 + 2], 1);
+          w.set4(0, idx, vCol[i * 3], vCol[i * 3 + 1], vCol[i * 3 + 2], vSec[i]);
           w.set4(1, idx, type, vFlags[i], vSuv[i], vPack[i]);
+          if (type === VK.BUS_A && w === W.heavy && !w.full()) {
+            poseAt(i, -3.0, PJ);
+            poseAt(i, -7.3, PR);
+            let gx = PJ[0] - PR[0], gy = PJ[1] - PR[1], gz = PJ[2] - PR[2];
+            const gl = Math.hypot(gx, gy, gz);
+            if (gl > 1) { gx /= gl; gy /= gl; gz /= gl; } else { gx = fx; gy = fy; gz = fz; }
+            const j = w.put(x - fx * 3.0, y - fy * 3.0, z - fz * 3.0, gx, gy, gz);
+            w.set4(0, j, vCol[i * 3], vCol[i * 3 + 1], vCol[i * 3 + 2], vSec[i]);
+            w.set4(1, j, VK.BUS_R, vFlags[i], vSuv[i], vPack[i]);
+          }
         }
         if (lightsOn && !W.light.full()) {
           const lt = LIGHT_T[type];
@@ -1486,7 +1911,7 @@ export default {
     // 关闭的部分不仿真、不写实例（count=0 且隐藏），真正省掉 CPU 与绘制开销。
     let vehOn = true, trainOn = true;
     let enabled = true;
-    const vehMeshes = [carMesh, heavyMesh, farMesh];
+    const vehMeshes = [carFineMesh, carMesh, heavyMesh, farMesh, ...bikeMeshes, RN.mesh, RF.mesh];
     const trainMeshes = [trainNearMesh, trainFarMesh];
     const applyLayers = () => {
       enabled = vehOn || trainOn;
@@ -1518,9 +1943,10 @@ export default {
           mark('refresh');
           // 大步长时分两次积分
           if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
+          bikeSim(dt, simTime);
           mark('sim');
           balT -= dt;
-          if (balT <= 0) { balance(); balT = 0.25; }
+          if (balT <= 0) { balance(); bikeBalance(); balT = 0.25; }
           mark('balance');
         }
         camera.updateMatrixWorld();
@@ -1528,12 +1954,14 @@ export default {
         frustum.setFromProjectionMatrix(projScreen, camera.coordinateSystem, camera.reversedDepth);
         const night = ctx.uniforms.uNight.value;
         for (const w of WL) w.reset();
+        RN.reset(); RF.reset();
         tq = performance.now();
-        if (vehOn) drawVehicles(night);
+        if (vehOn) { drawVehicles(night); drawParked(); drawBikes(night); }
         mark('drawV');
         if (trainOn) drawTrains(simTime, night);
         mark('drawT');
         for (const w of WL) w.commit();
+        RN.commit(); RF.commit();
         lightMesh.visible = night > 0.02;
         perfMs = perfMs * 0.95 + (performance.now() - t0) * 0.05;
         if (DEBUG_STATS && simTime > 1 && !statsShown) { statsShown = true; console.warn('[traffic] ' + JSON.stringify(inst.stats())); }
@@ -1554,7 +1982,8 @@ export default {
       setQuality(q) {
         level = Math.max(0, Math.min(3, q.level ?? level));
         capNow = CAP_BY_LEVEL[level];
-        for (const m of [carMesh, heavyMesh, trainNearMesh]) m.castShadow = shadowsOn();
+        bikeCapNow = BIKE_CAP[level];
+        for (const m of shadowCasters) m.castShadow = shadowsOn();
         refreshT = 0;
       },
       /** 调试：列出 (x,z) 半径 r 内的列车车头 */
@@ -1574,6 +2003,12 @@ export default {
         }
         return out;
       },
+      /** 调试：已生成的路边停车（前 n 辆，世界坐标） */
+      debugParked(n = 20) {
+        const out = [];
+        for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1)]);
+        return out;
+      },
       /** 调试：各阶段最大耗时（ms），读取后清零 */
       profile() { const o = { ...prof }; for (const k in prof) prof[k] = 0; return o; },
       stats() {
@@ -1585,7 +2020,7 @@ export default {
           if (vHold[i]) held++;
           vsum += vV[i];
         }
-        return { vehicles: nAlive, stopped, held, ghosts, vAvg: +(vsum / Math.max(1, nAlive)).toFixed(2), ms: +perfMs.toFixed(2), activeEdges: activeList.length, bubbleR: bubble.R, near: W.car.n, heavy: W.heavy.n, far: W.far.n, lights: W.light.n, trainsNear: W.tNear.n, trainsFar: W.tFar.n, services: services.length };
+        return { vehicles: nAlive, stopped, held, ghosts, vAvg: +(vsum / Math.max(1, nAlive)).toFixed(2), ms: +perfMs.toFixed(2), activeEdges: activeList.length, bubbleR: bubble.R, near: W.car.n, heavy: W.heavy.n, far: W.far.n, lights: W.light.n, fine: W.carFine.n, parked: parkCount, parkFeat: nParkFeat, bikes: nB, bikesDrawn: W.bike0.n + W.bike1.n + W.bike2.n, riders: RN.n + RF.n, trainsNear: W.tNear.n, trainsFar: W.tFar.n, services: services.length };
       },
     };
     if (typeof window !== 'undefined') window.__traffic = inst;
