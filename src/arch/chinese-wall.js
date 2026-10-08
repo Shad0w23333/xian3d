@@ -456,7 +456,7 @@ export function cityPlatform(b, o) {
 export function yardWall(b, pts, o = {}) {
   const h = o.h ?? 3.2, t = o.t ?? 0.6;
   const col = o.color ?? 0xa4382a;
-  const capC = o.capColor ?? 0x6e7176;
+  const capC = o.capColor ?? 0x75726e;
   const skirt = o.skirt ?? 0.8;
   const n = pts.length;
   const segs = o.closed ? n : n - 1;

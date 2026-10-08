@@ -251,12 +251,14 @@ export function lakeMask(polys, pad = 20, size = 1024) {
 
 // ───────────── 投影倒影 ─────────────
 // 把建筑按水面镜像后，沿视线投影回水面（屏幕位置与真实镜像一致，深度落在水面上 → 不被水面遮挡、
-// 仍被岸上物体遮挡）。加色混合 = 水面反射光叠加；湖面外用遮罩裁掉。
+// 仍被岸上物体遮挡）。发光部分（灯带、窗光）加色混合 = 水面反射光叠加；实体部分（墙、柱、屋面）白天用半透明正常混合
+// 盖在水面上（原先也是加色，白天只能把浅色水面再提亮一点，近景几乎看不出倒影）。湖面外用遮罩裁掉。
 const reflCache = new Map();
 function reflMaterial(ctx, kind, lake) {
   const key = kind + '|' + lake.id;
   if (reflCache.has(key)) return reflCache.get(key);
-  const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
+  const solid = kind !== 'emit' && kind !== 'glow';
+  const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
   m.name = 'qj.refl.' + kind;
   m.defines = { REFL_KIND: kind === 'emit' ? 1 : kind === 'glow' ? 2 : 0 };
   m.onBeforeCompile = (sh) => {
@@ -296,9 +298,13 @@ function reflMaterial(ctx, kind, lake) {
         #elif REFL_KIND == 2
           rc = vec3( 1.0, 0.62, 0.3 ) * uNight * 0.55 * rip * fade;
         #else
-          rc = diffuseColor.rgb * ( 0.2 * ( 1.0 - uNight ) + 0.012 ) * rip * fade;
+          // 实体倒影：近似受光的反照率（白天约 0.62，夜间压暗），半透明盖在水面上；多层重叠时透明度累积有限
+          rc = diffuseColor.rgb * mix( 0.62, 0.05, uNight ) * ( 0.85 + 0.15 * rip );
+          gl_FragColor = vec4( rc, 0.3 * fade * ( 0.75 + 0.25 * rip ) * ( 1.0 - 0.7 * uNight ) );
         #endif
-        gl_FragColor = vec4( rc, 1.0 );`);
+        #if REFL_KIND != 0
+        gl_FragColor = vec4( rc, 1.0 );
+        #endif`);
   };
   m.customProgramCacheKey = () => 'qj-refl-' + kind;
   // 加色混合与绘制顺序无关：关掉 three 对“透明 + 双面”材质的背面/正面两遍绘制（否则每个网格 2 次 draw call）
