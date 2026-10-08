@@ -22,6 +22,8 @@ export const MODULES = [
   { id: 'airports', load: () => import('./airports.js') },
   // 片区街景（未央/凤城七路、曲江、浐灞、回坊）：须在 buildings / vegetation 之前（prepare 登记广场与停车场排除区）、signage 之前
   { id: 'streetscape', load: () => import('./streetscape.js') },
+  // 地面停车场（OSM amenity=parking）：须在 streetscape 之后（精建片区的停车场不重复）、vegetation 之前（停车场内不种树）
+  { id: 'parking', load: () => import('./parking.js') },
   { id: 'buildings', load: () => import('./buildings.js') },
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
