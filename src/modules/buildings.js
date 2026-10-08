@@ -154,26 +154,44 @@ function tint(g, c) {
   return g;
 }
 function propGeometries() {
-  // 0 盒体：电梯机房/楼梯间/彩钢棚/通风器（底面在 y=0），顶部压顶略深
-  const box = mergeGeometries([
-    tint(new THREE.BoxGeometry(1, 0.94, 1).translate(0, 0.47, 0), [1, 1, 1]),
-    tint(new THREE.BoxGeometry(1.03, 0.06, 1.03).translate(0, 0.97, 0), [0.8, 0.8, 0.78]),
-  ]);
-  // 1 水箱：不锈钢/玻璃钢圆罐（10 边，顶盖）
-  const tank = tint(new THREE.CylinderGeometry(0.5, 0.5, 1, 10, 1, false).translate(0, 0.5, 0), [1, 1, 1]);
+  // 构件三角形预算：老城屋面由坡顶改回平屋面后构件数量翻倍（审查 st_eastgate），每种构件都压到够用的最少面数
+  // 0 盒体：电梯机房/楼梯间/彩钢棚/通风器/悬空构架梁（底面在 y=0；不再单独做压顶盒；构架梁悬空，底面要保留）
+  const box = tint(new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), [1, 1, 1]);
+  // 1 水箱：不锈钢/玻璃钢圆罐（8 边，顶盖；总是坐在屋面或机房顶上，去掉底面）
+  const tank = tint(new THREE.CylinderGeometry(0.5, 0.5, 1, 8, 1, false).translate(0, 0.5, 0), [1, 1, 1]);
+  dropFace(tank, 0, -1, 0);
   // 2 空调室外机组（多联机）：机身 + 顶部风扇格栅（深色顶板）
   const ac = mergeGeometries([
     tint(new THREE.BoxGeometry(1, 0.86, 1).translate(0, 0.43, 0), [1, 1, 1]),
     tint(new THREE.BoxGeometry(0.92, 0.08, 0.86).translate(0, 0.9, 0), [0.16, 0.16, 0.17]),
   ]);
   // 3 太阳能热水器（朝南 +Z）：真空管集热板（深蓝黑）倾角 40° + 顶部储水罐 + 支架，实尺寸 1.8×1.4 m
+  //   储水罐为积灰的不锈钢（审查 st_shanbo：原 0.86 近白反照率在成排拼接后像一根发光灯管）
   const tilt = (40 * Math.PI) / 180;
   const solar = mergeGeometries([
     tint(new THREE.BoxGeometry(1.8, 0.08, 1.4).rotateX(tilt).translate(0, 0.3 + 0.7 * Math.sin(tilt), 0.2), [0.07, 0.09, 0.13]),
-    tint(new THREE.CylinderGeometry(0.2, 0.2, 1.9, 8, 1, true).rotateZ(Math.PI / 2).translate(0, 0.3 + 1.4 * Math.sin(tilt) + 0.12, 0.2 - 0.7 * Math.cos(tilt) - 0.1), [0.86, 0.86, 0.84]),
-    tint(new THREE.BoxGeometry(1.7, 1.2, 0.05).translate(0, 0.6, -0.38), [0.5, 0.5, 0.5]),
+    tint(new THREE.CylinderGeometry(0.2, 0.2, 1.9, 6, 1, true).rotateZ(Math.PI / 2).translate(0, 0.3 + 1.4 * Math.sin(tilt) + 0.12, 0.2 - 0.7 * Math.cos(tilt) - 0.1), [0.5, 0.51, 0.5]),
+    // 支架背板：一块朝北的面片（原薄盒 12 个三角形）
+    tint(new THREE.PlaneGeometry(1.7, 1.2).rotateY(Math.PI).translate(0, 0.6, -0.38), [0.42, 0.42, 0.41]),
   ]);
   return [box, tank, ac, solar];
+}
+/** 去掉法线为 (nx,ny,nz) 的面（非索引几何，按三角形逐个检查；屋顶构件贴在屋面上的底面永远看不见） */
+function dropFace(g, nx, ny, nz) {
+  const p = g.attributes.position.array, n = g.attributes.normal.array;
+  const keep = [];
+  for (let t = 0; t < p.length / 9; t++) {
+    const o = t * 9;
+    if (n[o] * nx + n[o + 1] * ny + n[o + 2] * nz > 0.99) continue;
+    keep.push(t);
+  }
+  for (const name of Object.keys(g.attributes)) {
+    const a = g.attributes[name], s = a.itemSize, src = a.array;
+    const out = new src.constructor(keep.length * 3 * s);
+    keep.forEach((t, k) => out.set(src.subarray(t * 3 * s, (t + 1) * 3 * s), k * 3 * s));
+    g.setAttribute(name, new THREE.BufferAttribute(out, s));
+  }
+  return g;
 }
 
 // ———— 航空障碍灯（红色中光强闪光灯，约 40 次/分） ————
@@ -190,8 +208,9 @@ function makeObstacleLights(ctx, arr) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   g.setAttribute('aPhase', new THREE.BufferAttribute(ph, 1));
   g.computeBoundingSphere();
-  const m = new THREE.PointsMaterial({ size: 3.5, sizeAttenuation: false, transparent: true, depthWrite: false, fog: true });
-  m.color.setRGB(5, 0.15, 0.08);
+  // 屏幕尺寸封顶约 3 px、HDR 亮度压低（审查 p7_night：成片住宅楼顶的红色光团被泛光放大成“火灾”）
+  const m = new THREE.PointsMaterial({ size: 3.0, sizeAttenuation: false, transparent: true, depthWrite: false, fog: true });
+  m.color.setRGB(2.6, 0.08, 0.04);
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = ctx.uniforms.uTime;
     sh.uniforms.uNight = ctx.uniforms.uNight;
@@ -205,13 +224,13 @@ function makeObstacleLights(ctx, arr) {
         float obD = length(mvPosition.xyz);
         float obFade = 1.0 - smoothstep(3000.0, 9000.0, obD);
         vBlink *= obFade * obFade;
-        gl_PointSize = size * clamp(1.5 - obD / 8000.0, 0.6, 1.5);`
+        gl_PointSize = size * clamp(1.2 - obD / 8000.0, 0.6, 1.0);`
       );
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vBlink;')
       .replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.a *= smoothstep(0.5, 0.15, length(gl_PointCoord - 0.5)) * vBlink;');
   };
-  m.customProgramCacheKey = () => 'xian-bld-obstacle-v2';
+  m.customProgramCacheKey = () => 'xian-bld-obstacle-v3';
   const pts = new THREE.Points(g, m);
   pts.name = '航空障碍灯';
   pts.renderOrder = 5;

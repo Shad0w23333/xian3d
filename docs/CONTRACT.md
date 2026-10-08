@@ -71,7 +71,9 @@ uint16  vertCount[count]
 uint16  heightDm[count]                               // 建筑顶高（分米）
 uint16  minHeightDm[count]                            // 底部起始高度（分米，building:part 用，通常 0）
 uint8   kind[count]   // 0 通用 1 住宅 2 商业/办公 3 工业 4 公共/政府 5 历史/宗教 6 交通 7 学校/医院 8 酒店
-uint8   flags[count]  // bit0 高度为实测(OSM/数据集)；bit1 有名称(见 buildings_names.json)；bit2 高层地标
+uint8   flags[count]  // bit0 高度为实测(OSM/数据集)；bit1 有名称(见 buildings_names.json)；bit2 高层地标；bit3 skyline 地标对应楼；
+                      // bit6 3D-GloBFP 补楼（追加段，tools/buildings_patch.py）；bit7 数据层让位（不渲染，工地临建/站场设施等）
+(v2) uint8 style[count] // bits0-3 年代；bits4-7 功能（…8 公共，9 仿古商业，见 src/arch/bld-gen.js mapStyleByte）
 (对齐到 4 字节)
 int16   offs[totalVerts*2]                            // 相对 anchor 的顶点偏移（分米），外环逆时针（俯视，X 东 Z 南坐标下按 shoelace 面积 >0 定义为 CCW），不重复首点
 ```
