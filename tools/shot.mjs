@@ -116,7 +116,7 @@ try {
         await new Promise((r) => setTimeout(r, 200));
         return window.xian.renderer.domElement.toDataURL('image/png');
       });
-      if (url && url.startsWith('data:image/png') && !opt.dom) {
+      if (url && url.startsWith('data:image/png') && !opt.dom && q.get('labels') !== '1' && q.get('ui') !== '1') { // 要看标注/界面时用整页截图
         fs.writeFileSync(path.resolve(root, out), Buffer.from(url.split(',')[1], 'base64'));
         saved = true;
       }
