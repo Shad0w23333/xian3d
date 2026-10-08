@@ -40,7 +40,8 @@ const C = {
   back: 0xc8b089, // 反叠涩
   arch: 0xccb286, // 券脸
   base: 0xb4aa98, // 台基砖
-  cap: 0xd7d0c2, // 台基压面石
+  cap: 0xc9c2b4, // 台基压面石
+  deck: 0x9a9285, // 台面方砖海墁
   finial: 0xb7a88c,
   doorStone: 0xd8d0c0,
 };
@@ -105,7 +106,12 @@ export function dayanta(b) {
   // ───── 台基：砖砌台身 + 压面石 + 矮护墙 + 南北踏道 ─────
   const bw = D.base.w / 2, bd = D.base.d / 2, bh = D.base.h;
   b.box('brick', -bw, 0, -bd, bw, bh - 0.3, bd, C.base, { skip: 'bottom' });
-  b.box('stone', -bw - 0.15, bh - 0.3, -bd - 0.15, bw + 0.15, bh, bd + 0.15, C.cap, { skip: 'bottom' });
+  // 台面：方砖海墁（暖灰，砖纹）+ 外沿一圈压面石（原先整面浅色石材 → 远看一块发白的无纹理平板）
+  b.box('brick', -bw + 0.6, bh - 0.3, -bd + 0.6, bw - 0.6, bh - 0.02, bd - 0.6, C.deck, { skip: 'bottom' });
+  b.box('stone', -bw - 0.15, bh - 0.3, -bd - 0.15, bw + 0.15, bh, -bd + 0.6, C.cap, { skip: 'bottom' });
+  b.box('stone', -bw - 0.15, bh - 0.3, bd - 0.6, bw + 0.15, bh, bd + 0.15, C.cap, { skip: 'bottom' });
+  b.box('stone', -bw - 0.15, bh - 0.3, -bd + 0.6, -bw + 0.6, bh, bd - 0.6, C.cap, { skip: 'bottom' });
+  b.box('stone', bw - 0.6, bh - 0.3, -bd + 0.6, bw + 0.15, bh, bd - 0.6, C.cap, { skip: 'bottom' });
   // 台身下碱（青石勒脚）
   b.box('stone', -bw - 0.08, 0, -bd - 0.08, bw + 0.08, 0.6, bd + 0.08, 0xbfb8aa, { skip: 'bottom' });
   const stairW = 11;

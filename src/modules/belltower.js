@@ -273,14 +273,33 @@ export default {
     const hDrum = hPlaza;
     const levels = [[2, 0], [1, 260], [0, 750]];
 
+    // 夜景泛光（参考照片：台基与楼身暖金色，券洞内是暗的，檐口青白轮廓灯）：
+    //  · 木构楼身暖金、向上渐弱；砖台单独配更深的金色、强度压低，保留砖纹明暗（原先 2.1 倍整体泛光 → 台基奶白一片）
+    //  · 券洞（十字贯通 / 鼓楼南北一孔）深处不受泛光：shade 盒沿洞轴向 2.5 m 渐暗，洞口一圈仍有余光
+    const tunnelShade = (cx, cz, y0, axisX, half, w = 3.25, h = 6.6) => ({
+      min: axisX ? [cx - half, y0 - 1, cz - w] : [cx - w, y0 - 1, cz - half],
+      max: axisX ? [cx + half, y0 + h, cz + w] : [cx + w, y0 + h, cz + half],
+      soft: axisX ? [2.5, 0.25, 0.08] : [0.08, 0.25, 2.5],
+      k: 0.9,
+    });
+    const bellFlood = {
+      color: 0xffc47a, strength: 1.45, baseY: hBell + 0.5, height: 36, top: 0.7,
+      shade: [tunnelShade(BELL_C[0], BELL_C[1], hBell, false, 17.55), tunnelShade(BELL_C[0], BELL_C[1], hBell, true, 17.55)],
+      byKey: { brick: { color: 0xffab4a, strength: 1.05, top: 0.85 }, stone: { color: 0xffb860, strength: 0.95 } },
+    };
     // 钟楼
-    const bell = buildLOD(ctx, bellTower, { style: 'ming', levels, name: '西安钟楼', flood: { color: 0xffc47a, strength: 2.1, baseY: hBell + 0.5, height: 36, top: 0.8 } });
+    const bell = buildLOD(ctx, bellTower, { style: 'ming', levels, name: '西安钟楼', flood: bellFlood });
     bell.position.set(BELL_C[0], hBell, BELL_C[1]);
     root.add(bell);
     const bInfo = bell.userData.info;
 
     // 鼓楼
-    const drumT = buildLOD(ctx, drumTower, { style: 'ming', levels, name: '西安鼓楼', flood: { color: 0xffc27a, strength: 2.0, baseY: hDrum + 0.5, height: 34, top: 0.8 } });
+    const drumFlood = {
+      color: 0xffc27a, strength: 1.4, baseY: hDrum + 0.5, height: 34, top: 0.7,
+      shade: [tunnelShade(DRUM_C[0], DRUM_C[1], hDrum, false, 17.6)],
+      byKey: { brick: { color: 0xffab4a, strength: 1.0, top: 0.85 }, stone: { color: 0xffb860, strength: 0.95 } },
+    };
+    const drumT = buildLOD(ctx, drumTower, { style: 'ming', levels, name: '西安鼓楼', flood: drumFlood });
     drumT.position.set(DRUM_C[0], hDrum, DRUM_C[1]);
     root.add(drumT);
     const dInfo = drumT.userData.info;
@@ -297,7 +316,9 @@ export default {
       const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0).rotateX(-Math.PI / 2).translate((x0 + x1) / 2, hPlaza + 0.3, (z0 + z1) / 2);
       shapes.push(g);
     }
-    const ring = new THREE.RingGeometry(21.6, 38.4, 64).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0);
+    // 绿岛草坪只铺在最外圈绿篱与路缘石之间（38.2~41.4 m）；原先 21.6~38.4 m 整圈铺草，贴地覆盖层的深度偏移
+    // 在远处把 0.2~0.45 m 高的红/黄/紫花带整片盖住，钟楼四周只剩一块均匀的暗绿色圆盘
+    const ring = new THREE.RingGeometry(38.1, ISLAND_R - 0.55, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0);
     shapes.push(ring);
     for (const g of shapes) {
       const uv = g.attributes.uv, pos = g.attributes.position;
@@ -316,12 +337,15 @@ export default {
     for (const [x0, z0, x1, z1] of pInfo.lawns) for (let x = x0 + 5; x < x1 - 2; x += 11) trees.push([x, z0 + 4], [x, z1 - 4]);
     for (const m of treeGrid(ctx, trees, () => hPlaza + 0.1)) root.add(m);
 
-    // 灯光：钟楼四角地面泛光 + 楼内暖光；鼓楼南北
+    // 灯光：楼体的泛光由材质自发光表现（floodlit），点光源只补台顶回廊与楼内的暖光。
+    // 原先在绿岛四角离地 2 m 放了 4 盏 900 cd、半径 55 m 的点光源 → 草坪被打成四团黄绿光斑（像 UFO 落地灯）；
+    // 鼓楼南侧那盏离地 3 m、1000 cd → 广场上一个刺眼橙点。现改为抬到台顶高度、低强度、小半径，照不到地面。
     const L = (x, y, z, color, intensity, distance, priority) => ctx.lights.add({ position: new THREE.Vector3(x, y, z), color, intensity, distance, nightOnly: true, priority });
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) L(sx * 24, hBell + 2, sz * 24, 0xffc27a, 900, 55, 3);
-    L(0, hBell + bInfo.platTop + 4, 0, 0xffb060, 500, 30, 2);
-    L(DRUM_C[0], hDrum + 3, DRUM_C[1] + 28, 0xffc27a, 1000, 60, 3);
-    L(DRUM_C[0], hDrum + 3, DRUM_C[1] - 28, 0xffc27a, 800, 60, 2);
+    const yDeck = hBell + bInfo.platTop;
+    L(0, yDeck + 4, 0, 0xffb060, 260, 16, 2);
+    const yDrumDeck = hDrum + dInfo.platTop;
+    L(DRUM_C[0], yDrumDeck + 3, DRUM_C[1] + 14, 0xffc27a, 160, 20, 2);
+    L(DRUM_C[0], yDrumDeck + 3, DRUM_C[1] - 14, 0xffc27a, 130, 20, 1.8);
 
     // 标注
     ctx.labels.add('西安钟楼', new THREE.Vector3(0, hBell + bInfo.topY + 8, 0), { category: 'landmark', minDist: 60, maxDist: 12000, priority: 5 });
