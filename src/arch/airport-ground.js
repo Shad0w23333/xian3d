@@ -62,9 +62,11 @@ export function markingAtlas() {
   const g = c.getContext('2d');
   g.clearRect(0, 0, W, H);
   g.fillStyle = '#ffffff';
-  g.fillRect(4, 4, 56, 56);
+  // 实色块与虚线画在画布下半（y 68~124）：CanvasTexture 默认 flipY，UV_SOLID/UV_DASH 的 v=16~48/128 对应画布 y=80~112。
+  // 原来画在 y 4~60，实色 UV 采到的是透明区，被 alphaTest 全部丢弃——所有跑道/滑行道标线（除跑道号字形外）都不显示。
+  g.fillRect(0, 64, 64, 64); // 整格填满：远处取低层 mip 时不会和透明边混成半透明而被丢弃
   // 虚线（用于等待位置 B 型虚线）：64..128
-  for (let i = 0; i < 4; i++) g.fillRect(64 + i * 16, 4, 9, 56);
+  for (let i = 0; i < 4; i++) g.fillRect(64 + i * 16, 68, 9, 56);
   g.font = 'bold 128px "DIN Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
@@ -161,10 +163,11 @@ export function runwaySurface(sink, hf, R, { shoulder = 7.5, lift = 0.12 } = {})
 }
 
 /** 跑道标线 */
-export function runwayMarkings(sink, hf, R, { big = true } = {}) {
+export function runwayMarkings(sink, hf, R, { big = true, lift = 0.3 } = {}) {
+  // lift 必须高于跑道道面（道面抬高 0.24 m）：原来用默认 0.06 m，近处标线全被道面盖住，只在 2 km 外靠深度偏移露出来
   const hw = R.w / 2;
   const L = R.L;
-  const M = (s, o, len, wid, col = WHITE, uv) => markRect(sink, hf, R.ax + R.ux * s + R.rx * o, R.az + R.uz * s + R.rz * o, R.ux, R.uz, len, wid, col, uv);
+  const M = (s, o, len, wid, col = WHITE, uv) => markRect(sink, hf, R.ax + R.ux * s + R.rx * o, R.az + R.uz * s + R.rz * o, R.ux, R.uz, len, wid, col, uv, lift);
   // 边线
   M(L / 2, -hw + 0.6, L - 4, 0.9); M(L / 2, hw - 0.6, L - 4, 0.9);
   // 中线
@@ -177,7 +180,7 @@ export function runwayMarkings(sink, hf, R, { big = true } = {}) {
     // 反向时标线方向翻转：用负向量画（字形朝向入口）
     const E = (d, o, len, wid, col = WHITE, uv) => {
       const cx = R.ax + R.ux * S(d) + R.rx * o * sgn, cz = R.az + R.uz * S(d) + R.rz * o * sgn;
-      markRect(sink, hf, cx, cz, R.ux * sgn, R.uz * sgn, len, wid, col, uv);
+      markRect(sink, hf, cx, cz, R.ux * sgn, R.uz * sgn, len, wid, col, uv, lift);
     };
     const nStr = R.w >= 58 ? 8 : R.w >= 44 ? 6 : R.w >= 29 ? 4 : 3;
     for (let k = 0; k < nStr; k++) for (const sd of [-1, 1]) E(6 + 15, sd * (1.8 + 0.9 + k * 3.6), 30, 1.8);
@@ -214,6 +217,8 @@ export const LC = {
   amber: [3.2, 2.0, 0.6], mast: [3.4, 3.0, 2.3], strobe: [5, 5, 5], land: [6, 5.6, 5],
   // 高光强灯具（进近灯排灯/横排灯、入口灯、末端灯）：灯点改为取最大值混合后密排灯不再靠叠加增亮，按真实光强等级单独提亮
   als: [5.6, 5.3, 4.7], alsRed: [5.4, 0.5, 0.3], thr: [0.6, 5.2, 1.9], end: [5.0, 0.5, 0.3],
+  // 跑道边灯（高光强白灯，夜里最醒目的一类）；滑行道中线灯（绿）与弯道/机坪边灯（蓝）为低光强，明显暗于跑道灯
+  rwyEdge: [4.6, 4.4, 4.0], rwyEdgeY: [4.8, 3.4, 0.7], twy: [0.13, 1.1, 0.4], twyEdge: [0.15, 0.3, 1.2],
 };
 
 /**
@@ -322,16 +327,16 @@ export function lightPoints(ctx, list, opts = {}) {
 export function runwayLights(L, hf, R, { approach = true, center = true } = {}) {
   const hw = R.w / 2;
   const P = (s, o, h = 0.35) => { const x = R.ax + R.ux * s + R.rx * o, z = R.az + R.uz * s + R.rz * o; return [x, hf(x, z) + h, z]; };
-  // 边灯（每 60 m；距末端 600 m 内朝向跑道内侧为黄色）
+  // 边灯（每 60 m；距末端 600 m 内朝向跑道内侧为黄色）——高光强，灯点比滑行道灯大一倍以上
   for (let s = 0; s <= R.L + 0.1; s += Math.min(60, R.L / Math.ceil(R.L / 60))) {
     for (const sd of [-1, 1]) {
       const [x, y, z] = P(s, sd * (hw + 1.5));
-      if (s > 600 && s < R.L - 600) L.add(x, y, z, LC.white, 0.7);
+      if (s > 600 && s < R.L - 600) L.add(x, y, z, LC.rwyEdge, 1.0);
       else {
         const nearB = s >= R.L - 600;
         const inx = nearB ? -R.ux : R.ux, inz = nearB ? -R.uz : R.uz;
-        L.add(x, y, z, LC.yellow, 0.7, 0, 0, inx, inz);
-        L.add(x, y, z, LC.white, 0.7, 0, 0, -inx, -inz);
+        L.add(x, y, z, LC.rwyEdgeY, 1.0, 0, 0, inx, inz);
+        L.add(x, y, z, LC.rwyEdge, 1.0, 0, 0, -inx, -inz);
       }
     }
   }
@@ -370,26 +375,26 @@ export function runwayLights(L, hf, R, { approach = true, center = true } = {}) 
       const [x, y, z] = P(S(350), -sgn * (hw + 15 + k * 9), 0.9);
       L.add(x, y, z, k >= 2 ? LC.white : LC.red, 1.1, 0, 0, out[0], out[1]);
     }
-    // 进近灯光系统（Ⅰ类 900 m 中线排灯 + 5 道横排灯 + 顺序闪光灯）
+    // 进近灯光系统（Ⅰ类 900 m 中线排灯 + 5 道横排灯 + 顺序闪光灯）——夜里最醒目，灯点放大
     for (let d = 30; d <= 900; d += 30) {
       for (let k = -2; k <= 2; k++) {
         const [x, y, z] = P(S(-d), k * 1.05, 0.8 + d * 0.004);
-        L.add(x, y, z, LC.als, 0.8, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.als, 1.1, 0, 0, out[0], out[1]);
       }
       if (d >= 300) {
         const [x, y, z] = P(S(-d), 0, 1.8 + d * 0.004);
-        L.add(x, y, z, LC.strobe, 1.4, 1, ((900 - d) / 600) * 0.45, out[0], out[1]);
+        L.add(x, y, z, LC.strobe, 1.8, 1, ((900 - d) / 600) * 0.45, out[0], out[1]);
       }
       if (d <= 270) for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) {
         const [x, y, z] = P(S(-d), sd * (9 + k * 1.5), 0.8);
-        L.add(x, y, z, LC.alsRed, 0.7, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.alsRed, 0.9, 0, 0, out[0], out[1]);
       }
     }
     for (const [d, half] of [[150, 9], [300, 15], [450, 18], [600, 21], [750, 24]]) {
       for (let o = -half; o <= half + 0.01; o += 2.7) {
         if (Math.abs(o) < 3) continue;
         const [x, y, z] = P(S(-d), o, 0.8 + d * 0.004);
-        L.add(x, y, z, LC.als, 0.8, 0, 0, out[0], out[1]);
+        L.add(x, y, z, LC.als, 1.1, 0, 0, out[0], out[1]);
       }
     }
   }
