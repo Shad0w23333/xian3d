@@ -102,7 +102,7 @@ export function buildRoadGraph(roads) {
   const featLen = new Float32Array(feats.length);
   for (let fi = 0; fi < feats.length; fi++) {
     const f = feats[fi];
-    if (!ROAD_CLASSES.has(f.c) || f.t || !f.p || f.p.length < 4) continue;
+    if (!ROAD_CLASSES.has(f.c) || f.t || f._ped || !f.p || f.p.length < 4) continue;
     const c = cumLen(f.p);
     const L = c[c.length - 1];
     if (L < 1.5) continue;
@@ -463,6 +463,34 @@ function finishGraph(feats, featLen, nodes, edges) {
       return out;
     },
   };
+}
+
+/**
+ * 封闭不通车的边（步行街、下沉广场坑口、楼体内部等“道路模块不画路面”的地方）：
+ * 沿边每 step 米取样（两端各让出 5 m，路口本身常在排除区边缘），落在 blocked(x,z) 内的样点
+ * 占 30% 以上或累计 ≥ 24 m 即封闭；封闭边从所有出边表里删除（车辆不会选路驶入），活动区也不再激活它。
+ * 返回封闭边数。
+ */
+export function blockEdges(G, blocked, step = 6) {
+  const { edges, feats } = G;
+  const cumOf = new Map();
+  const pt = [0, 0];
+  let nb = 0;
+  for (const e of edges) {
+    let c = cumOf.get(e.f);
+    if (!c) cumOf.set(e.f, (c = cumLen(feats[e.f].p)));
+    const p = feats[e.f].p;
+    const a = e.s0 + Math.min(5, e.L * 0.2), b = e.s1 - Math.min(5, e.L * 0.2);
+    const n = Math.max(1, Math.ceil((b - a) / step));
+    let hit = 0;
+    for (let k = 0; k <= n; k++) {
+      pointAtS(p, c, a + ((b - a) * k) / n, pt);
+      if (blocked(pt[0], pt[1])) hit++;
+    }
+    if (hit && (hit / (n + 1) >= 0.3 || hit * ((b - a) / n) >= 24)) { e.blocked = true; nb++; }
+  }
+  if (nb) for (const e of edges) if (e.next.length) e.next = e.next.filter((q) => !edges[q.e].blocked);
+  return nb;
 }
 
 /**
