@@ -1,6 +1,7 @@
 // 道路/铁路网预处理（roads 模块专用）：拆边、路口分析、对向车道配对、灯位、铁路链与高架抬升。
 // 纯 CPU 计算，不创建任何 three 对象。所有坐标为世界坐标（米，X 东 Z 南）。
 import { chainage } from '../core/roadheight.js';
+import { DISTRICTS } from './streetscape-data.js';
 
 // —— 道路等级配置（下标与 roads.json classes 一致） ——
 // rank：路口主次；minW：最小路面宽（米）；dashLong：6m/9m 长虚线（设计速度≥60），否则 2m/4m；
@@ -50,6 +51,17 @@ const LANTERN_NAMES = /二环/;
 
 // 灯型
 export const LAMP = { SINGLE: 0, DOUBLE: 1, KNOT: 2, PALACE: 3, LANTERN: 4 };
+
+export const BIKE_W = 2.4; // 人非共板：非机动车道 2.0 m + 两侧收边
+const inStreetscape = (x, z) => DISTRICTS.some((D) => D.bbox && x > D.bbox[0] - 100 && x < D.bbox[2] + 100 && z > D.bbox[1] - 100 && z < D.bbox[3] + 100);
+// 公交专用道（最外侧车道，黄色虚线 + “公交专用”）：只给公交走廊上的主干道、单向 ≥3 车道的路段（示意性选取，非官方名单）
+const BUS_NAMES = /^(长安北路|长安中路|长安南路|北大街|南大街|未央路|朱雀大街|太白南路|太白北路|含光路|雁塔北路|雁塔路|科技路|友谊西路|友谊东路|西二环|东二环|北二环|南二环)/;
+/** 字符串散列 → [0,1) */
+export function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return ((h >>> 0) % 100000) / 100000;
+}
 
 const nodeKey = (x, z) => (Math.round(x * 10) + 700000) * 2000000 + (Math.round(z * 10) + 1000000);
 
@@ -135,8 +147,17 @@ export function buildRoadNet(roads, { inDetail }) {
   for (let fi = 0; fi < nF; fi++) {
     const f = feats[fi];
     info[fi] = featureInfo(f);
+    info[fi].sw = info[fi].cfg.sw;
     const p = f.p;
     if (!p || p.length < 4 || f.t) continue;
+    // 人非共板非机动车道（人行道加宽 2.4 m：设施带外侧 2 m 绿色铺装 + 自行车图标）：二环外有名的主次干道约一半（按路名整条一致）
+    if ((f.c === 2 || f.c === 3) && !f.b && f.n) {
+      const mx = p[(p.length >> 2) * 2], mz = p[(p.length >> 2) * 2 + 1];
+      if (inDetail(mx, mz) && Math.hypot(mx, mz) > 2700 && hashStr('bike:' + f.n) < 0.5 && !inStreetscape(mx, mz)) {
+        info[fi].sw = info[fi].cfg.sw + BIKE_W;
+        info[fi].bike = 1;
+      }
+    }
     const ch = chainage(p);
     chain[fi] = ch;
     total[fi] = ch[ch.length - 1];
@@ -207,15 +228,53 @@ export function buildRoadNet(roads, { inDetail }) {
     out[1] = dz / l;
     return out;
   };
-  const dA = [0, 0], dB = [0, 0];
+  const dA = [0, 0], dB = [0, 0], dC = [0, 0];
+  // 从节点 node 处的顶点 (fj, j) 沿 sgn 走到下一个路口节点（度 ≥3）或折线端点的距离与该节点
+  const runToJunction = (fj, j, sgn) => {
+    const ch = chain[fj], nodes = featNodes[fj], n = nodes.length;
+    let k = j + sgn;
+    while (k > 0 && k < n - 1 && degAll[nodes[k]] < 3) k += sgn;
+    k = Math.max(0, Math.min(n - 1, k));
+    return { d: Math.abs(ch[k] - ch[j]), node: nodes[k], k };
+  };
+  // 可驶出的路口出口方向（相对来车方向 T）：bit0 左转、bit1 直行、bit2 右转。路口内部短连接段（<45 m，双幅路
+  // 两幅之间）沿直行方向再看一层，双幅路交叉口第一个节点处也能看到对面那幅才有的左转。
+  const turnMaskAt = (node, Tx, Tz, depth) => {
+    let mask = 0;
+    for (let e = head[node]; e >= 0; e = next[e]) {
+      const fj = incF[e], j = incV[e];
+      const fo = feats[fj], oth = info[fj];
+      if (!(oth.cfg.major || oth.cfg.rank >= 3) || oth.cfg.paving || fo.t) continue;
+      const nj = fo.p.length / 2;
+      for (const sgn of [1, -1]) {
+        const jj = j + sgn;
+        if (jj < 0 || jj >= nj) continue;
+        if (fo.o && sgn < 0) continue; // 单行道逆向不可驶出
+        dirAt(fj, j, sgn, dC);
+        const dot = Tx * dC[0] + Tz * dC[1];
+        if (dot < -0.85) continue; // 掉头/来路
+        const cr = Tx * dC[1] - Tz * dC[0];
+        if (dot > 0.7) {
+          mask |= 2;
+          if (depth > 0) {
+            const r = runToJunction(fj, j, sgn);
+            if (r.d < 45 && r.node !== node && degAll[r.node] >= 3) mask |= turnMaskAt(r.node, dC[0], dC[1], depth - 1) & 5;
+          }
+        } else mask |= cr < 0 ? 1 : 4; // x 东 z 南：叉积 <0 为左
+      }
+    }
+    return mask;
+  };
   const analyzeEnd = (E, atStart) => {
     const fi = E.fi;
     const node = atStart ? E.n0 : E.n1;
     const vi = atStart ? E.i0 : E.i1;
     const me = info[fi];
-    const res = { R: 0, trim: 0, sw: 0, nX: 0, cw: false };
+    const res = { R: 0, trim: 0, sw: 0, nX: 0, nXcw: 0, cw: false, turn: 0 };
     if (degAll[node] < 3 && !(me.cfg.link && degAll[node] >= 2)) return res;
     dirAt(fi, vi, atStart ? 1 : -1, dA);
+    // 驶向本端的车辆可用的转向（单行道只在终点端有来车）
+    if (me.cfg.major && (!feats[fi].o || !atStart)) res.turn = turnMaskAt(node, -dA[0], -dA[1], 1);
     for (let e = head[node]; e >= 0; e = next[e]) {
       const fj = incF[e], j = incV[e];
       const nj = feats[fj].p.length / 2;
@@ -240,8 +299,27 @@ export function buildRoadNet(roads, { inDetail }) {
           if (oth.cfg.major) {
             res.R = Math.max(res.R, hw * k + 0.6);
             res.nX++;
+            // 人行横道只认真正的横街：中央分隔带开口（双幅路两幅之间 <45 m 的掉头连接段，远端只接回与本路平行的路）不算
+            if (!oth.cfg.link) {
+              const r = runToJunction(fj, j, sgn);
+              let connector = false;
+              if (r.d < 45 && degAll[r.node] >= 3) {
+                connector = true;
+                for (let e2 = head[r.node]; e2 >= 0 && connector; e2 = next[e2]) {
+                  const fk = incF[e2], k2 = incV[e2];
+                  if (fk === fj || !info[fk].cfg.major) continue;
+                  const nk = feats[fk].p.length / 2;
+                  for (const s2 of [1, -1]) {
+                    if (k2 + s2 < 0 || k2 + s2 >= nk) continue;
+                    dirAt(fk, k2, s2, dC);
+                    if (Math.abs(dA[0] * dC[0] + dA[1] * dC[1]) < 0.85) { connector = false; break; }
+                  }
+                }
+              }
+              if (!connector) res.nXcw++;
+            }
             const bigger = oth.cfg.rank > me.cfg.rank || (oth.cfg.rank === me.cfg.rank && fj < fi);
-            res.sw = Math.max(res.sw, (hw + (bigger ? oth.cfg.sw : 0)) * k);
+            res.sw = Math.max(res.sw, (hw + (bigger ? oth.sw : 0)) * k);
           } else if (oth.cfg.rank >= 3 && oth.W >= 6) {
             // 次要道路接入：人行道留出路口（不画路口箱体）
             res.sw = Math.max(res.sw, hw * k);
@@ -280,9 +358,26 @@ export function buildRoadNet(roads, { inDetail }) {
     if (cfg.major && !cfg.link) flags |= F.EDGES;
     if (f.c === 13) flags |= F.FOOTWAY;
     const cwOk = cfg.major && !cfg.link && f.c >= 2 && f.c <= 4 && !E.b;
-    if (cwOk && a.nX >= 1 && E.len > 28 && a.R > 0 && a.R < 30) flags |= F.CW0;
-    if (cwOk && b.nX >= 1 && E.len > 28 && b.R > 0 && b.R < 30) flags |= F.CW1;
+    // 两端路口之间要放得下斑马线（各 R+6 m）：双幅路口内部两幅之间的短段（路口中心）不画
+    const roomOk = E.len > Math.max(28, a.R + b.R + 14);
+    if (cwOk && roomOk && a.nXcw >= 1 && a.R > 0 && a.R < 30) flags |= F.CW0;
+    if (cwOk && roomOk && b.nXcw >= 1 && b.R > 0 && b.R < 30) flags |= F.CW1;
     E.flags = flags;
+    E.turn0 = a.turn;
+    E.turn1 = b.turn;
+    // 路段标线属性（着色器 aDet.y 位）：1 公交专用道（最外侧车道）、2 右侧禁停黄线、4 右侧禁止长时停车（黄虚线）
+    E.mark = 0;
+    if (!E.b && !cfg.link && cfg.major) {
+      const perSide = f.o ? lanes : lanes >> 1;
+      if ((f.c === 1 || f.c === 2) && perSide >= 3 && BUS_NAMES.test(f.n || '') && E.len > 120) E.mark |= 1;
+      if (cfg.sw > 0) {
+        // 禁停黄线：主次干道大部分路段（按要素名 + 路段散列，整段一致），少量禁止长时停车
+        const h = hashStr((f.n || '') + ':' + Math.round(E.s0 / 50));
+        const pk = f.c <= 2 ? 0.75 : f.c === 3 ? 0.55 : 0.3;
+        if (h < pk) E.mark |= 2;
+        else if (h < pk + 0.12) E.mark |= 4;
+      }
+    }
     E.gap = 0;
     E.pairF = -1;
     E.swR = cfg.sw > 0 && !E.b;
@@ -371,7 +466,15 @@ export function buildRoadNet(roads, { inDetail }) {
     E.flags |= F.MEDIAN | F.PAIRED;
     E.swL = false;
   }
-  const net = { edges, feats, info, chain, total, inDetail };
+  // 与要素 fi 共用任一节点的要素集合（出入口、路口横街；人行道宽度探测时不把它们当成并行的别的路）
+  const attachedTo = (fi) => {
+    const out = new Set();
+    const nodes = featNodes[fi];
+    if (!nodes) return out;
+    for (const node of nodes) for (let e = head[node]; e >= 0; e = next[e]) out.add(incF[e]);
+    return out;
+  };
+  const net = { edges, feats, info, chain, total, inDetail, attachedTo };
   // 中分带宽沿路变化很大（东大街一条边 1.4 km，两端 0.2 m、中段 3.7 m）：E.gap 只是三点探测的中位数，
   // 这里再沿边每 ~40 m 取局部宽度，记中位数 gapMed（路灯/光斑判定用）；建模与布灯逐断面用 pairGapAt
   for (const E of edges) {
@@ -392,7 +495,160 @@ export function buildRoadNet(roads, { inDetail }) {
     gs.sort((a, b) => a - b);
     E.gapMed = gs.length ? gs[gs.length >> 1] : E.gap;
   }
+  // —— 出入口（小区/单位/支路接入主路的路段中间节点）：人行道连续，路缘石降坡 ——
+  // E.drives = [{s(要素里程), side(+1 右 / -1 左), hw(接入路半宽)}]
+  for (const E of edges) {
+    const fi = E.fi, cfg = info[fi].cfg;
+    if (!cfg.major || cfg.link || !cfg.sw || E.b) continue;
+    const nodes = featNodes[fi], ch = chain[fi], p = feats[fi].p;
+    for (let i = E.i0 + 1; i < E.i1; i++) {
+      const node = nodes[i];
+      if (degAll[node] < 3) continue;
+      const dx0 = p[i * 2 + 2] - p[i * 2 - 2], dz0 = p[i * 2 + 3] - p[i * 2 - 1];
+      const l0 = Math.hypot(dx0, dz0) || 1;
+      const rx = -dz0 / l0, rz = dx0 / l0; // 右法线
+      for (let e = head[node]; e >= 0; e = next[e]) {
+        const fj = incF[e], j = incV[e];
+        if (fj === fi) continue;
+        const oc = info[fj].cfg;
+        if (oc.major || oc.paving || feats[fj]._ped || feats[fj].t || feats[fj].b) continue;
+        const nj = feats[fj].p.length / 2;
+        for (const sgn of [1, -1]) {
+          if (j + sgn < 0 || j + sgn >= nj) continue;
+          dirAt(fj, j, sgn, dB);
+          const sd = dB[0] * rx + dB[1] * rz;
+          if (Math.abs(sd) < 0.35) continue;
+          (E.drives || (E.drives = [])).push({ s: ch[i], side: sd > 0 ? 1 : -1, hw: Math.min(4, info[fj].W / 2) / Math.abs(sd) });
+        }
+      }
+    }
+  }
   return net;
+}
+
+/**
+ * 地面车行道索引（不含高速、步道/步行街/园路、桥、隧道）：inside(x, z, skip) 判断点是否落在某条车行道路面内
+ * （中心线距离 < 半宽 + 0.25 m），skip 为要忽略的要素集合；命中信息写在 hit（要素、该要素里程）。
+ */
+export function carriageIndex(net, inRegion) {
+  const { feats, info, chain } = net;
+  const CELL = 40, grid = new Map();
+  const gk = (a, b) => a * 1000003 + b;
+  for (let fi = 0; fi < feats.length; fi++) {
+    const f = feats[fi];
+    const cfg = info[fi].cfg;
+    if (!chain[fi] || cfg.paving || f._ped || f.b || f.t || f.c === 0) continue;
+    const p = f.p, hw = info[fi].W / 2 + 0.25;
+    for (let k = 0; k + 3 < p.length; k += 2) {
+      const x0 = Math.min(p[k], p[k + 2]) - hw, x1 = Math.max(p[k], p[k + 2]) + hw;
+      const z0 = Math.min(p[k + 1], p[k + 3]) - hw, z1 = Math.max(p[k + 1], p[k + 3]) + hw;
+      if (x1 - x0 > 6000 || z1 - z0 > 6000) continue;
+      if (!inRegion(p[k], p[k + 1]) && !inRegion(p[k + 2], p[k + 3])) continue;
+      for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++)
+        for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) {
+          let a = grid.get(gk(cx, cz));
+          if (!a) grid.set(gk(cx, cz), (a = []));
+          a.push(fi, k >> 1);
+        }
+    }
+  }
+  const hit = { fi: -1, s: 0, d: 0 };
+  const inside = (x, z, skip) => {
+    const a = grid.get(gk(Math.floor(x / CELL), Math.floor(z / CELL)));
+    if (!a) return false;
+    let best = 1e9;
+    for (let i = 0; i < a.length; i += 2) {
+      const fi = a[i], k = a[i + 1], p = feats[fi].p;
+      if (skip && skip.has(fi)) continue;
+      const ax = p[k * 2], az = p[k * 2 + 1], dx = p[k * 2 + 2] - ax, dz = p[k * 2 + 3] - az;
+      const l2 = dx * dx + dz * dz || 1e-9;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+      const d = Math.hypot(ax + dx * t - x, az + dz * t - z) - (info[fi].W / 2 + 0.25);
+      if (d < 0 && d < best) {
+        best = d;
+        hit.fi = fi;
+        hit.s = chain[fi][k] + Math.sqrt(l2) * t;
+        hit.d = d;
+      }
+    }
+    return best < 0;
+  };
+  return { inside, hit };
+}
+
+/**
+ * 步道/步行街与车行道的重叠（roads 模块渲染时剔除，人行道铺装不再画到车行道上）与路段中间的过街点。
+ * 沿每条铺装要素每 1.2 m 取样，落在任一地面车行道（中心线距离 < 半宽 + 0.25 m）内的样本连成区间。
+ * 返回 { cuts: Map(fi → [[sA, sB], ...]), mids: [{fi(车行道要素), s(该要素里程), dir}] }：
+ *   区间短（横穿）且车行道是主次干道时记一处路段人行横道（路口进口 R+14 m 内的不记，路口斑马线已覆盖）。
+ */
+export function pavingCuts(net, inRegion, ci = null) {
+  const { feats, info, chain, edges } = net;
+  ci = ci || carriageIndex(net, inRegion);
+  const hit = ci.hit, inside = (x, z) => ci.inside(x, z, null);
+  const cuts = new Map(), mids = [];
+  for (let fi = 0; fi < feats.length; fi++) {
+    const f = feats[fi];
+    const cfg = info[fi].cfg;
+    if (!chain[fi] || !(cfg.paving || f._ped) || f.b || f.t) continue;
+    const p = f.p, ch = chain[fi];
+    if (!inRegion(p[0], p[1]) && !inRegion(p[p.length - 2], p[p.length - 1])) continue;
+    const tot = ch[ch.length - 1];
+    const STEP = 1.2;
+    const n = Math.max(2, Math.ceil(tot / STEP));
+    let runA = -1, runHits = [];
+    const list = [];
+    const close = (sEnd) => {
+      list.push([Math.max(0, runA - STEP * 0.6), Math.min(tot, sEnd + STEP * 0.6), runHits]);
+      runA = -1;
+      runHits = [];
+    };
+    let seg = 0;
+    for (let q = 0; q <= n; q++) {
+      const s = (q / n) * tot;
+      while (seg < ch.length - 2 && ch[seg + 1] < s) seg++;
+      const L = ch[seg + 1] - ch[seg] || 1, t = (s - ch[seg]) / L;
+      const x = p[seg * 2] + (p[seg * 2 + 2] - p[seg * 2]) * t, z = p[seg * 2 + 1] + (p[seg * 2 + 3] - p[seg * 2 + 1]) * t;
+      if (inside(x, z)) {
+        if (runA < 0) runA = s;
+        runHits.push(hit.fi, hit.s);
+      } else if (runA >= 0) close(s - tot / n);
+    }
+    if (runA >= 0) close(tot);
+    if (!list.length) continue;
+    cuts.set(fi, list.map((r) => [r[0], r[1]]));
+    // 横穿主次干道的短区间 → 路段人行横道（取区间中点处命中的车行道）
+    for (const [a, b, hits] of list) {
+      if (b - a > 45 || hits.length < 2) continue;
+      const m = (hits.length >> 2) * 2;
+      const mf = hits[m], ms = hits[m + 1];
+      const mc = info[mf].cfg;
+      if (!mc.major || mc.link || feats[mf].c < 1 || feats[mf].c > 4) continue;
+      mids.push({ fi: mf, s: ms });
+    }
+  }
+  // 去重（同一车行道 10 m 内）并挂到边上；路口进口附近（R+14 m 内）的交给路口斑马线
+  mids.sort((a, b) => a.fi - b.fi || a.s - b.s);
+  const byF = new Map();
+  for (const E of edges) {
+    let a = byF.get(E.fi);
+    if (!a) byF.set(E.fi, (a = []));
+    a.push(E);
+  }
+  let last = null, nMid = 0;
+  for (const m of mids) {
+    if (last && last.fi === m.fi && m.s - last.s < 10) continue;
+    last = m;
+    const E = (byF.get(m.fi) || []).find((e) => m.s >= e.s0 && m.s <= e.s1);
+    if (!E || E.b) continue;
+    const d0 = m.s - E.s0, d1 = E.s1 - m.s;
+    if ((E.R0 > 0 || E.flags & F.CW0) && d0 < E.R0 + 14) continue;
+    if ((E.R1 > 0 || E.flags & F.CW1) && d1 < E.R1 + 14) continue;
+    if (d0 < 6 || d1 < 6) continue;
+    (E.mids || (E.mids = [])).push(m.s);
+    nMid++;
+  }
+  return { cuts, nMid };
 }
 
 /**
