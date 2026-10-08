@@ -9,6 +9,9 @@
 // 沿街店铺名取自 OSM POI（西安饭庄、德发长、同盛祥、茶话弄、巧克巧蔻、锦绣唐朝、曲江正唐、万象幻唐、唐·长安里、半唐空间……），
 //   其余用不夜城真实常见业态（长安大牌档、老孙家泡馍、樊记腊汁肉夹馍、袁家村等）。
 // 建筑：唐风（朱柱白壁灰瓦、鸱尾、出檐深远、斗拱雄大），2~3 层，底层隔扇门 + 直棂窗店面；檐口/屋脊/柱 LED 金色轮廓灯。
+// 夜景基调（照片）：金光很亮但轮廓清楚——能看清地面铺装、雕塑与人群，天空是深色的；串灯树是一颗颗小暖光点勾出的树形。
+// 因此各类自发光的 HDR 亮度都压在泛光阈值附近（灯带/宫灯/灯笼/铜像泛光），不让大面积发光面把整条街糊成一片金雾；
+// 远景（数公里外）用屏幕尺寸受控的金色光点合成一条约 1.3 km 的金色光带（全城夜景里最亮的南北轴线）。
 import * as THREE from 'three';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang } from '../arch/chinese.js';
 import { Batcher, ribbon } from '../core/util.js';
@@ -16,7 +19,7 @@ import { floodlit } from '../arch/chinese-core.js';
 import { shadowReach } from '../arch/perf-lod.js';
 import {
   personGeometry, crowdMesh, treeMeshes, lampMeshes, lanternInstances, lightPools, lightBeams,
-  figureGeometry, riderGeometry, camelGeometry, plinthGeometry,
+  figureGeometry, riderGeometry, camelGeometry, plinthGeometry, plinthRelief, reliefMaterial, farGlow,
 } from '../arch/datang-props.js';
 
 // ───────────── 布局常量（世界坐标，米） ─────────────
@@ -374,7 +377,7 @@ export default {
           const b = new ArchBuilder(ctx, { detail: d, style: 'tang', name: lod.name });
           const rr = rng(seed);
           for (const s of specs) placeShop(b, H, side, s.zc, s, rr, o);
-          lod.addLevel(b.build({ flood: { color: 0xffc27a, strength: 0.7, baseY: baseY - 0.5, height: 15, top: 0.45, upDim: 0.95 }, name: lod.name + 'd' + d }), dist);
+          lod.addLevel(b.build({ flood: { color: 0xffc27a, strength: 0.55, baseY: baseY - 0.5, height: 15, top: 0.45, upDim: 0.95 }, name: lod.name + 'd' + d }), dist);
         }
         lod.addLevel(new THREE.Object3D(), FAR_HIDE); // 远处整段隐藏
         root.add(lod);
@@ -447,11 +450,15 @@ export default {
     }
 
     // ───── 4. 中央景观带：雕塑群、台座、花坛、水景 ─────
-    const bronze = new THREE.MeshStandardMaterial({ color: 0x7c5a33, metalness: 0.7, roughness: 0.38, vertexColors: true });
-    floodlit(bronze, { ctx, color: 0xffc070, strength: 2.6, baseY: yMid - 1, height: 12, top: 0.5, upDim: 0.3 });
+    // 青铜：棕铜本色 + 金属高光（原先 0x7c5a33、金属度 0.7 → 白天几乎纯黑）；夜间泛光 2.6 → 0.85（原先整座雕塑糊成奶油色）
+    const bronze = new THREE.MeshStandardMaterial({ color: 0xa27a4a, metalness: 0.5, roughness: 0.42, vertexColors: true });
+    floodlit(bronze, { ctx, color: 0xffc070, strength: 0.85, baseY: yMid - 1, height: 12, top: 0.45, upDim: 0.3 });
     const stoneMat = ctx.mats.clone('marble', { color: 0xd8d0c2 });
-    floodlit(stoneMat, { ctx, color: 0xffc47a, strength: 0.9, baseY: yMid - 1, height: 3, top: 0.4 });
-    const led = ctx.mats.get('ledGold');
+    floodlit(stoneMat, { ctx, color: 0xffc47a, strength: 0.5, baseY: yMid - 1, height: 3, top: 0.4 });
+    const relief = floodlit(reliefMaterial(), { ctx, color: 0xffc47a, strength: 0.5, baseY: yMid - 1, height: 3, top: 0.5 });
+    // 金色灯带：不夜城专用副本，夜间 4.5 → 1.15、宽 0.16 → 0.1 m（贴地灯带离人眼近，原亮度在人眼高度下泛光成一大片金雾）
+    const led = ctx.mats.clone('ledGold');
+    ctx.night.register(led, { day: 0, night: 1.15 });
     const waterMat = new THREE.MeshPhysicalMaterial({ color: 0x0d1b20, roughness: 0.04, metalness: 0.1, clearcoat: 1, envMapIntensity: 1.2 });
     const flowerMat = new THREE.MeshStandardMaterial({ map: flowerTexture(), roughness: 0.9 });
     const curbMat = ctx.mats.get('stonePaving');
@@ -467,9 +474,14 @@ export default {
         if (g) sb.add(g, led);
       }
     };
+    const plinthAt = (x, y, z, w, d, h) => {
+      put(plinthGeometry(w, d, h), stoneMat, x, y, z);
+      const rg = plinthRelief(w, d, h);
+      if (rg) put(rg, relief, x, y, z);
+    };
     const plinth = (z, w, d, h) => {
       const y = H(AX, z);
-      put(plinthGeometry(w, d, h), stoneMat, AX, y, z);
+      plinthAt(AX, y, z, w, d, h);
       ledRect(AX - w / 2 - 0.2, AX + w / 2 + 0.2, z - d / 2 - 0.2, z + d / 2 + 0.2, y + h + 0.02);
       ledRect(AX - w / 2 - 0.35, AX + w / 2 + 0.35, z - d / 2 - 0.35, z + d / 2 + 0.35, y + 0.27);
       return y + h;
@@ -520,7 +532,7 @@ export default {
     // 大唐文化柱
     {
       const z = 5909, y = H(AX, z);
-      put(plinthGeometry(6, 6, 2), stoneMat, AX, y, z);
+      plinthAt(AX, y, z, 6, 6, 2);
       const col = new THREE.CylinderGeometry(1.15, 1.35, 22, 16);
       col.translate(0, 11, 0);
       put(col, bronze, AX, y + 2, z);
@@ -540,7 +552,7 @@ export default {
     // 开元盛世碑
     {
       const z = 5961, y = H(AX, z);
-      put(plinthGeometry(6, 3.2, 1.6), stoneMat, AX, y, z);
+      plinthAt(AX, y, z, 6, 3.2, 1.6);
       const stele = new THREE.BoxGeometry(3.4, 7.5, 0.9);
       stele.translate(0, 3.75, 0);
       put(stele, stoneMat, AX, y + 1.6, z);
@@ -645,10 +657,10 @@ export default {
     // ───── 5. 灯柱、行道树、红灯笼、光斑 ─────
     const lampMats = {
       gold: ctx.mats.get('gold'),
-      glow: new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xffc070, emissiveIntensity: 0, roughness: 0.4 }),
+      glow: new THREE.MeshStandardMaterial({ color: 0xfff0d0, emissive: 0xffb258, emissiveIntensity: 0, roughness: 0.4 }),
       red: ctx.mats.get('lanternRed'),
     };
-    ctx.night.register(lampMats.glow, { day: 0.15, night: 4.0 });
+    ctx.night.register(lampMats.glow, { day: 0.15, night: 2.0 });
     const inStreet = (z) => z > ZN + 10 && z < ZS - 10 && !(z > CROSS[0] - 3 && z < CROSS[1] + 3);
     const lamps = [], pools = [], trees = [], lant = [];
     for (let z = ZN + 14; z < ZS - 8; z += 20) {
@@ -689,7 +701,7 @@ export default {
       }
     }
     const lanternMat = new THREE.MeshStandardMaterial({ color: 0xb52a1a, emissive: 0xff4a1c, emissiveIntensity: 0, roughness: 0.55 });
-    ctx.night.register(lanternMat, { day: 0.12, night: 3.6 });
+    ctx.night.register(lanternMat, { day: 0.12, night: 1.7 });
     // 远处隐藏的对象集合（见 FAR_HIDE）；灯柱与灯笼不投射阴影（细小构件，阴影不可辨但三角形翻倍）
     const farItems = [sculpt, tg, ground, backStreet].filter(Boolean);
     for (const m of lampMeshes(ctx, lamps, lampMats)) {
@@ -697,10 +709,13 @@ export default {
       root.add(m);
       farItems.push(m);
     }
-    for (const m of treeMeshes(ctx, trees)) {
+    // 树干、树冠随远景隐藏；串灯光点（夜间才有，白天也不提交三角形）另在 update 里按昼夜与距离开关
+    const [trunkM, crownM, treeLights] = treeMeshes(ctx, trees);
+    for (const m of [trunkM, crownM]) {
       root.add(m);
       farItems.push(m);
     }
+    root.add(treeLights);
     {
       const li = lanternInstances(lant, lanternMat, { r: 0.28 });
       li.castShadow = false;
@@ -718,24 +733,42 @@ export default {
           for (const off of [BELT + 0.2, HW - 1.2]) {
             if (off > 20 && z0 > CROSS[1] && false) continue;
             const x = AX + s * off;
-            const g = ribbon([x, z0, x, z1], 0.16, H, { lift: 0.09, step: 16 });
+            const g = ribbon([x, z0, x, z1], 0.1, H, { lift: 0.09, step: 16 });
             if (g) lb.add(g, led);
           }
       const lg = lb.build({ castShadow: false, name: '地面灯带' });
       root.add(lg);
     }
+    let farLights = null;
     // 光柱：贞观广场四角 + 开元广场两侧（夜间）
     const beams = [];
     for (const [x, z, tx, tz] of [[1540, 5345, -0.08, -0.05], [1600, 5345, 0.08, -0.05], [1540, 5560, -0.06, 0.06], [1600, 5560, 0.06, 0.06], [AX - 22, 6085, -0.1, 0.02], [AX + 22, 6085, 0.1, 0.02], [AX - 22, 6125, -0.05, 0.08], [AX + 22, 6125, 0.05, 0.08]])
       beams.push([x, H(x, z) + 0.2, z, tx, tz]);
-    root.add(lightBeams(ctx, beams, { h: 360 }));
+    root.add(lightBeams(ctx, beams, { h: 360, alpha: 0.32 }));
+
+    // 远景金色光带：沿灯柱、中央景观带、两侧檐口的光点（1.4 km 外渐显，2~20 km 合成连续的金色南北轴线）
+    {
+      const fp = [];
+      for (let z = ZN + 6; z < ZS - 4; z += 9) {
+        if (z > CROSS[0] - 2 && z < CROSS[1] + 2) continue;
+        for (const s of [-1, 1]) {
+          fp.push([AX + s * 9.8, H(AX, z) + 6, z], [AX + s * 26.5, H(AX, z) + 6, z + 4.5]);
+          if (!(z > ZG[0] && z < ZG[1]) && z < KY[0]) fp.push([AX + s * (HW + 2), H(AX, z) + 9, z + 2]);
+        }
+      }
+      for (const [x0, x1, z0, z1] of [[1510, 1630, ZG[0] + 6, ZG[1] - 6], [1515, 1625, KY[0] + 6, ZS - 6]])
+        for (let x = x0; x <= x1; x += 18) for (let z = z0; z <= z1; z += 18) fp.push([x, H(x, z) + 8, z]);
+      farLights = farGlow(ctx, fp);
+      root.add(farLights);
+    }
     await tick();
 
     // ───── 6. 人流（顶点着色器行走） ─────
     const hz0 = ZN - 10, hdz = (ZS - ZN + 20) / 47;
     const heights = new Float32Array(48);
     for (let i = 0; i < 48; i++) heights[i] = H(AX, hz0 + i * hdz) + 0.06;
-    const nNight = [900, 1800, 3200, 4600][lvl] ?? 3200;
+    // 人形约 200 个三角形（原积木假人约 90），高画质人数 3200 → 2800 抵消大部分增量
+    const nNight = [800, 1600, 2800, 4000][lvl] ?? 2800;
     const len = ZS - ZN - 4;
     const mk = (n, hanfu) => {
       const w = new Float32Array(n * 4);
@@ -802,7 +835,7 @@ export default {
 
     // 招牌亮度：古建构件库匾额默认夜间 0.55，不夜城需更亮（后注册覆盖）
     root.traverse((o) => {
-      if (o.isMesh && o.name === 'plaque') ctx.night.register(o.material, { day: 0.02, night: 1.35 });
+      if (o.isMesh && o.name === 'plaque') ctx.night.register(o.material, { day: 0.02, night: 1.0 });
     });
 
     // 统计
@@ -855,8 +888,10 @@ export default {
             for (const o of casters) o.castShadow = sh;
           }
         }
-        if (!near) return;
         const k = ctx.sky ? ctx.sky.night ?? 0 : 0;
+        treeLights.visible = near && k > 0.15 && d < 2500;
+        if (farLights) farLights.visible = k > 0.15 && d > 1200;
+        if (!near) return;
         // 人流：夜多昼少 × 随距离减少（500 m 内全量，到 FAR_HIDE 的 1/3 处降到 1/4）
         const dk = 1 - 0.75 * Math.min(1, Math.max(0, (d - 500) / Math.max(1, FAR_HIDE / 3 - 500)));
         const f = (0.4 + 0.6 * k) * dk;
