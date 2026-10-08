@@ -3,7 +3,7 @@
 // 逐顶点属性：
 //   color    基色（线性 RGB）
 //   aMat     (paintMode, roughness, metalness, emissiveKind)
-//             paintMode 0=顶点色 1=车漆(实例色) 2=第二色(车顶黑/货箱色) 3=号牌(蓝/绿) 4=条纹(实例色,列车)
+//             paintMode 0=顶点色 1=车漆(实例色) 2=第二色(车顶黑/货箱色) 3=号牌(蓝/绿) 4=条纹(实例色,列车) 5=车窗玻璃(深色贴膜 + 透见头枕)
 //             emissiveKind 见 EM
 //   aKind    所属车型（-1 = 通用部件；uber 几何按实例车型折叠其它车型的顶点）
 // 参考尺寸：
@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 
 export const EM = { NONE: 0, HEAD: 1, TAIL: 2, TURN_L: 3, TURN_R: 4, INTERIOR: 5, LED: 6, TAXI: 7, TRAIN_END: 8, DRL: 9, TRAIN_WIN: 10 };
-export const PM = { NONE: 0, BODY: 1, SECOND: 2, PLATE: 3, STRIPE: 4 };
+export const PM = { NONE: 0, BODY: 1, SECOND: 2, PLATE: 3, STRIPE: 4, GLASS: 5 };
 
 // 道路车辆车型编码
 export const VK = { CAR: 0, TAXI: 1, BUS: 2, DUMP: 3, BOXTRUCK: 4, SEMI: 5 };
@@ -34,7 +34,9 @@ const M = {
   paintLow: { c: [0.82, 0.82, 0.82], paint: PM.BODY, rough: 0.32, metal: 0.4 },
   roof: { c: [1, 1, 1], paint: PM.SECOND, rough: 0.3, metal: 0.4 },
   second: { c: [1, 1, 1], paint: PM.SECOND, rough: 0.45, metal: 0.2 },
-  glass: { c: col(0x0b0e12), rough: 0.05, metal: 0.35 },
+  // 车窗：金属度 0、极低粗糙度 → 环境贴图按菲涅耳反射天空/街景（正视发暗、斜视发亮），漫反射为透见的车内（着色器）
+  glass: { c: col(0x0b0e12), paint: PM.GLASS, rough: 0.04, metal: 0.0 },
+  lamp: { c: col(0x2a2c30), rough: 0.25, metal: 0.6 }, // 灯腔（深色反光碗）
   glassBus: { c: col(0x0a0c0f), rough: 0.06, metal: 0.3, em: EM.INTERIOR },
   black: { c: col(0x141516), rough: 0.7, metal: 0.0 },
   trim: { c: col(0x1d1f22), rough: 0.45, metal: 0.3 },
@@ -262,21 +264,32 @@ const CAR_INTERVALS = [
 
 function carRing(s) {
   const [, yb, ys, yw, yt, hw, hwt] = s;
+  // 腰线肩部（车窗下沿向内收 2.5%）：侧面在腰线处有一道折线高光，车身不再是平板盒子
+  const ysh = Math.min(yw + 0.045, yt - 0.06);
   return [
-    [hw * 0.93, yb], [hw, ys], [hw, yw], [hwt, yt - 0.05], [hwt * 0.55, yt],
-    [-hwt * 0.55, yt], [-hwt, yt - 0.05], [-hw, yw], [-hw, ys], [-hw * 0.93, yb],
+    [hw * 0.93, yb], [hw, ys], [hw, yw], [hw * 0.975, ysh], [hwt, yt - 0.05], [hwt * 0.55, yt],
+    [-hwt * 0.55, yt], [-hwt, yt - 0.05], [-hw * 0.975, ysh], [-hw, yw], [-hw, ys], [-hw * 0.93, yb],
   ];
+}
+/** 站点表在 z 处的腰线半宽（线性插值） */
+function hwAt(P, z) {
+  const st = P.st;
+  for (let i = 0; i + 1 < st.length; i++) {
+    const a = st[i], b = st[i + 1];
+    if ((z <= a[0] && z >= b[0]) || (z >= a[0] && z <= b[0])) return a[5] + ((b[5] - a[5]) * (z - a[0])) / (b[0] - a[0] || 1);
+  }
+  return st[0][5];
 }
 
 function buildCar(B, P) {
   const secs = P.st.map((s) => ({ z: s[0], ring: carRing(s) }));
   B.loft(secs, (i, k) => {
     const [side, top] = CAR_INTERVALS[i];
-    if (k === 9) return M.under;
-    if (k === 0 || k === 8) return M.paintLow;
-    if (k === 1 || k === 7) return M.paint;
-    if (k === 2 || k === 6) return side === 1 ? M.glass : side === 2 ? M.trim : M.paint;
-    // 3,4,5：顶面
+    if (k === 11) return M.under;
+    if (k === 0 || k === 10) return M.paintLow;
+    if (k === 1 || k === 9 || k === 2 || k === 8) return M.paint; // 侧板 + 腰线肩部
+    if (k === 3 || k === 7) return side === 1 ? M.glass : side === 2 ? M.trim : M.paint;
+    // 4,5,6：顶面
     return top === 1 ? M.glass : top === 2 ? M.roof : M.paint;
   }, { capFront: M.paint, capBack: M.paint, center: () => 0.7 });
   const fz = P.frontZ, rz = P.rearZ;
@@ -284,18 +297,29 @@ function buildCar(B, P) {
   B.box(0, P.headY - 0.17, fz + 0.01, 0.92, 0.2, 0.08, M.trim); // 格栅
   B.box(0, P.plateY - 0.12, fz + 0.03, 1.2, 0.1, 0.05, M.black); // 下进气
   for (const sd of [1, -1]) {
-    B.box(sd * 0.60, P.headY, fz - 0.06, 0.42, 0.11, 0.2, M.head);
+    // 前大灯：深色灯腔（略大、略靠后）+ 发光灯罩 + 下沿日行灯条 → 有进深的灯组，而不是一块贴片
+    B.box(sd * 0.60, P.headY + 0.005, fz - 0.1, 0.46, 0.15, 0.2, M.lamp, 'back');
+    B.box(sd * 0.60, P.headY, fz - 0.06, 0.4, 0.1, 0.2, M.head);
     B.box(sd * 0.62, P.headY - 0.075, fz - 0.03, 0.40, 0.03, 0.14, M.drl);
     B.box(sd * 0.83, P.headY, fz - 0.2, 0.08, 0.07, 0.2, sd > 0 ? M.turnL : M.turnR);
-    // 尾灯
+    // 尾灯：深红灯腔 + 内侧亮条
+    B.box(sd * 0.60, P.tailY, rz + 0.06, 0.5, 0.15, 0.12, M.lamp, 'front');
     B.box(sd * 0.60, P.tailY, rz + 0.04, 0.46, 0.12, 0.12, M.tail);
     B.box(sd * 0.84, P.tailY - 0.02, rz + 0.12, 0.06, 0.1, 0.12, sd > 0 ? M.turnL : M.turnR);
     // 后视镜
     B.box(sd * 0.99, P.mirrorY, P.mirrorZ, 0.16, 0.12, 0.24, M.paint);
     B.box(sd * 0.99, P.mirrorY, P.mirrorZ - 0.121, 0.13, 0.09, 0.005, M.chrome);
-    // 车轮
-    B.wheel(sd * P.track, P.axleF, P.wheelR, 0.22, sd);
-    B.wheel(sd * P.track, P.axleR, P.wheelR, 0.22, sd);
+    // 车轮外侧面与车身侧板齐平（原先整轮缩在车身里，只露底下一条，像方盒在地上滑），
+    // 轮上方贴半圆形暗色轮拱开口（8 个三角形）
+    for (const az of [P.axleF, P.axleR]) {
+      const hwA = hwAt(P, az);
+      B.wheel(sd * (hwA + 0.012 - 0.11), az, P.wheelR, 0.22, sd);
+      const x = sd * (hwA + 0.004), R = P.wheelR + 0.075;
+      for (let k = 0; k < 8; k++) {
+        const a0 = (Math.PI * k) / 8, a1 = (Math.PI * (k + 1)) / 8;
+        B.tri([x, P.wheelR, az], [x, P.wheelR + Math.sin(a0) * R, az + Math.cos(a0) * R], [x, P.wheelR + Math.sin(a1) * R, az + Math.cos(a1) * R], M.under, { n: [sd, 0, 0] });
+      }
+    }
   }
   B.box(0, P.tailY + 0.02, rz + 0.01, 0.72, 0.035, 0.06, M.tail); // 贯穿式尾灯
   B.box(0, P.plateY, fz + 0.06, 0.44, 0.14, 0.02, M.plate);

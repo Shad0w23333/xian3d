@@ -18,7 +18,7 @@
 //   陇海/西康等普速线跑客车（机车 + 25G 客车）与货车（敞车/罐车）；地铁 B 型车只在地面/高架段可见。
 //   国铁双线左侧行车，地铁右侧行车（按平行线位关系判断每条股道的运行方向）。
 import * as THREE from 'three';
-import { buildRoadGraph, resampleFeature, buildRailStrokes, resampleStroke, RAIL_KIND } from '../arch/traffic_net.js';
+import { buildRoadGraph, blockEdges, resampleFeature, buildRailStrokes, resampleStroke, RAIL_KIND } from '../arch/traffic_net.js';
 import {
   carNearGeometry, heavyNearGeometry, farVehicleGeometry, trainNearGeometry, trainFarGeometry,
   VK, VK_LEN, TK, TK_LEN, pickCarColor, TAXI_GREEN, TAXI_YELLOW, BUS_COLORS, DUMP_GREEN,
@@ -150,6 +150,23 @@ ${PLATE_GLSL}`)
   if (pm > 0.5 && pm < 1.5) diffuseColor.rgb = vTrBody * vColor.rgb;
   else if (pm > 1.5 && pm < 2.5) { float sc = mod(vTrInfo.w, 16.0); diffuseColor.rgb = (sc > 7.5 ? vTrBody : uSecond[int(sc)]) * vColor.rgb; }
   else if (pm > 2.5 && pm < 3.5) diffuseColor.rgb = trPlate(floor(vTrInfo.w / 16.0));
+  else if (pm > 4.5) {
+    // 车窗：深色贴膜，隐约透见座椅头枕（局部坐标；侧窗按 z-y 平面、前后挡按 x-y 平面投影），
+    // 金属度 0 + 低粗糙度，反射由环境贴图按菲涅耳给出
+    vec3 lp = vTrLocal;
+    float hy = mix(1.17, 1.33, vTrInfo.z);
+    float hr = 0.0;
+    if (abs(lp.x) > 0.62) {
+      for (int k = 0; k < 2; k++) {
+        float sz = k == 0 ? 0.02 : -0.86;
+        hr = max(hr, smoothstep(1.0, 0.55, length(vec2((lp.z - sz) / 0.15, (lp.y - hy) / 0.13))));
+      }
+    } else {
+      hr = smoothstep(1.0, 0.55, length(vec2((abs(lp.x) - 0.4) / 0.14, (lp.y - hy) / 0.13)));
+    }
+    float lowK = smoothstep(hy + 0.25, hy - 0.35, lp.y); // 窗下部看到车内座椅/门板，略亮
+    diffuseColor.rgb = vec3(0.012, 0.015, 0.018) + vec3(0.03, 0.028, 0.026) * max(hr, 0.35 * lowK);
+  }
   else if (pm > 3.5) diffuseColor.rgb = vTrBody;
 }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = vTrMat.y;')
@@ -189,7 +206,7 @@ ${PLATE_GLSL}`)
   totalEmissiveRadiance = E;
 }`);
   };
-  mat.customProgramCacheKey = () => 'traffic-near-' + (morph ? 'm' : '') + (train ? 't' : '');
+  mat.customProgramCacheKey = () => 'traffic-near2-' + (morph ? 'm' : '') + (train ? 't' : '');
   return mat;
 }
 
@@ -567,7 +584,13 @@ export default {
     const WL = Object.values(W);
 
     // —— 路网 ——
+    // 景区/公园里的无名支路（大慈恩寺绕三藏院的环路等）按步行道处理，不进车行路网（与 roads 同一规则）
+    if (typeof roadsNet.markParkWalkways === 'function') roadsNet.markParkWalkways(ctx.data.roads, ctx.data.landuse);
     const G = buildRoadGraph(ctx.data.roads);
+    // 步行街与“道路模块不画路面”的地方（大唐不夜城步行街、下沉广场坑口、楼体内部路段等，排除区 roads=true）不跑车
+    const EX = ctx.exclusions;
+    const nBlocked = EX && EX.items && EX.items.length ? blockEdges(G, (x, z) => EX.test(x, z, 'roads')) : 0;
+    if (nBlocked) console.warn(`[traffic] 封闭不通车的边 ${nBlocked} 条（步行街/排除区）`);
     const edges = G.edges;
     const NE = edges.length;
     const feats = G.feats;
@@ -831,6 +854,7 @@ export default {
       let sum = 0;
       for (const id of qList) {
         const e = edges[id];
+        if (e.blocked) continue;
         const d = Math.hypot(Math.max(e.x0 - cx, 0, cx - e.x1), Math.max(e.z0 - cz, 0, cz - e.z1));
         const reach = Math.min(R * CLASS_REACH[e.cls], CLASS_REACH_CAP[e.cls]);
         if (d > reach) continue;

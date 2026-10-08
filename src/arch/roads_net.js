@@ -11,9 +11,10 @@ export const CFG = [
   { id: 'primary', rank: 8, major: 1, minW: 7, dashLong: 1, lamp: 34, sw: 5, far: 1, edge: 0.15 },
   { id: 'secondary', rank: 7, major: 1, minW: 6.5, dashLong: 0, lamp: 32, sw: 4, far: 1, edge: 0.15 },
   { id: 'tertiary', rank: 6, major: 1, minW: 6, dashLong: 0, lamp: 30, sw: 3, far: 'core', edge: 0.15 },
-  { id: 'residential', rank: 3, major: 0, minW: 5, dashLong: 0, lamp: 0, sw: 0, far: 0, noMark: 1 },
+  // 支路/小区路：单侧路灯（间距约 36 m）。远景灯点在主干道光带之间铺出一层暗的灯网，人眼高度小巷夜里也有光斑
+  { id: 'residential', rank: 3, major: 0, minW: 5, dashLong: 0, lamp: 36, sw: 0, far: 0, noMark: 1, lampOne: 1 },
   { id: 'service', rank: 2, major: 0, minW: 3.5, dashLong: 0, lamp: 0, sw: 0, far: 0, noMark: 1 },
-  { id: 'unclassified', rank: 4, major: 0, minW: 5, dashLong: 0, lamp: 0, sw: 0, far: 0, noMark: 1 },
+  { id: 'unclassified', rank: 4, major: 0, minW: 5, dashLong: 0, lamp: 38, sw: 0, far: 0, noMark: 1, lampOne: 1 },
   { id: 'motorway_link', rank: 5, major: 1, link: 1, minW: 4.5, dashLong: 1, lamp: 0, sw: 0, far: 1, edge: 0.15 },
   { id: 'trunk_link', rank: 5, major: 1, link: 1, minW: 4.5, dashLong: 1, lamp: 0, sw: 0, far: 1, edge: 0.15 },
   { id: 'primary_link', rank: 5, major: 1, link: 1, minW: 4.5, dashLong: 1, lamp: 0, sw: 0, far: 1, edge: 0.15 },
@@ -35,6 +36,8 @@ export const F = {
   CW1: 256, // 终点端有人行横道
   EDGES: 512, // 画边线
   PAIRED: 1024, // 有对向车道（左侧中央分隔带灯）
+  // 2048/4096/8192 为 roads.js 的路灯侧别位（LAMPL/LAMPR/LAMPM）
+  FOOTWAY: 16384, // 公园/小区步道（铺装着色用较深的暖灰石材）
 };
 
 // 表面种类（aRoad.x）
@@ -50,9 +53,61 @@ export const LAMP = { SINGLE: 0, DOUBLE: 1, KNOT: 2, PALACE: 3, LANTERN: 4 };
 
 const nodeKey = (x, z) => (Math.round(x * 10) + 700000) * 2000000 + (Math.round(z * 10) + 1000000);
 
+/**
+ * 景区/公园/广场里的无名支路（OSM 常把寺院甬道、园路、广场通道标成 service/unclassified/residential）：
+ * 要素 60% 以上的顶点与段中点落在 landuse 的 park/square 多边形内 → 标 f._ped = 1，按步行道处理
+ * （roads 画石板铺装、不布路灯；traffic 不跑车；pedestrians 当步行街放人）。有名字的街道一律不动。
+ * 结果缓存在 roads 上（不可枚举属性），各模块重复调用无开销。返回标记数。
+ */
+export function markParkWalkways(roads, landuse) {
+  if (!roads || !roads.features) return 0;
+  if (roads._parkWalk !== undefined) return roads._parkWalk;
+  const polys = (landuse?.polys || []).filter((q) => (q.k === 'park' || q.k === 'square') && q.outer && q.outer.length >= 6);
+  const CELL = 500, grid = new Map();
+  for (const q of polys) {
+    const o = q.outer;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < o.length; i += 2) { x0 = Math.min(x0, o[i]); x1 = Math.max(x1, o[i]); z0 = Math.min(z0, o[i + 1]); z1 = Math.max(z1, o[i + 1]); }
+    q._bb = [x0, z0, x1, z1];
+    for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++)
+      for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) {
+        const k = cx * 100003 + cz;
+        let a = grid.get(k);
+        if (!a) grid.set(k, (a = []));
+        a.push(q);
+      }
+  }
+  const pip = (x, z, p) => {
+    let c = false;
+    for (let i = 0, n = p.length / 2, j = n - 1; i < n; j = i++) {
+      const xi = p[i * 2], zi = p[i * 2 + 1], xj = p[j * 2], zj = p[j * 2 + 1];
+      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+    }
+    return c;
+  };
+  const inPark = (x, z) => {
+    const a = grid.get(Math.floor(x / CELL) * 100003 + Math.floor(z / CELL));
+    if (a) for (const q of a) { const b = q._bb; if (x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] && pip(x, z, q.outer)) return true; }
+    return false;
+  };
+  let n = 0;
+  for (const f of roads.features) {
+    if ((f.c !== 5 && f.c !== 6 && f.c !== 7) || f.b || f.t || f.n || !f.p || f.p.length < 4) continue;
+    const p = f.p;
+    let hit = 0, tot = 0;
+    for (let i = 0; i < p.length; i += 2) {
+      tot++; if (inPark(p[i], p[i + 1])) hit++;
+      if (i + 3 < p.length) { tot++; if (inPark((p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2)) hit++; }
+    }
+    if (hit / tot >= 0.6) { Object.defineProperty(f, '_ped', { value: 1, writable: true, configurable: true, enumerable: false }); n++; }
+  }
+  Object.defineProperty(roads, '_parkWalk', { value: n, writable: true, configurable: true, enumerable: false });
+  return n;
+}
+
 /** 读入道路要素，给出有效宽度、车道数、标志 */
 function featureInfo(f) {
-  const cfg = CFG[f.c] || CFG[7];
+  const cfg = CFG[f._ped ? 12 : f.c] || CFG[7];
   const lanes = Math.max(1, Math.min(8, f.l | 0 || 1));
   let W = Number(f.w) || cfg.minW;
   if (!cfg.paving) W = Math.max(W, cfg.minW, lanes * (cfg.rank >= 8 ? 3.4 : 3.1));
@@ -223,6 +278,7 @@ export function buildRoadNet(roads, { inDetail }) {
     if (f.c === 0) flags |= F.MOTORWAY;
     if (cfg.link) flags |= F.LINK;
     if (cfg.major && !cfg.link) flags |= F.EDGES;
+    if (f.c === 13) flags |= F.FOOTWAY;
     const cwOk = cfg.major && !cfg.link && f.c >= 2 && f.c <= 4 && !E.b;
     if (cwOk && a.nX >= 1 && E.len > 28 && a.R > 0 && a.R < 30) flags |= F.CW0;
     if (cwOk && b.nX >= 1 && E.len > 28 && b.R > 0 && b.R < 30) flags |= F.CW1;
@@ -315,7 +371,53 @@ export function buildRoadNet(roads, { inDetail }) {
     E.flags |= F.MEDIAN | F.PAIRED;
     E.swL = false;
   }
-  return { edges, feats, info, chain, total, inDetail };
+  const net = { edges, feats, info, chain, total, inDetail };
+  // 中分带宽沿路变化很大（东大街一条边 1.4 km，两端 0.2 m、中段 3.7 m）：E.gap 只是三点探测的中位数，
+  // 这里再沿边每 ~40 m 取局部宽度，记中位数 gapMed（路灯/光斑判定用）；建模与布灯逐断面用 pairGapAt
+  for (const E of edges) {
+    if (!(E.flags & F.PAIRED)) continue;
+    const p = feats[E.fi].p, ch = chain[E.fi];
+    const n = Math.max(3, Math.min(40, Math.round(E.len / 40)));
+    const gs = [];
+    let i = E.i0;
+    for (let k = 0; k < n; k++) {
+      const s = E.s0 + (E.len * (k + 0.5)) / n;
+      while (i < E.i1 - 1 && ch[i + 1] < s) i++;
+      const L = ch[i + 1] - ch[i] || 1;
+      const dx = (p[i * 2 + 2] - p[i * 2]) / L, dz = (p[i * 2 + 3] - p[i * 2 + 1]) / L;
+      const u = s - ch[i];
+      const g = pairGapAt(net, E, p[i * 2] + dx * u, p[i * 2 + 1] + dz * u, -dz, dx);
+      if (g !== null) gs.push(g);
+    }
+    gs.sort((a, b) => a - b);
+    E.gapMed = gs.length ? gs[gs.length >> 1] : E.gap;
+  }
+  return net;
+}
+
+/**
+ * 双幅路局部中分带宽（米）：从路中心点 (x,z) 沿左法线（右法线 (rx,rz) 取反）射向配对要素折线，
+ * 交点距离减去两幅半宽。没有交点（配对要素在此处已结束等）返回 null。
+ */
+export function pairGapAt(net, E, x, z, rx, rz) {
+  if (E.pairF < 0) return null;
+  const q = net.feats[E.pairF].p;
+  const rl = Math.hypot(rx, rz) || 1;
+  const lx = -rx / rl, lz = -rz / rl;
+  const maxT = E.W / 2 + 75;
+  let best = Infinity;
+  for (let j = 0; j + 3 < q.length; j += 2) {
+    const qx = q[j], qz = q[j + 1], sx = q[j + 2] - qx, sz = q[j + 3] - qz;
+    const den = lx * sz - lz * sx;
+    if (Math.abs(den) < 1e-6) continue;
+    const wx = qx - x, wz = qz - z;
+    const t = (wx * sz - wz * sx) / den;
+    const w = (wx * lz - wz * lx) / den;
+    if (w < -0.02 || w > 1.02 || t <= E.W * 0.3 || t > maxT) continue;
+    if (t < best) best = t;
+  }
+  if (best === Infinity) return null;
+  return best - E.W / 2 - net.info[E.pairF].W / 2;
 }
 
 /** 路灯灯型：按道路名 */
@@ -331,7 +433,7 @@ export function lampStyleFor(f) {
  * 布置路灯（记录，不建几何）。返回 {x,y,z,yaw,type,n}（类型化数组）
  * yaw：灯臂指向（弧度，atan2(dx,dz) 约定：局部 +Z 指向路面）
  */
-export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = null }) {
+export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = null, minorOk = null }) {
   const { edges, feats, info, chain, total } = net;
   const out = { x: [], y: [], z: [], yaw: [], type: [], lvl: [] };
   let curLvl = 3;
@@ -376,11 +478,13 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
       const yawR = Math.atan2(-rx, -rz); // 右侧灯：灯臂指向 -右法线（路中）
       const yawL = Math.atan2(rx, rz);
       const sideType = style === LAMP.PALACE ? LAMP.PALACE : style === LAMP.KNOT ? LAMP.KNOT : style === LAMP.LANTERN ? LAMP.LANTERN : LAMP.SINGLE;
+      // 中分带灯按灯位处的局部中分带宽布置（立在中分带正中；宽度沿路变化，整边一个 gap 会把灯杆插进车道）
+      const gLoc = (E.flags & F.PAIRED) && E.pairF > E.fi ? pairGapAt(net, E, cx, cz, rx, rz) ?? -1 : -1;
       if (f.c === 0) {
         // 高速/快速路：中央分隔带双臂灯（配对时只由一侧布置）
         if (E.flags & F.PAIRED) {
-          if (E.pairF > E.fi && E.gap > 0.5 && E.gap < 30) {
-            const m = hw + E.gap / 2;
+          if (E.pairF > E.fi && gLoc > 0.5 && gLoc < 30) {
+            const m = hw + gLoc / 2;
             const x = cx - rx * m, z = cz - rz * m;
             push(x, onBridge ? deckY + 0.9 : gY(x, z) + 0.2, z, yawL, LAMP.DOUBLE);
           } else if (onBridge && E.pairF > E.fi) {
@@ -396,12 +500,17 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
       // 右侧（外侧人行道）
       {
         const x = cx + rx * (hw + off), z = cz + rz * (hw + off);
+        // 支路单侧灯：落在片区自建房屋/地标里（OSM 中心线偏差）就不立
+        if (cfg.lampOne) {
+          if (!minorOk || minorOk(x, z)) push(x, baseY(x, z), z, yawR, sideType);
+          continue;
+        }
         push(x, baseY(x, z), z, yawR, sideType);
       }
       if (E.flags & F.PAIRED) {
         // 双幅路：中央分隔带双臂灯，由编号小的一幅负责
-        if (E.pairF > E.fi && E.gap > 1.2 && E.gap < 40 && !onBridge) {
-          const m = hw + E.gap / 2;
+        if (E.pairF > E.fi && gLoc > 1.2 && gLoc < 40 && !onBridge) {
+          const m = hw + gLoc / 2;
           const x = cx - rx * m, z = cz - rz * m;
           push(x, gY(x, z) + 0.2, z, yawL, sideType === LAMP.PALACE ? LAMP.PALACE : sideType === LAMP.KNOT ? LAMP.KNOT : LAMP.DOUBLE);
         }

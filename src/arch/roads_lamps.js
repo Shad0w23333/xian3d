@@ -16,7 +16,7 @@ const C_DARK = [0.16, 0.16, 0.17];
 const C_BRONZE = [0.2, 0.12, 0.08];
 const C_RED = [0.55, 0.05, 0.035];
 const C_GOLD = [0.62, 0.45, 0.16];
-const E_LED = [1.0, 0.8, 0.56];
+const E_LED = [1.0, 0.74, 0.46]; // 约 3500 K 暖白（原 4500 K 偏冷，夜景近处成白色光球）
 const E_WARM = [1.0, 0.66, 0.3];
 const E_RED = [1.0, 0.07, 0.03];
 
@@ -66,7 +66,7 @@ function sphere(r, sx, sy, sz, x, y, z, color, emi, s, seg = 10) {
 /** 标准 LED 灯头（在 +Z 方向 z 处） */
 function ledHead(parts, y, z, dir = 1) {
   parts.push(box(0.36, 0.13, 0.8, 0, y, z * dir, C_POLE));
-  parts.push(box(0.3, 0.03, 0.66, 0, y - 0.075, z * dir, [0.9, 0.9, 0.85], E_LED, 4.5));
+  parts.push(box(0.3, 0.03, 0.66, 0, y - 0.075, z * dir, [0.9, 0.9, 0.85], E_LED, 2.4));
 }
 /** 弯臂：从杆顶 (0,y0,0) 上挑到 (0,y0+rise,len) */
 function arm(parts, y0, len, rise, dir = 1, r = 0.045) {
@@ -81,7 +81,7 @@ function pole(parts, h, rb = 0.12, rt = 0.065, color = C_POLE) {
 
 /** 六角宫灯（中心 x,y,z） */
 function palaceLantern(parts, x, y, z, r = 0.3, h = 0.66) {
-  parts.push(cyl(r, r, h, 6, x, y, z, [0.95, 0.8, 0.55], E_WARM, 5));
+  parts.push(cyl(r, r, h, 6, x, y, z, [0.95, 0.8, 0.55], E_WARM, 3));
   // 立柱
   for (let k = 0; k < 6; k++) {
     const a = (k / 6) * Math.PI * 2;
@@ -152,7 +152,7 @@ export function lampGeometries() {
     arm(p, 9.5, 1.7, 0.3, 1, 0.05);
     arm(p, 9.5, 1.7, 0.3, -1, 0.05);
     for (const d of [1, -1]) {
-      p.push(box(0.46, 0.5, 0.46, 0, 9.55, 1.75 * d, [0.95, 0.9, 0.8], E_LED, 5));
+      p.push(box(0.46, 0.5, 0.46, 0, 9.55, 1.75 * d, [0.95, 0.9, 0.8], E_LED, 2.6));
       p.push(cyl(0.02, 0.4, 0.22, 4, 0, 9.91, 1.75 * d, [0.3, 0.3, 0.32]));
     }
     p.push(cyl(0.02, 0.09, 0.5, 8, 0, 9.75, 0, C_GOLD));
@@ -198,8 +198,8 @@ export function lampGeometriesLow(full) {
   const out = {};
   const H = { [LAMP.SINGLE]: 10, [LAMP.DOUBLE]: 11.5, [LAMP.KNOT]: 9.5, [LAMP.PALACE]: 7.3, [LAMP.LANTERN]: 10 };
   const HEADCOL = {
-    [LAMP.SINGLE]: [[0.9, 0.9, 0.85], E_LED, 4.5], [LAMP.DOUBLE]: [[0.9, 0.9, 0.85], E_LED, 4.5], [LAMP.KNOT]: [[0.95, 0.9, 0.8], E_LED, 5],
-    [LAMP.PALACE]: [[0.95, 0.8, 0.55], E_WARM, 5], [LAMP.LANTERN]: [[0.9, 0.9, 0.85], E_LED, 4.5],
+    [LAMP.SINGLE]: [[0.9, 0.9, 0.85], E_LED, 2.4], [LAMP.DOUBLE]: [[0.9, 0.9, 0.85], E_LED, 2.4], [LAMP.KNOT]: [[0.95, 0.9, 0.8], E_LED, 2.6],
+    [LAMP.PALACE]: [[0.95, 0.8, 0.55], E_WARM, 3], [LAMP.LANTERN]: [[0.9, 0.9, 0.85], E_LED, 2.4],
   };
   for (const k in full) {
     const t = +k;
@@ -233,7 +233,7 @@ export function lampMaterial(ctx) {
       .replace('#include <common>', '#include <common>\nuniform float uNight;\nvarying vec3 vEmi;')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vEmi * (0.04 + uNight);');
   };
-  mat.customProgramCacheKey = () => 'roadLamp|v1';
+  mat.customProgramCacheKey = () => 'roadLamp|v2';
   return mat;
 }
 
@@ -259,7 +259,10 @@ export function lampPointsMaterial(ctx) {
         float d = max(-mvPosition.z, 1.0);
         float px = 1.5 * uScale / d;
         float ps = clamp(px, 2.0, 12.0);
-        vA = clamp(px / ps, 0.0, 1.0) * smoothstep(90.0, 260.0, d) * exp(-uFog * d * 0.8);
+        // 按像素大小限亮：灯头小于点精灵时亮度随“真实像素尺寸 / 精灵尺寸”下降；取平方根（远处仍可辨成串的灯点，
+        // 取最大值混合不会叠加成光团），再设上限 0.75（远处灯点不进泛光阈值）
+        vA = min(sqrt(clamp(px / ps, 0.0, 1.0)) * 1.25, 1.0) * smoothstep(90.0, 260.0, d) * exp(-uFog * d * 0.6);
+        vA *= mix(1.0, 0.75, smoothstep(600.0, 2500.0, d));
         gl_PointSize = ps;
         gl_Position = projectionMatrix * mvPosition;
         vCol = color;

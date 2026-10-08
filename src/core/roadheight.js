@@ -30,6 +30,7 @@ export const RAMP = 90; // 旧规则起坡长度（仅作未 prepare 时的回�
 export const MAX_GRADE = 0.045; // 引桥/匝道最大纵坡（规范 ≤5%，留余量给平滑）
 export const CLEAR = 4.5; // 立交最小净空（米）
 const RAMP_IN = 120; // 落地端向桥内的起坡距离（桥梁要素在 OSM 里通常从桥台起算，引道路堤另成一段）
+const REFINE_DEV = 0.3; // 地面路节点加密阈值：段内地形偏离节点连线超过此值（米）就按 ~4 m 加密
 const STEP_BRIDGE = 10, STEP_CORE = 16, STEP_FAR = 48;
 
 /** 计算折线每个顶点的累计里程 */
@@ -203,6 +204,7 @@ export function prepareRoadProfiles(roads, terrain, opt = {}) {
     }
     eA[nE] = a; eB[nE] = b; eL[nE] = l; eF[nE] = fi; nE++;
   };
+  let nRefined = 0;
   const newV = (x, z) => {
     if (nV >= cap) grow();
     X[nV] = x; Z[nV] = z;
@@ -231,8 +233,24 @@ export function prepareRoadProfiles(roads, terrain, opt = {}) {
       if (id === undefined) { id = newV(x, z); nodeId.set(key, id); }
       if (k > 0) {
         const L = ch[k] - ch[k - 1];
-        const m = Math.max(1, Math.ceil(L / h - 0.2));
+        let m = Math.max(1, Math.ceil(L / h - 0.2));
         const x0 = p[k * 2 - 2], z0 = p[k * 2 - 1];
+        // 核心区地面路：段内地形折得厉害（建筑平整区的羽化坡、DEM 坑）时把节点加密到 ~4 m，路面贴着地形走。
+        // 否则下面“只补凸起”的包络会把坑底一端整体抬起 0.5~1 m（锦江酒店内院的小路成了悬空厚板、露出半截挡土墙）
+        if (!f.b && core && L > 8) {
+          const mf = Math.ceil(L / 4);
+          if (mf > m) {
+            const H = (t) => terrain.heightAt(x0 + (x - x0) * t, z0 + (z - z0) * t);
+            const hc = new Float64Array(m + 1);
+            for (let j = 0; j <= m; j++) hc[j] = H(j / m);
+            let dev = 0;
+            for (let j = 1; j < mf && dev <= REFINE_DEV; j++) {
+              const tc = (j / mf) * m, j0 = Math.min(m - 1, Math.floor(tc)), tt = tc - j0;
+              dev = Math.max(dev, Math.abs(H(j / mf) - (hc[j0] + (hc[j0 + 1] - hc[j0]) * tt)));
+            }
+            if (dev > REFINE_DEV) { m = mf; nRefined++; }
+          }
+        }
         for (let j = 1; j < m; j++) {
           const t = j / m;
           const v = newV(x0 + (x - x0) * t, z0 + (z - z0) * t);
@@ -685,7 +703,7 @@ export function prepareRoadProfiles(roads, terrain, opt = {}) {
     nProf++;
   }
   const ms = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
-  const stats = { features: nProf, vertices: nV, edges: nE, crossings: crossings.length / 4, rounds: rounds + 1, residual: viol, coupled: nCoupled, conflict: nConflict, ms: Math.round(ms) };
+  const stats = { features: nProf, vertices: nV, edges: nE, refined: nRefined, crossings: crossings.length / 4, rounds: rounds + 1, residual: viol, coupled: nCoupled, conflict: nConflict, ms: Math.round(ms) };
   Object.defineProperty(roads, '_rpTerrain', { value: terrain, writable: true, configurable: true, enumerable: false });
   Object.defineProperty(roads, '_rpStats', { value: stats, writable: true, configurable: true, enumerable: false });
   return stats;
