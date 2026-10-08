@@ -26,6 +26,7 @@ export const MODULES = [
   { id: 'parking', load: () => import('./parking.js') },
   { id: 'streetfurniture', load: () => import('./streetfurniture.js') }, // 全城街道设施（信号灯/路名牌/公交站/人行道小品，相机附近分块流式）
   { id: 'buildings', load: () => import('./buildings.js') },
+  { id: 'compounds', load: () => import('./compounds.js') }, // 小区与校园内部：须在 vegetation 之前（prepare 登记车行道/车位/园路的“只让树”排除区）
   { id: 'vegetation', load: () => import('./vegetation.js') },
   { id: 'signage', load: () => import('./signage.js') },
   { id: 'traffic', load: () => import('./traffic.js') },
