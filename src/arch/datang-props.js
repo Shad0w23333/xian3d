@@ -104,7 +104,8 @@ export function crowdMesh(ctx, geo, walkers, { z0, len, heights, hz0, hdz, color
   const g = geo.clone();
   g.setAttribute('aWalk', new THREE.InstancedBufferAttribute(walkers, 4));
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0 });
-  const U = { uZ0: { value: z0 }, uLen: { value: len }, uH: { value: heights }, uHz0: { value: hz0 }, uHdz: { value: hdz }, uLeg: { value: leg } };
+  // uHide：(相机 x, 相机 z, 半径, 0)——半径内的人由近景细模（people-geo）接管，本网格在着色器里把它们收起
+  const U = { uZ0: { value: z0 }, uLen: { value: len }, uH: { value: heights }, uHz0: { value: hz0 }, uHdz: { value: hdz }, uLeg: { value: leg }, uHide: { value: new THREE.Vector4(0, 0, 0, 0) } };
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U, { uTime: ctx.uniforms.uTime });
     sh.vertexShader = sh.vertexShader
@@ -112,7 +113,7 @@ export function crowdMesh(ctx, geo, walkers, { z0, len, heights, hz0, hdz, color
         '#include <common>',
         `#include <common>
         attribute vec4 aWalk; attribute float tint;
-        uniform float uTime, uZ0, uLen, uHz0, uHdz, uLeg; uniform float uH[48];`
+        uniform float uTime, uZ0, uLen, uHz0, uHdz, uLeg; uniform float uH[48]; uniform vec4 uHide;`
       )
       .replace(
         '#include <beginnormal_vertex>',
@@ -138,7 +139,8 @@ export function crowdMesh(ctx, geo, walkers, { z0, len, heights, hz0, hdz, color
         float hi = clamp((wz - uHz0) / uHdz, 0.0, 46.999);
         int i0 = int(hi);
         float wy = mix(uH[i0], uH[i0 + 1], hi - float(i0));
-        transformed += vec3(aWalk.x, wy, wz);`
+        transformed += vec3(aWalk.x, wy, wz);
+        if (uHide.z > 0.0 && length(vec2(aWalk.x, wz) - uHide.xy) < uHide.z) transformed = vec3(0.0, -1.0e4, 0.0);`
       )
       .replace(
         '#include <color_vertex>',
@@ -157,6 +159,9 @@ export function crowdMesh(ctx, geo, walkers, { z0, len, heights, hz0, hdz, color
   mesh.castShadow = false;
   mesh.receiveShadow = true;
   mesh.name = '不夜城人流';
+  mesh.userData.crowdU = U;
+  mesh.userData.walkers = walkers;
+  mesh.userData.cfg = { z0, len, heights, hz0, hdz };
   return mesh;
 }
 

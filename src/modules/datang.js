@@ -21,6 +21,7 @@ import {
   personGeometry, crowdMesh, treeMeshes, lampMeshes, lanternInstances, lightPools, lightBeams,
   figureGeometry, riderGeometry, camelGeometry, plinthGeometry, plinthRelief, reliefMaterial, farGlow,
 } from '../arch/datang-props.js';
+import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, MASK } from '../arch/people-geo.js';
 
 // ───────────── 布局常量（世界坐标，米） ─────────────
 const AX = 1570; // 中轴
@@ -862,6 +863,54 @@ export default {
 
     const crowds = [modern, hanfu];
     const totals = [nM, nH];
+    // —— 近景细模：相机 NEAR_R 米内的游客改用 people-geo 的真实比例人形（步态、衣着、发型），远处仍是轻量人形 ——
+    const NEAR_R = 55, NEAR_CAP = 700;
+    const nearMat = peopleMaterial(ctx);
+    const nearGeo = peopleGeometry(0);
+    const NW = createPeopleMesh(ctx, nearGeo, nearMat, NEAR_CAP, '不夜城人流（近景）');
+    nearGeo.dispose();
+    NW.mesh.customDepthMaterial = peopleDepthMaterial(ctx);
+    NW.mesh.castShadow = false;
+    NW.mesh.receiveShadow = true;
+    root.add(NW.mesh);
+    // 每人固定外观（按序号播种）：汉服游客用长外套 + 汉服配色近似
+    const HANFU_TOP = [0xc8312a, 0xe9c9c0, 0xf2efe6, 0xd8667a, 0x9ec3d6, 0xe0b050, 0x7a3c8c, 0xe87a5a, 0xb8e0d2, 0xf4f2ec, 0xa82020];
+    const looks = crowds.map((m, ci) => {
+      const n = m.userData.walkers.length / 4, out = new Array(n);
+      for (let i = 0; i < n; i++) {
+        let sd = (i + 1) * 2654435761 % 4294967296 + ci * 97;
+        const rnd = () => ((sd = (sd * 1664525 + 1013904223) % 4294967296) / 4294967296);
+        const ap = randomLook(rnd);
+        if (ci === 1) { ap.mask = (ap.mask | MASK.COAT) & ~(MASK.HOOD | MASK.OPEN | MASK.CAP | MASK.BEANIE | MASK.PHONE); ap.cols[2] = HANFU_TOP[i % HANFU_TOP.length]; ap.cols[4] = HANFU_TOP[(i * 7 + 3) % HANFU_TOP.length]; }
+        out[i] = ap;
+      }
+      return out;
+    });
+    const uTimeRef = ctx.uniforms.uTime;
+    const updateNear = (on) => {
+      const cp = ctx.camera.position;
+      NW.reset();
+      crowds.forEach((m) => { const h = m.userData.crowdU.uHide.value; h.set(cp.x, cp.z, on ? NEAR_R : 0, 0); });
+      if (!on) { NW.commit(); return; }
+      const t = uTimeRef.value;
+      crowds.forEach((m, ci) => {
+        const W = m.userData.walkers, C = m.userData.cfg, L = looks[ci];
+        const n = Math.min(m.count, W.length / 4);
+        for (let i = 0; i < n && !NW.full(); i++) {
+          const x = W[i * 4], y0 = W[i * 4 + 1], spd = W[i * 4 + 2], w = W[i * 4 + 3];
+          if (Math.abs(x - cp.x) > NEAR_R) continue;
+          const z = C.z0 + (((y0 + spd * t) % C.len) + C.len) % C.len;
+          if (Math.hypot(x - cp.x, z - cp.z) >= NEAR_R) continue;
+          const hi = Math.min(46.999, Math.max(0, (z - C.hz0) / C.hdz)), i0 = Math.floor(hi);
+          const y = C.heights[i0] + (C.heights[i0 + 1] - C.heights[i0]) * (hi - i0);
+          const moving = Math.abs(spd) > 0.001;
+          const yaw = moving ? (spd > 0 ? 0 : Math.PI) : w * Math.PI * 2;
+          const ap = L[i];
+          NW.put(x, y, z, yaw, ap.height / 1.7, ap, w, moving ? Math.abs(spd) * ap.speedK : 0, 0);
+        }
+      });
+      NW.commit();
+    };
     farItems.push(modern, hanfu);
     // 阴影开关：建成时投射阴影的网格（整片按距离切换）
     const casters = [];
@@ -880,6 +929,7 @@ export default {
         if (near !== farOn) {
           farOn = near;
           for (const o of farItems) o.visible = near;
+          if (!near) updateNear(false);
         }
         if (frame % 10 === 1) {
           const sh = d < shadowReach(ctx, SHADOW_D, 30);
@@ -896,6 +946,9 @@ export default {
         const dk = 1 - 0.75 * Math.min(1, Math.max(0, (d - 500) / Math.max(1, FAR_HIDE / 3 - 500)));
         const f = (0.4 + 0.6 * k) * dk;
         crowds.forEach((m, i) => (m.count = Math.max(1, Math.floor(totals[i] * f))));
+        // 近景细模：相机离地 40 m 内、离步行街 60 m 内才启用
+        const nearOn = d < 60 && cp.y - yMid < 40;
+        updateNear(nearOn);
       },
       setLayer(layer, visible) {
         if (layer === 'landmarks') root.visible = visible;
