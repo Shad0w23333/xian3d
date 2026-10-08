@@ -5,7 +5,7 @@ OSM 在西安的 POI 只有约 9 千条且陈旧；高德同范围有十几万�
 不抓取高德矢量/栅格瓦片。请遵守高德服务条款（数据仅供个人本地使用，不要公开发布生成的数据文件），注意每日配额。
 
 准备：https://console.amap.com/dev/key/app 创建应用 → 添加 Key，服务平台选“Web服务”。
-  export AMAP_KEY=你的Key
+  在仓库根目录 .env 里写一行 AMAP_KEY=你的Key（.env 不入库），或 export AMAP_KEY=你的Key
 
 用法：
   python tools/amap_fetch.py poi   [--bbox 108.84,34.17,109.08,34.40] [--max-requests 4000]   # 多边形 POI 搜索（可多次运行续传）
@@ -1245,7 +1245,21 @@ def merge_extra():
         print('没有地铁/区划/商圈/地标缓存，跳过 amap_extra.json（先运行 metro / district / poi / place）')
 
 
+def load_dotenv():
+    """仓库根目录 .env（已在 .gitignore，不入库）里的 KEY=VALUE 写进环境变量（已设置的不覆盖）。用于 AMAP_KEY。"""
+    p = Path(__file__).resolve().parent.parent / '.env'
+    if not p.exists():
+        return
+    for line in p.read_text('utf-8').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        k, v = line.split('=', 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
 def main():
+    load_dotenv()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('cmd', choices=['poi', 'roads', 'metro', 'district', 'place', 'all', 'status', 'merge'])
     ap.add_argument('--key', default=os.environ.get('AMAP_KEY', ''))
