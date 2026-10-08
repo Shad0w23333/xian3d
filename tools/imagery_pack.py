@@ -51,7 +51,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / 'data-src' / 'tiles_hd'
-OUT = ROOT / 'tiles'   # 不放 public/（否则 vite build 会复制进 dist）；开发/预览/启动脚本服务器挂到 /tiles/
+OUT = Path(os.environ['XTP_OUT']).resolve() if os.environ.get('XTP_OUT') else ROOT / 'tiles'   # 不放 public/（否则 vite build 会复制进 dist）；XTP_OUT 可先打到别处再整体替换
 
 UA = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
       'Chrome/126.0 Safari/537.36')
@@ -114,6 +114,14 @@ PLANS['ultra'] = PLANS['default'] + [
     ('未央路口 z20', (108.935, 34.332, 108.955, 34.348), 20, 20),
     ('浐灞半岛 z20', (109.004, 34.326, 109.025, 34.345), 20, 20),
     ('曲江池·W z20', (108.975, 34.192, 108.992, 34.212), 20, 20),
+]
+# ultra2：ultra 基础上扩大城区 z16-17 覆盖到长安区/咸阳/渭北（审查：长安区只有 z15 很糊），并补若干片区 z18
+PLANS['ultra2'] = PLANS['ultra'] + [
+    ('大城区', (108.70, 34.07, 109.18, 34.48), 16, 17),
+    ('长安韦曲郭杜', (108.84, 34.10, 108.98, 34.17), 18, 18),
+    ('西安站·大明宫', (108.940, 34.270, 108.985, 34.310), 18, 19),
+    ('高新扩展', (108.830, 34.165, 108.905, 34.245), 18, 18),
+    ('经开·北客站', (108.915, 34.340, 108.960, 34.385), 18, 18),
 ]
 # 打包分组（层级段 → 文件）
 BANDS = [(11, 15), (16, 17), (18, 18), (19, 20)]

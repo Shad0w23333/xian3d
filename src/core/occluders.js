@@ -342,4 +342,4 @@ export class Occluders {
 }
 
 /** 精建模块（参与遮挡）；通用建筑 buildings 自带 occluded()，道路/植被/车流/行人/水面/街道小品不算 */
-export const OCCLUDER_MODULES = new Set(['citywall', 'belltower', 'pagoda', 'datang', 'qujiang', 'heritage', 'heritage26', 'dossier', 'skyline', 'huimin', 'mixc', 'sunken', 'airports']);
+export const OCCLUDER_MODULES = new Set(['citywall', 'belltower', 'pagoda', 'datang', 'qujiang', 'heritage', 'heritage26', 'dossier', 'skyline', 'huimin', 'mixc', 'sunken', 'airports', 'weiyang']);
