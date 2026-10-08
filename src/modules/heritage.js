@@ -15,7 +15,7 @@
 //   · 兴庆宫公园：沉香亭（重檐四角攒尖，OSM (3533, 662)）；湖心南岸楼阁 ≈ (3365, 663)（花萼相辉楼式二层楼阁）。
 import * as THREE from 'three';
 import { ArchBuilder, hall, multiStoreyTower, pavilion, corridor, roof, yardWall, balustrade, lantern, lanternPost, stoneLion, steps, glowQuad, latticePanel, eaveLights } from '../arch/chinese.js';
-import { denseEavePagoda, danfengGate, ruinTerrace, columnBases, earthWall, whiteBlock } from '../arch/heritage-parts.js';
+import { denseEavePagoda, danfengGate, ruinTerrace, columnBases, earthWall, whiteBlock, roofMaterials, NeutralSkyMaterial } from '../arch/heritage-parts.js';
 
 const LEVELS = [[2, 0], [1, 260], [0, 750]];
 const HIDE = 9000; // 超过此距离整组隐藏（远景由通用建筑/影像承担）
@@ -27,6 +27,10 @@ const PAL_SHANBO = {
   flyEnd: 0xe6e2da, soffit: 0xbcb6aa, fascia: 0xcfc9bd, stone: 0xd9d4ca, gable: 0xeeeae2, boFeng: 0xcfc9bd, railing: 0xd6d1c7,
   beamRow: 3, plankRow: 3,
 };
+// 荐福寺殿宇瓦面：中性略暖的灰筒瓦
+const TEMPLE_ROOF = { tile: 0x8f8b84, tube: 0x88847d, ridge: 0x54514c, glazed: false };
+// 西安站屋面：中性灰瓦（'darkgray'/'gray' 在晴天天光下读成海军蓝）
+const STATION_ROOF = { tile: 0x8a8781, tube: 0x837f79, ridge: 0x56534e, glazed: false };
 // 西安站：灰瓦、深灰钢柱、浅灰斗拱
 const PAL_STATION = {
   ...PAL_SHANBO, col: 0x8e8a84, frame: 0x55595c, dou: 0xb9b4aa, gong: 0xb3aea4, ang: 0xb3aea4, rafter: 0xa9a49a, soffit: 0xa6a196, fascia: 0xb3aea4,
@@ -38,8 +42,9 @@ const PAL_STATION = {
 function buildXiaoyanta(b, env) {
   const dy = env.dy; // (x,z) → 相对原点的地面高差
   const info = denseEavePagoda(b, { floors: 13, baseW: 11.38, firstH: 6.83, totalH: 40.2, topW: 0.5 });
-  // 荐福寺中轴（明清官式，灰瓦朱柱）
-  const M = { style: 'ming', roofColor: 'darkgray' };
+  // 荐福寺中轴（明清官式，灰瓦朱柱）：瓦面用中性略暖的灰（'darkgray' 偏蓝，天光下读成藏青），
+  // 台基青灰砖 / 灰石（默认须弥座 0xe2ddd2 近白，像白塑料台座）
+  const M = { style: 'ming', roofColor: TEMPLE_ROOF, platformColor: 0xa29d94, platformCap: 0x98938a };
   b.push(0, dy(0, -40), -40, 0);
   hall(b, { ...M, bays: 5, bayW: 3.6, depthBays: 3, colH: 3.8, roof: 'xieshan', front: 'center3', platformH: 0.8, plaque: '白衣閣' });
   b.pop();
@@ -60,7 +65,7 @@ function buildXiaoyanta(b, env) {
   // 钟楼、鼓楼（砖台 + 方亭式楼）
   for (const [s, name] of [[1, '鼓樓'], [-1, '鐘樓']]) {
     b.push(s * 20, dy(s * 20, 128), 128, 0);
-    hall(b, { ...M, bays: 1, bayW: 4.6, depthBays: 1, depthW: 4.6, colH: 3.4, roof: 'xieshan', platform: 'brick', platformH: 3.4, platformMargin: 1.6, steps: 'none', front: 'doors', back: 'doors', sides: 'doors', plaque: name, plaqueVertical: false });
+    hall(b, { ...M, bays: 1, bayW: 4.6, depthBays: 1, depthW: 4.6, colH: 3.4, roof: 'xieshan', platform: 'brick', platformH: 3.4, platformMargin: 1.6, steps: 'none', front: 'doors', back: 'doors', sides: 'doors', plaque: name, plaqueVertical: false, platformColor: 0x6f6c67, platformCap: 0x88847c });
     b.pop();
   }
   // 山门 + 院墙
@@ -71,8 +76,15 @@ function buildXiaoyanta(b, env) {
   b.pop();
   const wy = dy(0, 60);
   yardWall(b, [[-7, 160], [-42, 160], [-42, -58], [42, -58], [42, 160], [7, 160]], { h: 3.2, y0: wy, color: 0xa4382a });
-  // 甬道
-  b.box('stone', -2.2, wy - 0.3, 14, 2.2, wy + 0.08, 158, 0xbdb6a8, { skip: 'bottom' });
+  // 甬道（青灰条石）
+  b.box('stone', -2.2, wy - 0.3, 14, 2.2, wy + 0.08, 158, 0x9c978e, { skip: 'bottom' });
+  // 院内草坪（甬道两侧、塔院两侧；古树由植被模块在草坪与院落空地上种，见 SITES.trees 的避让区）
+  for (const s of [1, -1]) {
+    for (const [a, c, z0, z1] of [[7, 36, 84, 118], [7, 36, 137, 151], [16, 37, -26, 24]]) {
+      const x0 = s > 0 ? a : -c, x1 = s > 0 ? c : -a;
+      b.box('hgrass', x0, wy - 0.3, z0, x1, wy + 0.05, z1, 0xffffff, { skip: 'bottom' });
+    }
+  }
   // —— 西安博物院（天圆地方）：方形台座 + 方形主体 + 环形灰瓦檐 + 中央圆形穹顶 ——
   const mx = -166, mz = 212, my = dy(mx, mz);
   b.push(mx, my, mz, 0);
@@ -257,6 +269,80 @@ function footing(b, env, x0, z0, x1, z1, yTop, col = 0xbdb6a8) {
  *    + 两翼三层楼（窗带 + 琉璃檐），首层通长琉璃披檐，入口朱柱门廊，屋顶正中红色“西安”二字。
  * 原模型：唐风重檐庑殿殿堂放大 3 倍（约 140 m 宽、深灰屋面）/ 放大 2 倍，与实物不符。
  */
+/** 南广场的两处下沉采光井（影像：南站房与北城墙之间，x -64~-15 / 8~60、z 320~356）：花岗岩矮墙 + 玻璃采光顶 + 竖梃格 + 沿墙绿篱 */
+function lightWells(b, env) {
+  for (const [x0, x1, z0, z1] of [[-64, -15, 320, 356], [8, 60, 319, 356]]) {
+    const y = Math.max(env.dy(x0, z0), env.dy(x1, z0), env.dy(x0, z1), env.dy(x1, z1));
+    const H = 0.95, t = 0.45;
+    // 矮墙（四边）
+    b.box('stone', x0, y - 0.6, z0, x1, y + H, z0 + t, 0xb7b1a6, { skip: 'bottom' });
+    b.box('stone', x0, y - 0.6, z1 - t, x1, y + H, z1, 0xb7b1a6, { skip: 'bottom' });
+    b.box('stone', x0, y - 0.6, z0 + t, x0 + t, y + H, z1 - t, 0xb7b1a6, { skip: 'bottom' });
+    b.box('stone', x1 - t, y - 0.6, z0 + t, x1, y + H, z1 - t, 0xb7b1a6, { skip: 'bottom' });
+    // 墙内一圈绿篱
+    b.box('hgrass', x0 + t, y - 0.3, z0 + t, x1 - t, y + H - 0.1, z0 + t + 1.2, 0xffffff, { skip: 'bottom' });
+    b.box('hgrass', x0 + t, y - 0.3, z1 - t - 1.2, x1 - t, y + H - 0.1, z1 - t, 0xffffff, { skip: 'bottom' });
+    // 玻璃采光顶（略起拱：中间高 0.6 m）+ 竖梃
+    const gx0 = x0 + t + 1.2, gx1 = x1 - t - 1.2, gz0 = z0 + t + 1.2, gz1 = z1 - t - 1.2, zm = (gz0 + gz1) / 2;
+    b.quad('hskylight', [gx0, y + H, gz0], [gx1, y + H, gz0], [gx1, y + H + 0.6, zm], [gx0, y + H + 0.6, zm], 0xffffff);
+    b.quad('hskylight', [gx0, y + H + 0.6, zm], [gx1, y + H + 0.6, zm], [gx1, y + H, gz1], [gx0, y + H, gz1], 0xffffff);
+    b.box('paint', gx0, y - 0.3, gz0, gx1, y + H - 0.02, gz1, 0x3a3e42, { skip: 'bottom' });
+    // 竖梃（沿南北向，每 ~3 m 一根，贴着两坡玻璃）+ 屋脊
+    const nm = Math.max(4, Math.round((gx1 - gx0) / 3));
+    for (let k = 0; k <= nm; k++) {
+      const x = gx0 + ((gx1 - gx0) * k) / nm;
+      b.quad('paint', [x - 0.07, y + H + 0.02, gz0], [x + 0.07, y + H + 0.02, gz0], [x + 0.07, y + H + 0.62, zm], [x - 0.07, y + H + 0.62, zm], 0x5a6064);
+      b.quad('paint', [x - 0.07, y + H + 0.62, zm], [x + 0.07, y + H + 0.62, zm], [x + 0.07, y + H + 0.02, gz1], [x - 0.07, y + H + 0.02, gz1], 0x5a6064);
+    }
+    b.box('paint', gx0, y + H + 0.55, zm - 0.12, gx1, y + H + 0.7, zm + 0.12, 0x5a6064, { skip: 'bottom' });
+  }
+}
+
+/** 西安站站台雨棚：两大块平屋面（东西两侧）+ 东西向天窗带 + 立柱（落在各岛式站台中线上，站台位置按 rail.json 股道间距 > 10 m 求出） */
+function canopies(b, env) {
+  const rail = (env.data?.rail?.features || []).filter((f) => f.c === 0 && !f.t);
+  const SX = env.sx, SZ = env.sz;
+  // 世界 X 处的站台中线（世界 Z）
+  const platformsAt = (X) => {
+    const zs = [];
+    for (const f of rail) {
+      const p = f.p;
+      for (let i = 0; i + 3 < p.length; i += 2) {
+        const ax = p[i], az = p[i + 1], bx = p[i + 2], bz = p[i + 3];
+        if ((ax - X) * (bx - X) > 0 || ax === bx) continue;
+        const z = az + ((bz - az) * (X - ax)) / (bx - ax);
+        if (z > SZ + 36 && z < SZ + 224) zs.push(z);
+      }
+    }
+    zs.sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i + 1 < zs.length; i++) if (zs[i + 1] - zs[i] > 10) out.push((zs[i] + zs[i + 1]) / 2);
+    return { tracks: zs, plat: out };
+  };
+  const Y = 11.5, T = 0.55;
+  for (const [x0, x1] of [[-242, -66], [72, 270]]) {
+    const ym = env.dy((x0 + x1) / 2, 130) + Y;
+    // 屋面（浅灰金属板，四周檐板）
+    b.box('hcanopy', x0, ym, 39, x1, ym + T, 219, 0xffffff, {});
+    // 天窗带：每对股道上方一条（站台之间），玻璃略高出屋面
+    const mid = platformsAt(SX + (x0 + x1) / 2);
+    for (let i = 0; i + 1 < mid.tracks.length; i++) {
+      const gap = mid.tracks[i + 1] - mid.tracks[i];
+      if (gap > 10 || gap < 3) continue;
+      const zc = (mid.tracks[i] + mid.tracks[i + 1]) / 2 - SZ;
+      b.box('hglass', x0 + 2, ym + T, zc - 1.8, x1 - 2, ym + T + 0.06, zc + 1.8, 0xffffff, { skip: 'bottom' });
+    }
+    // 立柱：每 24 m 一排，落在各站台中线
+    for (let x = x0 + 8; x <= x1 - 4; x += 24) {
+      for (const Zc of platformsAt(SX + x).plat) {
+        const z = Zc - SZ;
+        if (z < 40 || z > 218) continue;
+        b.box('paint', x - 0.35, Math.min(0, env.dy(x, z)) - 0.3, z - 0.35, x + 0.35, ym, z + 0.35, 0x8e8c88, { skip: 'bottom' });
+      }
+    }
+  }
+}
+
 function buildStation(b, env) {
   const BEIGE = 0xe4d8bf, DARK = 0x34322e;
   // —— 北站房（局部原点 = 站房中心，正面朝北 = -Z） ——
@@ -298,7 +384,7 @@ function buildStation(b, env) {
     b.pop();
   }
   // 单檐缓坡四坡顶（大出檐 5 m），檐口暖黄轮廓灯
-  const r = roof(b, { type: 'wudian', w: CW, d: CD, y: eaveY + 0.2, overhang: 5, pitch: 0.17, style: 'tang', color: 'darkgray', pal: PAL_STATION, ornament: 'none', beasts: 0, ridgeH: 0.6 });
+  const r = roof(b, { type: 'wudian', w: CW, d: CD, y: eaveY + 0.2, overhang: 5, pitch: 0.17, style: 'tang', color: STATION_ROOF, pal: PAL_STATION, ornament: 'none', beasts: 0, ridgeH: 0.6 });
   if (b.detail >= 1) eaveLights(b, { roofs: [r] }, { color: 0xffc46a, width: 0.14, ridges: false });
 
   // —— 高架候车室（跨线）：玻璃体 + 大屋面 ——
@@ -306,9 +392,11 @@ function buildStation(b, env) {
   // 高架候车室立柱：柱脚按各自位置的地面高度下探（原先统一 y=0，平整区外的柱脚悬空）
   // （各级 LOD 都做：远景不做立柱时候车室整体悬空）
   for (let x = -60; x <= 60; x += 20) for (let z = 40; z <= 216; z += 22) b.box('paint', x - 0.8, Math.min(0, env.dy(x, z)) - 0.3, z - 0.8, x + 0.8, 9, z + 0.8, 0x9a9690, { skip: 'bottom' });
-  b.push(0, 21, 127, 0, 4);
-  roof(b, { type: 'wudian', w: 32.5, d: 48, y: 0.15, overhang: 0.9, style: 'tang', color: 'gray', pitch: 0.2 });
-  b.pop();
+  // 屋面：真实尺寸的平缓四坡顶（130×192 m，坡度 0.08，顶高约 26 m），无鸱吻。旧版把 32.5×48 m 的殿堂屋顶整体放大 4 倍，
+  // 屋面高出南站房一大截、正吻变成十几米高的黑色尖刺（审查 g8）
+  roof(b, { type: 'wudian', w: 128, d: 190, y: 21.15, overhang: 1.2, style: 'tang', color: STATION_ROOF, pitch: 0.08, ornament: 'none', beasts: 0, ridgeH: 0.5 });
+  // —— 站台雨棚（高架候车室东西两侧，卫星：x 1208~1385 / 1522~1720、z -2193~-2013）：平屋面 + 天窗带 + 站台中线立柱 ——
+  canopies(b, env);
 
   // —— 南站房（局部原点 (5, 256)，正面朝南 = +Z） ——
   const WALL = 0xeadcae, GREEN = 'green';
@@ -327,8 +415,9 @@ function buildStation(b, env) {
       // 中央大厅通高竖窗 14 樘
       for (let k = 0; k < 14; k++) {
         const x = -cw + 3.2 + k * ((2 * cw - 6.4) / 13);
-        b.box('paint', x - 1.05, 5.6, 0, x + 1.05, 16.6, 0.12, 0x5a5448, { skip: 'bottom' });
-        glowQuad(b, x - 0.9, x + 0.9, 5.75, 16.45, 0.14, k % 4 ? 0.6 : 0.35, 0x39444c);
+        const top = yaw === 0 && (k === 6 || k === 7) ? 10.4 : 16.6; // 南立面正中两樘让出大钟
+        b.box('paint', x - 1.05, 5.6, 0, x + 1.05, top, 0.12, 0x5a5448, { skip: 'bottom' });
+        glowQuad(b, x - 0.9, x + 0.9, 5.75, top - 0.15, 0.14, k % 4 ? 0.6 : 0.35, 0x39444c);
       }
       b.pop();
     }
@@ -376,10 +465,21 @@ function buildStation(b, env) {
   b.push(PX, 0, cd + 3.6, 0);
   hall(b, { style: 'ming', bays: 3, bayW: 4.2, depthBays: 1, depthW: 4.6, colH: 5.0, roof: 'xieshan', roofColor: 'green', platform: 'plain', platformH: 0.3, steps: 'none', front: 'open', back: 'open', sides: 'open' });
   b.pop();
-  // 屋顶正中红色“西安”：立在正脊上（面朝南）
-  if (b.detail >= 1) b.plaque('西安', 0, rc.ridgeY + 2.4, 0.35, 10, 4.2, { bg: '#eadcae', color: '#c4231a', border: '#eadcae' });
+  // 南广场下沉采光井（站房局部坐标）
   b.pop();
-  return { topY: 27.7, labelY: 32 };
+  lightWells(b, env);
+  b.push(5, 0, 256, 0);
+  // 南立面正中大钟（改扩建时保留）：白色钟面 + 深色钟框 + 时针分针
+  if (b.detail >= 1) {
+    const ring = (r, n = 28) => Array.from({ length: n }, (_, i) => [Math.cos((i / n) * Math.PI * 2) * r, 13.4 + Math.sin((i / n) * Math.PI * 2) * r]);
+    b.prism('paint', ring(2.05), 'z', cd - 0.05, cd + 0.16, 0x3a3630);
+    b.prism('plaster', ring(1.8), 'z', cd + 0.16, cd + 0.2, 0xf2efe6);
+    b.box('paint', -0.09, 13.4, cd + 0.2, 0.09, 14.75, cd + 0.26, 0x1e1c1a); // 分针（指向 12）
+    b.box('paint', 0, 13.31, cd + 0.2, 1.0, 13.49, cd + 0.26, 0x1e1c1a); // 时针（指向 3）
+  }
+  b.pop();
+  // 屋顶正中红色“西安”大字：透明底、字高 5.5 m，立在正脊上（由 build 用文字牌生成，ArchBuilder 的匾额只能带底色）
+  return { topY: 27.7, labelY: 32, signs: [{ text: '西安', x: 5, y: rc.ridgeY + 3.4, z: 256.4, h: 5.5, color: '#d8231a' }] };
 }
 /** 兴庆宫公园：沉香亭（重檐四角攒尖）+ 花萼相辉楼式二层楼阁 */
 function buildXingqing(b, env) {
@@ -402,7 +502,18 @@ function buildXingqing(b, env) {
 const SITES = [
   {
     id: 'xiaoyanta', label: '小雁塔', x: -456, z: 2244, fn: buildXiaoyanta, flood: { color: 0xffc98a, strength: 1.7, height: 46, top: 0.55 },
-    flatten: [[-50, -66, 50, 168], [-212, 166, -120, 258]], excl: [[-48, -64, 48, 166], [-210, 168, -122, 256]],
+    flatten: [[-50, -66, 50, 168], [-212, 166, -120, 258]], excl: [[-210, 168, -122, 256]],
+    // 荐福寺院落与山门前院（南到荐福寺路北侧）：只让位通用建筑（山门前原有两三个无贴图的小方盒子）；
+    // 院内允许植被模块按公园用地种古树（原先整院排除树木，院内一棵 3D 树都没有），由下面 trees 避让殿宇、甬道、塔院、院墙
+    bexcl: [[-48, -64, 48, 166], [-46, 166, 46, 250]],
+    trees: [
+      [-20, -24, 20, 24], // 塔院（台基 23.4 m 见方）
+      [-12, -49, 12, -31], [-12, 25, 12, 43], [-16, 56, 16, 80], [17, 60, 31, 76], [-31, 60, -17, 76], // 白衣阁、藏经楼、大雄宝殿、东西配殿
+      [-11, 93, 11, 111], [14, 121, 26, 135], [-26, 121, -14, 135], [-11, 148, 11, 164], // 慈氏阁、钟鼓楼、山门
+      [-6, -60, 6, 166], // 中轴甬道
+      [-44, -60, -38, 162], [38, -60, 44, 162], [-44, -60, 44, -54], [-44, 156, 44, 162], // 院墙内侧
+      [-14, 160, 14, 270], // 山门前中轴视廊：从荐福寺路朝北能看到山门与塔（审查 g7：两棵雪松 + 一棵大树把塔整个挡住）
+    ],
     lights: [[0, 3.5, 16, 0xffc890, 60, 90], [0, 3.5, -16, 0xffc890, 40, 70], [-166, 8, 250, 0xffe0b0, 30, 70]],
   },
   {
@@ -423,7 +534,7 @@ const SITES = [
   {
     id: 'station', label: '西安站', x: 1450, z: -2232, fn: buildStation, flood: { color: 0xffe4be, strength: 1.2, height: 40, top: 0.5 },
     // 北站房 221×61 m、南站房 142.8×52 m（北站房原按 140 m 宽的放大殿堂建模，平整/排除范围随之扩大）
-    flatten: [[-114, -36, 114, 36], [-72, 228, 82, 284]], excl: [[-112, -34, 112, 34], [-66, 30, 66, 224], [-70, 229, 80, 283]],
+    flatten: [[-114, -36, 114, 36], [-72, 228, 82, 284]], excl: [[-112, -34, 112, 34], [-66, 30, 66, 224], [-70, 229, 80, 283], [-390, 34, 272, 228], [-90, 283, 100, 360]],
     lights: [[0, 3, -44, 0xffe4c0, 70, 120], [5, 3, 290, 0xffe4c0, 50, 100]],
   },
   {
@@ -450,6 +561,7 @@ export default {
       });
       this.h[s.id] = h0;
       for (const r of s.excl) ctx.exclusions.add({ points: rectPts(s.x, s.z, r) }, { buildings: true, trees: true, roads: false });
+      for (const r of s.bexcl || []) ctx.exclusions.add({ points: rectPts(s.x, s.z, r) }, { buildings: true, trees: false, roads: false });
       for (const r of s.trees || []) ctx.exclusions.add({ points: rectPts(s.x, s.z, r) }, { buildings: false, trees: true, roads: false });
     }
   },
@@ -458,6 +570,12 @@ export default {
     root.name = 'heritage';
     ctx.scene.add(root);
     const glass = new THREE.MeshStandardMaterial({ color: 0x6d7f8c, metalness: 0.75, roughness: 0.12, emissive: 0xffd6a0, emissiveIntensity: 0, vertexColors: true });
+    // 站台雨棚屋面：浅灰金属板（天光去蓝，免得整片读成淡蓝塑料板）
+    const canopy = new NeutralSkyMaterial({ color: 0xcfcbc3, metalness: 0.2, roughness: 0.55 });
+    canopy.name = 'heritage.canopy';
+    // 采光顶玻璃：浅灰绿、低金属度（原 hglass 反射天空成一整块深蓝）
+    const skylight = new NeutralSkyMaterial({ color: 0x9fb0b0, metalness: 0.15, roughness: 0.22, vertexColors: true, side: THREE.DoubleSide });
+    skylight.name = 'heritage.skylight';
     glass.name = 'heritage.glass';
     const glassSeen = new Set();
     const report = {};
@@ -467,7 +585,7 @@ export default {
       const ts = performance.now();
       try {
         const h0 = this.h?.[s.id] ?? ctx.terrain.heightAt(s.x, s.z);
-        const env = { dy: (x, z) => (Math.abs(x) < 5000 && Math.abs(z) < 5000 && Math.hypot(x, z) < 600 ? ctx.terrain.heightAt(s.x + x, s.z + z) - h0 : ctx.terrain.heightAt(x, z) - h0) };
+        const env = { dy: (x, z) => (Math.abs(x) < 5000 && Math.abs(z) < 5000 && Math.hypot(x, z) < 600 ? ctx.terrain.heightAt(s.x + x, s.z + z) - h0 : ctx.terrain.heightAt(x, z) - h0), data: ctx.data, sx: s.x, sz: s.z };
         // dy 约定：小坐标（|x|,|z| < 600）视为局部偏移；否则视为世界坐标
         let info = null;
         const lod = new THREE.LOD();
@@ -475,7 +593,7 @@ export default {
           const b = new ArchBuilder(ctx, { detail, style: 'tang', name: s.id });
           const r = s.fn(b, env);
           info = info || r;
-          const g = b.build({ flood: { ...s.flood, baseY: h0 + 0.5 }, name: s.id + '@' + detail, materials: { hglass: glass } });
+          const g = b.build({ flood: { ...s.flood, baseY: h0 + 0.5 }, name: s.id + '@' + detail, materials: { hglass: glass, hgrass: ctx.mats.get('grass'), hcanopy: canopy, hskylight: skylight, ...roofMaterials(ctx) } });
           g.traverse((m) => {
             if (m.isMesh && m.name === 'hglass' && !glassSeen.has(m.material)) {
               glassSeen.add(m.material);
@@ -490,6 +608,13 @@ export default {
         root.add(lod);
         objs.push(lod);
         if (s.label) ctx.labels.add(s.label, new THREE.Vector3(s.x, h0 + (info?.labelY ?? 30), s.z), { category: 'landmark', priority: 3, maxDist: 6000 });
+        // 透明底大字（站房屋脊上的“西安”等）：面朝 +Z（南）
+        for (const sg of info?.signs || []) {
+          const m = ctx.sign(sg.text, { height: sg.h, color: sg.color, serif: false, weight: 700, size: 160, padding: 0.06, emissive: 1.2, emissiveDay: 0.05 });
+          m.position.set(s.x + sg.x, h0 + sg.y, s.z + sg.z);
+          m.name = 'heritage-sign:' + sg.text;
+          root.add(m);
+        }
         for (const [lx, ly, lz, col, intensity, dist] of s.lights || [])
           ctx.lights.add({ position: new THREE.Vector3(s.x + lx, h0 + ly, s.z + lz), color: col, intensity, distance: dist, nightOnly: true, priority: 2 });
         let meshes = 0, tris = 0;

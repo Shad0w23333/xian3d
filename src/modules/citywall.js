@@ -15,8 +15,9 @@
 //    券洞与墙身同一套截面（收分、土衬石、海墁）一体生成，真实贯通：拱顶/侧墙/券脸，道路从洞中穿过。
 //  · 魁星楼：文昌门券洞西侧约 27 m 的城墙顶（影像核对）。
 import * as THREE from 'three';
-import { ArchBuilder, buildArch, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, cityPlatform } from '../arch/chinese.js';
+import { ArchBuilder, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, cityPlatform, roof } from '../arch/chinese.js';
 import { MeshBuf, wallMaterial, merlonGeometry, merlonLedGeometry, lampPostGeometry, outlineLines } from '../arch/citywall-kit.js';
+import { roofMaterials } from '../arch/heritage-parts.js';
 import { pointInPoly } from '../core/util.js';
 import { shadowReach } from '../arch/perf-lod.js';
 
@@ -29,6 +30,10 @@ const OB = 8.1, OT = 6.6, IB = -8.1, IT = -6.6; // 中线→外/内皮（底/顶
 const PO = { t: 0.62, h: 1.25 }; // 外侧垛墙下段（垛口底以下）
 const PIN = { t: 0.5, h: 1.0 }; // 内侧女墙
 const MER = { w: 1.8, h: 0.72, gap: 0.5 };
+const SLOPE = 0.06; // 海墁排水坡：外沿比内侧排水沟高 6 cm
+const GUTTER = 0.95; // 排水沟：内皮向内 0.95 m（含女墙脚下 0.5 m）
+// 城楼 / 箭楼 / 角楼 / 敌楼瓦面：中性略暖的灰筒瓦（'darkgray' 偏蓝，天光下读成藏青）
+const WALL_ROOF = { tile: 0x9a958c, tube: 0x928d84, ridge: 0x58544e, glazed: false };
 const MSTEP = MER.w + MER.gap;
 // 西南圆形角台：台心在两外墙顶皮外约 4 m（沿两外法线，距中线 off），台顶半径 rT、底半径 rB，高出墙顶 up
 const SW_TOWER = { off: OT + 4, rT: 10, rB: 11.2, up: 1.9 };
@@ -186,9 +191,12 @@ function emitBody(bufs, st, sec, capStart = true, capEnd = true) {
     // 外墙面（收分）
     brick.quad(P3(a, oPl, a.b + 0.9), P3(b, oPl, b.b + 0.9), P3(b, oT, b.b + Hh), P3(a, oT, a.b + Hh),
       [[a.s, 0.9], [b.s, 0.9], [b.s, Hh], [a.s, Hh]], [[0.9, 1], [0.9, 1], [Hh, 0.5], [Hh, 0.5]], En);
-    // 顶面海墁
-    pave.quad(P3(a, oT, a.b + Hh), P3(b, oT, b.b + Hh), P3(b, iT, b.b + Hh), P3(a, iT, a.b + Hh),
-      [[a.s, oT], [b.s, oT], [b.s, iT], [a.s, iT]], [Hh, 0], [0, 1, 0]);
+    // 顶面海墁：外高内低的排水坡（外沿高出 6 cm），内侧女墙根下一道条石排水沟
+    const gI = iT + GUTTER;
+    pave.quad(P3(a, oT, a.b + Hh + SLOPE), P3(b, oT, b.b + Hh + SLOPE), P3(b, gI, b.b + Hh), P3(a, gI, a.b + Hh),
+      [[a.s, oT], [b.s, oT], [b.s, gI], [a.s, gI]], [Hh, 0], [0, 1, 0]);
+    bufs.gutter.quad(P3(a, gI, a.b + Hh), P3(b, gI, b.b + Hh), P3(b, iT, b.b + Hh), P3(a, iT, a.b + Hh),
+      [[a.s, 0], [b.s, 0], [b.s, GUTTER], [a.s, GUTTER]], [Hh, 0], [0, 1, 0]);
     // 内墙面
     brick.quad(P3(a, iT, a.b + Hh), P3(b, iT, b.b + Hh), P3(b, iPl, b.b + 0.6), P3(a, iPl, a.b + 0.6),
       [[a.s, Hh], [b.s, Hh], [b.s, 0.6], [a.s, 0.6]], [[Hh, 0.3], [Hh, 0.3], [0.6, 0.55], [0.6, 0.55]], Ei);
@@ -455,8 +463,10 @@ function emitHoleWall(bufs, stA, stB, holes, lo) {
       }
     }
   }
-  // —— 顶面海墁 ——
-  pave.quad(W(0, OT, H), W(Lb, OT, H), W(Lb, IT, H), W(0, IT, H), [[u(0), OT], [u(Lb), OT], [u(Lb), IT], [u(0), IT]], [H, 0], UP);
+  // —— 顶面海墁（排水坡 + 女墙脚排水沟，与 emitBody 一致） ——
+  const gI = IT + GUTTER;
+  pave.quad(W(0, OT, H + SLOPE), W(Lb, OT, H + SLOPE), W(Lb, gI, H), W(0, gI, H), [[u(0), OT], [u(Lb), OT], [u(Lb), gI], [u(0), gI]], [H, 0], UP);
+  bufs.gutter.quad(W(0, gI, H), W(Lb, gI, H), W(Lb, IT, H), W(0, IT, H), [[u(0), 0], [u(Lb), 0], [u(Lb), GUTTER], [u(0), GUTTER]], [H, 0], UP);
   return { W, hs, T, Nn };
 }
 
@@ -558,6 +568,9 @@ export default {
       const W = (a, o) => [f.x + f.X[0] * a + f.nx * o, f.z + f.X[1] * a + f.nz * o];
       const poly = (a0, a1, o0, o1) => [W(a0, o0), W(a1, o0), W(a1, o1), W(a0, o1)].flat();
       ctx.exclusions.add({ points: poly(-spec.W - 10, spec.W + 10, -34, spec.P + 40), name: spec.label }, { buildings: true, trees: true, pois: false });
+      // 城门中轴视廊（门外 ~420 m、宽 28 m）：不种树。南关正街北口等处朝城门看，箭楼与吊桥应一览无余（审查 g5：
+      // 中分带上两棵十几米的塔形针叶树正好挡住永宁门，夜里连城墙轮廓灯都看不见）
+      ctx.exclusions.add({ points: poly(-14, 14, spec.P + 30, spec.P + 450), name: spec.label + '视廊' }, { buildings: false, trees: true, pois: false });
       ctx.terrain.addFlatten({ points: poly(-spec.W - 2, spec.W + 2, -22, spec.P + 4), height: null, feather: 22 });
     }
   },
@@ -658,7 +671,7 @@ export default {
     }
 
     // —— 城墙本体 ——
-    const bufs = { brick: new MeshBuf(), pave: new MeshBuf(), stone: new MeshBuf() };
+    const bufs = { brick: new MeshBuf(), pave: new MeshBuf(), stone: new MeshBuf(), gutter: new MeshBuf() };
     const merl = [];
     const lamps = [];
     // 站点
@@ -938,6 +951,10 @@ export default {
     addMesh(bufs.brick, matBrick, '城墙·墙身');
     addMesh(bufs.pave, matPave, '城墙·海墁');
     addMesh(bufs.stone, matStone, '城墙·条石');
+    // 排水沟：深色条石（略湿、反光稍强）
+    const matGutter = wallMaterial(ctx, 'stone', { color: 0x6a6762 });
+    matGutter.roughness = 0.62;
+    addMesh(bufs.gutter, matGutter, '城墙·排水沟');
 
     // —— 垛（实例） + 垛口轮廓灯（实例） ——
     const mtx = new THREE.Matrix4(), X = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3();
@@ -995,14 +1012,26 @@ export default {
     // —— 城门群 / 角楼（古建构件库） ——
     const FLOOD = { color: 0xffc47a, strength: 1.7, height: 24, top: 0.45 };
     const complexes = [];
-    const glowEaves = (b, info) => eaveLights(b, info, { color: 0xffc56a, width: 0.08 });
+    // 檐口 / 屋脊灯带；建远景合批时顺便把这些线（世界坐标）收集起来，做成屏幕恒宽的城门轮廓灯线：
+    // 0.08 m 的灯带在几百米外不到 1/5 像素，南门外看过去只剩城墙一道光、城楼轮廓出不来
+    let towerLines = null;
+    const _tv = new THREE.Vector3();
+    const glowEaves = (b, info) => {
+      eaveLights(b, info, { color: 0xffc56a, width: 0.08 });
+      if (!towerLines) return;
+      for (const r of info.roofs || []) {
+        for (const line of [...(r.eaveLines || []), ...(r.ridgeLines || [])]) {
+          if (line.length > 1) towerLines.push(line.map((p) => { _tv.set(p[0], p[1], p[2]).applyMatrix4(b.m); return [_tv.x, _tv.y, _tv.z]; }));
+        }
+      }
+    };
     for (const g of mainGates) {
       const sp = g.spec;
       const fn = (b) => {
         // 正楼
         b.push(0, 0, MAIN_PLAT.zc, 0);
         const t = gateTower(b, {
-          w: MAIN_PLAT.w, d: MAIN_PLAT.d, h: H, tunnels: 1, tw: 6, th: 7, crenel: false, plaque: sp.plaque, roofColor: 'darkgray',
+          w: MAIN_PLAT.w, d: MAIN_PLAT.d, h: H, tunnels: 1, tw: 6, th: 7, crenel: false, plaque: sp.plaque, roofColor: WALL_ROOF,
           tower: { lanterns: true },
         });
         glowEaves(b, t);
@@ -1013,14 +1042,16 @@ export default {
         cityPlatform(b, { w: 62, d: 22, h: H, tunnels: sp.arrowTunnel, tw: 6, th: 7, crenel: false, inner: [] });
         b.pop();
         b.push(0, 0, g.zA + 3, Math.PI);
-        const a = arrowTower(b, { w: 52, d: 12.5, h: 13.5, rows: 4, cols: 12, sideCols: 3, roofColor: 'darkgray', y0: H + 0.08 });
+        const a = arrowTower(b, { w: 52, d: 12.5, h: 13.5, rows: 4, cols: 12, sideCols: 3, roofColor: WALL_ROOF, y0: H + 0.08 });
+        // 重檐：第四排箭窗之上加一圈灰瓦下檐，与上檐相隔约 1.7 m（构件库的箭楼只有单檐歇山，远看读成一个深灰方盒子）
+        a.roofs.push(roof(b, { type: 'band', w: 52, d: 12.5, y: H + 0.08 + 12.35, overhang: 1.3, top: 0.08, color: WALL_ROOF, style: 'ming' }));
         glowEaves(b, a);
         b.pop();
         // 闸楼 + 吊桥（永宁门）
         if (sp.yue) {
           b.push(0, 0, g.zZ, 0);
           const z = gateTower(b, {
-            w: 34, d: 12, h: 10, tunnels: 1, tw: 5, th: 6, crenel: false, plaque: sp.plaque, roofColor: 'darkgray',
+            w: 34, d: 12, h: 10, tunnels: 1, tw: 5, th: 6, crenel: false, plaque: sp.plaque, roofColor: WALL_ROOF,
             hall: { bays: [3.4, 4, 4.6, 4, 3.4], depthBays: [3.4, 3.4], colH: 4.2, roof: 'xieshan', eaves: 1, front: 'windows', back: 'center3', sides: 'wall', lanterns: true },
           });
           glowEaves(b, z);
@@ -1038,7 +1069,7 @@ export default {
     }
     const cornerTower = (b) => {
       const t = multiStoreyTower(b, {
-        style: 'ming', roofColor: 'darkgray', platform: 'plain', platformH: 0.45, steps: 'none', y0: H,
+        style: 'ming', roofColor: WALL_ROOF, platform: 'plain', platformH: 0.45, steps: 'none', y0: H,
         storeys: [
           { bays: [3.4, 4.2, 3.4], depthBays: [3.4, 4.2, 3.4], colH: 4.4, front: 'center3', back: 'windows', sides: 'windows' },
           { colH: 3.6, front: 'windows', back: 'windows', sides: 'windows' },
@@ -1056,7 +1087,16 @@ export default {
 
     // 近景 LOD：初始只建 detail 0；相机靠近时按需补建 detail 1（< 1300 m）与 detail 2（< 520 m），每帧至多一个
     const nearLODs = [];
-    const mkLevel = (c, d) => buildArch(ctx, c.fn, { detail: d, flood: { ...FLOOD, baseY: c.y + H }, name: c.key + '-d' + d });
+    // 瓦面 / 屋脊材质压低环境光（天光 IBL 把深灰瓦面染成藏青；见 roofMaterials）
+    const RM = roofMaterials(ctx);
+    const mkLevel = (c, d) => {
+      const b = new ArchBuilder(ctx, { detail: d, style: 'ming', name: c.key + '-d' + d });
+      const info = c.fn(b) || {};
+      const g = b.build({ flood: { ...FLOOD, baseY: c.y + H }, name: c.key + '-d' + d, materials: RM });
+      g.userData.info = info;
+      g.userData.lights = b.lightAnchors;
+      return g;
+    };
     const relevel = (n) => {
       const lod = n.lod;
       for (const l of [...lod.children]) lod.remove(l);
@@ -1081,6 +1121,7 @@ export default {
     // 远景合批（全部城门群 + 角楼，detail 0）
     const fb = new ArchBuilder(ctx, { detail: 0, name: 'citywall-far' });
     let avgY = 0;
+    towerLines = [];
     for (const c of complexes) {
       fb.push(c.x, c.y, c.z, c.theta);
       c.fn(fb);
@@ -1088,8 +1129,13 @@ export default {
       avgY += c.y;
     }
     avgY /= complexes.length || 1;
-    const farGroup = fb.build({ flood: { ...FLOOD, baseY: avgY + H }, name: '城门群·远景' });
+    const farGroup = fb.build({ flood: { ...FLOOD, baseY: avgY + H }, name: '城门群·远景', materials: RM });
     root.add(farGroup);
+    // 城楼 / 箭楼 / 闸楼 / 角楼的檐口与屋脊轮廓灯线（夜间，屏幕恒宽；120 m 内淡出，让位于构件上的实体灯带）
+    const towerOutline = outlineLines(ctx, towerLines, { color: 0xffc56a, intensity: 2.0, pix: 0.0006, fadeNear: 110, fadeFar: 320 });
+    towerOutline.name = '城门轮廓灯线';
+    root.add(towerOutline);
+    towerLines = null;
 
     mark('远景');
     // —— 现代城门、敌楼、魁星楼（合批，detail 1） ——
@@ -1142,7 +1188,7 @@ export default {
       const f = m.f;
       const o = (OT + OB + m.proj - 1.5) / 2;
       mb.push(f.x + f.nx * o, m.by + H, f.z + f.nz * o, Math.atan2(f.nx, f.nz));
-      const t = hall(mb, { bays: [3.2, 3.8, 3.2], depthBays: [3.0, 3.0], colH: 3.6, roof: 'xieshan', eaves: 1, roofColor: 'darkgray', platform: 'plain', platformH: 0.3, steps: 'none', front: 'windows', back: 'center3', sides: 'wall', lanterns: true });
+      const t = hall(mb, { bays: [3.2, 3.8, 3.2], depthBays: [3.0, 3.0], colH: 3.6, roof: 'xieshan', eaves: 1, roofColor: WALL_ROOF, platform: 'plain', platformH: 0.3, steps: 'none', front: 'windows', back: 'center3', sides: 'wall', lanterns: true });
       eaveLights(mb, t, { color: 0xffc56a, width: 0.07 });
       mb.pop();
     }
@@ -1152,11 +1198,11 @@ export default {
       const s = wen.s + 27;
       const f = ring.frame(s);
       mb.push(f.x - f.nx * 1.5, baseAt(s) + H, f.z - f.nz * 1.5, Math.atan2(f.nx, f.nz));
-      const t = pavilion(mb, { sides: 4, size: 6.4, eaves: 2, colH: 3.8, roofColor: 'darkgray', roof: 'xieshan', platformH: 0.5 });
+      const t = pavilion(mb, { sides: 4, size: 6.4, eaves: 2, colH: 3.8, roofColor: WALL_ROOF, roof: 'xieshan', platformH: 0.5 });
       eaveLights(mb, t, { color: 0xffc56a, width: 0.07 });
       mb.pop();
     }
-    const miscGroup = mb.build({ flood: { ...FLOOD, baseY: avgY + H }, name: '现代城门·敌楼' });
+    const miscGroup = mb.build({ flood: { ...FLOOD, baseY: avgY + H }, name: '现代城门·敌楼', materials: RM });
     root.add(miscGroup);
 
     mark('杂项');
@@ -1211,6 +1257,7 @@ export default {
       merlons.visible = dWall < ([1600, 2400, 3000, 3600][ctx.quality.level ?? 2] ?? 3000);
       merlons.castShadow = dWall < shadowReach(ctx, 1500, 12);
       outline.visible = ctx.uniforms.uNight.value > 0.02;
+      towerOutline.visible = outline.visible;
     };
     update();
     console.info(`[citywall] 构建 ${(performance.now() - t0).toFixed(0)} ms：墙体三角 ${((bufs.brick.i.length + bufs.pave.i.length + bufs.stone.i.length) / 3) | 0}，垛 ${merl.length}，灯 ${lamps.length}，马面 ${mamian.length}，城门群 ${complexes.length}｜${tl.join(' / ')}`);

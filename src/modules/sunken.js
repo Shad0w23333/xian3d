@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 import * as G from '../arch/sky-geom.js';
 import { buildLiuyuan, liuyuanFootprints } from '../arch/sunken-liuyuan.js';
+import { buildWeiyang, weiyangFootprints } from '../arch/sunken-weiyang.js';
 
 const c3 = (h) => new THREE.Color(h);
 // 核验阈值
@@ -201,6 +202,23 @@ export default {
         this.sites.push({ ...s, kind: 'liuyuan', rim: fp.rim, top, depth: 5.5 });
         continue;
       }
+      if (/未央城市广场|张家堡/.test(s.name)) {
+        // 未央城市广场（原张家堡环岛中心岛，2026-02 改造）：清单里的 260×200 m 估计矩形压环路、被核验拒绝（审查 g8 P0）。
+        // 改为占满环岛中心岛（环路中线内缩 8.5 m）：广场平整 + 四个花瓣形下沉庭院（各自挖洞），清掉岛上的通用建筑与树
+        const ringF = (ctx.data.roads?.features || []).find((f) => f.n === '张家堡环岛' && f.p && f.p.length > 20);
+        if (ringF) {
+          const fp = weiyangFootprints(ringF.p);
+          const H0 = T.addFlatten({ points: fp.island, height: null, feather: 3 });
+          for (const P of fp.petals) {
+            P.top = T.holeRimTop(P.poly);
+            T.addHole(P.poly);
+          }
+          ctx.exclusions.add({ points: fp.island, name: 'sunken' }, { buildings: true, trees: true, pois: false });
+          for (const P of fp.petals) ctx.exclusions.add({ points: G.inset(P.poly, -1.2), name: 'sunken' }, { buildings: false, trees: false, pois: false, roads: true });
+          this.sites.push({ ...s, kind: 'weiyang', fp, H0, rim: fp.island, top: H0, depth: 7 });
+          continue;
+        }
+      }
       const rim = rimOf(s);
       const why = validate(ctx, s, rim);
       if (why.length) {
@@ -228,6 +246,13 @@ export default {
     const signC = [c3('#c9302c'), c3('#1f4e79'), c3('#2d6a4f'), c3('#b8860b'), c3('#6a2c70'), c3('#222222')];
     const addLabel = (name, p) => ctx.labels.add(name.replace(/（.*?）|\(.*?\)/g, ''), p, { category: 'landmark', sub: '下沉广场', priority: 1.5, minDist: 40, maxDist: 3000 });
     for (const s of this.sites || []) {
+      if (s.kind === 'weiyang') {
+        const r = buildWeiyang(ctx, s.fp, s.H0 ?? ctx.terrain.heightAt(s.fp.cx, s.fp.cz));
+        root.add(r.group);
+        for (const L of r.lights) ctx.lights.add({ ...L, nightOnly: true, priority: 1 });
+        addLabel('未央城市广场', r.label);
+        continue;
+      }
       if (s.kind === 'liuyuan') {
         const r = buildLiuyuan(ctx, { top: s.top, ground: (x, z) => ctx.terrain.heightAt(x, z) });
         root.add(r.group);
