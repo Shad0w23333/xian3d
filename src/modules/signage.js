@@ -299,6 +299,9 @@ class Signage {
       n++;
     }
     this.nPois = n;
+    // 高德全量店铺（pois.json 经 tools/amap_fetch.py merge，可挂招牌的 POI 数万条）：真实店铺已覆盖大部分沿街铺面，
+    // 没有店铺的立面多半确实没开店——随机补位门头降到 30%，避免满街编造的店名
+    this.fillK = n > 20000 ? 0.3 : 1;
     // 重要的先占位（地铁口 > 重要度 > 银行/酒店/商场），同一立面挂不下时次要店铺换到旁边的立面
     const pri = (p) => (p.k === 'subway_entrance' ? 100 : 0) + (p.i || 0) * 10 + (p.k === 'bank' || HOTEL.has(p.k) || MALL_RE.test(p.n) ? 5 : 0);
     for (const ch of this.chunks.values()) if (ch.pois.length > 1) ch.pois.sort((a, b) => pri(b) - pri(a));
@@ -1108,6 +1111,7 @@ if (sTex) {
           const hb = strHash(`${b}:${e}`);
           let rowP = rp[main ? 0 : 1] + (dist === 'street' ? 0.2 : 0) + (dist === 'wall' && !main ? 0.1 : 0);
           if (footOnly) rowP *= 0.35; // 只临小区/广场步道（没有车行道）的立面多不是铺面
+          rowP *= this.fillK ?? 1;
           if (hash01(hb + 77) > rowP) continue; // 这条立面不是铺面排
           const B = this.band(I, eSt);
           if (!B) continue;
