@@ -3,6 +3,8 @@
 // 剖面按 (o, y) 平面顺时针排列时，挤出面的法线朝外（见 emitProfile）。
 import * as THREE from 'three';
 
+const DET0 = [0, 0, 0, 0];
+
 // ---------------- 路面写入器（统一着色器用） ----------------
 export class SurfWriter {
   constructor(cap = 8192) {
@@ -23,16 +25,21 @@ export class SurfWriter {
     o.uv = grow(o.uv, cap * 2, Float32Array);
     o.road = grow(o.road, cap * 4, Uint16Array);
     o.junc = grow(o.junc, cap * 4, Uint16Array);
+    o.det = grow(o.det, cap * 4, Uint8Array);
     o.icap = icap;
     o.idx = grow(o.idx, icap, Uint32Array);
   }
   ensure(nv, ni) {
     if (this.n + nv > this.cap || this.ni + ni > this.icap) this._alloc(Math.max(this.cap * 2, this.n + nv + 1024), Math.max(this.icap * 2, this.ni + ni + 4096));
   }
-  /** 写入一个顶点；attr = [kind, lanes|灯距<<4|亮度<<10, flags, widthCm]，junc = [距边起点, 距边终点, R0, R1]（米，按分米存 Uint16） */
-  v(x, y, z, nx, ny, nz, u, w, attr, junc) {
+  /**
+   * 写入一个顶点；attr = [kind, lanes|灯距<<4|亮度<<10, flags, widthCm]，junc = [距边起点, 距边终点, R0, R1]（米，按分米存 Uint16），
+   * det = 细节通道 [0..255]×4（可省）：人行道 [缘石坡道权重, 标线位, 坡道类型, 0]；沥青 [0, 标线位, 起点端转向, 终点端转向]
+   */
+  v(x, y, z, nx, ny, nz, u, w, attr, junc, det = DET0) {
     const i = this.n++;
-    const p = this.pos, q = this.nor, t = this.uv, r = this.road, j = this.junc;
+    const p = this.pos, q = this.nor, t = this.uv, r = this.road, j = this.junc, d = this.det;
+    d[i * 4] = det[0]; d[i * 4 + 1] = det[1]; d[i * 4 + 2] = det[2]; d[i * 4 + 3] = det[3];
     p[i * 3] = x; p[i * 3 + 1] = y; p[i * 3 + 2] = z;
     q[i * 3] = nx * 127; q[i * 3 + 1] = ny * 127; q[i * 3 + 2] = nz * 127;
     t[i * 2] = u; t[i * 2 + 1] = w;
@@ -55,6 +62,7 @@ export class SurfWriter {
     g.setAttribute('aUV', new THREE.BufferAttribute(this.uv.slice(0, n * 2), 2));
     g.setAttribute('aRoad', new THREE.BufferAttribute(this.road.slice(0, n * 4), 4, false));
     g.setAttribute('aJunc', new THREE.BufferAttribute(this.junc.slice(0, n * 4), 4));
+    g.setAttribute('aDet', new THREE.BufferAttribute(this.det.slice(0, n * 4), 4, false));
     g.setIndex(new THREE.BufferAttribute(this.idx.slice(0, this.ni), 1));
     g.computeBoundingSphere();
     g.computeBoundingBox();
