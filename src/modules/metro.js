@@ -1,324 +1,353 @@
-// 西安地铁地下网络：全部已开通线路的隧道（按官方线路色）、车站（站台层 + 站厅层 + 屏蔽门 + 站名）、出入口通道、运行中的列车；
-// 两种浏览方式：
-//   · 透视俯视（X 键 / 面板按钮）：城市压暗，地铁线网按官方色发光叠加在最上层，车站圆点 + 站名，一键飞到正上方俯视；
-//   · 进入地下（U 键 / 面板按钮）：隐藏地面世界，传送到最近车站的站台，步行（G）或飞行在站台、站厅、隧道、出入口通道里浏览。
-// 数据：public/data/metro.json（tools/build_metro.py：OSM 地铁线与 layer、pois 出入口聚类成站，可叠加调研清单与高德线路）。
-// 地下部分全部用无光照材质 + 顶点色“烘焙”照明（地下不受日照/昼夜影响，夜里也亮），不参与雾。
+// 西安地铁地下网络：全部已开通线路的隧道（官方线路色腰线）、车站（站台层 + 站厅层 + 屏蔽门 + 楼梯扶梯 + 站名导向）、
+// 出入口通道、按站停靠的列车。两种浏览方式：
+//   · 透视俯视（X 键 / 面板勾选）：城市压暗，线网按官方色叠加（独立 2D 画布，不经泛光/色调映射，粗细亮度一致），
+//     车站圆点吸附线路中心线，只显示车站标注（含线路色标），其他地名/路名/小区名临时隐藏；再按 X 飞回原视点。
+//   · 进入地下（U 键 / 面板按钮）：隐藏地面世界与全部地面标注，传送到最近车站站台中线（两柱之间、面朝站台纵深），
+//     步行（G 切飞行）浏览站台、楼梯、站厅、出入口通道、隧道；再按 U 回到进站前的视点与模式，标注恢复原状。
+//   地下照明固定：进站时锁定曝光、关闭泛光、去掉天空环境反射，半球光/主光改为站内灯光（受光材质 + 程序化贴图），
+//   白天夜里进同一个站明暗一致；出站时恢复。
+// 数据：public/data/metro.json（tools/build_metro.py）；载入时合并同名/同址重复站（如“建筑科技大学-李家村/·李家村”）。
+// 性能：站体与隧道按需生成，只构建/显示相机附近的车站（约 11 次绘制/站）与 1 km 格隧道段；地面上不产生任何绘制。
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
+import { buildStation, boxFloor, passageFloor, PLAT_H, HALL_L, HALL_W, TRACK_V } from '../arch/metro-station.js';
+import { metroMaterials } from '../arch/metro-tex.js';
+import { buildXrayData, XrayOverlay } from '../arch/metro-xray.js';
 
-const PLAT_L = 124;   // 站台长（B 型车 6 节编组约 120 m）
-const HALL_L = 150;   // 车站主体长
-const HALL_W = 22;    // 车站主体宽（岛式站台 12 m + 两侧轨行区）
-const PLAT_W = 12;
-const PLAT_H = 1.05;  // 站台面高出轨面
-const LVL_H = 4.6;    // 站台层净高
-const SLAB = 0.8;
-const CONC_H = 5.2;   // 站厅层净高
 const TUN_STEP = 20;
+const TUN_CELL = 1000;     // 隧道分块（米）
+const STATION_R = 650;     // 地下时构建/显示的车站半径
+const MAX_BUILT = 10;      // 最多缓存的车站数
+const EXPOSURE = 0.68;     // 地下固定曝光（再乘画质面板的曝光倍率）
+
+// —— 数据：载入 + 合并重复站 ——
+let DATA = null;
+function normName(n) {
+  return String(n || '')
+    .replace(/（/g, '(').replace(/）/g, ')')
+    .replace(/[-－—–]/g, '·')
+    .replace(/·?[A-Z]区$/, '')
+    .trim();
+}
+function normalize(D) {
+  if (!D || !D.lines?.length) return null;
+  const groups = [];
+  for (const s of D.stations || []) {
+    const key = normName(s.n);
+    let g = groups.find((q) => {
+      const d = Math.hypot(q.x - s.x, q.z - s.z);
+      return (q.key === key && d < 400) || d < 60;
+    });
+    if (!g) groups.push((g = { key, x: s.x, z: s.z, list: [] }));
+    g.list.push(s);
+  }
+  const labeled = (s) => (s.exits || []).filter((e) => e[2]).length;
+  const stations = groups.map((g) => {
+    const L = g.list.slice().sort((a, b) => labeled(b) - labeled(a) || (normName(a.n) === a.n ? -1 : 1));
+    const P = L[0];
+    const name = (L.find((s) => s.n === g.key) || P).n;
+    const lines = [], exits = [];
+    for (const s of L) {
+      for (const l of s.lines) if (!lines.some((q) => q.num === l.num)) lines.push(l);
+      for (const e of s.exits || []) if (!exits.some((q) => Math.hypot(q[0] - e[0], q[1] - e[1]) < 3)) exits.push(e);
+    }
+    // 铁路客站同名站补“站”字（OSM 名为“西安”“西安北”，官方站名为“西安站”“北客站”等，这里只补字不改名）
+    const n = /^西安[东南西北]?$/.test(name) ? name + '站' : name;
+    return { n, x: P.x, z: P.z, lines, exits, merged: L.length > 1 ? L.map((s) => s.n) : undefined };
+  });
+  return { ...D, stations };
+}
+async function getData() {
+  if (DATA === null) DATA = normalize(await loadJSON('metro.json', { optional: true })) || false;
+  return DATA || null;
+}
 
 const c3 = (hex) => new THREE.Color(hex);
 
-/** 顶点色网格拼装器：quad(四点, 颜色或四色) → 非索引三角形 */
-class Mesher {
-  constructor() { this.pos = []; this.col = []; this.uv = []; }
-  tri(a, b, c, ca, cb, cc) {
-    this.pos.push(...a, ...b, ...c);
-    this.col.push(ca.r, ca.g, ca.b, cb.r, cb.g, cb.b, cc.r, cc.g, cc.b);
-  }
-  quad(a, b, c, d, ca, cb = ca, cc = cb, cd = ca) {
-    this.tri(a, b, c, ca, cb, cc);
-    this.tri(a, c, d, ca, cc, cd);
-  }
-  /** 轴对齐于局部框架的长方体（只画内/外六个面，双面材质） */
-  box(F, u0, u1, v0, v1, y0, y1, col, top = col) {
-    const P = (u, v, y) => F(u, v, y);
-    const [a, b, c, d] = [P(u0, v0, y0), P(u1, v0, y0), P(u1, v1, y0), P(u0, v1, y0)];
-    const [e, f, g, h] = [P(u0, v0, y1), P(u1, v0, y1), P(u1, v1, y1), P(u0, v1, y1)];
-    this.quad(e, f, g, h, top);
-    this.quad(a, b, f, e, col); this.quad(b, c, g, f, col); this.quad(c, d, h, g, col); this.quad(d, a, e, h, col);
-  }
-  build(mat, name) {
-    if (!this.pos.length) return null;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
-    if (this.uv.length) g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    g.computeBoundingSphere();
-    const m = new THREE.Mesh(g, mat);
-    m.name = name;
-    return m;
-  }
-}
-
-/** 站名贴图集：每个站名一格（站名 + 线路色块） */
-function nameAtlas(stations, lineColor, badgeOf) {
-  const CW = 512, CH = 96, COLS = 8;
-  const rows = Math.ceil(stations.length / COLS);
-  const cv = document.createElement('canvas');
-  cv.width = CW * COLS;
-  cv.height = Math.min(8192, THREE.MathUtils.ceilPowerOfTwo(Math.max(CH, rows * CH)));
-  const g = cv.getContext('2d');
-  const cells = new Map();
-  stations.forEach((s, i) => {
-    const x = (i % COLS) * CW, y = Math.floor(i / COLS) * CH;
-    if (y + CH > cv.height) return;
-    g.fillStyle = '#16324f';
-    g.fillRect(x, y, CW, CH);
-    let bx = x + 12;
-    for (const l of s.lines) {
-      g.fillStyle = lineColor(l.num);
-      g.fillRect(bx, y + 18, 60, 60);
-      g.fillStyle = '#fff';
-      const bt = badgeOf(l.num);
-      g.font = `bold ${bt.length > 1 && !/^\d+$/.test(bt) ? 26 : 40}px sans-serif`;
-      g.textAlign = 'center';
-      g.textBaseline = 'middle';
-      g.fillText(bt, bx + 30, y + 49);
-      bx += 68;
+/** 列车车厢几何（单节，局部 x 沿车长）：车体/裙板/车门（受光）与车窗灯光（自发光）分开 */
+function carGeometry() {
+  const body = { p: [], c: [] }, glow = { p: [], c: [] };
+  const q = (G, a, b, c, d, col) => { for (const P of [a, b, c, a, c, d]) { G.p.push(...P); G.c.push(col.r, col.g, col.b); } };
+  const box = (G, x0, x1, y0, y1, z0, z1, col, top = col) => {
+    q(G, [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], top);
+    q(G, [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], col);
+    q(G, [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], col);
+    q(G, [x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], col);
+    q(G, [x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0], col);
+  };
+  box(body, -9.4, 9.4, 0.35, 0.95, -1.3, 1.3, c3('#3b3e42'));
+  box(body, 9.4, 9.8, 1.0, 3.35, -0.95, 0.95, c3('#2a2c2f')); // 贯通道（车厢间风挡）
+  box(body, -9.4, 9.4, 0.95, 3.7, -1.4, 1.4, c3('#e4e7ea'), c3('#b9bec3'));
+  const doorC = c3('#c3c8ce'), win = c3('#ffefc8');
+  for (const z of [-1.405, 1.405]) {
+    const doors = [-7.1, -2.4, 2.4, 7.1];
+    let x = -9.0;
+    for (const dx of doors) {
+      if (dx - 0.75 - x > 0.4) q(glow, [x, 1.85, z], [dx - 0.75, 1.85, z], [dx - 0.75, 2.85, z], [x, 2.85, z], win);
+      q(body, [dx - 0.7, 1.05, z * 1.001], [dx + 0.7, 1.05, z * 1.001], [dx + 0.7, 3.05, z * 1.001], [dx - 0.7, 3.05, z * 1.001], doorC);
+      for (const e of [-0.32, 0.32]) q(glow, [dx + e - 0.22, 1.95, z * 1.002], [dx + e + 0.22, 1.95, z * 1.002], [dx + e + 0.22, 2.8, z * 1.002], [dx + e - 0.22, 2.8, z * 1.002], win);
+      x = dx + 0.75;
     }
-    g.fillStyle = '#ffffff';
-    g.font = `bold ${s.n.length > 6 ? 40 : 52}px "PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif`;
-    g.textAlign = 'left';
-    g.textBaseline = 'middle';
-    g.fillText(s.n, bx + 10, y + CH / 2 + 2, CW - (bx - x) - 20);
-    cells.set(s, [x / cv.width, 1 - (y + CH) / cv.height, (x + CW) / cv.width, 1 - y / cv.height]);
-  });
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  tex.flipY = true;
-  return { tex, cells };
+    q(glow, [x, 1.85, z], [9.0, 1.85, z], [9.0, 2.85, z], [x, 2.85, z], win);
+  }
+  const mk = (G) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(G.p, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(G.c, 3));
+    g.computeVertexNormals();
+    return g;
+  };
+  return { body: mk(body), glow: mk(glow) };
 }
 
 export default {
   id: 'metro',
   name: '地铁地下网络',
+  /** 出入口让位：出入口 3.5 m 内的小体量通用建筑（≤8 m，多为被识别成楼的出入口雨棚）与树木让位，招牌模块据此做标准雨棚 */
+  async prepare(ctx) {
+    const D = await getData();
+    if (!D || !ctx.exclusions) return;
+    for (const s of D.stations) for (const [x, z, lab] of s.exits || []) {
+      if (lab) ctx.exclusions.add({ circle: [x, z, 3.5], name: `地铁${s.n}${lab}口` }, { buildings: true, trees: true, roads: false, pois: false, maxHeight: 8 });
+    }
+  },
   async build(ctx) {
-    const D = await loadJSON('metro.json', { optional: true });
+    const D = await getData();
     const root = new THREE.Group();
     root.name = 'metro';
     root.visible = false;
     ctx.scene.add(root);
     const stub = { update() {}, setLayer() {}, api: {}, dispose() { ctx.scene.remove(root); } };
-    if (!D || !D.lines?.length) return stub;
+    if (!D) return stub;
+    const app = () => window.xian || {};
     const H = (x, z) => ctx.terrain.heightAt(x, z);
     const colorOf = new Map(D.lines.map((l) => [l.num, l.color]));
     // 有线号的显示“N号线”，西户线/云巴等无线号线路（num ≥ 100）显示线名
     const nameOf = new Map(D.lines.map((l) => [l.num, l.num < 100 ? `${l.num}号线` : l.name]));
     const badgeOf = (n) => (n < 100 ? String(n) : (nameOf.get(n) || '').replace(/^西安/, '').slice(0, 2));
     const lineColor = (n) => colorOf.get(n) || '#9aa4b0';
+    const linePts = new Map(D.lines.map((L) => [L.num, L.paths.map((f) => { const p = []; for (let i = 0; i + 2 < f.length; i += 3) p.push([f[i], f[i + 1], f[i + 2]]); return p; })]));
 
-    const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
-    const glass = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false, transparent: true, opacity: 0.32, depthWrite: false });
-
-    // —— 车站框架（每站每线一个站体） ——
-    const boxes = []; // {s, l, cx, cz, ux, uz, yR, F}
+    // —— 车站站体框架（每站每条地下线一个）：中心取上下行两条轨道之间、轴沿轨道 ——
+    const nearestOn = (p, x, z) => {
+      let best = null, bd = Infinity;
+      for (let i = 1; i < p.length; i++) {
+        const a = p[i - 1], b = p[i], ex = b[0] - a[0], ez = b[1] - a[1], L2 = ex * ex + ez * ez || 1;
+        if (Math.abs(a[0] - x) > 600 && Math.abs(b[0] - x) > 600) continue;
+        const t = Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / L2));
+        const px = a[0] + ex * t, pz = a[1] + ez * t, d = Math.hypot(px - x, pz - z);
+        if (d < bd) { bd = d; best = { x: px, z: pz, d, dx: ex, dz: ez }; }
+      }
+      return best;
+    };
+    const boxes = [];
     for (const s of D.stations) for (const l of s.lines) {
       if (!(l.d > 0)) continue; // 高架/地面站由地面铁路模块表现
-      const ux = l.dx, uz = l.dz, vx = -uz, vz = ux;
-      const g0 = H(l.x, l.z);
-      const yR = g0 - l.d;
-      const F = (u, v, y) => [l.x + ux * u + vx * v, yR + y, l.z + uz * u + vz * v];
-      boxes.push({ s, l, cx: l.x, cz: l.z, ux, uz, vx, vz, yR, g0, F });
+      let cx = l.x, cz = l.z, ux = l.dx, uz = l.dz;
+      const near = (linePts.get(l.num) || []).map((p) => nearestOn(p, l.x, l.z)).filter((q) => q && q.d < 50).sort((a, b) => a.d - b.d);
+      if (near.length >= 2) {
+        const a = near[0], b = near.find((q) => Math.hypot(q.x - a.x, q.z - a.z) > 4) || near[1];
+        const sep = Math.hypot(a.x - b.x, a.z - b.z);
+        if (sep > 5 && sep < 45) { cx = (a.x + b.x) / 2; cz = (a.z + b.z) / 2; }
+        const dl = Math.hypot(a.dx, a.dz);
+        if (dl > 1) { ux = a.dx / dl; uz = a.dz / dl; }
+      }
+      const ul = Math.hypot(ux, uz) || 1;
+      ux /= ul; uz /= ul;
+      const vx = -uz, vz = ux;
+      const g0 = H(cx, cz), yR = g0 - l.d;
+      const F = (u, v, y) => [cx + ux * u + vx * v, yR + y, cz + uz * u + vz * v];
+      boxes.push({ s, l, cx, cz, ux, uz, vx, vz, yR, g0, F });
     }
-    const inBox = (x, z, pad = 0) => {
-      for (const b of boxes) {
+    const BCELL = 200, bgrid = new Map();
+    for (const b of boxes) {
+      const r = HALL_L / 2 + 10;
+      for (let i = Math.floor((b.cx - r) / BCELL); i <= Math.floor((b.cx + r) / BCELL); i++)
+        for (let j = Math.floor((b.cz - r) / BCELL); j <= Math.floor((b.cz + r) / BCELL); j++) {
+          const k = i * 100003 + j;
+          if (!bgrid.has(k)) bgrid.set(k, []);
+          bgrid.get(k).push(b);
+        }
+    }
+    const boxesAt = (x, z) => bgrid.get(Math.floor(x / BCELL) * 100003 + Math.floor(z / BCELL)) || [];
+    /** 点所在的站体；padV：横向额外放宽（本线轨道吸附用：上下行在站内可能分开 20 多米） */
+    const inBox = (x, z, pad = 0, num = null, padV = 0) => {
+      for (const b of boxesAt(x, z)) {
+        if (num != null && b.l.num !== num) continue;
         const dx = x - b.cx, dz = z - b.cz;
-        if (Math.abs(dx) > 120 || Math.abs(dz) > 120) continue;
         const u = dx * b.ux + dz * b.uz, v = dx * b.vx + dz * b.vz;
-        if (Math.abs(u) < HALL_L / 2 + pad && Math.abs(v) < HALL_W / 2 + pad) return b;
+        if (Math.abs(u) < HALL_L / 2 + pad && Math.abs(v) < HALL_W / 2 + pad + padV) return b;
       }
       return null;
     };
 
-    // —— 隧道 ——
-    const tun = new Mesher();
-    const RING = [[-2.2, 0], [2.2, 0], [2.7, 1.5], [2.6, 3.2], [1.6, 4.6], [0, 5.0], [-1.6, 4.6], [-2.6, 3.2], [-2.7, 1.5]];
-    const tunSegs = []; // 步行地面查询：[ax, az, ay, bx, bz, by]
-    const conc = c3('#7d8185'), dark = c3('#3a3c3f'), lamp = c3('#fff3d6'), rail = c3('#55575a');
-    const paths = []; // 列车路径 {num, pts:[[x,y,z,under]], cum}
+    // —— 轨道路径（隧道、列车、步行共用）：20 m 重采样、轨面高程平滑；站体内吸附到站台两侧股道 ——
+    const paths = [];
     for (const L of D.lines) {
-      const lc = c3(L.color);
-      const ringCol = RING.map((_, i) => (i === 5 ? lamp : i === 2 || i === 8 ? lc : i < 2 ? rail : i === 4 || i === 6 ? conc.clone().lerp(lamp, 0.35) : conc));
-      for (const p of L.paths) {
-        // 重采样
+      const ps = linePts.get(L.num).slice().sort((a, b) => b.length - a.length);
+      ps.forEach((p, pi) => {
+        if (p.length < 2) return;
         const S = [];
-        for (let i = 0; i + 5 < p.length; i += 3) {
-          const ax = p[i], az = p[i + 1], ad = p[i + 2], bx = p[i + 3], bz = p[i + 4], bd = p[i + 5];
-          const len = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(len / TUN_STEP));
-          for (let k = 0; k < n; k++) {
-            const t = k / n;
-            S.push([ax + (bx - ax) * t, az + (bz - az) * t, ad + (bd - ad) * t]);
-          }
+        for (let i = 1; i < p.length; i++) {
+          const [ax, az, ad] = p[i - 1], [bx, bz, bd] = p[i];
+          const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / TUN_STEP));
+          for (let k = 0; k < n; k++) { const t = k / n; S.push([ax + (bx - ax) * t, az + (bz - az) * t, ad + (bd - ad) * t]); }
         }
-        S.push([p[p.length - 3], p[p.length - 2], p[p.length - 1]]);
-        // 轨面高程：地面高程 − 埋深，前后平滑（地形起伏不传给轨道）
+        S.push(p[p.length - 1].slice());
         const raw = S.map(([x, z, d]) => (d > 0 ? H(x, z) - d : H(x, z) + 0.5));
-        const ys = raw.map((_, i) => {
-          let s = 0, n = 0;
-          for (let k = Math.max(0, i - 4); k <= Math.min(raw.length - 1, i + 4); k++) { s += raw[k]; n++; }
-          return s / n;
+        const ys = raw.map((_, i) => { let s = 0, n = 0; for (let k = Math.max(0, i - 4); k <= Math.min(raw.length - 1, i + 4); k++) { s += raw[k]; n++; } return s / n; });
+        const pts = S.map(([x, z, d], i) => {
+          const b = d > 0 ? inBox(x, z, 0, L.num, 14) : null;
+          if (!b) return [x, ys[i], z, d > 0, null];
+          const dx = x - b.cx, dz = z - b.cz, u = dx * b.ux + dz * b.uz, v = dx * b.vx + dz * b.vz;
+          const vv = (v >= 0 ? 1 : -1) * TRACK_V;
+          return [b.cx + b.ux * u + b.vx * vv, b.yR, b.cz + b.uz * u + b.vz * vv, true, b];
         });
-        const pts = S.map(([x, z, d], i) => [x, ys[i], z, d > 0]);
         const cum = [0];
         for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][2] - pts[i - 1][2]));
-        paths.push({ num: L.num, color: L.color, pts, cum });
-        // 隧道环
-        let prev = null;
-        for (let i = 0; i < pts.length; i++) {
-          const [x, y, z, under] = pts[i];
-          const j = Math.min(pts.length - 1, i + 1), h = Math.max(0, i - 1);
-          let dx = pts[j][0] - pts[h][0], dz = pts[j][2] - pts[h][2];
-          const dl = Math.hypot(dx, dz) || 1;
-          dx /= dl; dz /= dl;
-          const vx = -dz, vz = dx;
-          const ok = under && !inBox(x, z);
-          const ring = ok ? RING.map(([v, hh]) => [x + vx * v, y - 0.3 + hh, z + vz * v]) : null;
-          if (ring && prev) {
-            for (let k = 0; k < RING.length; k++) {
-              const k2 = (k + 1) % RING.length;
-              tun.quad(prev[k], ring[k], ring[k2], prev[k2], ringCol[k], ringCol[k], ringCol[k2], ringCol[k2]);
-            }
-            tunSegs.push([pts[i - 1][0], pts[i - 1][2], pts[i - 1][1], x, z, y]);
-          }
-          prev = ring;
-        }
-      }
+        paths.push({ num: L.num, color: L.color, pts, cum, dir: pi % 2 ? -1 : 1, main: pi < 2 });
+      });
     }
-    const tunMesh = tun.build(mat, '地铁隧道');
-    if (tunMesh) root.add(tunMesh);
+    // 隧道段索引（按 1 km 分块）与步行查询网格
+    const tunCells = new Map(), tunGrid = new Map(), TG = 100;
+    paths.forEach((P, pi) => {
+      for (let i = 1; i < P.pts.length; i++) {
+        const a = P.pts[i - 1], b = P.pts[i];
+        if (!a[3] || !b[3] || a[4] || b[4]) continue;
+        const k = Math.floor(b[0] / TUN_CELL) * 100003 + Math.floor(b[2] / TUN_CELL);
+        if (!tunCells.has(k)) tunCells.set(k, []);
+        tunCells.get(k).push(pi, i);
+        const g = Math.floor(b[0] / TG) * 100003 + Math.floor(b[2] / TG);
+        if (!tunGrid.has(g)) tunGrid.set(g, []);
+        tunGrid.get(g).push([a[0], a[2], a[1], b[0], b[2], b[1]]);
+      }
+    });
 
-    // —— 车站 ——
-    const st = new Mesher(), gl = new Mesher();
-    const floorC = c3('#cfcac0'), wallC = c3('#e7e4dc'), ceilC = c3('#b9bcc0'), colC = c3('#dcd8cf'), trackC = c3('#45474a');
-    const lightC = c3('#ffffff'), gateC = c3('#8c939a'), stairC = c3('#a8a49c');
-    for (const b of boxes) {
-      const F = b.F, lc = c3(lineColor(b.l.num));
-      const hl = HALL_L / 2, hw = HALL_W / 2, pl = PLAT_L / 2, pw = PLAT_W / 2;
-      const yTop = PLAT_H + LVL_H, yC0 = yTop + SLAB, yC1 = yC0 + CONC_H;
-      // 站台层：轨行区地面、岛式站台、侧墙（带线路色腰线）、顶棚、端墙
-      st.box(F, -hl, hl, -hw, hw, -0.6, -0.5, trackC);
-      st.box(F, -pl, pl, -pw, pw, -0.5, PLAT_H, c3('#9c978d'), floorC);
-      st.quad(F(-hl, -hw, -0.5), F(hl, -hw, -0.5), F(hl, -hw, yTop), F(-hl, -hw, yTop), wallC, wallC, wallC.clone().multiplyScalar(0.85), wallC.clone().multiplyScalar(0.85));
-      st.quad(F(-hl, hw, -0.5), F(hl, hw, -0.5), F(hl, hw, yTop), F(-hl, hw, yTop), wallC, wallC, wallC.clone().multiplyScalar(0.85), wallC.clone().multiplyScalar(0.85));
-      for (const v of [-hw + 0.02, hw - 0.02]) st.quad(F(-hl, v, 2.2), F(hl, v, 2.2), F(hl, v, 2.8), F(-hl, v, 2.8), lc);
-      st.quad(F(-hl, -hw, yTop), F(hl, -hw, yTop), F(hl, hw, yTop), F(-hl, hw, yTop), ceilC);
-      for (const u of [-hl, hl]) st.quad(F(u, -hw, -0.5), F(u, hw, -0.5), F(u, hw, yC1), F(u, -hw, yC1), wallC.clone().multiplyScalar(0.8));
-      // 站台柱列、灯带、屏蔽门（玻璃 + 线路色门楣）
-      for (let u = -pl + 6; u <= pl - 6; u += 9) for (const v of [-2.6, 2.6]) st.box(F, u - 0.45, u + 0.45, v - 0.45, v + 0.45, PLAT_H, yTop, colC);
-      for (const v of [-4.2, 0, 4.2]) st.quad(F(-pl, v - 0.35, yTop - 0.05), F(pl, v - 0.35, yTop - 0.05), F(pl, v + 0.35, yTop - 0.05), F(-pl, v + 0.35, yTop - 0.05), lightC);
-      for (const v of [-pw, pw]) {
-        gl.quad(F(-pl, v, PLAT_H), F(pl, v, PLAT_H), F(pl, v, PLAT_H + 2.3), F(-pl, v, PLAT_H + 2.3), c3('#bfe3f2'));
-        st.quad(F(-pl, v, PLAT_H + 2.3), F(pl, v, PLAT_H + 2.3), F(pl, v, PLAT_H + 2.75), F(-pl, v, PLAT_H + 2.75), lc);
-        for (let u = -pl; u <= pl; u += 4.2) st.box(F, u - 0.06, u + 0.06, v - 0.06, v + 0.06, PLAT_H, PLAT_H + 2.3, gateC);
-      }
-      // 楼梯/扶梯（站台中部两组，通往站厅）
-      for (const u0 of [-30, 18]) {
-        const a = F(u0, -1.6, PLAT_H), bb = F(u0 + 12, -1.6, yC0), c = F(u0 + 12, 1.6, yC0), d = F(u0, 1.6, PLAT_H);
-        st.quad(a, bb, c, d, stairC);
-        for (const v of [-1.6, 1.6]) st.quad(F(u0, v, PLAT_H), F(u0 + 12, v, yC0), F(u0 + 12, v, yC0 + 1.1), F(u0, v, PLAT_H + 1.1), c3('#6f757b'));
-      }
-      // 站厅层：楼板、地面、顶棚灯格、闸机、侧墙
-      st.box(F, -hl, hl, -hw, hw, yTop, yC0, ceilC, floorC);
-      st.quad(F(-hl, -hw, yC1), F(hl, -hw, yC1), F(hl, hw, yC1), F(-hl, hw, yC1), ceilC);
-      for (let u = -hl + 8; u < hl - 4; u += 12) for (const v of [-6, 0, 6]) st.quad(F(u - 2, v - 1, yC1 - 0.05), F(u + 2, v - 1, yC1 - 0.05), F(u + 2, v + 1, yC1 - 0.05), F(u - 2, v + 1, yC1 - 0.05), lightC);
-      for (const v of [-hw, hw]) st.quad(F(-hl, v, yC0), F(hl, v, yC0), F(hl, v, yC1), F(-hl, v, yC1), wallC);
-      for (const u of [-44, 44]) for (let v = -8; v <= 8; v += 1.6) st.box(F, u - 0.9, u + 0.9, v - 0.15, v + 0.15, yC0, yC0 + 1.0, gateC, c3('#2f3439'));
-      // 顶板（覆土下的结构顶，透视/外部观看时的外壳）
-      st.quad(F(-hl, -hw, yC1 + 0.8), F(hl, -hw, yC1 + 0.8), F(hl, hw, yC1 + 0.8), F(-hl, hw, yC1 + 0.8), c3('#6d6a64'));
-      b.levels = { plat: PLAT_H, conc: yC0 };
-    }
-    // —— 出入口通道：站厅 → 地面出入口（水平段 + 末段斜坡） ——
-    const pass = new Mesher();
-    const exitsLog = [];
-    for (const s of D.stations) {
-      const bs = boxes.filter((b) => b.s === s);
-      if (!bs.length) continue;
-      const b = bs.reduce((a, c) => (c.yR > a.yR ? c : a)); // 最浅的站体
-      const yC0 = b.yR + PLAT_H + LVL_H + SLAB;
-      for (const [ex, ez] of s.exits || []) {
-        const dx = ex - b.cx, dz = ez - b.cz, dist = Math.hypot(dx, dz);
-        if (dist < 20 || dist > 420) continue;
-        const ux = dx / dist, uz = dz / dist, vx = -uz, vz = ux;
-        const g1 = H(ex, ez);
-        const rise = g1 - yC0;
-        const ramp = Math.max(12, Math.min(dist * 0.6, rise * 1.9));
-        const m0 = Math.max(10, dist - ramp);
-        const W = 2.4, HH = 3.4;
-        const sec = [[0, yC0], [m0, yC0], [dist, g1 - 0.2]];
-        for (let k = 0; k < 2; k++) {
-          const [s0, y0] = sec[k], [s1, y1] = sec[k + 1];
-          const P = (s_, v, y) => [b.cx + ux * s_ + vx * v, y, b.cz + uz * s_ + vz * v];
-          pass.quad(P(s0, -W, y0), P(s1, -W, y1), P(s1, W, y1), P(s0, W, y0), floorC);
-          pass.quad(P(s0, -W, y0 + HH), P(s1, -W, y1 + HH), P(s1, W, y1 + HH), P(s0, W, y0 + HH), ceilC);
-          for (const v of [-W, W]) pass.quad(P(s0, v, y0), P(s1, v, y1), P(s1, v, y1 + HH), P(s0, v, y0 + HH), wallC);
-          pass.quad(P(s0, -0.4, y0 + HH - 0.04), P(s1, -0.4, y1 + HH - 0.04), P(s1, 0.4, y1 + HH - 0.04), P(s0, 0.4, y0 + HH - 0.04), lightC);
+    // —— 隧道分块生成（进站后按需） ——
+    const RING = [[-2.2, 0], [2.2, 0], [2.7, 1.5], [2.6, 3.2], [1.6, 4.6], [0, 5.0], [-1.6, 4.6], [-2.6, 3.2], [-2.7, 1.5], [-2.2, 0]];
+    const ringArc = [0];
+    for (let k = 1; k < RING.length; k++) ringArc.push(ringArc[k - 1] + Math.hypot(RING[k][0] - RING[k - 1][0], RING[k][1] - RING[k - 1][1]));
+    const tunnels = new Map(); // key → {group, used}
+    const buildTunnel = (key) => {
+      const M = metroMaterials();
+      const list = tunCells.get(key);
+      const pos = [], col = [], uv = [], lp = [], lc = [];
+      const ringAt = (P, i) => {
+        const [x, y, z] = P.pts[i];
+        const j = Math.min(P.pts.length - 1, i + 1), h = Math.max(0, i - 1);
+        let dx = P.pts[j][0] - P.pts[h][0], dz = P.pts[j][2] - P.pts[h][2];
+        const dl = Math.hypot(dx, dz) || 1;
+        dx /= dl; dz /= dl;
+        return RING.map(([v, hh]) => [x - dz * v, y - 0.3 + hh, z + dx * v]);
+      };
+      for (let n = 0; n < list.length; n += 2) {
+        const P = paths[list[n]], i = list[n + 1];
+        const A = ringAt(P, i - 1), B = ringAt(P, i);
+        const s0 = P.cum[i - 1], s1 = P.cum[i];
+        const lcol = c3(P.color);
+        for (let k = 0; k + 1 < RING.length; k++) {
+          const cc = k === 0 ? c3('#4a4945') : k === 2 || k === 7 ? lcol.clone().multiplyScalar(0.8) : c3('#8a8984').multiplyScalar(0.62);
+          const V = [[A[k], s0, ringArc[k]], [B[k], s1, ringArc[k]], [B[k + 1], s1, ringArc[k + 1]], [A[k + 1], s0, ringArc[k + 1]]];
+          for (const t of [0, 1, 2, 0, 2, 3]) { pos.push(...V[t][0]); col.push(cc.r, cc.g, cc.b); uv.push(V[t][1], V[t][2]); }
         }
-        exitsLog.push([b, ux, uz, m0, dist, yC0, g1]);
+        // 拱顶灯：每段一盏
+        const mx = (A[5][0] + B[5][0]) / 2, my = (A[5][1] + B[5][1]) / 2 - 0.05, mz = (A[5][2] + B[5][2]) / 2;
+        const ex = (B[5][0] - A[5][0]) / 2 * 0.15, ez = (B[5][2] - A[5][2]) / 2 * 0.15, wx = -(B[5][2] - A[5][2]) / 2 * 0.03, wz = (B[5][0] - A[5][0]) / 2 * 0.03;
+        const Q = [[mx - ex - wx, my, mz - ez - wz], [mx + ex - wx, my, mz + ez - wz], [mx + ex + wx, my, mz + ez + wz], [mx - ex + wx, my, mz - ez + wz]];
+        for (const t of [0, 1, 2, 0, 2, 3]) { lp.push(...Q[t]); lc.push(1, 0.93, 0.8); }
       }
-    }
-    for (const [m, n] of [[st.build(mat, '地铁车站'), 0], [gl.build(glass, '屏蔽门'), 1], [pass.build(mat, '出入口通道'), 0]]) if (m) { m.renderOrder = n; root.add(m); }
-
-    // —— 站名牌（站台侧墙每 24 m 一块、站厅两端） ——
-    const { tex, cells } = nameAtlas(D.stations, lineColor, badgeOf);
-    const sp = [], su = [];
-    const signQuad = (a, b, c, d, r) => {
-      sp.push(...a, ...b, ...c, ...a, ...c, ...d);
-      su.push(r[0], r[1], r[2], r[1], r[2], r[3], r[0], r[1], r[2], r[3], r[0], r[3]);
+      const group = new THREE.Group();
+      const mk = (p, c, t, mat, name) => {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+        if (t) g.setAttribute('uv', new THREE.Float32BufferAttribute(t, 2));
+        g.computeVertexNormals();
+        g.computeBoundingSphere();
+        const m = new THREE.Mesh(g, mat);
+        m.name = name;
+        m.matrixAutoUpdate = false;
+        group.add(m);
+      };
+      if (pos.length) mk(pos, col, uv, M.conc, '地铁隧道');
+      if (lp.length) mk(lp, lc, null, M.light, '隧道灯');
+      root.add(group);
+      return { group, used: 0 };
     };
-    for (const b of boxes) {
-      const r = cells.get(b.s);
-      if (!r) continue;
-      const F = b.F, hw = HALL_W / 2 - 0.05;
-      for (let u = -PLAT_L / 2 + 10; u <= PLAT_L / 2 - 10; u += 24) {
-        // 从站台看向侧墙时文字从左到右：-v 侧墙左→右为 +u，+v 侧墙左→右为 -u
-        signQuad(F(u - 3.2, -hw, 3.1), F(u + 3.2, -hw, 3.1), F(u + 3.2, -hw, 4.3), F(u - 3.2, -hw, 4.3), r);
-        signQuad(F(u + 3.2, hw, 3.1), F(u - 3.2, hw, 3.1), F(u - 3.2, hw, 4.3), F(u + 3.2, hw, 4.3), r);
-      }
-      const yC = PLAT_H + LVL_H + SLAB;
-      for (const [u, sgn] of [[-HALL_L / 2 + 0.05, 1], [HALL_L / 2 - 0.05, -1]]) {
-        signQuad(F(u, 4 * sgn, yC + 2.6), F(u, -4 * sgn, yC + 2.6), F(u, -4 * sgn, yC + 4.1), F(u, 4 * sgn, yC + 4.1), r);
-      }
-    }
-    if (sp.length) {
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
-      g.setAttribute('uv', new THREE.Float32BufferAttribute(su, 2));
-      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -2 }));
-      m.name = '站名牌';
-      root.add(m);
-    }
 
-    // —— 列车（6 节编组，车体 + 线路色腰带 + 亮窗） ——
-    const trainGeo = (() => {
-      const m = new Mesher();
-      const body = c3('#e9ecef'), win = c3('#fff4cf'), under = c3('#3a3d40');
-      const F = (u, v, y) => [u, y, v];
-      m.box(F, -9.4, 9.4, -1.4, 1.4, 0.35, 0.9, under);
-      m.box(F, -9.4, 9.4, -1.4, 1.4, 0.9, 3.7, body);
-      for (const v of [-1.41, 1.41]) m.quad(F(-8.8, v, 1.9), F(8.8, v, 1.9), F(8.8, v, 2.9), F(-8.8, v, 2.9), win);
+    // —— 车站：按需生成 ——
+    const stationRecs = new Map();
+    for (const b of boxes) {
+      let r = stationRecs.get(b.s);
+      if (!r) stationRecs.set(b.s, (r = { s: b.s, boxes: [], x: 0, z: 0, built: null, used: 0, idx: stationRecs.size }));
+      r.boxes.push(b);
+    }
+    for (const r of stationRecs.values()) { r.x = r.boxes.reduce((a, b) => a + b.cx, 0) / r.boxes.length; r.z = r.boxes.reduce((a, b) => a + b.cz, 0) / r.boxes.length; }
+    const ensureStation = (r) => {
+      if (!r.built) {
+        r.built = buildStation(r.s, r.boxes, H, lineColor, badgeOf, r.idx + 1);
+        root.add(r.built.group);
+      }
+      return r.built;
+    };
+
+    // —— 列车：沿轨道中心线按站停靠（停站 25 s），每条轨道单向运行，到终点后隐藏折返 ——
+    const geo = carGeometry();
+    // 线路色腰带：车体两侧各一条薄带（不用盒子，免得车厢间隙里露出色块端面）
+    const stripeGeo = (() => {
+      const P = [];
+      for (const z of [-1.412, 1.412]) P.push(-9.3, 1.4, z, 9.3, 1.4, z, 9.3, 1.62, z, -9.3, 1.4, z, 9.3, 1.62, z, -9.3, 1.62, z);
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(m.pos, 3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(m.col, 3));
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+      g.computeVertexNormals();
       return g;
     })();
-    const stripeGeo = new THREE.BoxGeometry(18.8, 0.35, 2.84).translate(0, 1.55, 0);
     const trains = [];
     for (const P of paths) {
       const L = P.cum[P.cum.length - 1];
       if (L < 1500 || !P.pts.some((p) => p[3])) continue;
-      const n = Math.max(1, Math.round(L / 3500));
-      for (let k = 0; k < n; k++) for (const dir of [1, -1]) trains.push({ P, L, s0: (k / n) * 2 * L + (dir < 0 ? L * 0.37 : 0), dir, v: 19 + ((k * 7) % 5) });
+      // 停站位置：路径穿过本线站体处离站中心最近的点
+      const stops = [];
+      let cur = null;
+      for (let i = 0; i < P.pts.length; i++) {
+        const b = P.pts[i][4];
+        if (b && b !== cur) {
+          let bi = i, bd = Infinity, last = i;
+          for (let k = i; k < P.pts.length && P.pts[k][4] === b; k++) { last = k; const d = Math.hypot(P.pts[k][0] - b.cx, P.pts[k][2] - b.cz); if (d < bd) { bd = d; bi = k; } }
+          // 站内的点已吸附在股道上（沿站台轴），用局部 u 把停车位置精确对准站台中心（车门对准屏蔽门）
+          const uOf = (k) => (P.pts[k][0] - b.cx) * b.ux + (P.pts[k][2] - b.cz) * b.uz;
+          const k2 = bi < last ? bi + 1 : bi > i ? bi - 1 : bi;
+          const sgn = k2 === bi ? 1 : Math.sign((uOf(k2) - uOf(bi)) * (k2 - bi)) || 1;
+          stops.push(P.cum[bi] - sgn * uOf(bi));
+        }
+        cur = b;
+      }
+      const seq = P.dir > 0 ? stops : stops.slice().reverse();
+      const ev = []; // [t0, t1, s0, s1]（s0 == s1 为停站）
+      let t = 0;
+      if (seq.length >= 2) {
+        for (let k = 0; k < seq.length; k++) {
+          ev.push([t, t + 25, seq[k], seq[k]]);
+          t += 25;
+          if (k + 1 < seq.length) { const T = Math.abs(seq[k + 1] - seq[k]) / 15 + 8; ev.push([t, t + T, seq[k], seq[k + 1]]); t += T; }
+        }
+        ev.push([t, t + 40, null, null]); // 折返（隐藏）
+        t += 40;
+      }
+      const n = Math.max(1, Math.round(L / 1800)); // 行车间隔约 2~3 分钟
+      for (let k = 0; k < n; k++) trains.push({ P, L, ev, cycle: t, phase: (k / n) * (t || L / 15), dir: P.dir });
     }
     const CARS = 6;
     const nInst = Math.max(1, trains.length * CARS);
-    const bodyIM = new THREE.InstancedMesh(trainGeo, mat, nInst);
-    const stripeIM = new THREE.InstancedMesh(stripeGeo, new THREE.MeshBasicMaterial({ fog: false }), nInst);
-    bodyIM.frustumCulled = stripeIM.frustumCulled = false;
-    bodyIM.name = '地铁列车';
-    trains.forEach((t, i) => { for (let c = 0; c < CARS; c++) stripeIM.setColorAt(i * CARS + c, c3(t.P.color)); });
-    root.add(bodyIM, stripeIM);
+    const stdTrain = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.2, fog: false, side: THREE.DoubleSide });
+    const bodyIM = new THREE.InstancedMesh(geo.body, stdTrain, nInst);
+    const glowIM = new THREE.InstancedMesh(geo.glow, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide, color: new THREE.Color(1.5, 1.5, 1.5) }), nInst);
+    const stripeIM = new THREE.InstancedMesh(stripeGeo, new THREE.MeshStandardMaterial({ roughness: 0.5, fog: false, side: THREE.DoubleSide }), nInst);
+    for (const m of [bodyIM, glowIM, stripeIM]) { m.frustumCulled = false; m.name = '地铁列车'; }
+    trains.forEach((tr) => { tr.col = c3(tr.P.color); });
+    stripeIM.setColorAt(0, trains[0]?.col || c3('#ffffff'));
+    bodyIM.count = glowIM.count = stripeIM.count = 0;
+    root.add(bodyIM, glowIM, stripeIM);
     const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
     const at = (P, s) => {
       const c = P.cum;
@@ -327,119 +356,114 @@ export default {
       const a = P.pts[lo], b = P.pts[hi], t = (s - c[lo]) / Math.max(1e-6, c[hi] - c[lo]);
       return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, b[0] - a[0], b[2] - a[2], a[3] && b[3]];
     };
+    const centerAt = (tr, time) => {
+      if (!tr.ev.length) { let s = (tr.phase + time * 16) % (2 * tr.L); return s > tr.L ? 2 * tr.L - s : s; }
+      const tau = (((time + tr.phase) % tr.cycle) + tr.cycle) % tr.cycle;
+      let lo = 0, hi = tr.ev.length - 1;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (tr.ev[mid][0] <= tau) lo = mid; else hi = mid - 1; }
+      const [t0, t1, s0, s1] = tr.ev[lo];
+      if (s0 == null) return null;
+      const k = Math.min(1, (tau - t0) / (t1 - t0)), e = k * k * (3 - 2 * k);
+      return s0 + (s1 - s0) * e;
+    };
+    // 只把相机 2.5 km 内的列车写进实例（其余不画），实例数随之变化
     const updateTrains = (time) => {
-      trains.forEach((t, i) => {
-        // 往返运行：0..L 正向，L..2L 反向；进站（车站中心 ±60 m）减速停靠效果用速度调制近似
-        let s = (t.s0 + time * t.v) % (2 * t.L);
-        let dir = 1;
-        if (s > t.L) { s = 2 * t.L - s; dir = -1; }
+      const cp = ctx.camera.position;
+      let n = 0;
+      for (const tr of trains) {
+        const sc = centerAt(tr, time);
+        if (sc == null) continue;
+        const ctr = at(tr.P, Math.max(0, Math.min(tr.L, sc)));
+        if (Math.abs(ctr[0] - cp.x) > 2500 || Math.abs(ctr[2] - cp.z) > 2500) continue;
         for (let c = 0; c < CARS; c++) {
-          const sc = Math.min(t.L, Math.max(0, s - dir * c * 19.6));
-          const [x, y, z, dx, dz, under] = at(t.P, sc);
-          const dl = Math.hypot(dx, dz) || 1;
-          const off = 2.2 * dir; // 上下行各走一侧
-          _p.set(x - (dz / dl) * off, y, z + (dx / dl) * off);
+          const s = sc + tr.dir * (2.5 - c) * 19.6;
+          if (s < 0 || s > tr.L) continue;
+          const [x, y, z, dx, dz, under] = at(tr.P, s);
+          if (!under) continue;
+          _p.set(x, y, z);
           _q.setFromAxisAngle(_up, Math.atan2(-dz, dx));
-          _s.setScalar(under ? 1 : 0);
+          _s.setScalar(1);
           _m.compose(_p, _q, _s);
-          bodyIM.setMatrixAt(i * CARS + c, _m);
-          stripeIM.setMatrixAt(i * CARS + c, _m);
+          bodyIM.setMatrixAt(n, _m);
+          glowIM.setMatrixAt(n, _m);
+          stripeIM.setMatrixAt(n, _m);
+          stripeIM.setColorAt(n, tr.col);
+          n++;
         }
-      });
-      bodyIM.instanceMatrix.needsUpdate = stripeIM.instanceMatrix.needsUpdate = true;
+      }
+      bodyIM.count = glowIM.count = stripeIM.count = n;
+      bodyIM.instanceMatrix.needsUpdate = glowIM.instanceMatrix.needsUpdate = stripeIM.instanceMatrix.needsUpdate = true;
+      if (stripeIM.instanceColor) stripeIM.instanceColor.needsUpdate = true;
     };
 
-    // —— 透视俯视叠加层：压暗城市 + 发光线网 + 车站圆点 ——
-    const xray = new THREE.Group();
-    xray.name = 'metro-xray';
-    xray.visible = false;
-    ctx.scene.add(xray);
-    const dim = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
-      vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
-      fragmentShader: 'void main(){ gl_FragColor = vec4(0.01, 0.02, 0.05, 0.62); }',
-    }));
-    dim.frustumCulled = false;
-    dim.renderOrder = 990;
-    xray.add(dim);
-    const uW = { value: 20 };
-    const ribbonMat = new THREE.ShaderMaterial({
-      transparent: true, depthTest: false, depthWrite: false, vertexColors: true, side: THREE.DoubleSide,
-      uniforms: { uW },
-      vertexShader: `attribute vec3 aSide; attribute float aDash; varying vec3 vC; varying float vD;
-        void main(){ vC = color; vD = aDash; vec3 p = position + aSide * uW; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`.replace('attribute vec3 aSide;', 'uniform float uW; attribute vec3 aSide;'),
-      fragmentShader: `varying vec3 vC; varying float vD;
-        void main(){ float a = vD > 0.5 ? 0.95 : (mod(gl_FragCoord.x + gl_FragCoord.y, 10.0) < 5.0 ? 0.9 : 0.35); gl_FragColor = vec4(vC * 1.25, a); }`,
-    });
-    {
-      const pos = [], side = [], col = [], dash = [];
-      for (const P of paths) {
-        const cc = c3(P.color);
-        for (let i = 1; i < P.pts.length; i++) {
-          const a = P.pts[i - 1], b = P.pts[i];
-          const dx = b[0] - a[0], dz = b[2] - a[2], dl = Math.hypot(dx, dz) || 1;
-          const nx = -dz / dl, nz = dx / dl;
-          const ya = H(a[0], a[2]) + 4, yb = H(b[0], b[2]) + 4;
-          const q = [[a[0], ya, a[2], -1], [b[0], yb, b[2], -1], [b[0], yb, b[2], 1], [a[0], ya, a[2], 1]];
-          for (const k of [0, 1, 2, 0, 2, 3]) {
-            pos.push(q[k][0], q[k][1], q[k][2]);
-            side.push(nx * q[k][3], 0, nz * q[k][3]);
-            col.push(cc.r, cc.g, cc.b);
-            dash.push(a[3] && b[3] ? 1 : 0); // 地下实线，高架/地面段虚线
-          }
-        }
-      }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      g.setAttribute('aSide', new THREE.Float32BufferAttribute(side, 3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-      g.setAttribute('aDash', new THREE.Float32BufferAttribute(dash, 1));
-      const m = new THREE.Mesh(g, ribbonMat);
-      m.frustumCulled = false;
-      m.renderOrder = 995;
-      xray.add(m);
-    }
-    {
-      const pos = [], col = [], size = [];
-      for (const s of D.stations) {
-        pos.push(s.x, H(s.x, s.z) + 6, s.z);
-        const tr = s.lines.length > 1;
-        const cc = tr ? c3('#ffffff') : c3(lineColor(s.lines[0].num));
-        col.push(cc.r, cc.g, cc.b);
-        size.push(tr ? 15 : 10);
-      }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-      g.setAttribute('aSize', new THREE.Float32BufferAttribute(size, 1));
-      const m = new THREE.Points(g, new THREE.ShaderMaterial({
-        transparent: true, depthTest: false, depthWrite: false, vertexColors: true,
-        vertexShader: 'attribute float aSize; varying vec3 vC; void main(){ vC = color; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize; }',
-        fragmentShader: 'varying vec3 vC; void main(){ float r = length(gl_PointCoord - 0.5) * 2.0; if (r > 1.0) discard; vec3 c = r > 0.62 ? vec3(0.08, 0.1, 0.14) : vec3(1.0); if (r < 0.62 && r > 0.4) c = vC; gl_FragColor = vec4(c, 1.0); }',
-      }));
-      m.frustumCulled = false;
-      m.renderOrder = 996;
-      xray.add(m);
+    // —— 透视俯视：2D 叠加层 + 车站标注（只在 X 模式显示） ——
+    const xrData = buildXrayData(D.lines, D.stations);
+    const overlay = new XrayOverlay(ctx.renderer.domElement, xrData, H, D.stations);
+    if (!document.getElementById('metro-style')) {
+      const st = document.createElement('style');
+      st.id = 'metro-style';
+      st.textContent = `.label-metrox .label-text{font-size:13px;background:rgba(8,14,30,.82);border-color:rgba(255,255,255,.38)}
+.label-metrox .label-sub{display:flex;gap:3px;margin-top:2px}
+.label-metrox .mx-b{display:inline-block;padding:0 4px;border-radius:3px;color:#fff;font-size:10px;font-weight:700;line-height:14px;font-style:normal;text-shadow:0 1px 1px rgba(0,0,0,.4)}
+.label-metrox .label-dot{height:8px;background:rgba(255,255,255,.75)}
+button.b-metro-under.on{box-shadow:0 0 0 2px rgba(232,181,74,.35)}`;
+      document.head.appendChild(st);
     }
     for (const s of D.stations) {
-      ctx.labels.add(s.n, new THREE.Vector3(s.x, H(s.x, s.z) + 8, s.z), {
-        category: 'metrox', sub: s.lines.map((l) => nameOf.get(l.num)).join(' · '),
-        priority: s.lines.length > 1 ? 1.6 : 1.0, minDist: 0, maxDist: 60000,
+      const [x, z] = xrData.pos.get(s) || [s.x, s.z];
+      const nums = [...new Set(s.lines.map((l) => l.num))];
+      const sub = nums.map((n) => `<i class="mx-b" style="background:${lineColor(n)}">${n < 100 ? n + '号线' : nameOf.get(n)}</i>`).join('');
+      const it = ctx.labels.add(s.n, new THREE.Vector3(x, H(x, z) + 60, z), {
+        category: 'metrox', sub, priority: nums.length > 1 ? 2.2 : 1.2, minDist: 0, maxDist: 60000,
       });
+      // 线路色标比站名宽时按色标宽度做碰撞（换乘站两三个色标并排）
+      if (it) it.labelWidth = Math.max(it.labelWidth, nums.length * 44 + 8);
     }
     ctx.labels.hidden.add('metrox');
 
+    // —— 文字标注层：透视时隐藏路名/小区名（地名只留车站），地下时全部隐藏；用 visibility 隐藏，不改用户的开关状态 ——
+    const textLayers = () => {
+      const A = app();
+      return [['labels', ctx.labels, ctx.labels.root], ['roads', A.roadNames, A.roadNames?.root], ['estates', A.estates?.labels, A.estates?.labels?.root]];
+    };
+    const applyText = () => {
+      for (const [k, obj, el] of textLayers()) {
+        if (!obj || !el) continue;
+        const hide = state.under || (state.xray && k !== 'labels');
+        el.style.visibility = hide ? 'hidden' : '';
+        // 隐藏期间停掉其逐帧计算；恢复时以 DOM 的 display（即用户开关的最后状态）为准
+        obj.visible = hide ? false : el.style.display !== 'none';
+      }
+    };
+    const setButton = () => {
+      const btn = document.querySelector('.b-metro-under');
+      if (!btn) return;
+      btn.textContent = state.under ? `返回地面（U）· ${state.station}站` : '进入地铁·地下浏览（U）';
+      btn.classList.toggle('on', state.under);
+    };
+
     // —— 模式切换 ——
-    const state = { xray: false, under: false, saved: null, hidden: [], floorY: null };
+    const state = { xray: false, under: false, saved: null, hidden: [], xrHid: [], surface: null, station: null, env: null, frame: 0 };
     const setXray = (on, fly = true) => {
       if (on === state.xray) return;
       state.xray = on;
-      xray.visible = on;
-      on ? ctx.labels.hidden.delete('metrox') : ctx.labels.hidden.add('metrox');
-      const C = ctx.controls, cam = ctx.camera;
-      if (!C || !fly) return;
+      overlay.setVisible(on);
+      const L = ctx.labels;
       if (on) {
-        state.saved = { p: cam.position.clone(), q: cam.quaternion.clone() };
+        // 只显示车站标注：其他类别（地标、POI、片区、行政区……）暂时隐藏，记下是本模块隐藏的哪些
+        state.xrHid = [];
+        for (const it of L.items) if (it.category !== 'metrox' && !L.hidden.has(it.category)) { L.hidden.add(it.category); state.xrHid.push(it.category); }
+        L.hidden.delete('metrox');
+      } else {
+        for (const c of state.xrHid) L.hidden.delete(c);
+        state.xrHid = [];
+        L.hidden.add('metrox');
+      }
+      applyText();
+      const C = ctx.controls, cam = ctx.camera;
+      if (!C || !fly) { if (!on) state.saved = null; return; }
+      if (on) {
+        state.saved = { p: cam.position.clone(), q: cam.quaternion.clone(), mode: C.mode };
         // 视线与地面交点（或相机正下方）作为俯视中心；高度按城区尺度
         const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
         let tx = cam.position.x, tz = cam.position.z;
@@ -449,78 +473,180 @@ export default {
       } else if (state.saved) {
         const s = state.saved;
         const tgt = new THREE.Vector3(0, 0, -100).applyQuaternion(s.q).add(s.p);
-        C.flyTo(s.p, tgt, { duration: 1.8 });
+        const mode = s.mode;
+        C.flyTo(s.p, tgt, {
+          duration: 1.8,
+          onArrive: () => { cam.quaternion.copy(s.q); C._syncAnglesFromCamera(); if (mode && mode !== 'fly') C.setMode(mode); },
+        });
         state.saved = null;
       }
     };
     const floorAt = (x, z, y) => {
-      const b = inBox(x, z, 0.5);
-      if (b) {
-        const dx = x - b.cx, dz = z - b.cz, v = Math.abs(dx * b.vx + dz * b.vz);
-        const yC = b.yR + b.levels.conc;
-        if (y > yC - 0.5) return yC;                       // 站厅层
-        return v < PLAT_W / 2 ? b.yR + PLAT_H : b.yR - 0.5; // 站台 / 轨行区
+      const foot = y - (ctx.controls?.eye ?? 1.7);
+      let best = null;
+      for (const b of boxesAt(x, z)) {
+        const f = boxFloor(b, x, z, foot);
+        if (f != null && (best == null || (f <= foot + 0.7 && f > best) || (best > foot + 0.7 && f < best))) best = f;
       }
-      // 出入口通道
-      for (const [bb, ux, uz, m0, dist, yC0, g1] of exitsLog) {
-        const dx = x - bb.cx, dz = z - bb.cz, s = dx * ux + dz * uz, v = Math.abs(-dx * uz + dz * ux);
-        if (v < 2.6 && s > 0 && s < dist) {
-          const yy = s < m0 ? yC0 : yC0 + (g1 - 0.2 - yC0) * ((s - m0) / (dist - m0));
-          if (Math.abs(yy - (y - 1.7)) < 4) return yy;
-        }
+      if (best != null) return best;
+      // 出入口通道（已生成的车站）
+      for (const r of stationRecs.values()) {
+        if (!r.built || Math.abs(r.x - x) > 700 || Math.abs(r.z - z) > 700) continue;
+        const y = passageFloor(r.built.runs, x, z, foot);
+        if (y != null) return y;
       }
       // 隧道
-      let best = null, bd = 6;
-      for (const [ax, az, ay, bx, bz, by] of tunSegs) {
-        if (Math.abs(ax - x) > 30 || Math.abs(az - z) > 30) continue;
-        const ex = bx - ax, ez = bz - az, L2 = ex * ex + ez * ez || 1;
-        const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2));
-        const d = Math.hypot(ax + ex * t - x, az + ez * t - z);
-        if (d < bd) { bd = d; best = ay + (by - ay) * t - 0.3; }
+      let bd = 6, yy = null;
+      const gi = Math.floor(x / TG), gj = Math.floor(z / TG);
+      for (let i = gi - 1; i <= gi + 1; i++) for (let j = gj - 1; j <= gj + 1; j++) {
+        for (const [ax, az, ay, bx, bz, by] of tunGrid.get(i * 100003 + j) || []) {
+          const ex = bx - ax, ez = bz - az, L2 = ex * ex + ez * ez || 1;
+          const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2));
+          const d = Math.hypot(ax + ex * t - x, az + ez * t - z);
+          if (d < bd) { bd = d; yy = ay + (by - ay) * t - 0.3; }
+        }
       }
-      return best;
+      return yy;
     };
-    const setUnder = (on, station = null) => {
+
+    // 地下固定照明：半球光 = 站内漫射，主光 = 顶部灯具方向；曝光锁定、泛光关闭、去掉天空环境反射
+    const _sun = new THREE.Vector3(0.3, 1, 0.18).normalize();
+    const underLighting = () => {
+      const sky = ctx.sky, cam = ctx.camera;
+      if (sky) {
+        sky.hemi.color.set(0xfff7ec);
+        sky.hemi.groundColor.set(0xd3cdc3);
+        sky.hemi.intensity = 2.2;
+        sky.sun.color.set(0xfff3e2);
+        sky.sun.intensity = 1.5;
+        sky.sun.target.position.copy(cam.position);
+        sky.sun.target.updateMatrixWorld();
+        sky.sun.position.copy(cam.position).addScaledVector(_sun, 400);
+        ctx.renderer.toneMappingExposure = EXPOSURE * (sky.exposureScale ?? 1);
+      }
+      const post = app().post;
+      if (post?.bloom) post.bloom.enabled = false;
+      if (ctx.scene.environment) { state.env = ctx.scene.environment; ctx.scene.environment = null; }
+      // 用户在地下改了标注开关：保持隐藏（离开时按开关状态恢复）
+      for (const [, obj, el] of textLayers()) if (obj && el && obj.visible) obj.visible = false;
+    };
+
+    /** keepCamera：出站但不动相机（地下时按了预设视角/俯视，相机已在飞往地面目标） */
+    const setUnder = (on, station = null, { keepCamera = false } = {}) => {
       if (on === state.under) return;
       const C = ctx.controls, cam = ctx.camera;
       if (on) {
-        setXray(false, false);
         let b = null;
-        if (station) b = boxes.find((q) => q.s === station) || null;
+        if (station) {
+          // station：车站对象、站名，或“站名:线号”（换乘站指定站体）
+          const [nm, num] = typeof station === 'string' ? station.split(':') : [null, null];
+          b = boxes.find((q) => (q.s === station || q.s.n === nm) && (!num || q.l.num === +num)) || null;
+        }
         if (!b) {
           let bd = Infinity;
           for (const q of boxes) { const d = Math.hypot(q.cx - cam.position.x, q.cz - cam.position.z); if (d < bd) { bd = d; b = q; } }
         }
         if (!b) return;
+        // 进站前视点：从透视模式进站时取进入透视前的视点
+        state.surface = state.xray && state.saved
+          ? { p: state.saved.p.clone(), q: state.saved.q.clone(), mode: state.saved.mode || 'fly' }
+          : { p: cam.position.clone(), q: cam.quaternion.clone(), mode: C ? C.mode : 'fly' };
+        setXray(false, false);
         state.under = true;
-        state.surface = { p: cam.position.clone(), q: cam.quaternion.clone() };
+        state.station = b.s.n;
         state.hidden = [];
         for (const o of ctx.scene.children) if (o !== root && o.visible && !o.isLight && !o.isCamera) { o.visible = false; state.hidden.push(o); }
         root.visible = true;
-        state.labelsWere = ctx.labels.visible;
-        ctx.labels.setVisible(false);
+        state.env = ctx.scene.environment;
+        ctx.scene.environment = null;
+        state.bloomWas = app().post?.bloom?.enabled;
+        const rec = stationRecs.get(b.s);
+        if (rec) { ensureStation(rec); rec.used = state.frame; }
+        streamNear(true);
         if (C) {
           C.tween = null;
           C.groundFn = (x, z, y) => floorAt(x, z, y);
           C.setMode('walk');
-          cam.position.set(b.cx + b.vx * 2, b.yR + PLAT_H + C.eye, b.cz + b.vz * 2);
+          C.velocity.set(0, 0, 0);
+          C.vy = 0;
+          // 出生点：站台中线、两排柱之间（u=0 那对柱子在身体两侧、视野外），面朝站台纵深（+u），前方 8 m 内无遮挡
+          const p = b.F(1.0, 0, PLAT_H + C.eye);
+          cam.position.set(p[0], p[1], p[2]);
           C.yaw = Math.atan2(-b.ux, -b.uz);
-          C.pitch = 0;
+          C.pitch = -0.02;
+          C._lastUnder = b.yR + PLAT_H;
         }
-        state.station = b.s.n;
+        underLighting();
       } else {
         state.under = false;
         for (const o of state.hidden) o.visible = true;
         state.hidden = [];
         root.visible = false;
-        ctx.labels.setVisible(state.labelsWere !== false);
-        if (C) {
-          C.groundFn = null;
-          C.setMode('fly');
-          const p = cam.position;
-          cam.position.set(p.x, H(p.x, p.z) + 60, p.z);
-          C.pitch = -0.35;
+        const sky = ctx.sky;
+        ctx.scene.environment = sky && sky.envEnabled !== false ? (sky.envRT?.texture ?? state.env) : null;
+        state.env = null;
+        const post = app().post, dv = app().display?.values;
+        if (post) {
+          if (dv && post.setBloom) post.setBloom(dv.bloom, dv.bloomStrength);
+          else if (post.bloom && state.bloomWas != null) post.bloom.enabled = state.bloomWas;
         }
+        if (C && keepCamera) {
+          C.groundFn = null;
+          C._lastUnder = undefined;
+        } else if (C) {
+          C.groundFn = null;
+          C._lastUnder = undefined;
+          C.tween = null;
+          C.velocity.set(0, 0, 0);
+          C.vy = 0;
+          const s = state.surface;
+          if (s) {
+            cam.position.copy(s.p);
+            cam.quaternion.copy(s.q);
+            C._syncAnglesFromCamera();
+            if (C.mode !== s.mode) C.setMode(s.mode === 'walk' || s.mode === 'orbit' ? s.mode : 'fly');
+          } else {
+            C.setMode('fly');
+            const p = cam.position;
+            cam.position.set(p.x, H(p.x, p.z) + 60, p.z);
+            C.pitch = -0.35;
+          }
+        }
+        state.surface = null;
+      }
+      applyText();
+      setButton();
+    };
+
+    // 地下：按相机位置生成/显示附近车站与隧道块
+    const streamNear = (force = false) => {
+      const cp = ctx.camera.position;
+      const recs = [...stationRecs.values()].map((r) => [Math.hypot(r.x - cp.x, r.z - cp.z), r]).sort((a, b) => a[0] - b[0]);
+      let built = 0;
+      for (const [d, r] of recs) {
+        const want = d < STATION_R;
+        if (want && !r.built && (force || built < 1)) { ensureStation(r); built++; }
+        if (r.built) { r.built.group.visible = want; if (want) r.used = state.frame; }
+      }
+      const live = recs.filter(([, r]) => r.built);
+      if (live.length > MAX_BUILT) {
+        live.sort((a, b) => a[1].used - b[1].used);
+        for (const [d, r] of live.slice(0, live.length - MAX_BUILT)) if (d >= STATION_R) { root.remove(r.built.group); r.built.dispose(); r.built = null; }
+      }
+      const ci = Math.floor(cp.x / TUN_CELL), cj = Math.floor(cp.z / TUN_CELL);
+      for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) {
+        const k = i * 100003 + j;
+        if (tunCells.has(k) && !tunnels.has(k) && (force || built < 2)) { tunnels.set(k, buildTunnel(k)); built++; }
+      }
+      for (const [k, t] of tunnels) {
+        const i = Math.round(k / 100003), j = k - i * 100003;
+        const near = Math.abs(i - ci) <= 1 && Math.abs(j - cj) <= 1;
+        t.group.visible = near;
+        if (near) t.used = state.frame;
+      }
+      if (tunnels.size > 40) {
+        const old = [...tunnels].filter(([, t]) => !t.group.visible).sort((a, b) => a[1].used - b[1].used).slice(0, tunnels.size - 40);
+        for (const [k, t] of old) { root.remove(t.group); t.group.traverse((o) => o.geometry?.dispose()); tunnels.delete(k); }
       }
     };
 
@@ -530,26 +656,52 @@ export default {
       get underground() { return state.under; },
       get station() { return state.station; },
       stations: D.stations, lines: D.lines,
+      /** 诊断：已生成的车站与隧道块 */
+      /** 诊断：站体框架（截图脚本定位相机用） */
+      frame: (name, num) => { const b = boxes.find((q) => q.s.n === name && (!num || q.l.num === num)); return b && { cx: b.cx, cz: b.cz, ux: b.ux, uz: b.uz, vx: b.vx, vz: b.vz, yR: b.yR, num: b.l.num }; },
+      /** 诊断：已生成车站的出入口通道折线 [[x, z, s], ...] */
+      passages: (name) => { for (const r of stationRecs.values()) if (r.s.n === name && r.built) return r.built.runs.map((q) => q.pts); return null; },
+      /** 诊断：相机 r 米内的列车（车组中心距离、是否停站） */
+      trainsNear: (r = 300) => {
+        const cp = ctx.camera.position, time = (performance.now() - t0) / 1000, out = [];
+        for (const tr of trains) {
+          const sc = centerAt(tr, time);
+          if (sc == null) continue;
+          const [x, y, z] = at(tr.P, Math.max(0, Math.min(tr.L, sc)));
+          const d = Math.hypot(x - cp.x, z - cp.z);
+          if (d < r) out.push({ d: +d.toFixed(1), dy: +(y - cp.y).toFixed(1), x, z, stopped: Math.abs(centerAt(tr, time + 0.5) - sc) < 0.01, num: tr.P.num });
+        }
+        return out;
+      },
+      stats: () => ({ stations: [...stationRecs.values()].filter((r) => r.built).map((r) => r.s.n), tunnels: tunnels.size, boxes: boxes.length, trains: trains.length }),
     };
     ctx.metro = api;
-    console.warn(`[metro] ${D.lines.length} 条线，${D.stations.length} 站（地下站体 ${boxes.length}），出入口通道 ${exitsLog.length}，列车 ${trains.length}`);
-    let t0 = performance.now();
+    let exitsN = 0;
+    for (const s of D.stations) exitsN += (s.exits || []).filter((e) => e[2]).length;
+    console.log(`[metro] ${D.lines.length} 条线，${D.stations.length} 站（地下站体 ${boxes.length}），出入口 ${exitsN}，列车 ${trains.length}`);
+    const t0 = performance.now();
     return {
       api,
       update() {
-        const time = (performance.now() - t0) / 1000;
-        if (state.xray) uW.value = THREE.MathUtils.clamp((ctx.camera.position.y - H(ctx.camera.position.x, ctx.camera.position.z)) * 0.0022, 3, 60);
-        if (state.under) updateTrains(time);
+        state.frame++;
+        if (state.xray) overlay.draw(ctx.camera);
+        // 地下时按了预设视角 / 俯视（相机开始飞行）：自动回到地面世界，相机按飞行目标走
+        if (state.under && ctx.controls?.tween) setUnder(false, null, { keepCamera: true });
+        if (state.under) {
+          underLighting();
+          if (state.frame % 10 === 0) streamNear();
+          updateTrains((performance.now() - t0) / 1000);
+        }
       },
       setLayer(layer, v) {
         if (layer === 'metro') setXray(v);
-        if (layer === 'trains') bodyIM.visible = stripeIM.visible = v; // 画质面板“列车”开关
+        if (layer === 'trains') bodyIM.visible = glowIM.visible = stripeIM.visible = v; // 画质面板“列车”开关
       },
       dispose() {
+        for (const r of stationRecs.values()) if (r.built) r.built.dispose();
         root.traverse((o) => o.geometry?.dispose());
-        xray.traverse((o) => o.geometry?.dispose());
-        tex.dispose();
-        ctx.scene.remove(root, xray);
+        overlay.dispose();
+        ctx.scene.remove(root);
       },
     };
   },
