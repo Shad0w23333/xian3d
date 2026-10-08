@@ -11,7 +11,7 @@
 //   （远处只画杆 + 灯头盒）；桥墩分近（投影）/远（低模、不投影）两组。
 import * as THREE from 'three';
 import { LIFT, roadY, bridgeLift, prepareRoadProfiles, profileStepFn } from '../core/roadheight.js';
-import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, pairGapAt, markParkWalkways, F, KIND, LAMP } from '../arch/roads_net.js';
+import { buildRoadNet, placeLamps, buildRailNet, lampStyleFor, pairGapAt, markParkWalkways, pavingCuts, carriageIndex, F, KIND, LAMP } from '../arch/roads_net.js';
 import { SurfWriter, StructWriter, sampleSections } from '../arch/roads_mesh.js';
 import { createSurfaceMaterial, createStructMaterial } from '../arch/roads_shader.js';
 import { lampGeometries, lampGeometriesLow, lampMaterial, lampPointsMaterial } from '../arch/roads_lamps.js';
@@ -19,7 +19,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { shadowReach } from '../arch/perf-lod.js';
 
 const LAMPL = 2048, LAMPR = 4096, LAMPM = 8192;
-const KIND_SLAB = 6, KIND_MEDIAN = 3, KIND_HEDGE = 8, KIND_FENCE = 9;
+const KIND_SLAB = 6, KIND_MEDIAN = 3, KIND_HEDGE = 8, KIND_FENCE = 9, KIND_XWALK = 10;
 const T_MAJOR = 5000, T_MINOR = 5000, T_FAR = 10000; // 核心区外路面 10 km 分块（原 30 km：从任何视角都整块在视锥内）
 const T_STRUCT = 2500; // 桥梁/高架结构分块
 const T_SUB = 2500; // 人行道/路缘石/分隔带/钢轨（细小附属，只在相机附近显示）分块
@@ -39,9 +39,57 @@ const STRUCT_R = [6000, 12000, 40000, 40000]; // 桥梁结构块显示半径（�
 const FAR_TILE_R = [9000, 20000, 1e9, 1e9]; // 核心区外路面分块显示半径（三维距离；低/中画质远郊公路由影像表现）
 const MAJOR_TILE_R = [5000, 14000, 1e9, 1e9]; // 核心区主要道路分块显示半径（三维距离；低画质远处/高空俯视时路网由影像表现）
 
+// prepare 求出的路网（路网数据未被后续模块替换时 build 直接复用，省一次 buildRoadNet）
+const netCache = new WeakMap();
+
 export default {
   id: 'roads',
   name: '道路与轨道交通',
+
+  // 双幅路中央分隔带在人行横道处开口（行人过街通道）：登记成“让树”排除区，植被模块（prepare 里就开始后台种植）
+  // 不在开口里种分隔带的树、灌木球与绿篱。只登记，不缓存路网（后续模块的 prepare 还可能改路网数据）。
+  prepare(ctx) {
+    try {
+      const t0 = performance.now();
+      const pa = ctx.geo.project(108.84, 34.35), pb = ctx.geo.project(109.06, 34.17);
+      const inCore = (x, z) => x > pa.x && x < pb.x && z > pa.z && z < pb.z;
+      markParkWalkways(ctx.data.roads, ctx.data.landuse);
+      const net = buildRoadNet(ctx.data.roads, { inDetail: inCore });
+      netCache.set(ctx.data.roads, { feats: ctx.data.roads.features, len: ctx.data.roads.features.length, net });
+      let n = 0;
+      for (const E of net.edges) {
+        if (!(E.flags & F.PAIRED) || E.b) continue;
+        const f = net.feats[E.fi], p = f.p, ch = net.chain[E.fi];
+        const ends = [];
+        if (E.flags & F.CW0 && E.R0 > 0) ends.push([E.s0 + E.R0 + 0.6, E.s0 + E.R0 + 6.6]);
+        if (E.flags & F.CW1 && E.R1 > 0) ends.push([E.s1 - E.R1 - 6.6, E.s1 - E.R1 - 0.6]);
+        for (const [a, b] of ends) {
+          const at = (s) => {
+            let i = 0;
+            while (i < ch.length - 2 && ch[i + 1] < s) i++;
+            const L = ch[i + 1] - ch[i] || 1, t = Math.max(0, Math.min(1, (s - ch[i]) / L));
+            const dx = (p[i * 2 + 2] - p[i * 2]) / L, dz = (p[i * 2 + 3] - p[i * 2 + 1]) / L;
+            return [p[i * 2] + dx * L * t, p[i * 2 + 1] + dz * L * t, -dz, dx];
+          };
+          const [mx, mz, rx, rz] = at((a + b) / 2);
+          if (!inCore(mx, mz)) continue;
+          const g = pairGapAt(net, E, mx, mz, rx, rz);
+          if (g === null || g < 0.8 || g > 70) continue;
+          const o0 = E.W / 2 - 0.2, o1 = E.W / 2 + g / 2 + 0.3;
+          const P = [];
+          for (const [s, o] of [[a, o0], [b, o0], [b, o1], [a, o1]]) {
+            const [x, z, qx, qz] = at(s);
+            P.push(x - qx * o, z - qz * o);
+          }
+          ctx.exclusions.add({ points: P, name: 'roads:分隔带过街开口' }, { buildings: false, trees: true, roads: false, pois: false });
+          n++;
+        }
+      }
+      console.warn(`[roads] prepare：分隔带过街开口 ${n} 处（让树），${(performance.now() - t0).toFixed(0)} ms`);
+    } catch (e) {
+      console.warn('[roads] prepare 失败（分隔带开口不让树）', e);
+    }
+  },
 
   async build(ctx) {
     const t0 = performance.now();
@@ -70,9 +118,16 @@ export default {
     const T0 = performance.now();
     // 景区/公园里的无名支路（寺院甬道、园路）按步行道画：石板铺装、不布路灯（traffic 同一规则不跑车）
     const nPark = markParkWalkways(ctx.data.roads, ctx.data.landuse);
-    const net = buildRoadNet(ctx.data.roads, { inDetail: inCore });
+    const cached = netCache.get(ctx.data.roads);
+    const net = cached && cached.feats === ctx.data.roads.features && cached.len === ctx.data.roads.features.length ? cached.net : buildRoadNet(ctx.data.roads, { inDetail: inCore });
+    netCache.delete(ctx.data.roads);
     const T1 = performance.now();
     const { edges, feats, info, chain, total } = net;
+    // 步道/步行街落在车行道里的部分不画（否则一条铺装横穿车行道）；横穿主次干道处记路段人行横道（E.mids）
+    const TC = performance.now();
+    const cIdx = carriageIndex(net, inCore);
+    const pc = pavingCuts(net, inCore, cIdx);
+    console.warn(`[roads] 步道剔除车行道重叠 ${pc.cuts.size} 条、路段人行横道 ${pc.nMid} 处，${(performance.now() - TC).toFixed(0)} ms`);
     // 双幅路互相配对的要素：对向一幅也会建它那一半中分带（绿篱内侧封口面可省）
     const pairedBy = new Map();
     for (const E of edges) {
@@ -138,7 +193,8 @@ export default {
 
     // —— 通用条带发射：pts 为从“左”到“右”越过外表面的剖面点 {o, dy, u, abs?}；nrm=[no, ny] ——
     const JUNC = [0, 0, 0, 0];
-    function band(W, secs, iA, iB, ys, pts, nrm, attr, E) {
+    const DET0 = [0, 0, 0, 0];
+    function band(W, secs, iA, iB, ys, pts, nrm, attr, E, det = DET0) {
       const np = pts.length;
       W.ensure((iB - iA + 1) * np, (iB - iA) * (np - 1) * 6);
       kindTris[attr[0]] = (kindTris[attr[0]] || 0) + (iB - iA) * (np - 1) * 2;
@@ -157,7 +213,7 @@ export default {
         const base = W.n;
         for (let k = 0; k < np; k++) {
           const p = pts[k];
-          W.v(cx - rx * p.o, ys[i] + p.dy, cz - rz * p.o, nx, ny, nz, p.u, secs.s[i], attr, JUNC);
+          W.v(cx - rx * p.o, ys[i] + p.dy, cz - rz * p.o, nx, ny, nz, p.u, secs.s[i], attr, JUNC, det);
         }
         if (prev >= 0)
           for (let k = 0; k < np - 1; k++) {
@@ -224,7 +280,58 @@ export default {
       return b;
     }
 
+    /** 步长函数加断点：断面一定落在 br（升序）上的各里程处 */
+    function withBreaks(stepFn, br) {
+      const B = Array.from(new Set(br)).sort((a, b) => a - b);
+      return (s) => {
+        let st = stepFn(s);
+        for (const b of B) if (b > s + 0.04) { st = Math.min(st, b - s); break; }
+        return st;
+      };
+    }
+    /**
+     * 人行道缘石坡道规划（一侧）：
+     *   端部坡道：路口处人行道最后 1.4 m 整幅降到路面 +3 cm（转角坡道），带提示盲道；
+     *   过街坡道：本路进口有人行横道时，在斑马线落脚处（R+1.6 ~ R+5.4 m）路缘侧 1.5 m 降坡，两侧 0.9 m 渐变；
+     *   出入口坡道：小区/单位/支路在路段中间接入（E.drives）处，路缘石降坡、人行道连续（不画提示盲道）。
+     * 返回 {br 断点, at(s) → {w 路缘侧降坡权重, e 整幅降坡权重, t 类型}, n 坡道数}
+     */
+    function rampPlan(E, side, rA, rB) {
+      const zones = [];
+      const add = (a, b, fl, t) => {
+        const a2 = Math.max(a, rA + 0.3), b2 = Math.min(b, rB - 0.3);
+        if (b2 - a2 < 1.2) return;
+        zones.push({ a: a2, b: b2, fl, t });
+      };
+      if (E.flags & F.CW0 && E.R0 > 0) add(E.s0 + E.R0 + 1.6, E.s0 + E.R0 + 5.4, 0.9, 1);
+      if (E.flags & F.CW1 && E.R1 > 0) add(E.s1 - E.R1 - 5.4, E.s1 - E.R1 - 1.6, 0.9, 1);
+      if (E.drives) for (const d of E.drives) if (d.side === side) add(d.s - d.hw - 0.6, d.s + d.hw + 0.6, 1.0, 2);
+      const e0 = E.sw0 > 0, e1 = E.sw1 > 0;
+      const br = [];
+      if (e0) br.push(rA + 0.7, rA + 1.4);
+      if (e1) br.push(rB - 1.4, rB - 0.7);
+      for (const z of zones) br.push(z.a - z.fl, z.a, z.b, z.b + z.fl);
+      const q = { w: 0, e: 0, t: 0 };
+      const at = (s) => {
+        let e = 0;
+        if (e0) e = Math.max(e, 1 - (s - rA) / 1.4);
+        if (e1) e = Math.max(e, 1 - (rB - s) / 1.4);
+        e = Math.max(0, Math.min(1, e));
+        let w = 0, t = 0;
+        for (const z of zones) {
+          const f = s >= z.a && s <= z.b ? 1 : s < z.a ? 1 - (z.a - s) / z.fl : 1 - (s - z.b) / z.fl;
+          if (f > w) { w = f; t = z.t; }
+        }
+        w = Math.max(0, w);
+        if (e > 0.01 && e >= w) t = 1;
+        q.w = w; q.e = e; q.t = t;
+        return q;
+      };
+      return { br: br.filter((b) => b > rA && b < rB), at, n: zones.length + (e0 ? 1 : 0) + (e1 ? 1 : 0) };
+    }
+
     // ================= 道路 =================
+    let nMidDecal = 0, nRamp = 0, tProbe = 0;
     const attr = [0, 0, 0, 0];
     const attrS = [0, 0, 0, 0];
     let nEdges = 0;
@@ -254,9 +361,22 @@ export default {
       const T = core ? (minor ? T_MINOR : T_MAJOR) : T_FAR;
       const tag = core ? (minor ? 'n' : 'm') : 'f';
       const grid = { x0: G0, z0: G0, T };
-      const secs = sampleSections(f.p, ch, sA, sB, stepFn, grid);
+      // 步道/步行街：落在车行道里的区间（pavingCuts）断开；断面落在区间端点与中点上，保证区间内一律无效
+      const cuts = cfg.paving || f._ped ? pc.cuts.get(E.fi) : null;
+      let cutBr = null;
+      if (cuts) {
+        cutBr = [];
+        for (const [a, b] of cuts) if (b > sA && a < sB) cutBr.push(a, (a + b) / 2, b);
+        if (!cutBr.length) cutBr = null;
+      }
+      const secs = sampleSections(f.p, ch, sA, sB, cutBr ? withBreaks(stepFn, cutBr) : stepFn, grid);
       if (!secs) continue;
       const { ys, valid } = sectionYs(secs, f, tot);
+      if (cutBr)
+        for (let i = 0; i < secs.n; i++) {
+          const sv = secs.s[i];
+          for (const [a, b] of cuts) if (sv > a + 0.02 && sv < b - 0.02) { valid[i] = 0; break; }
+        }
       DS[tag + (isBridge ? 'b' : '')] = (DS[tag + (isBridge ? 'b' : '')] || 0) + secs.n;
       DL[tag + (isBridge ? 'b' : '')] = (DL[tag + (isBridge ? 'b' : '')] || 0) + (sB - sA) / 1000;
       const style = lampStyleFor(f);
@@ -270,39 +390,118 @@ export default {
       attr[1] = lanes | ((lb ? S : 0) << 4) | (lvl << 10);
       attr[2] = (E.flags | lb) & 0xffff;
       attr[3] = Math.round(W * 100);
+      // 细节通道：标线位（公交专用道/禁停）+ 两端可用转向（导向箭头按车道数与路口实际出口排布）
+      const detA = [0, E.mark || 0, E.turn0 || 0, E.turn1 || 0];
       // 断面只要左右两点：横向 UV 与世界坐标在着色器里都是线性插值，宽路中点纯属冗余（去掉后宽路三角形减半）
       const pts = cfg.paving ? [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: W }] : [{ o: hw, dy: 0, u: 0 }, { o: -hw, dy: 0, u: 1 }];
       runs(secs, valid, T, tag, (key, kx, kz, iA, iB) => {
-        band(getTile(key, T, kx, kz, minor), secs, iA, iB, ys, pts, TOP, attr, E);
+        band(getTile(key, T, kx, kz, minor), secs, iA, iB, ys, pts, TOP, attr, E, detA);
       });
       nEdges++;
+      // —— 路段人行横道（步道横穿主次干道处，OSM 过街位置）：贴花条带（斑马线 + 两侧停止线），比路面高 1.2 cm ——
+      if (E.mids && !cfg.paving)
+        for (const sm of E.mids) {
+          const a = Math.max(sA, sm - 4.8), b = Math.min(sB, sm + 4.8);
+          if (b - a < 6) continue;
+          const sd = sampleSections(f.p, ch, a, b, () => 2.4, grid);
+          if (!sd) continue;
+          const yd = sectionYs(sd, f, tot);
+          attr[0] = KIND_XWALK;
+          const pseudo = { s0: a, s1: b, R0: 0, R1: 0 };
+          runs(sd, yd.valid, T, tag, (key, kx, kz, iA, iB) => {
+            band(getTile(key, T, kx, kz, minor), sd, iA, iB, yd.ys, [{ o: hw - 0.05, dy: 0.012, u: 0.05 / W }, { o: -hw + 0.05, dy: 0.012, u: 1 - 0.05 / W }], TOP, attr, pseudo, detA);
+          });
+          nMidDecal++;
+        }
 
       // —— 人行道 + 路缘石（核心区、非桥、主要道路） ——
       if (core && cfg.sw > 0 && !isBridge && !cfg.link) {
-        const sw = cfg.sw;
+        const sw = info[E.fi].sw;
+        const bike = !!info[E.fi].bike;
+        const attached = net.attachedTo(E.fi);
+        if (E.pairF >= 0) attached.add(E.pairF);
         for (const side of [1, -1]) {
           const on = side === 1 ? E.swR : E.swL;
           if (!on) continue;
-          const rA = E.s0 + E.sw0 + 0.5, rB = E.s1 - E.sw1 - 0.5;
+          // 路口端退让 sw + 0.5 m；度 2 的接续点（OSM 分段处）不留缝，与下一段人行道接上
+          const rA = E.s0 + (E.sw0 > 0 ? E.sw0 + 0.5 : 0), rB = E.s1 - (E.sw1 > 0 ? E.sw1 + 0.5 : 0);
           if (rB - rA < 4) continue;
-          const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
+          const rp = rampPlan(E, side, rA, rB);
+          const s2 = sampleSections(f.p, ch, rA, rB, rp.br.length ? withBreaks(stepFn, rp.br) : stepFn, grid);
           if (!s2) continue;
           const y2 = sectionYs(s2, f, tot);
           const sideLamp = side === 1 ? lb & LAMPR : lb & (LAMPL | LAMPM) ? LAMPL : 0;
           attrS[1] = (sideLamp ? S << 4 : 0) | (lvl << 10);
           attrS[2] = sideLamp;
           attrS[3] = Math.round(sw * 100);
-          const H = 0.15;
-          const curb = side === 1 ? [{ o: -hw, dy: 0, u: 0 }, { o: -hw, dy: H, u: 0 }] : [{ o: hw, dy: H, u: 0 }, { o: hw, dy: 0, u: 0 }];
-          const top = side === 1 ? [{ o: -hw, dy: H, u: 0 }, { o: -hw - sw, dy: H, u: sw }] : [{ o: hw + sw, dy: H, u: sw }, { o: hw, dy: H, u: 0 }];
+          // 禁停黄线只画在外侧（右侧）路缘；8 = 人非共板非机动车道，16 = 左侧人行道（自行车图标朝 -s）
+          const mk = (side === 1 ? (E.mark || 0) & 6 : 0) | (bike ? 8 : 0) | (side === -1 ? 16 : 0);
+          // 逐断面可用宽度：沿外法线探测，碰到并行的别的车行道（辅路等）就收窄，人行道不再铺到别的路面上
+          const swS = new Float32Array(s2.n);
+          const tP0 = performance.now();
+          for (let i = 0; i < s2.n; i++) {
+            const rl = Math.hypot(s2.rx[i], s2.rz[i]) || 1;
+            const ux = (s2.rx[i] / rl) * side, uz = (s2.rz[i] / rl) * side; // 朝外（side=1 右侧）
+            let w = sw;
+            const px = s2.x[i], pz = s2.z[i];
+            // 先探外缘与中点（并行的路一般会盖住外缘），都不在别的路面里就整宽；否则从路缘往外逐步找
+            if (!cIdx.inside(px + ux * (hw + sw), pz + uz * (hw + sw), attached) && !cIdx.inside(px + ux * (hw + sw * 0.5), pz + uz * (hw + sw * 0.5), attached)) {
+              swS[i] = sw;
+              continue;
+            }
+            for (let o = 0.9; o <= sw + 0.45; o += 0.9) {
+              const oo = Math.min(o, sw);
+              if (cIdx.inside(s2.x[i] + ux * (hw + oo), s2.z[i] + uz * (hw + oo), attached)) { w = Math.max(0.8, oo - 0.9); break; }
+            }
+            swS[i] = w;
+          }
+          tProbe += performance.now() - tP0;
+          // 逐断面坡道：w 缘石坡道（路缘侧 1.5 m 内降到 3 cm）、e 端部坡道（整幅降坡）、t 类型（1 过街坡道带提示盲道，2 出入口）
+          const n2 = s2.n, rw = new Float32Array(n2), re = new Float32Array(n2), rt = new Uint8Array(n2);
+          for (let i = 0; i < n2; i++) {
+            const q = rp.at(s2.s[i]);
+            rw[i] = q.w; re[i] = q.e; rt[i] = q.t;
+          }
+          const H = 0.15, LOW = 0.03, RW = Math.min(1.5, sw * 0.45);
+          const det = [0, mk, 0, 0];
+          const detAt = (i) => { det[0] = Math.round(Math.max(rw[i], re[i]) * 255); det[2] = rt[i]; det[3] = Math.min(255, Math.round(swS[i] * 10)); return det; };
+          const dIn = (i) => H - (H - LOW) * Math.max(rw[i], re[i]);
+          const dOut = (i) => H - (H - LOW) * re[i];
+          const p2 = [{ o: 0, dy: 0, u: 0 }, { o: 0, dy: 0, u: 0 }];
+          const p3 = [{ o: 0, dy: 0, u: 0 }, { o: 0, dy: 0, u: 0 }, { o: 0, dy: 0, u: 0 }];
           const cn = side === 1 ? [1, 0] : [-1, 0];
+          // 横向坐标 o（左正）：右侧人行道在 -hw 外，左侧在 +hw 外；各剖面点按 o 递减排列（法线朝上/朝路）
+          const fillCurb = side === 1
+            ? (i, q) => { q[0].o = -hw; q[0].dy = 0; q[0].u = 0; q[1].o = -hw; q[1].dy = dIn(i); q[1].u = 0; }
+            : (i, q) => { q[0].o = hw; q[0].dy = dIn(i); q[0].u = 0; q[1].o = hw; q[1].dy = 0; q[1].u = 0; };
+          const fillTop = side === 1
+            ? (i, q) => {
+                const w = swS[i], r = Math.min(RW, w * 0.45);
+                q[0].o = -hw; q[0].dy = dIn(i); q[0].u = 0;
+                q[1].o = -hw - r; q[1].dy = dOut(i); q[1].u = r;
+                q[2].o = -hw - w; q[2].dy = dOut(i); q[2].u = w;
+              }
+            : (i, q) => {
+                const w = swS[i], r = Math.min(RW, w * 0.45);
+                q[0].o = hw + w; q[0].dy = dOut(i); q[0].u = w;
+                q[1].o = hw + r; q[1].dy = dOut(i); q[1].u = r;
+                q[2].o = hw; q[2].dy = dIn(i); q[2].u = 0;
+              };
           runs(s2, y2.valid, T_SUB, 'w', (key, kx, kz, iA, iB) => {
             const w = getTile(key, T_SUB, kx, kz, 'sub');
             attrS[0] = KIND.CURB;
-            band(w, s2, iA, iB, y2.ys, curb, cn, attrS, E);
+            bandF(w, s2, iA, iB, y2.ys, p2, fillCurb, cn, attrS, E, detAt);
             attrS[0] = KIND.SIDEWALK;
-            band(w, s2, iA, iB, y2.ys, top, TOP, attrS, E);
+            bandF(w, s2, iA, iB, y2.ys, p3, fillTop, TOP, attrS, E, detAt);
+            // 人行道端部（路口处）：外缘竖向封口面，抬高的板不再露出下面的空隙
+            for (const [i, sg] of [[iA, -1], [iB, 1]]) {
+              if ((i === 0 && E.sw0 > 0) || (i === n2 - 1 && E.sw1 > 0)) {
+                const o0 = side === 1 ? -hw - swS[i] : hw, o1 = side === 1 ? -hw : hw + swS[i];
+                endCap(w, s2, i, sg, o0, o1, y2.ys[i], -0.05, LOW, KIND.CURB);
+              }
+            }
           });
+          nRamp += rp.n;
         }
       }
       // —— 中央分隔带（双幅路之间）：两幅各建靠自己一侧的一半，按断面处的局部中分带宽选型 ——
@@ -321,7 +520,11 @@ export default {
      *   ≥ 12 m：宽绿化带只做路缘 + 1.5 m 宽的边缘绿篱，中间交给影像/植被。
      */
     function buildMedian(E, f, ch, tot, stepFn, grid, lb, S, lvl) {
-      const rA = E.s0 + Math.max(E.R0 + 1.5, E.sw0 * 0.5, 1), rB = E.s1 - Math.max(E.R1 + 1.5, E.sw1 * 0.5, 1);
+      // 有人行横道的进口：分隔带在斑马线外断开（行人安全岛开口），不让绿篱/隔离墩横在斑马线上
+      const rA = E.s0 + Math.max(E.R0 + (E.flags & F.CW0 ? 6.4 : 1.5), E.sw0 * 0.5, 1), rB = E.s1 - Math.max(E.R1 + (E.flags & F.CW1 ? 6.4 : 1.5), E.sw1 * 0.5, 1);
+      // 开口处铺面：窄分隔带（≤8 m）是路面高的沥青 + 斑马线接续过来；宽绿化带里是一条石板过街步道
+      if (E.flags & F.CW0 && E.R0 > 0) medianGap(E, f, ch, tot, grid, E.s0 + E.R0 + 0.8, Math.min(rA, E.s0 + E.R0 + 6.4), E.s0 + E.R0 + 1.0, lb, S, lvl);
+      if (E.flags & F.CW1 && E.R1 > 0) medianGap(E, f, ch, tot, grid, Math.max(rB, E.s1 - E.R1 - 6.4), E.s1 - E.R1 - 0.8, E.s1 - E.R1 - 6.0, lb, S, lvl);
       if (rB - rA < 8) return;
       const s2 = sampleSections(f.p, ch, rA, rB, stepFn, grid);
       const backed = !!pairedBy.get(E.fi)?.has(E.pairF);
@@ -401,6 +604,33 @@ export default {
         });
       }
     }
+    /** 分隔带人行横道开口 [a,b]（本幅一侧，从左路缘到局部中线）；xw0 = 斑马线带起点里程（带宽 5 m） */
+    function medianGap(E, f, ch, tot, grid, a, b, xw0, lb, S, lvl) {
+      if (b - a < 1) return;
+      const sd = sampleSections(f.p, ch, a, b, () => 2.0, grid);
+      if (!sd) return;
+      const mid = sd.n >> 1;
+      const g = pairGapAt(net, E, sd.x[mid], sd.z[mid], sd.rx[mid], sd.rz[mid]);
+      if (g === null || g < 0.25 || g > 70) return;
+      const yd = sectionYs(sd, f, tot);
+      const hw = E.W / 2, half = g / 2 + 0.05;
+      const pseudo = { s0: xw0, s1: xw0 + 5.0, R0: 0, R1: 0 };
+      const att = [0, 1 | ((lb & LAMPL ? S : 0) << 4) | (lvl << 10), F.NOMARK | (E.flags & 1) | (lb & LAMPL), Math.round(E.W * 100)];
+      runs(sd, yd.valid, T_SUB, 'w', (key, kx, kz, iA, iB) => {
+        const w = getTile(key, T_SUB, kx, kz, 'sub');
+        if (g <= 8) {
+          // u 按本幅车行道宽归一并接着本幅左缘往外量（负值），斑马线条纹相位与车行道上的连续
+          att[0] = KIND.ASPHALT;
+          band(w, sd, iA, iB, yd.ys, [{ o: hw + half, dy: -0.005, u: -half / E.W }, { o: hw, dy: -0.005, u: 0 }], TOP, att, E);
+          att[0] = KIND_XWALK;
+          band(w, sd, iA, iB, yd.ys, [{ o: hw + half, dy: 0.008, u: -half / E.W }, { o: hw, dy: 0.008, u: 0 }], TOP, att, pseudo);
+        } else {
+          att[0] = KIND.PAVING;
+          att[3] = Math.round(half * 100);
+          band(w, sd, iA, iB, yd.ys, [{ o: hw + half, dy: 0.02, u: half }, { o: hw, dy: 0.02, u: 0 }], TOP, att, E);
+        }
+      });
+    }
     /** 构件端面：断面 i 处、横向 o0..o1、高 dy0..dy1 的竖直矩形，sg=+1 朝前进方向、-1 朝后 */
     function endCap(W, secs, i, sg, o0, o1, y, dy0, dy1, kind) {
       const cx = secs.x[i], cz = secs.z[i], rx = secs.rx[i], rz = secs.rz[i];
@@ -426,7 +656,7 @@ export default {
     }
     function sliceArr(arr, a, b) { return arr.subarray(a, b + 1); }
     /** 与 band 相同，但剖面点逐断面由 fill(i, pts) 填写（宽度沿路变化的构件） */
-    function bandF(W, secs, iA, iB, ys, pts, fill, nrm, attr, E) {
+    function bandF(W, secs, iA, iB, ys, pts, fill, nrm, attr, E, detAt = null) {
       const np = pts.length;
       W.ensure((iB - iA + 1) * np, (iB - iA) * (np - 1) * 6);
       kindTris[attr[0]] = (kindTris[attr[0]] || 0) + (iB - iA) * (np - 1) * 2;
@@ -445,9 +675,10 @@ export default {
           JUNC[3] = E.R1;
         }
         const base = W.n;
+        const det = detAt ? detAt(i) : DET0;
         for (let k = 0; k < np; k++) {
           const p = pts[k];
-          W.v(cx - rx * p.o, ys[i] + p.dy, cz - rz * p.o, nx, ny, nz, p.u, secs.s[i], attr, JUNC);
+          W.v(cx - rx * p.o, ys[i] + p.dy, cz - rz * p.o, nx, ny, nz, p.u, secs.s[i], attr, JUNC, det);
         }
         if (prev >= 0)
           for (let k = 0; k < np - 1; k++) {
@@ -472,7 +703,7 @@ export default {
       for (const side of [1, -1]) {
         const swOn = cfg.sw > 0 && (side === 1 ? E.swR : E.swL);
         // 横向坐标约定 o 以前进方向左侧为正（世界位置 = 中心 − 右法线 × o）；side=1 为右侧墙
-        const oo = -side * (hw + (swOn ? cfg.sw : 0) + 0.05);
+        const oo = -side * (hw + (swOn ? info[E.fi].sw : 0) + 0.05);
         let prev = -1;
         SW.ensure(n * 2, n * 6);
         for (let i = 0; i < n; i++) {
@@ -634,7 +865,7 @@ export default {
         if (!g) groups.set(r, (g = []));
         g.push(...ends.get(n));
       }
-      const JA = [KIND.ASPHALT, 1, F.NOMARK, 1000], JJ = [0, 0, 99, 99];
+      const JA = [KIND.ASPHALT, 1 | (3 << 10), F.NOMARK, 1000], JJ = [0, 0, 99, 99]; // 亮度档 3：夜里远景光带与均匀照度同主干道
       for (const g of groups.values()) {
         // 凸包顶点带高程（各进口在该里程处的路面高）：路口铺面随路面纵坡倾斜，整体比路面低 4 cm，
         // 不会在下坡一侧顶出路面（平的铺面在有坡的路口会盖住条带，夜里成一块没有路灯光斑的暗斑）
@@ -683,7 +914,7 @@ export default {
         nJunc++;
       }
     }
-    console.warn(`[roads] 路口铺面 ${nJunc} 处，${(performance.now() - T6).toFixed(0)} ms`);
+    console.warn(`[roads] 路口铺面 ${nJunc} 处，${(performance.now() - T6).toFixed(0)} ms；路段人行横道贴花 ${nMidDecal}、人行道坡道 ${nRamp}、人行道宽度探测 ${tProbe.toFixed(0)} ms`);
 
     // ================= 铁路 =================
     console.warn('[roads] secs ' + JSON.stringify(DS) + ' km ' + JSON.stringify(DL));
