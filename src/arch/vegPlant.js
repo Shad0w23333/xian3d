@@ -41,8 +41,7 @@ const MAX_OUTER = 180000; // 外圈上限
 // 地标正面对景条带与禁种圆区（世界坐标 [x0, z0, x1, z1, 半宽]，起止点相同即圆）：区内不种树（钟楼四街/城门/雁塔北路另按道路生成）
 export const LANDMARK_SIGHTLINES = [
   [-456, 2402, -456, 2575, 16], // 荐福寺山门 → 荐福寺路北侧广场（对景小雁塔）
-  // 未央城市广场（原张家堡环岛，2026-02 改造为四象限下沉庭院的城市广场；OSM 仍是 7.5 万 m² 的环岛公园，影像为工地）
-  [22, -9068, 22, -9068, 140],
+  // 未央城市广场（原张家堡环岛）不在这里整片禁种：src/modules/weiyang.js 已把用地换成广场公园，并只对坑口、环坑步道、园路登记不种树
 ];
 
 // 地标模块整片设为“树木排除区”的寺院院落：植被侧按院落布局补种古槐、古柏（荐福寺院内古槐成林，小雁塔掩映在大树中）。
@@ -1057,7 +1056,8 @@ export function plantVegetation(input) {
       if (o[i] < x0) x0 = o[i]; if (o[i] > x1) x1 = o[i]; if (o[i + 1] < z0) z0 = o[i + 1]; if (o[i + 1] > z1) z1 = o[i + 1];
     }
     if (x1 < R.x0 || x0 > R.x1 || z1 < R.z0 || z0 > R.z1) continue;
-    const fo = falloff((x0 + x1) / 2, (z0 + z1) / 2);
+    // boost：用地多边形可带的密度加成（如未央城市广场的集中绿地，离市中心远但是精建广场）
+    const fo = Math.min(1, falloff((x0 + x1) / 2, (z0 + z1) / 2) * (f.boost || 1));
     if (fo <= 0.01) continue;
     const step = Math.sqrt(area * 0.55); // 候选格：约 0.55 倍面积一个候选，再按噪声接受
     const rings = [o, ...(f.holes || [])];
