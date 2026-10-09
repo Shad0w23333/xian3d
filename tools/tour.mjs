@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // 全城巡检截图：只加载一次页面，按机位清单依次移动相机、等待就绪后截图（比 shot.mjs 每张重载快 3~5 倍）。
 // 用法：node tools/tour.mjs --list tools/tour_spots.json --out shots/tour [--w 1280 --h 720] [--q 2] [--only id1,id2] [--extra "skip=a"]
+//        [--shard k/n]（按清单顺序切成 n 段连续区间、只拍第 k 段，k 从 0 起；相邻机位在同一段，少重复加载）
+//        [--resume]（已有截图的机位跳过，清单里已记录的行保留；每拍一张就写一次 manifest，中途被打断不丢）
 // 机位清单：[{ "id": "bell_street", "ll": [lon, lat, 离地高, 目标lon, 目标lat, 目标离地高], "time": 15, "note": "说明" }, ...]
 //   或 { "id": "...", "view": "2", "time": 20.8 }（预设视角）
 // 输出：<out>/<id>.png 与 <out>/manifest.json（每张的 fps/calls/三角形/新增控制台错误）
@@ -20,7 +22,23 @@ const only = get('--only', '') ? new Set(get('--only', '').split(',')) : null;
 const extra = get('--extra', '');
 let spots = JSON.parse(fs.readFileSync(listFile, 'utf8'));
 if (only) spots = spots.filter((s) => only.has(s.id));
+const shard = get('--shard', '');
+let mfName = 'manifest.json';
+if (shard) {
+  const [k, n] = shard.split('/').map(Number);
+  spots = spots.slice(Math.floor((k * spots.length) / n), Math.floor(((k + 1) * spots.length) / n));
+  mfName = `manifest_${k}of${n}.json`;
+}
 fs.mkdirSync(outDir, { recursive: true });
+const resume = a.includes('--resume');
+const mfPath = path.join(outDir, mfName);
+const prevRows = resume && fs.existsSync(mfPath) ? JSON.parse(fs.readFileSync(mfPath, 'utf8')) : [];
+if (resume) {
+  const n0 = spots.length;
+  spots = spots.filter((s) => !fs.existsSync(path.join(outDir, `${s.id}.png`)));
+  console.log(`续拍：跳过已有 ${n0 - spots.length} 张，剩 ${spots.length} 张`);
+  if (!spots.length) process.exit(0);
+}
 
 const mac = process.platform === 'darwin' && !process.env.SWIFTSHADER;
 const server = await createServer({ root, logLevel: 'error', server: { port: 0, host: '127.0.0.1', hmr: false, watch: { ignored: ['**/*'] } } }); // 不热更新、不监听：拍摄中改代码不会重载页面
@@ -49,7 +67,7 @@ if (fatal) {
 }
 console.log(`加载 ${((Date.now() - t0) / 1000).toFixed(1)} s，模块错误：`, await page.evaluate(() => window.xian.errors));
 
-const manifest = [];
+const manifest = prevRows.filter((r) => !spots.some((s) => s.id === r.id));
 for (const s of spots) {
   const before = logs.length;
   await page.evaluate((s) => {
@@ -89,9 +107,10 @@ for (const s of spots) {
   await page.screenshot({ path: file });
   const row = { id: s.id, file: path.relative(root, file), note: s.note || '', ll: s.ll || null, view: s.view || null, time: s.time ?? null, ...info, logs: logs.slice(before).filter((l) => !/willReadFrequently|Failed to load resource/.test(l)).slice(0, 10) };
   manifest.push(row);
+  fs.writeFileSync(mfPath, JSON.stringify(manifest, null, 2));
   console.log(`${s.id.padEnd(22)} fps ${String(info.fps).padStart(5)}  calls ${String(info.calls).padStart(5)}  tri ${String(info.tris).padStart(6)}M  ${row.logs.length ? '日志 ' + row.logs.length : ''}`);
 }
-fs.writeFileSync(path.join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
-console.log(`完成 ${manifest.length} 张，总耗时 ${((Date.now() - t0) / 1000).toFixed(0)} s → ${path.relative(root, outDir)}/manifest.json`);
+fs.writeFileSync(mfPath, JSON.stringify(manifest, null, 2));
+console.log(`完成 ${manifest.length} 张，总耗时 ${((Date.now() - t0) / 1000).toFixed(0)} s → ${path.relative(root, mfPath)}`);
 await browser.close();
 await server.close();
