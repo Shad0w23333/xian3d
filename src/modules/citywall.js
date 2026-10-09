@@ -15,10 +15,11 @@
 //    券洞与墙身同一套截面（收分、土衬石、海墁）一体生成，真实贯通：拱顶/侧墙/券脸，道路从洞中穿过。
 //  · 魁星楼：文昌门券洞西侧约 27 m 的城墙顶（影像核对）。
 import * as THREE from 'three';
-import { ArchBuilder, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, cityPlatform, roof } from '../arch/chinese.js';
+import { ArchBuilder, gateTower, arrowTower, multiStoreyTower, hall, pavilion, eaveLights, lantern, lanternPost, cityPlatform, roof, getKit } from '../arch/chinese.js';
 import { MeshBuf, wallMaterial, merlonGeometry, merlonLedGeometry, lampPostGeometry, outlineLines } from '../arch/citywall-kit.js';
 import { roofMaterials } from '../arch/heritage-parts.js';
 import { pointInPoly } from '../core/util.js';
+import { pavedGround, groundGlow, uplights } from '../arch/landmark-ground.js';
 import { shadowReach } from '../arch/perf-lod.js';
 
 // 城墙中心线（data-src/landmarks_historic/wall_centerline.json 的 polygon，自西北角顺时针）
@@ -546,6 +547,62 @@ function gateFrame(ring, g) {
   return { s: pr.s, x: f.x, z: f.z, nx: f.nx, nz: f.nz, X, theta: Math.atan2(f.nx, f.nz) };
 }
 
+/**
+ * 永宁门外：南门广场（入城式广场，环城南路两支与长安北路围成的 U 形场地，影像实测 x -70~57、z 1012~1182）
+ * 与瓮城 / 月城两侧到环城路之间的空地：花岗岩铺装 + 中轴浅色石带；夜景为中轴地埋灯、四周地埋灯与宫灯柱照亮的地面光斑。
+ * 原先这里是贴地卫星影像（白天烘焙的车辆、白线一眼可辨；夜里几百米见方只有两盏庭院灯的光圈，审查 g1/g4）。
+ */
+function southGatePlaza(ctx, g, H) {
+  const out = [];
+  if (Math.abs(g.nz) < 0.95) return out;
+  const moats = (ctx.data?.water?.polys || []).filter((p) => p.k === 'moat' || /护城河/.test(p.n || ''));
+  const wet = (x, z) => moats.some((p) => pointInPoly(x, z, p.outer));
+  const gx = g.x, gz = g.z, s = g.nz > 0 ? 1 : -1;
+  const Z = (o) => gz + s * o; // 局部外凸距离 → 世界 z
+  // 广场（世界坐标，北缘为护城河南岸；南缘随环城路弧线收口）
+  const plaza = [[-70, 1013], [57, 1013], [57, 1132], [56, 1142], [54, 1150], [51, 1158], [46, 1165], [40, 1172], [30, 1179], [-36, 1179], [-46, 1173], [-56, 1166], [-62, 1158], [-66, 1150], [-69, 1140], [-70, 1130]];
+  // 中轴石带（浅色，宽 14 m）
+  const ax = gx;
+  const axis = [[ax - 7, 1013.2], [ax + 7, 1013.2], [ax + 7, 1178.8], [ax - 7, 1178.8]];
+  // 瓮城（外皮 ±58）/ 月城（外皮 ±40）两侧到环城路（东路西缘 61.2、西路东缘 -71.2）之间
+  const sides = [];
+  const eRoad = 61.2, wRoad = -71.2;
+  if (gx + 40.6 < eRoad) sides.push([[gx + 40.6, Z(73.4)], [eRoad, Z(73.4)], [eRoad, Z(136)], [gx + 40.6, Z(136)]]);
+  if (gx + 58.4 < eRoad) sides.push([[gx + 58.4, Z(8.6)], [eRoad, Z(8.6)], [eRoad, Z(73.4)], [gx + 58.4, Z(73.4)]]);
+  if (gx - 40.6 > wRoad) sides.push([[wRoad, Z(73.4)], [gx - 40.6, Z(73.4)], [gx - 40.6, Z(136)], [wRoad, Z(136)]]);
+  if (gx - 58.4 > wRoad) sides.push([[wRoad, Z(8.6)], [gx - 58.4, Z(8.6)], [gx - 58.4, Z(73.4)], [wRoad, Z(73.4)]]);
+  out.push(pavedGround(ctx, [plaza, ...sides], { tile: 1.0, color: '#a69c8c', seed: 11, night: 0.1, skip: wet, name: '南门广场·铺装' }));
+  out.push(pavedGround(ctx, [axis], { tile: 0.8, color: '#c4bbab', seed: 12, night: 0.12, lift: 0.09, bias: 0.0009, name: '南门广场·中轴' }));
+  // 夜景：中轴两侧地埋灯（每 6 m）、广场四周地埋灯（每 9 m）、宫灯柱（中轴两侧 16 m，每 22 m）
+  const ups = [], glow = [];
+  for (let z = 1018; z < 1176; z += 6) for (const dx of [-7.6, 7.6]) { ups.push([ax + dx, z]); glow.push([ax + dx, z, 2.6, 0.9]); }
+  for (let i = 0; i < plaza.length; i++) {
+    const a = plaza[i], b = plaza[(i + 1) % plaza.length];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.floor(L / 9);
+    for (let k = 0; k < n; k++) {
+      const t = (k + 0.5) / n;
+      // 向广场中心内收 1.6 m
+      const x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
+      const cx = -6 - x, cz = 1100 - z, cl = Math.hypot(cx, cz) || 1;
+      const px = x + (cx / cl) * 1.6, pz = z + (cz / cl) * 1.6;
+      if (wet(px, pz)) continue;
+      ups.push([px, pz]);
+      glow.push([px, pz, 2.2, 0.75]);
+    }
+  }
+  const posts = [];
+  for (let z = 1030; z < 1172; z += 22) for (const dx of [-16, 16]) { posts.push([ax + dx, z]); glow.push([ax + dx, z, 7.5, 0.85]); }
+  out.push(uplights(ctx, ups));
+  out.push(groundGlow(ctx, glow, { color: 0xffbf72, intensity: 0.42 }));
+  const b = new ArchBuilder(ctx, { detail: 1, instancing: true, minInstances: 4, name: 'south-plaza-posts' });
+  for (const [x, z] of posts) lanternPost(b, x, ctx.terrain.heightAt(x, z), z, 4.2, { kind: 'palace', size: 0.9, yaw: x < ax ? 0 : Math.PI, arm: 0.7 });
+  out.push(b.build({ castShadow: true, name: '南门广场·宫灯柱' }));
+  // 行人与树能被照亮：两盏高位暖光（点光源池按距离分配，只在近处生效）
+  for (const z of [1060, 1130]) ctx.lights.add({ position: new THREE.Vector3(ax, ctx.terrain.heightAt(ax, z) + 9, z), color: 0xffc27a, intensity: 260, distance: 45, nightOnly: true, priority: 1.4 });
+  void H;
+  return out;
+}
+
 export default {
   id: 'citywall',
   name: '西安明城墙与十八城门',
@@ -1011,6 +1068,16 @@ export default {
     mark('墙体+灯');
     // —— 城门群 / 角楼（古建构件库） ——
     const FLOOD = { color: 0xffc47a, strength: 1.7, height: 24, top: 0.45 };
+    // 城台（砖/土衬石）与吊桥：泛光从地面（墙根地灯槽）往上洗，与墙身同色同强度（墙身 2.4×，墙根 1 → 墙顶 0.5）。
+    // 原先城台与楼身共用 FLOOD（灯具高度 = 城台顶），城台立面在灯具以下全黑，只剩箭楼前一盏离地 3 m 的点光源
+    // 打在地上的光斑，从南边看像一颗灯泡悬在黑墙前（审查 P0）
+    const platFlood = (y0) => ({
+      brick: { color: 0xffa650, strength: 2.3, baseY: y0 - 0.4, height: H, top: 0.5 },
+      stone: { color: 0xffa650, strength: 1.5, baseY: y0 - 0.4, height: H, top: 0.5 },
+      bridge: { color: 0xffb466, strength: 0.9, baseY: y0 - 3, height: 8, top: 0.7, upDim: 0.2 },
+    });
+    // 城台上的殿身台基用城砖灰（默认汉白玉色，在灰砖城台上一圈亮白；真实闸楼/城楼直接坐在砖台上）
+    const ON_WALL = 0x8a867e;
     const complexes = [];
     // 檐口 / 屋脊灯带；建远景合批时顺便把这些线（世界坐标）收集起来，做成屏幕恒宽的城门轮廓灯线：
     // 0.08 m 的灯带在几百米外不到 1/5 像素，南门外看过去只剩城墙一道光、城楼轮廓出不来
@@ -1032,7 +1099,7 @@ export default {
         b.push(0, 0, MAIN_PLAT.zc, 0);
         const t = gateTower(b, {
           w: MAIN_PLAT.w, d: MAIN_PLAT.d, h: H, tunnels: 1, tw: 6, th: 7, crenel: false, plaque: sp.plaque, roofColor: WALL_ROOF,
-          tower: { lanterns: true },
+          tower: { lanterns: true, platformColor: ON_WALL },
         });
         glowEaves(b, t);
         b.pop();
@@ -1052,14 +1119,14 @@ export default {
           b.push(0, 0, g.zZ, 0);
           const z = gateTower(b, {
             w: 34, d: 12, h: 10, tunnels: 1, tw: 5, th: 6, crenel: false, plaque: sp.plaque, roofColor: WALL_ROOF,
-            hall: { bays: [3.4, 4, 4.6, 4, 3.4], depthBays: [3.4, 3.4], colH: 4.2, roof: 'xieshan', eaves: 1, front: 'windows', back: 'center3', sides: 'wall', lanterns: true },
+            hall: { bays: [3.4, 4, 4.6, 4, 3.4], depthBays: [3.4, 3.4], colH: 4.2, roof: 'xieshan', eaves: 1, front: 'windows', back: 'center3', sides: 'wall', lanterns: true, platformColor: ON_WALL },
           });
           glowEaves(b, z);
           // 吊桥：木桥面 + 栏杆 + 铁链
           const z0 = 6, z1 = 30;
-          b.box('paint', -3.6, 0.2, z0, 3.6, 0.75, z1, 0x5b4231);
+          b.box('bridge', -3.6, 0.2, z0, 3.6, 0.75, z1, 0x5b4231);
           for (const sx of [-1, 1]) {
-            b.box('paint', sx * 3.5 - 0.1, 0.75, z0, sx * 3.5 + 0.1, 1.85, z1, 0x4a3426, { skip: 'bottom' });
+            b.box('bridge', sx * 3.5 - 0.1, 0.75, z0, sx * 3.5 + 0.1, 1.85, z1, 0x4a3426, { skip: 'bottom' });
             b.sweep('metal', [[sx * 3.4, 1.8, z1 - 0.5], [sx * 3.2, 5.5, (z0 + z1) / 2 - 3], [sx * 2.8, 8.2, z0 - 0.3]], [[-0.05, -0.05], [0.05, -0.05], [0.05, 0.05], [-0.05, 0.05]], 0x3a3634, { caps: false });
           }
           b.pop();
@@ -1069,7 +1136,7 @@ export default {
     }
     const cornerTower = (b) => {
       const t = multiStoreyTower(b, {
-        style: 'ming', roofColor: WALL_ROOF, platform: 'plain', platformH: 0.45, steps: 'none', y0: H,
+        style: 'ming', roofColor: WALL_ROOF, platform: 'plain', platformH: 0.45, platformColor: ON_WALL, steps: 'none', y0: H,
         storeys: [
           { bays: [3.4, 4.2, 3.4], depthBays: [3.4, 4.2, 3.4], colH: 4.4, front: 'center3', back: 'windows', sides: 'windows' },
           { colH: 3.6, front: 'windows', back: 'windows', sides: 'windows' },
@@ -1088,11 +1155,12 @@ export default {
     // 近景 LOD：初始只建 detail 0；相机靠近时按需补建 detail 1（< 1300 m）与 detail 2（< 520 m），每帧至多一个
     const nearLODs = [];
     // 瓦面 / 屋脊材质压低环境光（天光 IBL 把深灰瓦面染成藏青；见 roofMaterials）
-    const RM = roofMaterials(ctx);
+    // 'bridge'：吊桥木作（与楼身油饰同材质，单独一组好按地面高度泛光）
+    const RM = { ...roofMaterials(ctx), bridge: getKit(ctx).mat('paint') };
     const mkLevel = (c, d) => {
       const b = new ArchBuilder(ctx, { detail: d, style: 'ming', name: c.key + '-d' + d });
       const info = c.fn(b) || {};
-      const g = b.build({ flood: { ...FLOOD, baseY: c.y + H }, name: c.key + '-d' + d, materials: RM });
+      const g = b.build({ flood: { ...FLOOD, baseY: c.y + H, byKey: platFlood(c.y) }, name: c.key + '-d' + d, materials: RM });
       g.userData.info = info;
       g.userData.lights = b.lightAnchors;
       return g;
@@ -1129,7 +1197,7 @@ export default {
       avgY += c.y;
     }
     avgY /= complexes.length || 1;
-    const farGroup = fb.build({ flood: { ...FLOOD, baseY: avgY + H }, name: '城门群·远景', materials: RM });
+    const farGroup = fb.build({ flood: { ...FLOOD, baseY: avgY + H, byKey: platFlood(avgY) }, name: '城门群·远景', materials: RM });
     root.add(farGroup);
     // 城楼 / 箭楼 / 闸楼 / 角楼的檐口与屋脊轮廓灯线（夜间，屏幕恒宽；120 m 内淡出，让位于构件上的实体灯带）
     const towerOutline = outlineLines(ctx, towerLines, { color: 0xffc56a, intensity: 2.0, pix: 0.0006, fadeNear: 110, fadeFar: 320 });
@@ -1188,7 +1256,7 @@ export default {
       const f = m.f;
       const o = (OT + OB + m.proj - 1.5) / 2;
       mb.push(f.x + f.nx * o, m.by + H, f.z + f.nz * o, Math.atan2(f.nx, f.nz));
-      const t = hall(mb, { bays: [3.2, 3.8, 3.2], depthBays: [3.0, 3.0], colH: 3.6, roof: 'xieshan', eaves: 1, roofColor: WALL_ROOF, platform: 'plain', platformH: 0.3, steps: 'none', front: 'windows', back: 'center3', sides: 'wall', lanterns: true });
+      const t = hall(mb, { bays: [3.2, 3.8, 3.2], depthBays: [3.0, 3.0], colH: 3.6, roof: 'xieshan', eaves: 1, roofColor: WALL_ROOF, platform: 'plain', platformH: 0.3, platformColor: ON_WALL, steps: 'none', front: 'windows', back: 'center3', sides: 'wall', lanterns: true });
       eaveLights(mb, t, { color: 0xffc56a, width: 0.07 });
       mb.pop();
     }
@@ -1209,12 +1277,23 @@ export default {
     // —— 灯光与标注 ——
     for (const g of mainGates) {
       const W = (a, o, y) => new THREE.Vector3(g.x + g.X[0] * a + g.nx * o, g.by + y, g.z + g.X[1] * a + g.nz * o);
-      ctx.lights.add({ position: W(0, MAIN_PLAT.zc + 22, 3), color: 0xffb566, intensity: 1400, distance: 90, nightOnly: true, priority: 2.2 });
-      ctx.lights.add({ position: W(0, g.zA + 16, 3), color: 0xffb566, intensity: 1000, distance: 70, nightOnly: true, priority: 1.8 });
-      if (g.spec.yue) ctx.lights.add({ position: W(0, g.zZ + 14, 2), color: 0xffb566, intensity: 700, distance: 50, nightOnly: true, priority: 1.6 });
+      // 点光源只补瓮城/月城地面与城门前路面的高杆灯余光：抬到离地 9~10 m、离墙 20 m 以上、低强度
+      // （原先离地 2~3 m、离城台 5~7 m、700~1400 cd，地面与吊桥被打出过曝光斑，泛光后像悬空的灯泡）
+      ctx.lights.add({ position: W(0, MAIN_PLAT.zc + 36, 10), color: 0xffb566, intensity: 520, distance: 60, nightOnly: true, priority: 2.2 });
+      ctx.lights.add({ position: W(0, g.zA + 34, 10), color: 0xffb566, intensity: 420, distance: 55, nightOnly: true, priority: 1.8 });
       ctx.labels.add(g.spec.label, W(0, MAIN_PLAT.zc, 40), { category: 'landmark', minDist: 80, maxDist: 16000, priority: g.spec.yue ? 3.2 : 2.6 });
     }
     ctx.labels.add('西安城墙', new THREE.Vector3(-1990, baseAt(ring.project(-1990, -600).s) + 30, -600), { category: 'landmark', minDist: 500, maxDist: 20000, priority: 2.4 });
+    // 永宁门外南门广场与瓮城两侧空地（铺装 + 夜景地灯）
+    const plazaGroup = new THREE.Group();
+    plazaGroup.name = '南门广场';
+    try {
+      const yn = mainGates.find((g) => g.g.id === 'yongning');
+      if (yn) for (const o of southGatePlaza(ctx, yn, H)) plazaGroup.add(o);
+    } catch (e) {
+      console.warn('[citywall] 南门广场构建失败', e);
+    }
+    root.add(plazaGroup);
 
     // —— LOD 管理 ——
     const cam = ctx.camera;
@@ -1252,6 +1331,7 @@ export default {
       const edge = inside ? Math.min(p.x - bx0, bx1 - p.x, p.z - bz0, bz1 - p.z) : Math.hypot(dx, dz);
       const dWall = Math.hypot(edge, Math.max(0, p.y - 420));
       smallGroup.visible = dWall < 1400;
+      plazaGroup.visible = dWall < 2600;
       leds.visible = dWall < 2200;
       // 垛口（1 m 高）几公里外亚像素（按画质 1.6~3.6 km）；阴影只在阴影贴图覆盖范围内投射
       merlons.visible = dWall < ([1600, 2400, 3000, 3600][ctx.quality.level ?? 2] ?? 3000);

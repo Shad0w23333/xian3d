@@ -122,7 +122,8 @@ export function wallBrickTex() {
  */
 export function pavingTex() {
   if (TEX.has('pave')) return TEX.get('pave');
-  const S = 1024, rows = 12, cols = 6;
+  // 海墁：约 0.48 m 见方的大方砖（原先 0.48×0.24 m 顺墙长条错缝，读成人行道砖；城墙顶实际为方砖），隔行错半砖
+  const S = 1024, rows = 6, cols = 6;
   const c = cnv(S), hc = cnv(S);
   const g = c.getContext('2d'), hg = hc.getContext('2d');
   const r = rng(91);
@@ -237,7 +238,7 @@ export function wallMaterial(ctx, kind = 'brick', o = {}) {
     sh.uniforms.uCwFlood = { value: new THREE.Color(o.floodColor ?? 0xffa650) };
     sh.uniforms.uCwFloodK = { value: floodK };
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec2 aH;\nvarying vec2 vCwH;\nvarying vec3 vCwW;')
+      .replace('#include <common>', '#include <common>\nattribute vec2 aH;\nvarying vec2 vCwH;\nvarying vec3 vCwW;\nvarying float vCwUp;')
       .replace(
         '#include <project_vertex>',
         `#include <project_vertex>
@@ -248,15 +249,18 @@ export function wallMaterial(ctx, kind = 'brick', o = {}) {
             cwP = instanceMatrix * cwP;
           #endif
           vCwW = (modelMatrix * cwP).xyz;
+          vCwUp = abs((modelMatrix * vec4(objectNormal, 0.0)).y);
         }`
       );
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>\nuniform float uNight; uniform vec3 uCwFlood; uniform float uCwFloodK;\nvarying vec2 vCwH; varying vec3 vCwW;\n${NOISE_GLSL}`)
+      .replace('#include <common>', `#include <common>\nuniform float uNight; uniform vec3 uCwFlood; uniform float uCwFloodK;\nvarying vec2 vCwH; varying vec3 vCwW; varying float vCwUp;\n${NOISE_GLSL}`)
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
         {
-          vec2 q = vec2(vCwW.x + vCwW.z, vCwW.y);
+          // 立面按（沿墙, 高度）取噪声；朝上的面（海墁、垛顶）改按水平 (x, z)，否则 x+z 的等值线在水平面上是 45° 斜线，
+          // 墙顶砖面出现成片三角形明暗斜纹（审查 g3）
+          vec2 q = mix(vec2(vCwW.x + vCwW.z, vCwW.y), vCwW.xz * 0.75, step(0.6, vCwUp));
           float big = cwNoise(q * vec2(0.031, 0.07)) * 0.6 + cwNoise(q * vec2(0.17, 0.23)) * 0.4;
           float st = cwNoise(vec2(q.x * 1.7, q.y * 0.04)) * cwNoise(vec2(q.x * 0.35, 3.1));
           float hasH = step(0.001, vCwH.y);
@@ -268,7 +272,16 @@ export function wallMaterial(ctx, kind = 'brick', o = {}) {
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
-        totalEmissiveRadiance += diffuseColor.rgb * uCwFlood * (uNight * uCwFloodK * vCwH.y);`
+        {
+          // 墙根投光：沿墙每 22 m 一盏地埋投光灯，光束随高度张开（墙根光斑分明、墙顶趋于均匀），整体下亮上暗
+          // （原先整面墙同一亮度，像墙体自发光；审查 g7）
+          float hh = clamp(vCwH.x / 12.0, 0.0, 1.0);
+          float ph = fract((vCwW.x + vCwW.z) / 22.0) - 0.5;
+          float bw = mix(0.13, 0.4, hh);
+          float beam = exp(-ph * ph / (bw * bw));
+          float pat = mix(0.5, 1.3, beam) * (1.12 - 0.3 * hh);
+          totalEmissiveRadiance += diffuseColor.rgb * uCwFlood * (uNight * uCwFloodK * vCwH.y * pat);
+        }`
       );
   };
   m.customProgramCacheKey = () => 'citywall-' + kind + floodK;
