@@ -390,9 +390,11 @@ function makeGroundTexture(data, px) {
 }
 
 // ---------- 地形瓦片着色器补丁：自定义 UV 变换 + 影像调色 + 近处程序化地面 + 夜间压暗与城市光 + 挖洞 ----------
-function patchTileMaterial(mat, uvXform, holes, gnd, texM) {
+function patchTileMaterial(mat, uvXform, holes, gnd, texM, snowSrc) {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uUvXform = uvXform;
+    shader.uniforms.uGrade = gnd.grade;
+    shader.uniforms.uSnowSrc = snowSrc;
     shader.uniforms.uHoleTex = holes.tex;
     shader.uniforms.uHoleN = holes.n;
     shader.uniforms.uTexM = texM;
@@ -417,7 +419,7 @@ function patchTileMaterial(mat, uvXform, holes, gnd, texM) {
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + TERRAIN_SURFACE_GLSL)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += terrGlow;');
   };
-  mat.customProgramCacheKey = () => 'xian-terrain-v7';
+  mat.customProgramCacheKey = () => 'xian-terrain-v8';
 }
 
 const NOISE_GLSL = `
@@ -439,11 +441,15 @@ uniform float uTexM;
 uniform sampler2D uGndFar; uniform vec4 uGndFarBox;
 uniform sampler2D uGndNear; uniform vec4 uGndNearBox; uniform float uGndNearOn;
 uniform float uTNight; uniform float uCamAgl; uniform float uGlowGain;
+uniform vec4 uGrade;      // x 高光软肩起点（线性亮度） y 软肩压缩斜率 z 近处“去白”强度 w 青绿去色强度
+uniform float uSnowSrc;   // 本块影像来自内置 Esri 冬季底图（满地雪斑）：去白加强
 float tLuma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 // 卫星影像调色。原先的“饱和度 ×1.3、pow 1.12 ×1.1”是给 Esri 冬季灰图准备的；现在的 Google 影像本身饱和度正常，
 // 再加强会把土黄推成紫红、把浅色铺装与残雪推成纯白（审查：农田发紫、楼间地面像积雪）。现在只做轻度对比，并且：
-//  · 压冷色偏色（蓝、品红、紫：阴影、彩钢瓦、残雪、偏色瓦片）；
-//  · 高光软肩（白屋顶、过曝铺装、雪斑不再刺白）；远处的高亮低饱和（远山积雪、冬季白斑）压成灰褐（far）；
+//  · 压冷色偏色（蓝、品红、紫：阴影、彩钢瓦、残雪、偏色瓦片）；青绿（工地防尘网、偏色瓦片）压成暗橄榄绿；
+//  · 高亮低饱和（影像里的白屋顶、水泥坪、浅色裸土、过曝铺装、残雪）近处也压成中灰——影像本身已经带着日照，
+//    再按 15 点的太阳打一遍光、经 ACES 后成了近白的“雪斑”（审查 P0 浐灞：楼间空地一片白，实为工地与白屋顶）；
+//  · 高光软肩（线性亮度 uGrade.x 起压缩），远处（far）与冬季底图（uSnowSrc）去白更强；
 //  · 提亮影像自带的楼影（lift）。
 vec3 tGrade(vec3 c, float lift, float far) {
   c = pow(max(c, 0.0), vec3(1.06)) * 1.03;
@@ -455,16 +461,31 @@ vec3 tGrade(vec3 c, float lift, float far) {
   c = mix(c, vec3(l) * vec3(1.03, 1.0, 0.95), smoothstep(0.025, 0.2, cool) * 0.92);
   // 粉紫褐（红最高、蓝高于绿）：冬季影像的荒草地、农田、土路常呈这种色，加上天光就成了“紫色地毯”。把蓝压到绿的水平 → 土黄褐
   c.b -= max(0.0, c.b - c.g) * step(c.b, c.r) * 0.75;
-  // 高光软肩（线性亮度 0.42 ≈ sRGB 0.68 以上压缩）
+  // 粉灰（红最高、绿蓝接近）：Google 瓦片的裸土、土路、农田、河滩、飞行区土面常呈“品红灰”（如 99,90,90），
+  // 经天光与 ACES 后像粉色地毯（审查：渭河滩/飞行区/少陵塬/浐灞土路发粉）。蓝压到绿的 0.85 以下、绿略提 → 土黄褐
+  mx = max(c.r, max(c.g, c.b));
+  float pinkW = smoothstep(0.02, 0.09, (c.r - c.g) / max(mx, 1e-3));
+  c.b -= max(0.0, c.b - 0.85 * c.g) * pinkW * 0.8;
+  c.g += max(0.0, c.r - c.g) * pinkW * 0.15;
+  // 青绿（绿、蓝都明显高于红，且蓝接近绿）：工地防尘网、偏色瓦片、浅水塘反光。树冠草地是“绿 ≫ 蓝”，不受影响
+  mx = max(c.r, max(c.g, c.b));
+  float cyan = smoothstep(0.03, 0.14, (min(c.g, c.b) - c.r) / max(mx, 1e-3)) * smoothstep(0.72, 0.92, c.b / max(c.g, 1e-3));
   l = tLuma(c);
-  float over = max(l - 0.42, 0.0);
-  float lc = l - over + over / (1.0 + over * 2.5);
+  c = mix(c, vec3(l * 0.78) * vec3(0.95, 1.06, 0.84), cyan * uGrade.w);
+  // 高亮低饱和 → 中灰（暖），近处 uGrade.z、远处与冬季底图更强
+  l = tLuma(c);
+  mx = max(c.r, max(c.g, c.b));
+  float sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
+  float whiteK = max(mix(uGrade.z, 0.9, far), uSnowSrc);
+  float white = smoothstep(uGrade.x * 0.75, uGrade.x * 1.7, l) * (1.0 - smoothstep(0.1 + 0.08 * uSnowSrc, 0.26 + 0.1 * uSnowSrc, sat));
+  c = mix(c, vec3(l * 0.6) * vec3(1.05, 1.0, 0.9), white * whiteK);
+  // 高光软肩
+  l = tLuma(c);
+  float over = max(l - uGrade.x, 0.0);
+  float lc = l - over + over / (1.0 + over * uGrade.y);
   c *= lc / max(l, 1e-4);
   l = lc;
   mx = max(c.r, max(c.g, c.b));
-  float sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
-  float snow = smoothstep(0.2, 0.38, l) * (1.0 - smoothstep(0.08, 0.22, sat)) * far;
-  c = mix(c, vec3(l * 0.55) * vec3(1.05, 1.0, 0.9), snow * 0.8);
   // 影像里的楼影：暗且不偏绿（树冠是暗绿，保留）。3D 楼会投下自己的阴影，影像阴影是重复的，还常与太阳方向相反
   float grn = clamp((c.g - max(c.r, c.b)) / max(mx, 1e-3) * 6.0, 0.0, 1.0);
   float sh = smoothstep(0.05, 0.012, l) * (1.0 - grn) * lift;
@@ -840,6 +861,8 @@ export class Terrain {
       night: (ctx && ctx.uniforms && ctx.uniforms.uNight) || { value: 0 },
       camAgl: { value: 100 },
       glowGain: { value: 0.75 },
+      // 影像调色参数（见 tGrade）：高光软肩起点、压缩斜率、近处去白强度、青绿去色强度
+      grade: { value: new THREE.Vector4(0.14, 7.0, 0.95, 0.9) },
     };
     this.gmaps = null;
     if (ctx && ctx.data) {
@@ -1140,10 +1163,12 @@ export class Terrain {
 
     const uvXform = { value: new THREE.Vector4(0, 0, 1, 1) };
     const texM = { value: 1 }; // 当前影像每像素米数（近景低频取样按地面尺度换算 mip 级别）
+    const snowSrc = { value: 0 }; // 当前影像来自内置 Esri 冬季底图时为 1
     const mat = new THREE.MeshStandardMaterial({ roughness: 0.93, metalness: 0.0, color: 0xffffff });
     mat.userData.uvXform = uvXform;
     mat.userData.texM = texM;
-    patchTileMaterial(mat, uvXform, this.holeU, this.gndU, texM);
+    mat.userData.snowSrc = snowSrc;
+    patchTileMaterial(mat, uvXform, this.holeU, this.gndU, texM, snowSrc);
     const mesh = new THREE.Mesh(g, mat);
     mesh.position.set(n.cx, 0, n.cz);
     mesh.receiveShadow = true;
@@ -1206,6 +1231,8 @@ export class Terrain {
     const W = A.x1 - A.x0, H = A.z1 - A.z0;
     mat.userData.uvXform.value.set((b.x0 - A.x0) / W, 1 - (b.z1 - A.z0) / H, (b.x1 - b.x0) / W, (b.z1 - b.z0) / H);
     mat.userData.texM.value = best.mpp;
+    // 内置底图（img_*.jpg）是 Esri 冬季旧图，远山与空地有积雪：本地离线包缺图/还没读到时才会用到
+    mat.userData.snowSrc.value = best.key.startsWith('m:') ? 1 : 0;
     if (!hadMap) mat.needsUpdate = true;
     n.srcKey = best.key;
     n.texLevel = -best.mpp;
