@@ -303,7 +303,9 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
   vec3 alb = wallC; float rou = 0.86; float met = 0.0; vec3 nT = vec3(0.0, 0.0, 1.0); float ao = 1.0;
   vec3 emi = vec3(0.0);
   float nightOn = uLit.w;
-  int litCls = (st == 2 || st == 3 || st == 7) ? 1 : (st == 4 ? 2 : 0);
+  // 临街铺面落卷帘的比例：随商业营业曲线（uLit.z，白天约 0.9~0.95）——营业时段约 1 成（空铺/装修/歇业），打烊后陆续落下
+  float shutP = clamp(1.04 - uLit.z, 0.1, 0.92);
+  int litCls =(st == 2 || st == 3 || st == 7) ? 1 : (st == 4 ? 2 : 0);
   float litP = (litCls == 0 ? uLit.x : litCls == 1 ? uLit.y : uLit.z) * (0.55 + 0.9 * bRand(sd, 9, 1));
 
   if (abs(Nw.y) < 0.6) {
@@ -834,8 +836,9 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       }
     } else if (st == 1) {
       if (fi == 0 && eStreet) {
-        et = rb < 0.55 ? 4 : 7; wr = vec4(0.2, 0.0, bw - 0.2, min(gf - 0.35, 2.9));
-        if (gf > 3.3) { et2 = 12; wr2 = vec4(0.0, gf - 0.3 - 0.6, bw, gf - 0.2); }
+        // 临街铺面：营业时段绝大多数开门（橱窗/玻璃门），打烊后才陆续落卷帘（审查 fs_含光路/fs_科技路：下午整排卷帘像歇业）
+        et = bRand(sd, kBay, 76) < shutP ? 7 : 4; wr = vec4(0.2, 0.0, bw - 0.2, min(gf - 0.35, 2.9));
+        if (gf > 3.3) { et2 = 12; wr2 = vec4(0.0, gf - 0.3 - 0.6, bw, gf - 0.2); wr.w = min(wr.w, wr2.y - 0.12); }
       } else if (entBay) {
         if (fi == 0) { et = 13; wr = vec4(cx - 0.62, 0.0, cx + 0.62, min(2.35, gf - 0.3)); }        // 单元门（上方有雨棚）
         else { et = 1; eyo = 0.5 * fH; wr = vec4(cx - 0.5, 0.95, cx + 0.5, 1.95); }                 // 楼梯间半层窗
@@ -871,7 +874,8 @@ float bldSpecK = 1.0;  // 间接高光系数：积灰的平屋面掠射角下不
       }
     } else if (st == 5) {
       if (fi == 0 && (eStreet || rb < 0.45)) {
-        et = bRand(sd, kWin, 4) < 0.3 ? 4 : 7; wr = vec4(0.25, 0.0, bw - 0.25, min(3.0, gf - 0.3));
+        // 临街的是小店（营业时段开门）；不临街的底层多为车库/库房（卷帘为主）
+        et = (eStreet ? bRand(sd, kWin, 4) >= shutP : bRand(sd, kWin, 4) < 0.3) ? 4 : 7; wr = vec4(0.25, 0.0, bw - 0.25, min(3.0, gf - 0.3));
       } else if (rb > 0.9) {
         et = 0;
       } else {
