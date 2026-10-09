@@ -1,0 +1,9 @@
+先完整读 /Users/xiaochoumao/Documents/github repo/xian3d/docs/FIX_ROUND2.md（第二轮修复通用说明，照它的开工准备、验证、提交要求执行）。所有回复与输出一律用简体中文。
+
+你的任务：「地标与历史街区」。审查文件 MAIN/shots/audit2/all.json 里 module 为 citywall、huimin、heritage、heritage26、belltower、pagoda、datang、dossier、skyline、mixc、qujiang、airports、signage、metro、amapinfo 的条目（约 65 条）都归你。
+独占文件：src/modules/citywall.js、src/arch/citywall-kit.js、src/modules/huimin.js、src/arch/huimin-gen.js、public/data/huimin.json、tools/build_huimin.py、src/modules/heritage.js、src/modules/heritage26.js、src/arch/heritage-parts.js、src/modules/belltower.js、src/arch/belltower-parts.js、src/modules/pagoda.js、src/arch/pagoda-*.js、src/modules/datang.js、src/arch/datang-props.js、src/modules/dossier.js、src/arch/dossier*.js、src/arch/dossier-specs/*、src/modules/skyline.js、src/arch/sky-*.js、src/modules/mixc.js、src/arch/mixc.js、src/modules/qujiang.js、src/arch/qujiang-gen.js、src/arch/chinese*.js、src/modules/airports.js、src/arch/airport-*.js、src/modules/signage.js、src/arch/signage*.js、src/modules/metro.js、src/arch/metro*.js、src/modules/amapinfo.js。
+P0 必修：
+1. 永宁门夜景（p5_night）箭楼城台南立面几乎全黑，正前方却悬着一个发光圆球光晕，像灯泡挂在半空。真实城台是整面暖黄泛光洗墙。查清发光球来源（城墙模块的投光灯几何/点光源可见光晕？），改为城台整面洗墙泛光，去掉悬空光球。全城排查同类“悬空发光球”。
+2. 北院门（st_beiyuanmen_n）东侧临街一根约 2 m 宽红砖方柱 + 深色顶棚 + 顶棚下停车白线：huimin 模块生成的构筑物压在街边，检查是否占了街道/人行道，修正位置或去掉。
+其余 P1/P2 照 all.json 修。注意：招牌已接入高德全量店铺（public/data/local/pois.json，signage.js 在 POI 超过 2 万时随机补位降到 30%），审查里招牌店名/位置不合理的条目也归你。西安站（heritage buildStation）的站台雨棚是一整块巨大平板（st_danfengmen 机位下半屏）、南广场两块深灰长方形采光井很粗糙——如在审查条目里，按真实西安站（2021 年改扩建后）做成分站台的独立雨棚与合理的南广场。
+验收：p5_night、p5_day、st_beiyuanmen、st_beiyuanmen_n、st_xian_station、st_danfengmen、st_drum、st_datang_n、st_dayanta_sq，以及 all.json 里涉及的其他截图机位。
