@@ -348,34 +348,54 @@ function drawBai(g, rc, rand) {
 // —— 垂柳：自上而下的下垂枝条，狭披针形黄绿叶 ——
 function drawLiu(g, rc, rand) {
   clipRect(g, rc, 6);
+  const cx = rc.x + rc.w / 2;
+  // 上部：拱形的成团叶簇（冠层外壳）。树冠上半部的卡片看到的是一团团细叶，而不是一根根枝条的“挂点”——
+  // 此前整张卡都是自上垂下的枝条，冠顶的卡片像喷泉一样向上散开（审查 g3 曲江池）
+  const domeY = (x) => {
+    const ex = Math.abs(x - cx) / (rc.w / 2);
+    return rc.y + 10 + ex * ex * rc.h * 0.2;
+  };
+  const domeH = (x) => {
+    const ex = Math.abs(x - cx) / (rc.w / 2);
+    return rc.h * (0.3 - 0.12 * ex * ex);
+  };
+  // 下部：细长下垂小枝（主要由下垂枝帘卡片使用）。枝条细、叶狭长贴枝下垂、间距不等，帘子下缘参差
   for (let layer = 0; layer < 3; layer++) {
-    const n = [26, 34, 30][layer];
+    const n = [34, 44, 40][layer];
+    const L0 = [21, 28, 35][layer];
     for (let i = 0; i < n; i++) {
-      const x0 = rc.x + 18 + rand() * (rc.w - 36);
-      // 挂点呈拱形（两侧低），长度参差：避免卡片上沿/下沿成直线的“帘子”感
-      const ex = Math.abs(x0 - (rc.x + rc.w / 2)) / (rc.w / 2);
-      const top = ex * ex * rc.h * 0.28 + rand() * 20;
-      const len = (rc.h - top - 8) * (0.4 + rand() * 0.58) * (1 - ex * 0.25);
-      const ph = rand() * 6, drift = (rand() - 0.5) * 30;
-      const L0 = [20, 27, 34][layer];
-      const pt = (t) => [x0 + Math.sin(t * 3 + ph) * 5 + drift * t * t, rc.y + 6 + top + t * len];
-      g.strokeStyle = hsl(60, 28, L0 * 0.7);
-      g.lineWidth = 1.1;
+      const x0 = rc.x + 14 + rand() * (rc.w - 28);
+      const top = domeY(x0) + domeH(x0) * (0.3 + rand() * 0.5);
+      const len = (rc.y + rc.h - 8 - top) * (0.35 + rand() * 0.63);
+      const ph = rand() * 6, drift = (rand() - 0.5) * 22, wav = 2 + rand() * 3;
+      const pt = (t) => [x0 + Math.sin(t * 2.4 + ph) * wav + drift * t * t, top + t * len];
+      g.strokeStyle = hsl(62, 22, L0 * 0.75);
+      g.lineWidth = 0.8;
       g.beginPath();
-      for (let t = 0; t <= 1.001; t += 0.04) {
+      for (let t = 0; t <= 1.001; t += 0.05) {
         const [x, y] = pt(t);
         t ? g.lineTo(x, y) : g.moveTo(x, y);
       }
       g.stroke();
-      let side = 1;
-      for (let t = 0.02; t < 1; t += 6.5 / len) {
+      let t = rand() * 0.04;
+      while (t < 1) {
         const [x, y] = pt(t);
-        side = -side;
-        const a = Math.PI / 2 + side * (0.35 + rand() * 0.3);
-        const lf = 11 + rand() * 5;
-        ellipseLeaf(g, x, y, a, lf, 2.2 + rand() * 0.8, hsl(74 + rand() * 14, 30 + rand() * 12, L0 * 0.9 + rand() * 8 - t * 4));
+        const side = rand() < 0.5 ? -1 : 1;
+        const a = Math.PI / 2 + side * (0.12 + rand() * 0.28);
+        const lf = (10 + rand() * 7) * (1 - 0.35 * t);
+        ellipseLeaf(g, x, y, a, lf, 1.7 + rand() * 0.6, hsl(72 + rand() * 16, 28 + rand() * 14, L0 * 0.92 + rand() * 9 - t * 5));
+        t += (3.5 + rand() * 5) / len;
       }
     }
+  }
+  // 叶簇外壳（后画，盖住枝条上端）：几百片狭叶随机朝向，向下逐渐稀疏
+  for (let i = 0; i < 760; i++) {
+    const x = rc.x + 12 + rand() * (rc.w - 24);
+    const k = Math.pow(rand(), 0.7);
+    const y = domeY(x) + k * domeH(x);
+    const a = Math.PI / 2 + (rand() - 0.5) * 2.2;
+    const L = 22 + rand() * 16 - k * 6 + (1 - k) * 6;
+    ellipseLeaf(g, x, y, a, 9 + rand() * 6, 1.8 + rand() * 0.8, hsl(70 + rand() * 18, 28 + rand() * 14, L));
   }
   g.restore();
 }
@@ -432,10 +452,13 @@ function drawShiliu(g, rc, rand) {
   const cx = rc.x + rc.w / 2, cy = rc.y + rc.h / 2, R = 236;
   clipRect(g, rc, 6);
   const blobs = makeBlobs(cx, cy, 165, rand, 6);
+  // 果实：直径 7~10 cm（卡片约 1.1 m 对应 512 px → 半径 8~11 px），每张卡片 2~4 个、大小不一，多数藏在叶层下
+  // （此前半径 14~21 px、7 个，近看像挂满等大的红色圣诞球）
   const fruits = [];
-  for (let i = 0; i < 7; i++) {
+  const nF = 2 + ((rand() * 3) | 0);
+  for (let i = 0; i < nF; i++) {
     const [x, y] = blobPick(blobs, rand);
-    fruits.push([x, y, 14 + rand() * 7]);
+    fruits.push([x, y, 7.5 + rand() * 3.5]);
   }
   const drawFruit = ([x, y, r]) => {
     const gr = g.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
@@ -456,7 +479,7 @@ function drawShiliu(g, rc, rand) {
   };
   const LAY = [[60, 18], [72, 25], [60, 31]];
   for (let layer = 0; layer < 3; layer++) {
-    if (layer === 2) fruits.slice(0, 4).forEach(drawFruit);
+    if (layer === 2) fruits.slice(0, nF - 1).forEach(drawFruit);
     const [cnt, Lb] = LAY[layer];
     for (let i = 0; i < cnt; i++) {
       const [sx, sy, q, u] = blobPick(blobs, rand);
@@ -478,7 +501,7 @@ function drawShiliu(g, rc, rand) {
       }
     }
   }
-  fruits.slice(4).forEach(drawFruit);
+  fruits.slice(nF - 1).forEach(drawFruit);
   g.restore();
 }
 
@@ -798,10 +821,12 @@ class TreeGeo {
         this.vert(p, dir, strip.u0 + (strip.u1 - strip.u0) * (s / segs), v, [ao, ao, ao], p.y, 0);
       }
     }
+    // 绕向：外表面为正面（逆时针）。此前反了——双面材质按 faceDirection 翻转法线，枝干受光面与背光面颠倒，
+    // 树干、主枝几乎全黑（人眼高度近看像黑色塑料管）
     for (let i = 0; i < n - 1; i++)
       for (let s = 0; s < segs; s++) {
         const a = base + i * (segs + 1) + s, b = a + segs + 1;
-        this.I.push(a, b, a + 1, a + 1, b, b + 1);
+        this.I.push(a, a + 1, b, a + 1, b + 1, b);
       }
   }
   /**
@@ -875,11 +900,19 @@ function cardAxes(n, w, h, rand) {
 }
 
 /** 弯曲枝条路径：从 p0 沿 dir 伸出 len，末端向 upBend 方向弯 */
-function limbPath(p0, dir, len, bend, n = 4) {
+function limbPath(p0, dir, len, bend, n = 4, rand = null) {
+  // 主枝不是笔直的棍：先斜出后上弯（bend），中段再加一点随机的侧向折弯（rand 给出时，幅度约枝长 7%）
   const pts = [];
+  let wx = 0, wz = 0, wy = 0;
+  if (rand) {
+    const side = V(-dir.z, 0, dir.x).normalize();
+    const k = (rand() - 0.5) * 0.14 * len;
+    wx = side.x * k; wz = side.z * k; wy = (rand() - 0.3) * 0.06 * len;
+  }
   for (let i = 0; i <= n; i++) {
     const t = i / n;
-    pts.push(p0.clone().addScaledVector(dir, len * t).add(V(0, bend * t * t * len, 0)));
+    const w = Math.sin(t * Math.PI); // 两端不动、中段折弯
+    pts.push(p0.clone().addScaledVector(dir, len * t).add(V(wx * w, bend * t * t * len + wy * w, wz * w)));
   }
   return pts;
 }
@@ -973,6 +1006,7 @@ function broadleaf(tg, rand, o) {
   } else {
     // 合轴（国槐、法桐）：主枝从分枝点斜出，按方位分管叶团；叶团枝从主枝上离它最近的一点分出
     const nL = o.limbs;
+    const trunkAx = trunkTop.clone().sub(V(leanX * 0.7, o.trunkH * 0.7, leanZ * 0.7)).normalize();
     const az0 = rand() * Math.PI * 2;
     const limbs = [];
     for (let i = 0; i < nL; i++) limbs.push({ az: az0 + (i / nL) * Math.PI * 2 + (rand() - 0.5) * 0.5, lobes: [] });
@@ -993,8 +1027,11 @@ function broadleaf(tg, rand, o) {
       const dir = mean.clone().sub(trunkTop);
       const dist = dir.length();
       dir.divideScalar(dist || 1);
-      const path = limbPath(trunkTop.clone(), dir, dist * (o.limbFrac ?? 0.55), o.limbBend ?? 0.1, 4);
-      const rr = lerpR(o.r0 * 0.66, o.r0 * 0.3, 4);
+      // 主枝从主干顶下方 0.35 m（主干内部）起管、起始半径接近主干：分枝处不再有一道半径突变的接缝环
+      // （此前从主干顶面直接以 0.66·r0 起管，垂柳等斜干树在 2.5 m 高处看得到一圈截断环，审查 g3）
+      const p0 = trunkTop.clone().addScaledVector(trunkAx, -0.35);
+      const path = limbPath(p0, dir, dist * (o.limbFrac ?? 0.55) + 0.35, o.limbBend ?? 0.1, 4, rand);
+      const rr = lerpR(o.r0 * 0.8, o.r0 * 0.3, 4);
       tg.tube(path, rr, 6, o.bark, 4, 0.8, 1);
       for (const l of m.lobes) {
         let k = 2, bd = 1e9;
@@ -1046,7 +1083,7 @@ export function buildSpeciesGeometries() {
     const rand = mulberry(101);
     const tg = new TreeGeo(10.5);
     broadleaf(tg, rand, {
-      trunkH: 2.5, r0: 0.18, lean: 0.25, limbs: 5, limbFrac: 0.5, limbBend: 0.12,
+      trunkH: 2.5, r0: 0.18, lean: 0.25, limbs: 4, limbFrac: 0.5, limbBend: 0.17,
       bark: bark(BT.HUAI), twig: bark(BT.TWIG), crownC: V(0, 6.6, 0), crownR: V(4.4, 3.7, 4.4),
       lobes: 24, lobeR: 1.5, cardsPerLobe: 7, cardSize: [1.6, 2.2], leafUV: leaf(LT.HUAI),
     });
@@ -1145,6 +1182,8 @@ export function buildSpeciesGeometries() {
       lobes: 14, lobeR: 1.4, cardsPerLobe: 4, cardSize: [1.8, 2.4], leafUV: uv, segs: 8, upright: true,
     });
     const crown = { c: V(0.6, 7.0, 0.2), r: V(4.6, 2.6, 4.6) };
+    // 枝帘卡片只取贴图下部（纯下垂小枝；上部 40% 是冠层叶簇外壳，给叶团卡片用）
+    const uvHang = { ...uv, vTop: uv.vTop + (uv.vBot - uv.vTop) * 0.4 };
     // 下垂枝帘：从每个叶团下半边挂出 5~7 张竖向卡片，卡片法线水平朝外，上端藏进叶团里
     for (const l of lobes) {
       const out0 = Math.atan2(l.c.z - crown.c.z, l.c.x - crown.c.x);
@@ -1161,7 +1200,7 @@ export function buildSpeciesGeometries() {
         const right = V(-Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(w / 2);
         const up = V(Math.cos(yaw) * 0.07, 1, Math.sin(yaw) * 0.07).multiplyScalar(hang / 2);
         const c = top.clone().sub(up);
-        tg.card(c, right, up, uv, crown, { flut: (sy) => (sy > 0 ? 1.0 : 2.2), bendY: top.y, sphere: 0.5, tint: [1, 1, 0.95] });
+        tg.card(c, right, up, uvHang, crown, { flut: (sy) => (sy > 0 ? 1.0 : 2.2), bendY: top.y, sphere: 0.5, tint: [1, 1, 0.95] });
       }
     }
     out.push(tg);
@@ -1280,6 +1319,156 @@ export function buildHedgeGeometry() {
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array((P.length / 3) * 2), 2));
+  g.setIndex(I);
+  return g;
+}
+
+// ---------------------------------------------------------------------------
+// 行道树树池（人行道设施带里 1.3 m 见方；窄机非隔离带 1.0 m）：花岗岩池边 + 池面（铸铁树箅子 / 卵石 / 麦冬地被）。
+// 图集 512²，四格：左上 花岗岩，右上 铸铁箅子，左下 卵石，右下 地被（canvas 左上原点；CanvasTexture 默认 flipY，
+// 所以左上格在 UV 的 u∈[0,0.5]、v∈[0.5,1]）。池面默认取箅子格，着色器按实例偏移到卵石/地被格（PIT_VAR_OFF）。
+export const PIT_VAR_OFF = [[0, 0], [-0.5, -0.5], [0, -0.5]];
+export function buildPitTexture() {
+  const S = 512, H = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  const rand = mulberry(4242);
+  // —— 花岗岩（芝麻灰，细颗粒；比人行道砖略深，不成一圈白框）——
+  g.fillStyle = '#76736d';
+  g.fillRect(0, 0, H, H);
+  for (let i = 0; i < 2600; i++) {
+    const x = rand() * H, y = rand() * H, r = 0.6 + rand() * 1.6;
+    const k = rand();
+    g.fillStyle = k < 0.45 ? hsl(30, 4, 24 + rand() * 10, 0.85) : k < 0.8 ? hsl(35, 6, 56 + rand() * 10, 0.6) : hsl(20, 10, 40 + rand() * 10, 0.55);
+    g.fillRect(x, y, r, r);
+  }
+  // —— 铸铁树箅子：深色池土打底，方板四块拼（十字缝），中心留圆洞，放射状长条孔 + 两圈环孔 ——
+  {
+    const ox = H, cx = ox + H / 2, cy = H / 2;
+    g.fillStyle = '#2b241e';
+    g.fillRect(ox, 0, H, H);
+    g.save();
+    g.beginPath();
+    g.rect(ox, 0, H, H);
+    g.clip();
+    g.fillStyle = '#3d3c3a';
+    g.fillRect(ox + 2, 2, H - 4, H - 4);
+    // 中心树洞（直径约池宽 36%）：露出池土
+    g.fillStyle = '#251f1a';
+    g.beginPath();
+    g.arc(cx, cy, H * 0.18, 0, Math.PI * 2);
+    g.fill();
+    // 放射状条孔
+    g.strokeStyle = '#211b16';
+    g.lineCap = 'round';
+    for (const [r0, r1, n, w] of [[H * 0.22, H * 0.31, 28, 5], [H * 0.34, H * 0.43, 40, 5], [H * 0.46, H * 0.66, 56, 4.5]]) {
+      g.lineWidth = w;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + 0.05;
+        g.beginPath();
+        g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+        g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+        g.stroke();
+      }
+    }
+    // 十字拼缝 + 板面锈斑
+    g.fillStyle = '#1e1915';
+    g.fillRect(cx - 1.5, 0, 3, H);
+    g.fillRect(ox, cy - 1.5, H, 3);
+    for (let i = 0; i < 260; i++) {
+      g.fillStyle = rand() < 0.5 ? hsl(22, 35, 22 + rand() * 10, 0.25) : hsl(30, 5, 40 + rand() * 12, 0.18);
+      g.fillRect(ox + rand() * H, rand() * H, 2 + rand() * 6, 2 + rand() * 6);
+    }
+    g.restore();
+  }
+  // —— 卵石（灰白/黄褐，大小不一，下面是深色土）——
+  {
+    const oy = H;
+    g.fillStyle = '#3a332b';
+    g.fillRect(0, oy, H, H);
+    for (let i = 0; i < 900; i++) {
+      const x = rand() * H, y = oy + rand() * H, r = 3 + rand() * 6;
+      const L = 48 + rand() * 32;
+      g.fillStyle = rand() < 0.7 ? hsl(35, 6 + rand() * 8, L) : hsl(28, 20 + rand() * 12, L - 10);
+      g.beginPath();
+      g.ellipse(x, y, r, r * (0.65 + rand() * 0.3), rand() * Math.PI, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.12)';
+      g.beginPath();
+      g.arc(x - r * 0.3, y - r * 0.3, r * 0.35, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+  // —— 麦冬地被（深绿细长叶丛，间露池土）——
+  {
+    const ox = H, oy = H;
+    g.fillStyle = '#2f2a22';
+    g.fillRect(ox, oy, H, H);
+    g.lineCap = 'round';
+    for (let i = 0; i < 1500; i++) {
+      const x = ox + rand() * H, y = oy + rand() * H, a = rand() * Math.PI * 2, l = 7 + rand() * 9;
+      g.strokeStyle = hsl(95 + rand() * 25, 30 + rand() * 18, 16 + rand() * 16);
+      g.lineWidth = 1.4 + rand() * 1.2;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.quadraticCurveTo(x + Math.cos(a) * l * 0.5 + 2, y + Math.sin(a) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l);
+      g.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  t.name = 'veg-pit';
+  return t;
+}
+
+/** 树池单位几何（池外沿边长 1，实例矩阵按 1.3/1.0 m 缩放 x/z）：池边石顶面高 +5 cm、宽 6.5%，外侧面下插到 −8 cm；池面 +1.5 cm */
+export function buildPitGeometry() {
+  const P = [], N = [], U = [], Q = [], I = [];
+  const h = 0.5, b = 0.065, hi = h - b;
+  const yT = 0.06, yB = -0.08, yP = 0.025;
+  const ins = 2 / 512;
+  // 花岗岩格（u∈[0,0.5]，v∈[0.5,1]）：按位置平面映射
+  const gu = (x) => ins + (x + 0.5) * (0.5 - 2 * ins);
+  const gv = (z) => 0.5 + ins + (z + 0.5) * (0.5 - 2 * ins);
+  const quad = (a, b2, c, d, n, uvs, plate = 0) => {
+    const base = P.length / 3;
+    for (const [k, p] of [a, b2, c, d].entries()) {
+      P.push(p[0], p[1], p[2]);
+      N.push(n[0], n[1], n[2]);
+      U.push(uvs[k][0], uvs[k][1]);
+      Q.push(plate);
+    }
+    I.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  };
+  // 四条池边（绕 y 轴旋转 4 次）；顶面为梯形（45° 斜接）
+  for (let r = 0; r < 4; r++) {
+    const ca = Math.cos((r * Math.PI) / 2), sa = Math.sin((r * Math.PI) / 2);
+    const R = (x, y, z) => [x * ca - z * sa, y, x * sa + z * ca];
+    const Rn = (x, y, z) => [x * ca - z * sa, y, x * sa + z * ca];
+    const uvOf = (p) => [gu(p[0]), gv(p[2])];
+    // 本条边在 +z 侧（z 从 hi 到 h），逆时针看向 -y（俯视）为正面
+    const tA = R(-h, yT, h), tB = R(h, yT, h), tC = R(hi, yT, hi), tD = R(-hi, yT, hi);
+    quad(tA, tB, tC, tD, [0, 1, 0], [tA, tB, tC, tD].map(uvOf));
+    // 外侧面（朝 +z）
+    const oA = R(-h, yB, h), oB = R(h, yB, h);
+    const sideUV = [[gu(-0.5), 0.5 + ins], [gu(0.5), 0.5 + ins], [gu(0.5), 0.5 + ins + 0.06], [gu(-0.5), 0.5 + ins + 0.06]];
+    quad(oA, oB, tB, tA, Rn(0, 0, 1), [sideUV[0], sideUV[1], sideUV[2], sideUV[3]]);
+    // 内侧面（朝 -z，从池边顶面到池面）
+    const iA = R(-hi, yP, hi), iB = R(hi, yP, hi);
+    quad(iB, iA, tD, tC, Rn(0, 0, -1), [sideUV[1], sideUV[0], sideUV[3], sideUV[2]]);
+  }
+  // 池面：铸铁箅子格（u∈[0.5,1]，v∈[0.5,1]）
+  const pu = (x) => 0.5 + ins + ((x + hi) / (2 * hi)) * (0.5 - 2 * ins);
+  const pv = (z) => 0.5 + ins + ((z + hi) / (2 * hi)) * (0.5 - 2 * ins);
+  const pa = [-hi, yP, hi], pb = [hi, yP, hi], pc = [hi, yP, -hi], pd = [-hi, yP, -hi];
+  quad(pa, pb, pc, pd, [0, 1, 0], [pa, pb, pc, pd].map((p) => [pu(p[0]), pv(p[2])]), 1);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+  g.setAttribute('aPlate', new THREE.Float32BufferAttribute(Q, 1));
   g.setIndex(I);
   return g;
 }
