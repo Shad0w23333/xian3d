@@ -30,7 +30,7 @@ import { bikeGeometries, BIKE, OPT, SEAT, BIKE_LEN, SCOOTER_COLORS, SHARED_BIKES
 import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, SEAT_H, MODE } from '../arch/people-geo.js';
 import * as roadsNet from '../arch/roads_net.js';
 import { BRIDGE_UNIT, LIFT } from '../core/roadheight.js';
-import { parkingPlan, parkHash, featureWidth } from '../arch/vehicle-parking.js';
+import { parkingPlan, parkHash, featureWidth, carFreeZones } from '../arch/vehicle-parking.js';
 
 // ======================================================================
 // 参数
@@ -521,11 +521,13 @@ export default {
     // —— 路网 ——
     // 景区/公园里的无名支路（大慈恩寺绕三藏院的环路等）按步行道处理，不进车行路网（与 roads 同一规则）
     if (typeof roadsNet.markParkWalkways === 'function') roadsNet.markParkWalkways(ctx.data.roads, ctx.data.landuse);
-    const G = buildRoadGraph(ctx.data.roads);
-    // 步行街与“道路模块不画路面”的地方（大唐不夜城步行街、下沉广场坑口、楼体内部路段等，排除区 roads=true）不跑车
-    const EX = ctx.exclusions;
-    const nBlocked = EX && EX.items && EX.items.length ? blockEdges(G, (x, z) => EX.test(x, z, 'roads')) : 0;
-    if (nBlocked) console.warn(`[traffic] 封闭不通车的边 ${nBlocked} 条（步行街/排除区）`);
+    // 禁车区（vehicle-parking.js carFreeZones）：地标/景区门前与环路整条禁车；步行街与“道路模块不画路面”的地方
+    // （大唐不夜城步行街、下沉广场坑口、楼体内部路段等，排除区 roads=true）不跑车；地标、寺院、回民街街区等
+    // （排除区 buildings=true、寺院景区公园）里的支路不跑车
+    const CF = carFreeZones(ctx);
+    const G = buildRoadGraph(ctx.data.roads, (f) => CF.featureCarFree(f));
+    const nBlocked = blockEdges(G, (x, z, c) => CF.noDrive(x, z, c));
+    if (nBlocked) console.info(`[traffic] 封闭不通车的边 ${nBlocked} 条，整条禁车道路 ${CF.stats.carFreeFeatures} 条（步行街/景区/排除区）`);
     const edges = G.edges;
     const NE = edges.length;
     const feats = G.feats;
@@ -547,7 +549,7 @@ export default {
       const f = feats[fi];
       if (!f || !f.p) continue;
       const pl = parkingPlan(f, fi);
-      if (pl) { parkPlans[fi] = pl; nParkFeat++; }
+      if (pl && !CF.featureCarFree(f)) { parkPlans[fi] = pl; nParkFeat++; }
     }
     for (const e of edges) {
       e.parkShift = 0;
@@ -1393,7 +1395,7 @@ export default {
     }
 
     // ==================================================================
-    // 路边停车（支路/小区路/三级路，静态，按 200 m 网格懒生成；离路口 11 m 内、桥隧、排除区不停）
+    // 路边停车（支路/小区路/三级路，静态，按 200 m 网格懒生成；离路口 11 m 内、桥隧、禁车区不停）
     // ==================================================================
     const PARK_CELL = 200;
     const PARK_R = [350, 500, 650, 800];
@@ -1460,7 +1462,7 @@ export default {
               const x = ax + hx * (t + jit) - hz * lat, z = az + hz * (t + jit) + hx * lat;
               if (Math.floor(x / PARK_CELL) !== cx || Math.floor(z / PARK_CELL) !== cz) continue;
               if (nearJunction(x, z, 11)) continue;
-              if (EX && (EX.test(x, z, 'roads') || EX.test(x + hx * 2.3, z + hz * 2.3, 'roads') || EX.test(x - hx * 2.3, z - hz * 2.3, 'roads'))) continue;
+              if (CF.noPark(x, z) || CF.noPark(x + hx * 2.3, z + hz * 2.3) || CF.noPark(x - hx * 2.3, z - hz * 2.3)) continue;
               if (terrain.inHole?.(x, z)) continue;
               const rev = parkHash(key + 3) < 0.08;
               const dir = (sd === 0) !== rev ? 1 : -1;
@@ -2009,6 +2011,23 @@ export default {
         for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1)]);
         return out;
       },
+      /** 调试：禁车区（封闭的边按道路名汇总、整条禁车的道路） */
+      debugCarFree() {
+        const byName = new Map();
+        for (const e of edges) {
+          if (!e.blocked) continue;
+          const f = feats[e.f];
+          const k = `${f.n || '(无名)'}|${f.c}`;
+          const o = byName.get(k) || { n: f.n || '', c: f.c, edges: 0, len: 0, x: Math.round(f.p[0]), z: Math.round(f.p[1]) };
+          o.edges++; o.len += Math.round(e.L);
+          byName.set(k, o);
+        }
+        const whole = [];
+        for (const f of ctx.data.roads.features) if (CF.featureCarFree(f)) whole.push({ n: f.n || '', c: f.c, x: Math.round(f.p[0]), z: Math.round(f.p[1]) });
+        return { blocked: [...byName.values()].sort((a, b) => b.len - a.len), whole, stats: CF.stats };
+      },
+      /** 调试：某点是否禁停/禁行 */
+      debugCarFreeAt(x, z, c = 5) { return { noPark: CF.noPark(x, z), noDrive: CF.noDrive(x, z, c) }; },
       /** 调试：两轮车（位置、朝向、速度、车型） */
       debugBikes() {
         const out = [];
