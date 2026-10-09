@@ -215,6 +215,15 @@ export class SkySystem {
     this.pmrem = new THREE.PMREMGenerator(renderer);
     this.envRT = null;
     this._lastEnv = { el: 999, night: -1, t: -10 };
+    // WebGL 上下文丢失后恢复（GPU 压力大、多标签页/多实例同时跑 Metal 时会发生）：three 会重建所有 GL 资源，
+    // 但渲染出来的纹理只剩空白——环境贴图（IBL）变成全零，整场环境光消失，部分材质整块纯黑（审查 P0：永宁门近水机位
+    // 城墙、城门、脚下楼顶全黑，同机位手动丢失/恢复上下文可逐像素复现）。恢复后下一帧立即重画环境贴图。
+    // three 自己的恢复处理在渲染器构造时注册，先于这里执行。
+    this.contextRestores = 0;
+    renderer.domElement.addEventListener('webglcontextrestored', () => {
+      this.contextRestores++;
+      this._envDirty = true;
+    });
 
     // 太阳 / 月亮平行光（同一盏，按时段切换）
     this.sun = new THREE.DirectionalLight(0xffffff, 3);
@@ -383,7 +392,8 @@ export class SkySystem {
     // 环境贴图（节流）
     const now = performance.now() / 1000;
     const L = this._lastEnv;
-    if (this.envEnabled && (Math.abs(L.el - el) > 1.2 || Math.abs(L.night - this.night) > 0.04) && now - L.t > 0.35) {
+    if (this.envEnabled && (this._envDirty || ((Math.abs(L.el - el) > 1.2 || Math.abs(L.night - this.night) > 0.04) && now - L.t > 0.35))) {
+      this._envDirty = false;
       this._renderEnv();
       L.el = el;
       L.night = this.night;
