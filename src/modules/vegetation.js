@@ -13,12 +13,15 @@
 //   中景（至 300~900 m）：每树种 1 个 InstancedMesh，叶片抽稀放大的简化几何；
 //   远景：1 个 InstancedBufferGeometry impostor（启动时把近景几何正交烘焙成侧视/俯视图集），GPU 按距离/密度剔除；
 //   绿篱：1 个 InstancedMesh。
+//   树池：1 个 InstancedMesh（核心区有人行道的 1~4 级路上的行道树：花岗岩池边 + 铸铁箅子/卵石/麦冬地被，贴在人行道面上，
+//   面高按 roads 同一套道路纵断面 roadY + 0.15 m 求；随近景树一起流式填充）。
 //   近/中景实例每帧（相机移动时）按 200 m 分块 + 视锥剔除重新填充；LOD 之间用屏幕空间抖动交叉淡化。
 //   顶点着色器风摆（整树摆动 + 叶片颤动），片元着色器做银杏/法桐秋色、夜间路灯暖光（按到道路的距离）。
 import * as THREE from 'three';
-import { buildAtlas, buildSpeciesGeometries, buildHedgeGeometry, buildHedgeTexture, SPECIES_COUNT } from '../arch/vegSpecies.js';
+import { buildAtlas, buildSpeciesGeometries, buildHedgeGeometry, buildHedgeTexture, buildPitGeometry, buildPitTexture, PIT_VAR_OFF, SPECIES_COUNT } from '../arch/vegSpecies.js';
 import VegWorker from '../arch/vegWorker.js?worker&inline';
-import { simplifyTree, bakeImpostors, patchTreeMaterial, makeFarMaterial, makeFarGeometry, patchHedgeMaterial } from '../arch/vegRender.js';
+import { simplifyTree, bakeImpostors, patchTreeMaterial, makeFarMaterial, makeFarGeometry, patchHedgeMaterial, patchPitMaterial } from '../arch/vegRender.js';
+import { roadY } from '../core/roadheight.js';
 
 const GUANMU = 6;
 // 画质档位 → [近景半径, 中景（远景起点）半径, 远景最远, 绿篱半径, 灌木半径]
@@ -140,6 +143,9 @@ export default {
     const imp = bakeImpostors(ctx.renderer, nearGeos, atlas);
     const hedgeGeo = buildHedgeGeometry();
     const hedgeTex = buildHedgeTexture();
+    const pitGeo = buildPitGeometry();
+    const pitTex = buildPitTexture();
+    pitTex.anisotropy = Math.min(8, ctx.quality.anisotropy || 4);
 
     // —— 材质 ——
     let level = Math.max(0, Math.min(3, ctx.quality.level ?? 2));
@@ -159,6 +165,8 @@ export default {
     const fadeMid = new THREE.Vector4(nearR - BAND, nearR, farR - FARBAND, farR);
     const fadeFar = new THREE.Vector4(farR - FARBAND, farR, farMax * 0.8, farMax);
     const fadeHedge = new THREE.Vector4(0, 0, hedgeR - 20, hedgeR);
+    const pitRad = () => Math.max(60, nearR + 10);
+    const fadePit = new THREE.Vector4(0, 0, pitRad() - 20, pitRad());
     const rankMax = { value: 256 };
     const treeMat = (fade, key) =>
       patchTreeMaterial(
@@ -178,6 +186,12 @@ export default {
     });
     const farMat = makeFarMaterial(G, imp.texture, imp.info, { fade: fadeFar, rankMax, lampK });
     const hedgeMat = patchHedgeMaterial(new THREE.MeshStandardMaterial({ map: hedgeTex, roughness: 0.9, metalness: 0 }), G, fadeHedge, lampK);
+    const pitMat = patchPitMaterial(new THREE.MeshStandardMaterial({ map: pitTex, roughness: 0.88, metalness: 0 }), G, fadePit, lampK);
+    // 人行道（roads 路面材质）带覆盖层偏移 0.0004 + polygonOffset(-2,-2)：人眼高度掠射看时被往前推几厘米，
+    // 不加偏移的池面会被人行道砖盖住（只露出池边石）。树池用更大的偏移压过人行道
+    if (ctx.overlay) ctx.overlay(pitMat, 0.0009);
+    pitMat.polygonOffsetFactor = -4;
+    pitMat.polygonOffsetUnits = -4;
 
     // —— 动态实例槽 ——
     const slots = [];
@@ -226,6 +240,7 @@ export default {
     hedgeSlot.col = hedgeSlot.mesh.instanceColor.array;
     // 大叶黄杨 / 金叶女贞 / 红叶石楠
     const HEDGE_COL = [new THREE.Color(0x4f7436), new THREE.Color(0x93a64a), new THREE.Color(0x9a4636)];
+    const pitSlot = makeSlot(pitGeo, pitMat, 1024, { name: '植被-树池' });
 
     // —— 等待种植结果 ——
     let dirty = true;
@@ -238,6 +253,31 @@ export default {
       const y = new Float32Array(n);
       const th = ctx.terrain;
       for (let i = 0; i < n; i++) y[i] = th.heightAt(r.x[i], r.z[i]);
+      // —— 树池：只在 roads 画人行道的地方（核心区、道路模块已求纵断面、不在“道路不画”的排除区）——
+      // 面高 = 道路纵断面 roadY + 0.15（roads 人行道板顶）；树基不高于池面（地形高于人行道时树干不悬在箅子上）
+      let pitOf = null, pitY = null, pitN = 0;
+      const roads = ctx.data.roads;
+      if (r.pitK && r.pitK.length && roads && roads._rpStats && ctx.geo) {
+        const pa = ctx.geo.project(108.84, 34.35), pb = ctx.geo.project(109.06, 34.17);
+        const feats = roads.features;
+        const ex = ctx.exclusions;
+        const exOn = !!(ex && ex.items && ex.items.length);
+        pitOf = new Int32Array(n).fill(-1);
+        pitY = new Float32Array(r.pitK.length);
+        for (let j = 0; j < r.pitK.length; j++) {
+          const k = r.pitK[j], x = r.x[k], z = r.z[k];
+          if (x <= pa.x || x >= pb.x || z <= pa.z || z >= pb.z) continue;
+          const f = feats[r.pitF[j]];
+          if (!f || !f._rp || f.t) continue;
+          if (exOn && ex.test(x, z, 'roads')) continue;
+          const ry = roadY(th, f, x, z, r.pitS[j], 0);
+          if (ry == null) continue;
+          pitY[j] = ry + 0.15;
+          pitOf[k] = j;
+          if (y[k] > pitY[j] - 0.02) y[k] = pitY[j] - 0.02;
+          pitN++;
+        }
+      }
       const nC = r.ncx * r.ncz;
       const cy0 = new Float32Array(nC).fill(1e9), cy1 = new Float32Array(nC).fill(-1e9);
       for (let c = 0; c < nC; c++)
@@ -327,9 +367,9 @@ export default {
         );
         farCells.push({ mesh: m, box, n: b - a, rc });
       }
-      D = { ...r, y, cy0, cy1, hy };
+      D = { ...r, y, cy0, cy1, hy, pitOf, pitY, pitN };
       applyDensity();
-      console.warn(`[vegetation] 树木 ${n}（行道树 ${r.stats.street}、分隔带 ${r.stats.median}、环城公园 ${r.stats.wallpark}、水岸 ${r.stats.bank}、院落 ${r.stats.court}、用地 ${r.stats.landuse}、外圈 ${r.stats.outer}），绿篱 ${r.hedgeN} 段；种植 ${r.stats.ms} ms，装配 ${(performance.now() - t0).toFixed(0)} ms`);
+      console.warn(`[vegetation] 树木 ${n}（行道树 ${r.stats.street}、分隔带 ${r.stats.median}、环城公园 ${r.stats.wallpark}、水岸 ${r.stats.bank}、院落 ${r.stats.court}、用地 ${r.stats.landuse}、外圈 ${r.stats.outer}），绿篱 ${r.hedgeN} 段，树池 ${pitN}；种植 ${r.stats.ms} ms，装配 ${(performance.now() - t0).toFixed(0)} ms`);
     };
     let density = ctx.quality.treeDensity ?? 1;
     const applyDensity = () => {
@@ -418,6 +458,29 @@ export default {
       s.col[k * 3 + 2] = col.b * v;
     };
 
+    const writePit = (s, j, i) => {
+      if (s.n >= s.cap) growSlot(s);
+      const k = s.n++;
+      const o = k * 16;
+      const code = D.pitC[j];
+      const a = (((code & 127) - 1) / 126) * (Math.PI / 2);
+      const S = code & 128 ? 1.0 : 1.3;
+      const c = Math.cos(a) * S, sn = Math.sin(a) * S;
+      const m = s.m;
+      m[o] = c; m[o + 1] = 0; m[o + 2] = -sn; m[o + 3] = 0;
+      m[o + 4] = 0; m[o + 5] = 1; m[o + 6] = 0; m[o + 7] = 0;
+      m[o + 8] = sn; m[o + 9] = 0; m[o + 10] = c; m[o + 11] = 0;
+      m[o + 12] = D.x[i]; m[o + 13] = D.pitY[j]; m[o + 14] = D.z[i]; m[o + 15] = 1;
+      // 池面：同一条路（要素）同一种做法——铸铁箅子 55%、卵石 25%、麦冬地被 20%
+      const fh = ((Math.imul(D.pitF[j] + 7, 2654435761) >>> 0) % 1000) / 1000;
+      const v = PIT_VAR_OFF[fh < 0.55 ? 0 : fh < 0.8 ? 1 : 2];
+      const q = k * 4;
+      s.info[q] = v[0];
+      s.info[q + 1] = v[1];
+      s.info[q + 2] = 0;
+      s.info[q + 3] = 0;
+    };
+
     const assign = () => {
       const cam = ctx.camera;
       const cp = cam.position;
@@ -429,6 +492,8 @@ export default {
       const cx0 = Math.max(0, Math.floor((cp.x - reach - R.x0) / CH)), cx1 = Math.min(D.ncx - 1, Math.floor((cp.x + reach - R.x0) / CH));
       const cz0 = Math.max(0, Math.floor((cp.z - reach - R.z0) / CH)), cz1 = Math.min(D.ncz - 1, Math.floor((cp.z + reach - R.z0) / CH));
       const nr2 = nearR * nearR, fr2 = farR * farR, sr2 = shrubR * shrubR, hr2 = hedgeR * hedgeR;
+      const pr = pitRad(), pr2 = pr * pr;
+      const PO = D.pitOf;
       const midIn2 = (nearR - BAND) * (nearR - BAND);
       const rk = rankMax.value;
       // 远景 impostor：整格剔除（格到相机距离 < 远景最远 + 淡出带，且在视锥内）
@@ -461,6 +526,7 @@ export default {
               const dx = X[i] - cp.x, dy = Y[i] - cp.y, dz = Z[i] - cp.z;
               const d2 = dx * dx + dy * dy + dz * dz;
               const sp = SPA[i];
+              if (PO && d2 < pr2 && PO[i] >= 0) writePit(pitSlot, PO[i], i);
               if (sp === GUANMU) {
                 if (d2 < sr2) writeTree(near[sp], i);
                 continue;
@@ -501,6 +567,7 @@ export default {
       fadeMid.set(nearR - BAND, nearR, farR - FARBAND, farR);
       fadeFar.set(farR - FARBAND, farR, farMax * 0.8, farMax);
       fadeHedge.set(0, 0, hedgeR - 20, hedgeR);
+      fadePit.set(0, 0, pitRad() - 20, pitRad());
       dirty = true;
     };
 
@@ -541,19 +608,24 @@ export default {
       },
       dispose() {
         root.traverse((o) => o.geometry && o.geometry.dispose());
-        for (const m of [nearMat, shrubMat, midMat, depthMat, farMat, hedgeMat]) m.dispose();
+        for (const m of [nearMat, shrubMat, midMat, depthMat, farMat, hedgeMat, pitMat]) m.dispose();
         atlas.dispose();
         hedgeTex.dispose();
+        pitTex.dispose();
         imp.rt.dispose();
         ctx.scene.remove(root);
       },
       stats() {
         const far = farCells ? farCells.reduce((s, c) => (c.mesh.visible ? s + c.mesh.geometry.instanceCount : s), 0) : 0;
         const farCellsVis = farCells ? farCells.filter((c) => c.mesh.visible).length : 0;
-        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => (s ? s.n : 0)), hedge: hedgeSlot.n, far, farCells: farCellsVis } : null;
+        return D ? { trees: D.n, hedges: D.hedgeN, ...D.stats, near: near.map((s) => s.n), mid: mid.map((s) => (s ? s.n : 0)), hedge: hedgeSlot.n, pits: pitSlot.n, far, farCells: farCellsVis } : null;
       },
       get ready() {
         return dataReady;
+      },
+      /** 诊断：种植结果（只读；tools/ 与截图排查用） */
+      debugData() {
+        return D;
       },
     };
   },

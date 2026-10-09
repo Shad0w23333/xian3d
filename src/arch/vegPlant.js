@@ -307,22 +307,25 @@ export function plantVegetation(input) {
     for (let i = 0; i + 3 < p.length; i += 2) stampCapsule(RD, p[i], p[i + 1], p[i + 2], p[i + 3], hw);
   }
   // 矢量道路索引（行道树/绿篱用精确距离判断，避免 3 m 栅格量化把树池也判成路面）
-  const SEGC = 40;
+  // 每段 SEGN 个数：xa, za, xb, zb, 半宽, 要素序号, 类别, 软（1 = 单位/小区出入口这类 service 路：只在行道树避让路口时看；
+  // 2 = 步行道/步行街：行道树可以种在与之平行的步道上，只避让横穿车行道的路段人行横道与进出口步道）
+  const SEGC = 40, SEGN = 8;
   const segGrid = new Map();
   const segArr = [];
-  for (const f of feats) {
+  for (let fi = 0; fi < feats.length; fi++) {
+    const f = feats[fi];
     if (f.t) continue;
     const c = f.c | 0;
-    if (c === 6 || c === 12 || c === 13) continue; // 人行道/步行街/辅路：行道树允许种在其上
+    const soft = c === 12 || c === 13 ? 2 : c === 6 ? 1 : 0;
     const p = f.p;
     if (!p || p.length < 4) continue;
     const hw = roadW(f) / 2 + (f.b ? 1.5 : 0);
     for (let i = 0; i + 3 < p.length; i += 2) {
       const xa = p[i], za = p[i + 1], xb = p[i + 2], zb = p[i + 3];
       if (!inOuterBox(xa, za) && !inOuterBox(xb, zb)) continue;
-      const id = segArr.length / 5;
-      segArr.push(xa, za, xb, zb, hw);
-      const e = hw + 3;
+      const id = segArr.length / SEGN;
+      segArr.push(xa, za, xb, zb, hw, fi, c, soft);
+      const e = hw + 8.5; // 行道树避让横街要查到路缘外 8 m
       for (let cx = Math.floor((Math.min(xa, xb) - e) / SEGC); cx <= Math.floor((Math.max(xa, xb) + e) / SEGC); cx++)
         for (let cz = Math.floor((Math.min(za, zb) - e) / SEGC); cz <= Math.floor((Math.max(za, zb) + e) / SEGC); cz++) {
           const k = cx * 100003 + cz;
@@ -332,17 +335,45 @@ export function plantVegetation(input) {
         }
     }
   }
-  /** 点到任一车行道边缘距离 < margin（margin ≤ 3） */
+  /** 点到任一车行道边缘距离 < margin（margin ≤ 8；不含 service 软路段） */
   const roadHit = (x, z, margin) => {
     const l = segGrid.get(Math.floor(x / SEGC) * 100003 + Math.floor(z / SEGC));
     if (!l) return false;
     for (const id of l) {
-      const o = id * 5;
+      const o = id * SEGN;
+      if (segArr[o + 7]) continue;
       const xa = segArr[o], za = segArr[o + 1], dx = segArr[o + 2] - xa, dz = segArr[o + 3] - za;
       let t = ((x - xa) * dx + (z - za) * dz) / (dx * dx + dz * dz || 1e-6);
       t = t < 0 ? 0 : t > 1 ? 1 : t;
       const ex = xa + dx * t - x, ez = za + dz * t - z;
       const r = segArr[o + 4] + margin;
+      if (ex * ex + ez * ez < r * r) return true;
+    }
+    return false;
+  };
+  /**
+   * 行道树避让路口：(x, z) 处、本路走向 (tx, tz)、本路要素 fi。与本路不平行（|cos| < 0.8）的其他车行道：
+   * 主次干道（有人行道、路口有人行横道与缘石坡道）路缘外 7.5 m 内不种——横街人行道（≤ 5 m）+ 转角坡道 1.4 m +
+   * 过街坡道（路口退让后 1.6~5.4 m）；支路 4 m；service 出入口 1.2 m（降坡口）。
+   * 平行的其他路（机非隔离带外侧的辅路、双幅路的另一幅）只要求路缘外 near 米。
+   */
+  const crossHit = (x, z, tx, tz, fi, near) => {
+    const l = segGrid.get(Math.floor(x / SEGC) * 100003 + Math.floor(z / SEGC));
+    if (!l) return false;
+    for (const id of l) {
+      const o = id * SEGN;
+      if (segArr[o + 5] === fi) continue;
+      const xa = segArr[o], za = segArr[o + 1], dx = segArr[o + 2] - xa, dz = segArr[o + 3] - za;
+      const L2 = dx * dx + dz * dz || 1e-6;
+      const par = Math.abs(dx * tx + dz * tz) / Math.sqrt(L2) > 0.8;
+      const c = segArr[o + 6], soft = segArr[o + 7];
+      let m;
+      if (par) { if (soft) continue; m = near; }
+      else m = soft === 2 ? 1.0 : soft ? 1.2 : c <= 4 ? 7.5 : 4;
+      let t = ((x - xa) * dx + (z - za) * dz) / L2;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const ex = xa + dx * t - x, ez = za + dz * t - z;
+      const r = segArr[o + 4] + m;
       if (ex * ex + ez * ez < r * r) return true;
     }
     return false;
@@ -566,12 +597,15 @@ export function plantVegetation(input) {
   let X = new Float32Array(cap), Z = new Float32Array(cap);
   let SPC = new Uint8Array(cap), SC = new Uint8Array(cap), ROT = new Uint8Array(cap), RK = new Uint8Array(cap), LAMP = new Uint8Array(cap), YEL = new Uint8Array(cap), BR = new Uint8Array(cap);
   let SRCA = new Uint8Array(cap); // 种植来源（诊断用：1 行道 2 分隔带 3 环城外 4 环城内 5 岸环 6 岸线 7 用地 8 院落 9 外圈）
+  // 行道树树池：PIT 0 无；低 7 位 = 1 + 方池朝向（模 90°，量化 127 级），0x80 = 小号树池（1.0 m，窄隔离带）；
+  // PF/PS = 所在道路要素序号与里程（主线程按道路纵断面求人行道面高）
+  let PIT = new Uint8Array(cap), PF = new Int32Array(cap), PS = new Float32Array(cap);
   const grow = () => {
     cap *= 2;
     const g = (A, C) => { const b = new C(cap); b.set(A); return b; };
     X = g(X, Float32Array); Z = g(Z, Float32Array);
     SPC = g(SPC, Uint8Array); SC = g(SC, Uint8Array); ROT = g(ROT, Uint8Array); RK = g(RK, Uint8Array);
-    LAMP = g(LAMP, Uint8Array); YEL = g(YEL, Uint8Array); BR = g(BR, Uint8Array); SRCA = g(SRCA, Uint8Array);
+    LAMP = g(LAMP, Uint8Array); YEL = g(YEL, Uint8Array); BR = g(BR, Uint8Array); SRCA = g(SRCA, Uint8Array); PIT = g(PIT, Uint8Array); PF = g(PF, Int32Array); PS = g(PS, Float32Array);
   };
   const rnd = mulberry(20260925);
   const stats = { street: 0, median: 0, wallpark: 0, bank: 0, landuse: 0, court: 0, outer: 0, hedge: 0, shrunk: 0, axis: 0 };
@@ -646,7 +680,7 @@ export function plantVegetation(input) {
    * 放置一棵树（已通过路面/水面检查）。rankMul：rank 偏置（行道树更靠前保留）；exb=false 不按排除区收冠；
    * room(x,z)：额外的冠幅上限（院落里离殿堂/院墙的距离）
    */
-  function addTree(x, z, sp, { lamp = 0, sMul = 1, rankMul = 1, src = 0, exb = true, room = null, face = null, bg = B } = {}) {
+  function addTree(x, z, sp, { lamp = 0, sMul = 1, rankMul = 1, src = 0, exb = true, room = null, face = null, bg = B, pit = null } = {}) {
     if (n >= cap) grow();
     const [s0, s1] = SCALE[sp];
     let s = (s0 + (s1 - s0) * rnd()) * sMul;
@@ -671,6 +705,13 @@ export function plantVegetation(input) {
     YEL[n] = Math.round((y0 + (y1 - y0) * rnd() * rnd() * 1.6) * 255) & 255;
     BR[n] = (rnd() * 256) | 0;
     SRCA[n] = src;
+    if (pit) {
+      const Q = Math.PI / 2;
+      const q = (((pit.a % Q) + Q) % Q) / Q;
+      PIT[n] = (1 + Math.min(126, Math.round(q * 126))) | (pit.small ? 0x80 : 0);
+      PF[n] = pit.f;
+      PS[n] = pit.s;
+    } else PIT[n] = 0;
     occupyTree(x, z, sp);
     if (CONIFER(sp)) stampCapsule(CON, x - 0.01, z, x + 0.01, z, CROWN_R[sp] * s * 0.7);
     n++;
@@ -717,11 +758,75 @@ export function plantVegetation(input) {
     const h = hashI(Math.round(f.p[0] / 50), Math.round(f.p[1] / 50), 7);
     return [h < 0.6 ? HUAI : h < 0.82 ? WUTONG : YINXING, 0.7];
   }
-  const OTHER_STREET = [[HUAI, 0.55], [WUTONG, 0.2], [YINXING, 0.15], [SHILIU, 0.1]];
+  // 行道树不用挂果的石榴（近看满树红果像圣诞挂饰；西安行道树也基本不种果树）
+  const OTHER_STREET = [[HUAI, 0.6], [WUTONG, 0.22], [YINXING, 0.18]];
   // 宽分隔带（≥ 9 m）里的乔木：不种针叶树
   const MEDIAN_WIDE = [[HUAI, 0.45], [YINXING, 0.2], [SHILIU, 0.2], [GUANMU, 0.15]];
-  // 类别 → [间距, 距路缘, 种植概率, 灯光]
-  const STREET = { 1: [6.5, 2.0, 0.94, 1], 2: [6.5, 2.0, 0.94, 1], 3: [7.5, 1.9, 0.9, 1], 4: [8, 1.8, 0.85, 0.9], 5: [9, 1.4, 0.6, 0.45], 7: [9.5, 1.5, 0.55, 0.45], 12: [7, 1.3, 0.8, 0.8] };
+  // 类别 → [间距, 树池中心距路缘, 种植概率, 灯光]。人行道设施带 0~2.45 m（树池/灯杆），行进盲道在 2.7~3.1 m（roads_shader）：
+  // 树池中心 1.3~1.45 m、池宽 1.3 m，池边离盲道约 0.6 m
+  const STREET = { 1: [6.5, 1.45, 0.94, 1], 2: [6.5, 1.45, 0.94, 1], 3: [7, 1.4, 0.92, 1], 4: [7.5, 1.35, 0.88, 0.9], 5: [8.5, 1.2, 0.6, 0.45], 7: [9, 1.2, 0.55, 0.45], 12: [7, 1.3, 0.8, 0.8] };
+  // —— 路口节点：行道树离路口（≥ 3 条路交汇的端点，或路中段有别的路接入）的里程避让 ——
+  // roads 模块在路口把人行道退让 sw0 + 0.5 m（sw0 ≈ 横街半宽 + 横街人行道宽），最后 1.4 m 是转角缘石坡道（提示盲道）：
+  // 树池（半宽 0.65 m）要落在坡道以外。此前只按横街几何距离避让，横街与本路夹角小（如辅路在路口拐进西延路）时
+  // 被当成“平行路”，树正好种在转角坡道的提示盲道上（审查 g2 二环南路东段辅路）
+  const nodeKey = (x, z) => Math.round(x * 2) * 1000003 + Math.round(z * 2);
+  const nodeF = new Map();
+  for (let fi = 0; fi < feats.length; fi++) {
+    const f = feats[fi];
+    const c = f.c | 0;
+    if (f.t || c === 6 || c === 12 || c === 13 || !f.p || f.p.length < 4) continue;
+    for (let i = 0; i < f.p.length; i += 2) {
+      if (!inOuterBox(f.p[i], f.p[i + 1])) continue;
+      const k = nodeKey(f.p[i], f.p[i + 1]);
+      let l = nodeF.get(k);
+      if (!l) nodeF.set(k, (l = []));
+      if (l[l.length - 1] !== fi) l.push(fi);
+    }
+  }
+  const SW_OF = [0, 4.5, 5, 4, 3]; // roads_net CFG.sw（1~4 级有人行道）
+  const juncCache = new Map();
+  /** 要素 fi 上的路口：[[里程, 避让半径], ...] */
+  const junctionsOf = (fi) => {
+    let J = juncCache.get(fi);
+    if (J) return J;
+    J = [];
+    const p = feats[fi].p, n = p.length / 2;
+    let s = 0;
+    for (let i = 0; i < n; i++) {
+      if (i) s += Math.hypot(p[i * 2] - p[i * 2 - 2], p[i * 2 + 1] - p[i * 2 - 1]);
+      const l = nodeF.get(nodeKey(p[i * 2], p[i * 2 + 1]));
+      if (!l || l.length < 2) continue;
+      const others = l.filter((g) => g !== fi);
+      if (!others.length || ((i === 0 || i === n - 1) && others.length < 2)) continue; // 端点只接一条路：同一条路的分段接续
+      let cl = 0;
+      for (const g of others) cl = Math.max(cl, roadW(feats[g]) / 2 + (SW_OF[feats[g].c | 0] || 0));
+      J.push([s, cl + 3.2]);
+    }
+    juncCache.set(fi, J);
+    return J;
+  };
+  const nearJunction = (fi, s) => {
+    for (const [sj, cl] of junctionsOf(fi)) if (Math.abs(s - sj) < cl) return true;
+    return false;
+  };
+  /** 本路一侧路缘外到最近的其他路面（含 service 辅路）的净距，探到 maxD 为止 */
+  function sideGap(cx, cz, nx, nz, hw, maxD) {
+    for (let d = hw + 0.3; d < hw + maxD; d += 0.25) {
+      const x = cx + nx * d, z = cz + nz * d;
+      const l = segGrid.get(Math.floor(x / SEGC) * 100003 + Math.floor(z / SEGC));
+      if (!l) continue;
+      for (const id of l) {
+        const o = id * SEGN;
+        if (segArr[o + 7] === 2) continue; // 步行道不是“并行的另一幅路”
+        const xa = segArr[o], za = segArr[o + 1], dx = segArr[o + 2] - xa, dz = segArr[o + 3] - za;
+        let t = ((x - xa) * dx + (z - za) * dz) / (dx * dx + dz * dz || 1e-6);
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = xa + dx * t - x, ez = za + dz * t - z, r = segArr[o + 4];
+        if (ex * ex + ez * ez < r * r) return d - hw;
+      }
+    }
+    return maxD;
+  }
   // 老城区（城墙内）与二环内：大树；新区：青年树
   const ageMul = (x, z) => {
     const r = Math.hypot(x, z);
@@ -742,7 +847,8 @@ export function plantVegetation(input) {
     stampCapsule(HB, ax, az, bx, bz, wid / 2 + 0.4);
     return true;
   }
-  for (const f of feats) {
+  for (let fi = 0; fi < feats.length; fi++) {
+    const f = feats[fi];
     const cfg = STREET[f.c];
     if (!cfg || f.b || f.t) continue;
     const p = f.p;
@@ -778,6 +884,7 @@ export function plantVegetation(input) {
         // 右法线（x 东 z 南，行进方向右侧）：(-dz, dx)
         const nx = -dz * side, nz = dx * side;
         const cx = ax + (bx - ax) * t, cz = az + (bz - az) * t; // 中心线上的点
+        const sAt = s; // 本采样点里程（树池求人行道面高用）
         const stepHere = spacing * (0.9 + rnd() * 0.2);
         s += stepHere;
         if (median) {
@@ -824,14 +931,30 @@ export function plantVegetation(input) {
           medPrev = [x, z, planted];
           continue;
         }
-        const lat = (rnd() - 0.5) * 0.5;
-        const x = cx + nx * (hw + curb + lat), z = cz + nz * (hw + curb + lat);
+        // 树池中心距路缘 curb（设施带内，离行进盲道 ≥ 1 m）；外侧紧挨着平行的辅路/另一幅路（机非隔离带，缝 < 2·curb + 1.6 m）
+        // 时种在隔离带正中——此前固定按路缘外 2 m 种，南大街东侧 2.5 m 宽的机非隔离带上树干离辅路不足 0.9 m，整排被剔掉
+        let off = curb, near = 0.9, pitSmall = false, pitOk = f.c >= 1 && f.c <= 4; // 只有 1~4 级路有人行道（roads_net CFG.sw）
+        const gap = sideGap(cx, cz, nx, nz, hw, curb * 2 + 1.6);
+        const dbg0 = input.debugBox && cx > input.debugBox[0] - 20 && cx < input.debugBox[1] + 20 && cz > input.debugBox[2] - 20 && cz < input.debugBox[3] + 20;
+        if (gap < curb * 2 + 1.6) {
+          if (gap < 1.5) { hedgeRun = 0; if (dbg0) stats.rej_gap = (stats.rej_gap || 0) + 1; continue; }
+          off = gap / 2;
+          near = Math.max(0.45, Math.min(0.9, gap / 2 - 0.3));
+          // 窄隔离带：人行道收窄到约 gap − 0.9 m（roads 逐断面探测），只放得下 1.0 m 小树池；再窄就不做树池
+          pitSmall = true;
+          if (gap < 2.0) pitOk = false;
+        }
+        const lat = (rnd() - 0.5) * 0.24;
+        const x = cx + nx * (hw + off + lat), z = cz + nz * (hw + off + lat);
         const dbg = input.debugBox && x > input.debugBox[0] && x < input.debugBox[1] && z > input.debugBox[2] && z < input.debugBox[3];
         const rej = (k) => { if (dbg) stats['rej_' + k] = (stats['rej_' + k] || 0) + 1; };
-        if (rnd() > prob * (f.c <= 3 ? 0.5 + 0.5 * fo : fo * (0.25 + 0.75 * fo))) { hedgeRun = 0; rej('prob'); continue; }
+        // 城区（含二环外新区）的街道都是连续行道树：主次干道几乎不随离市中心距离变稀，支路按距离变稀
+        if (rnd() > prob * (f.c <= 4 ? 0.8 + 0.2 * fo : fo * (0.35 + 0.65 * fo))) { hedgeRun = 0; rej('prob'); continue; }
         if (!inRegion(x, z)) continue;
-        // 路面：树干处及 0.9 m 内不能是路（排除路口）
-        if (roadHit(x, z, 0.9) || nearAny(W, x, z, 1.5)) { hedgeRun = 0; rej('road'); continue; }
+        // 路口：按里程避开人行道端部的转角坡道（见 junctionsOf）
+        if (nearJunction(fi, sAt)) { hedgeRun = 0; rej('junc'); continue; }
+        // 路面：平行的其他路路缘外 near 米内不种；横街（路口）避开横街人行道、转角坡道与过街坡道（见 crossHit）
+        if (crossHit(x, z, dx, dz, fi, near) || nearAny(W, x, z, 1.5)) { hedgeRun = 0; rej('road'); continue; }
         if (excluded(x, z) || wallBlocked(x, z)) { hedgeRun = 0; rej('excl'); continue; }
         let sp = rnd() < loyal ? sp0 : pick(OTHER_STREET, rnd());
         if (nearWater(x, z, 9) && rnd() < 0.8) sp = LIU;
@@ -841,7 +964,7 @@ export function plantVegetation(input) {
         if (!axisRoad && axisBlocked(x, z, sp)) { hedgeRun = 0; stats.axis++; rej('axis'); continue; }
         if (!treeFree(x, z, sp, Math.min(CLEAR_B[sp], hw < 5 ? 1.1 : 1.5))) { hedgeRun = 0; rej(nearAny(B, x, z, 1.5) ? 'bld' : 'tree'); continue; }
         rej('ok');
-        addTree(x, z, sp, { lamp: lamp * (0.8 + rnd() * 0.2), sMul: ageMul(x, z) * (hw < 5 ? 0.85 : 1), rankMul: 0.72, src: 1, face: [-nx, -nz] });
+        addTree(x, z, sp, { lamp: lamp * (0.8 + rnd() * 0.2), sMul: ageMul(x, z) * (hw < 5 ? 0.85 : 1), rankMul: 0.72, src: 1, face: [-nx, -nz], pit: pitOk ? { a: Math.atan2(dz, dx), f: fi, s: sAt, small: pitSmall } : null });
         stats.street++;
         stats['st_' + f.c] = (stats['st_' + f.c] || 0) + 1;
         // 绿篱：主干道树池之间连续绿篱带
@@ -1165,7 +1288,8 @@ export function plantVegetation(input) {
       stats.outer++;
     };
     // 快速路/主干道/次干道行道树（间距放大、概率约三成）
-    for (const f of feats) {
+    for (let fi = 0; fi < feats.length; fi++) {
+      const f = feats[fi];
       const cfg = STREET[f.c];
       if (!cfg || f.b || f.t || f.c > 3) continue;
       const p = f.p;
@@ -1194,7 +1318,7 @@ export function plantVegetation(input) {
           const x = ax + (bx - ax) * t + nx * off, z = az + (bz - az) * t + nz * off;
           const w = ringW(x, z);
           if (!w || rnd() > prob * 0.3 * w) continue;
-          if (roadHit(x, z, 0.9)) continue;
+          if (crossHit(x, z, dx, dz, fi, 0.9)) continue;
           let sp = rnd() < loyal ? sp0 : pick(OTHER_STREET, rnd());
           if (sp === WUTONG && hw < 5) sp = HUAI;
           if (!free2(x, z, sp, 1.5)) continue;
@@ -1323,14 +1447,18 @@ export function plantVegetation(input) {
     sp: new Uint8Array(total), sc: new Uint8Array(total), rot: new Uint8Array(total), rank: new Uint8Array(total),
     lamp: new Uint8Array(total), yel: new Uint8Array(total), br: new Uint8Array(total),
   };
+  // 树池（紧凑表）：pitK = 树在输出数组里的序号，pitC = 朝向/尺寸码（见 PIT），pitF/pitS = 道路要素序号与里程
+  const pk = [], pc = [], pf = [], ps = [];
   if (input.debug) out.src = new Uint8Array(total);
   for (let i = 0; i < n; i++) {
     if (cidx[i] < 0) continue;
     const k = fill[cidx[i]]++;
     out.x[k] = X[i]; out.z[k] = Z[i]; out.sp[k] = SPC[i]; out.sc[k] = SC[i]; out.rot[k] = ROT[i];
     out.rank[k] = RK[i]; out.lamp[k] = LAMP[i]; out.yel[k] = YEL[i]; out.br[k] = BR[i];
+    if (PIT[i]) { pk.push(k); pc.push(PIT[i]); pf.push(PF[i]); ps.push(PS[i]); }
     if (out.src) out.src[k] = SRCA[i];
   }
+  out.pitK = Uint32Array.from(pk); out.pitC = Uint8Array.from(pc); out.pitF = Int32Array.from(pf); out.pitS = Float32Array.from(ps);
   // 绿篱同样分块
   const hc = new Int32Array(hn);
   const hcounts = new Uint32Array(nC + 1);
@@ -1366,5 +1494,5 @@ export function plantVegetation(input) {
 
 /** 结果中需要转移（transfer）的 ArrayBuffer 列表 */
 export function transferList(r) {
-  return [r.x, r.z, r.sp, r.sc, r.rot, r.rank, r.lamp, r.yel, r.br, r.chunkStart, r.hedges, r.hedgeStart].map((a) => a.buffer);
+  return [r.x, r.z, r.sp, r.sc, r.rot, r.rank, r.lamp, r.yel, r.br, r.pitK, r.pitC, r.pitF, r.pitS, r.chunkStart, r.hedges, r.hedgeStart].map((a) => a.buffer);
 }
