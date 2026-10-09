@@ -126,6 +126,17 @@ export class GeoWriter {
       if (top) this.tri([cx, y0 + h, cz], q1, q0, col);
     }
   }
+  /** 竖直旋转体（树干：根部外扩 + 锥台），rings = [[y, r], ...] 自下而上，无顶无底，法线朝外 */
+  lathe(cx, cz, rings, col, seg = 6, a0 = 0) {
+    for (let k = 0; k + 1 < rings.length; k++) {
+      const [ya, ra] = rings[k], [yb, rb] = rings[k + 1];
+      for (let i = 0; i < seg; i++) {
+        const t0 = a0 + (i / seg) * Math.PI * 2, t1 = a0 + ((i + 1) / seg) * Math.PI * 2;
+        const c0 = Math.cos(t0), s0 = Math.sin(t0), c1 = Math.cos(t1), s1 = Math.sin(t1);
+        this.quad([cx + c1 * ra, ya, cz + s1 * ra], [cx + c0 * ra, ya, cz + s0 * ra], [cx + c0 * rb, yb, cz + s0 * rb], [cx + c1 * rb, yb, cz + s1 * rb], col);
+      }
+    }
+  }
   /** 两点之间的方截面杆（宽 w），用于钢管/横梁（比圆管省面） */
   bar(a, b, w, col, h = w) {
     const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
@@ -758,49 +769,85 @@ export function carNear() {
   const prof = [[2.3, 0.28], [2.33, 0.72], [1.1, 0.92], [0.3, 1.42], [-1.0, 1.44], [-1.85, 0.98], [-2.3, 0.88], [-2.3, 0.28]];
   const body = [1, 1, 1];
   const n = prof.length;
-  // 两侧面（扇形三角化，凸多边形）
+  // 两侧面：剖面在引擎盖与前挡交界处是凹的，从车头角点扇形三角化会翻出一片反面三角形，
+  // 改为从剖面内部一点（z 0、y 0.8，剖面对它星形可见）扇形三角化
   for (const sx of [-1, 1]) {
-    const x = sx * hw;
-    for (let i = 1; i + 1 < n; i++) {
-      const a = [x, prof[0][1], prof[0][0]], b = [x, prof[i][1], prof[i][0]], c = [x, prof[i + 1][1], prof[i + 1][0]];
-      if (sx > 0) W.tri(a, c, b, body); else W.tri(a, b, c, body);
+    const x = sx * hw, c0 = [x, 0.8, 0];
+    for (let i = 0; i < n; i++) {
+      const b = [x, prof[i][1], prof[i][0]], c = [x, prof[(i + 1) % n][1], prof[(i + 1) % n][0]];
+      if (sx > 0) W.tri(c0, c, b, body); else W.tri(c0, b, c, body);
     }
   }
-  // 周边面（顶、前、后），车顶两侧略内收
+  // 周边面（顶、前、后），车顶两侧略内收。剖面按“车头下沿 → 车顶 → 车尾下沿”走，左 → 右的顶点顺序法线才朝外
+  // （原先右 → 左，顶/前/后全部朝内被背面剔除，40 m 俯看只剩侧板和车轮，审查 g4/g5 P0）
   const inset = (y) => (y > 1.0 ? 0.12 : 0);
   for (let i = 0; i < n; i++) {
     const p = prof[i], q = prof[(i + 1) % n];
     if (i === n - 1) continue; // 底面不画
     const ia = inset(p[1]), ib = inset(q[1]);
     const glass = i === 2 || i === 4; // 前挡 / 后窗
-    W.quad([hw - ia, p[1], p[0]], [-hw + ia, p[1], p[0]], [-hw + ib, q[1], q[0]], [hw - ib, q[1], q[0]], glass ? C('#151b1f') : body);
+    W.quad([-hw + ia, p[1], p[0]], [hw - ia, p[1], p[0]], [hw - ib, q[1], q[0]], [-hw + ib, q[1], q[0]], glass ? C('#151b1f') : body);
   }
-  // 侧窗（贴在侧面外 1 cm）
+  // 侧窗（贴在侧面外 1 cm，法线朝车外）
   for (const sx of [-1, 1]) {
     const x = sx * (hw + 0.01);
     const a = [x, 0.98, 1.0], b = [x, 0.98, -1.75], c = [x, 1.36, -0.95], d = [x, 1.36, 0.3];
-    if (sx > 0) W.quad(b, a, d, c, C('#151b1f')); else W.quad(a, b, c, d, C('#151b1f'));
+    if (sx > 0) W.quad(a, b, c, d, C('#151b1f')); else W.quad(b, a, d, c, C('#151b1f'));
   }
   // 车灯
   for (const sx of [-1, 1]) {
     W.quad([sx * 0.55 - 0.18, 0.62, 2.335], [sx * 0.55 + 0.18, 0.62, 2.335], [sx * 0.55 + 0.18, 0.72, 2.335], [sx * 0.55 - 0.18, 0.72, 2.335], C('#d8dde0', 0.9));
     W.quad([sx * 0.6 + 0.16, 0.7, -2.305], [sx * 0.6 - 0.16, 0.7, -2.305], [sx * 0.6 - 0.16, 0.82, -2.305], [sx * 0.6 + 0.16, 0.82, -2.305], C('#7a1010'));
   }
-  // 车轮（六棱柱，轴向 x）
+  // 车轮（八棱柱，轴向 x；胎面法线沿径向朝外、轮毂盖朝车外）
   for (const z of [1.42, -1.38])
     for (const sx of [-1, 1]) {
       const r = 0.33, cy = 0.33, x0 = sx * (hw - 0.2), x1 = sx * (hw + 0.005);
-      for (let k = 0; k < 6; k++) {
-        const a0 = (k / 6) * Math.PI * 2, a1 = ((k + 1) / 6) * Math.PI * 2;
+      const SEG = 8;
+      for (let k = 0; k < SEG; k++) {
+        const a0 = (k / SEG) * Math.PI * 2, a1 = ((k + 1) / SEG) * Math.PI * 2;
         const p0 = [cy + Math.sin(a0) * r, z + Math.cos(a0) * r], p1 = [cy + Math.sin(a1) * r, z + Math.cos(a1) * r];
-        W.quad([x0, p0[0], p0[1]], [x0, p1[0], p1[1]], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#141414'));
-        if (sx > 0) W.tri([x1, cy, z], [x1, p0[0], p0[1]], [x1, p1[0], p1[1]], C('#2a2a2a'));
-        else W.tri([x1, cy, z], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#2a2a2a'));
+        if (sx > 0) W.quad([x1, p0[0], p0[1]], [x1, p1[0], p1[1]], [x0, p1[0], p1[1]], [x0, p0[0], p0[1]], C('#141414'));
+        else W.quad([x0, p0[0], p0[1]], [x0, p1[0], p1[1]], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#141414'));
+        // 轮毂：外圈深灰、中心浅灰（铝圈）
+        const h0 = [cy + Math.sin(a0) * r * 0.62, z + Math.cos(a0) * r * 0.62], h1 = [cy + Math.sin(a1) * r * 0.62, z + Math.cos(a1) * r * 0.62];
+        const xo = x1 + sx * 0.003;
+        if (sx > 0) {
+          W.quad([x1, p1[0], p1[1]], [x1, p0[0], p0[1]], [xo, h0[0], h0[1]], [xo, h1[0], h1[1]], C('#202020'));
+          W.tri([xo, cy, z], [xo, h1[0], h1[1]], [xo, h0[0], h0[1]], C('#8a8d90'));
+        } else {
+          W.quad([x1, p0[0], p0[1]], [x1, p1[0], p1[1]], [xo, h1[0], h1[1]], [xo, h0[0], h0[1]], C('#202020'));
+          W.tri([xo, cy, z], [xo, h0[0], h0[1]], [xo, h1[0], h1[1]], C('#8a8d90'));
+        }
       }
     }
-  // 接触阴影（底面略高于地面的暗色片）
-  W.quad([hw, 0.02, 2.3], [-hw, 0.02, 2.3], [-hw, 0.02, -2.3], [hw, 0.02, -2.3], C('#050505'));
+  // 接触阴影（略高于地面的朝上暗色片，比车身略小）
+  W.quad([-hw + 0.05, 0.02, 2.2], [hw - 0.05, 0.02, 2.2], [hw - 0.05, 0.02, -2.2], [-hw + 0.05, 0.02, -2.2], C('#050505'));
   return W.geometry();
+}
+
+/**
+ * 自检：每个三角形的法线与“面心 − 部件中心”同向（车身取车体中轴、车轮取轮心）；返回朝内的三角形数。
+ * 用于 node 单元检查（tools/check_compound_car.mjs），渲染时不调用。
+ */
+export function checkCarWinding(geo) {
+  const P = geo.attributes.position.array;
+  let bad = 0;
+  for (let i = 0; i < P.length; i += 9) {
+    const ax = P[i], ay = P[i + 1], az = P[i + 2], bx = P[i + 3], by = P[i + 4], bz = P[i + 5], cx = P[i + 6], cy = P[i + 7], cz = P[i + 8];
+    const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az;
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const mx = (ax + bx + cx) / 3, my = (ay + by + cy) / 3, mz = (az + bz + cz) / 3;
+    const L = Math.hypot(nx, ny, nz) || 1;
+    let ox, oy, oz;
+    if (Math.abs(nx) / L > 0.9) { ox = 0; oy = my; oz = mz; } // 侧板/侧窗/轮毂盖：朝车外（x 与面心同号）
+    else if (my < 0.7 && Math.abs(mx) > 0.68 && (Math.abs(mz - 1.42) < 0.4 || Math.abs(mz + 1.38) < 0.4)) {
+      ox = mx; oy = 0.33; oz = Math.abs(mz - 1.42) < 0.4 ? 1.42 : -1.38; // 胎面：沿径向朝外
+    } else if (my < 0.05) { ox = mx; oy = -1; oz = mz; } // 接触阴影片：朝上
+    else { ox = 0; oy = 0.6; oz = mz * 0.5; } // 车身：剖面对 (y 0.6, z 0.5·z) 星形
+    if (nx * (mx - ox) + ny * (my - oy) + nz * (mz - oz) <= 0) bad++;
+  }
+  return bad;
 }
 
 /** 远景停放车（约 18 面）：车身盒 + 座舱盒 */

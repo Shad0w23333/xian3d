@@ -36,7 +36,8 @@ export function drawField(W, f, T, opts = {}) {
       const p = pts[i], q = pts[(i + 1) % n];
       const L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
       const na = (-(q[1] - p[1]) / L) * w / 2, nb = ((q[0] - p[0]) / L) * w / 2;
-      G.quadW(P(p[0] - na, p[1] - nb, lift), P(q[0] - na, q[1] - nb, lift), P(q[0] + na, q[1] + nb, lift), P(p[0] + na, p[1] + nb, lift), WHITE, [[p[0], p[1]], [q[0], q[1]], [q[0], q[1]], [p[0], p[1]]]);
+      // 顶点顺序须与 rect 一致（法线朝上）：原先反了，全部白线朝下被背面剔除，球场/跑道一条线都看不见
+      G.quadW(P(p[0] + na, p[1] + nb, lift), P(q[0] + na, q[1] + nb, lift), P(q[0] - na, q[1] - nb, lift), P(p[0] - na, p[1] - nb, lift), WHITE, [[p[0], p[1]], [q[0], q[1]], [q[0], q[1]], [p[0], p[1]]]);
     }
   };
   const arc = (ca0, cb0, r, t0, t1, n = 16) => {
