@@ -14,8 +14,9 @@
 //     高架候车室 z -2203~-2006；南站房（唐风）≈ (1455, -1976)。
 //   · 兴庆宫公园：沉香亭（重檐四角攒尖，OSM (3533, 662)）；湖心南岸楼阁 ≈ (3365, 663)（花萼相辉楼式二层楼阁）。
 import * as THREE from 'three';
-import { ArchBuilder, hall, multiStoreyTower, pavilion, corridor, roof, yardWall, balustrade, lantern, lanternPost, stoneLion, steps, glowQuad, latticePanel, eaveLights } from '../arch/chinese.js';
+import { ArchBuilder, hall, multiStoreyTower, pavilion, corridor, roof, yardWall, balustrade, lantern, lanternPost, stoneLion, steps, glowQuad, latticePanel, eaveLights, getKit } from '../arch/chinese.js';
 import { denseEavePagoda, danfengGate, ruinTerrace, columnBases, earthWall, whiteBlock, roofMaterials, NeutralSkyMaterial } from '../arch/heritage-parts.js';
+import { pavedGround } from '../arch/landmark-ground.js';
 
 const LEVELS = [[2, 0], [1, 260], [0, 750]];
 const HIDE = 9000; // 超过此距离整组隐藏（远景由通用建筑/影像承担）
@@ -30,7 +31,7 @@ const PAL_SHANBO = {
 // 荐福寺殿宇瓦面：中性略暖的灰筒瓦
 const TEMPLE_ROOF = { tile: 0x8f8b84, tube: 0x88847d, ridge: 0x54514c, glazed: false };
 // 西安站屋面：中性灰瓦（'darkgray'/'gray' 在晴天天光下读成海军蓝）
-const STATION_ROOF = { tile: 0x8a8781, tube: 0x837f79, ridge: 0x56534e, glazed: false };
+const STATION_ROOF = { tile: 0xa3a09a, tube: 0x9c9993, ridge: 0x605d58, glazed: false };
 // 西安站：灰瓦、深灰钢柱、浅灰斗拱
 const PAL_STATION = {
   ...PAL_SHANBO, col: 0x8e8a84, frame: 0x55595c, dou: 0xb9b4aa, gong: 0xb3aea4, ang: 0xb3aea4, rafter: 0xa9a49a, soffit: 0xa6a196, fascia: 0xb3aea4,
@@ -201,15 +202,20 @@ function buildHanyuan(b, env) {
 /** 陕西历史博物馆：中央殿堂、四隅崇楼、东西翼、南门、回廊 */
 function buildShanbo(b) {
   const T = { style: 'tang', roofColor: 'darkgray', pal: PAL_SHANBO };
-  // 院落铺地
-  b.box('stone', -84, -0.3, -80, 84, 0.12, 92, 0xcdc7bb, { skip: 'bottom' });
-  // 北侧附楼（现代平顶）
+  // 院落铺地：改由 SITES.paving 贴地花岗岩分格铺装（原先 0xcdc7bb 纯色石板，阳光下过曝成白板，审查 g6）
+  // 前院草坪（卫星：前殿与南门之间、中轴甬道两侧各一块，花岗岩路缘 + 草坪）
+  for (const sx of [-1, 1]) {
+    const xa = sx * 9, xb = sx * 25, x0 = Math.min(xa, xb), x1 = Math.max(xa, xb);
+    b.box('stone', x0 - 0.3, -0.2, 34.7, x1 + 0.3, 0.32, 55.3, 0xb9b4aa, { skip: 'bottom' });
+    b.box('hgrass', x0, 0.2, 35, x1, 0.34, 55, 0xffffff, { skip: 'bottom' });
+  }
+  // 北侧附楼（现代平顶，办公库房：保留成排窗）
   b.push(0, 0, -100, 0);
-  whiteBlock(b, { w: 96, d: 24, h: 13, floors: 3, seed: 5 });
+  whiteBlock(b, { w: 96, d: 24, h: 13, floors: 3, seed: 5, winRate: 0.6, joints: 1.6 });
   b.pop();
-  // 中央殿堂：两层白色台体 + 重檐庑殿
+  // 中央殿堂：两层白色台体 + 重檐庑殿（台体以素白实墙为主：少量窗 + 石材分缝）
   b.push(0, 0, -36, 0);
-  whiteBlock(b, { w: 62, d: 44, h: 7.5, floors: 2, seed: 7 });
+  whiteBlock(b, { w: 62, d: 44, h: 7.5, floors: 1, seed: 7, winRate: 0.15, joints: 1.5 });
   b.push(0, 7.5, 0, 0, 1.25);
   hall(b, { ...T, bays: 9, bayW: 4.6, depthBays: 5, depthW: 4.4, colH: 5.4, eaves: 2, roof: 'wudian', platform: 'plain', platformH: 0.5, steps: 'none', front: 'tang', back: 'zhiling', sides: 'zhiling' });
   b.pop();
@@ -222,7 +228,7 @@ function buildShanbo(b) {
   for (const sx of [1, -1])
     for (const sz of [1, -1]) {
       b.push(sx * 60, 0, sz * 60, 0);
-      whiteBlock(b, { w: 30, d: 30, h: 9, floors: 2, seed: 20 + sx + sz * 3 });
+      whiteBlock(b, { w: 30, d: 30, h: 9, floors: 1, seed: 20 + sx + sz * 3, winRate: 0.12, joints: 1.5 });
       b.push(0, 9, 0, 0);
       hall(b, { ...T, bays: 5, bayW: 4.3, depthBays: 5, depthW: 4.3, colH: 4.6, eaves: 2, roof: 'wudian', platform: 'plain', platformH: 0.4, steps: 'none', front: 'zhiling', back: 'zhiling', sides: 'zhiling' });
       b.pop();
@@ -232,7 +238,7 @@ function buildShanbo(b) {
   for (const s of [1, -1]) {
     b.push(s * 61, 0, 0, s * Math.PI / 2);
     // 局部正面朝院内（-X 侧 → 旋转后朝 ±X），长向沿局部 X
-    whiteBlock(b, { w: 88, d: 26, h: 8, floors: 2, seed: 30 + s });
+    whiteBlock(b, { w: 88, d: 26, h: 8, floors: 1, seed: 30 + s, winRate: 0.2, joints: 1.5 });
     b.push(0, 8, 0, 0);
     hall(b, { ...T, bays: 13, bayW: 5.8, depthBays: 3, depthW: 5.6, colH: 4.4, roof: 'wudian', platform: 'plain', platformH: 0.35, steps: 'none', front: 'zhiling', back: 'zhiling', sides: 'wall' });
     b.pop();
@@ -269,75 +275,154 @@ function footing(b, env, x0, z0, x1, z1, yTop, col = 0xbdb6a8) {
  *    + 两翼三层楼（窗带 + 琉璃檐），首层通长琉璃披檐，入口朱柱门廊，屋顶正中红色“西安”二字。
  * 原模型：唐风重檐庑殿殿堂放大 3 倍（约 140 m 宽、深灰屋面）/ 放大 2 倍，与实物不符。
  */
-/** 南广场的两处下沉采光井（影像：南站房与北城墙之间，x -64~-15 / 8~60、z 320~356）：花岗岩矮墙 + 玻璃采光顶 + 竖梃格 + 沿墙绿篱 */
+/**
+ * 南广场的两处下沉采光井（影像：南站房与北城墙之间，x -64~-15 / 8~60、z 320~356）：花岗岩矮墙（浅色压顶 + 不锈钢扶手）
+ * + 沿墙绿篱 + 双坡玻璃采光顶（映天光的玻璃 + 2.4 m × 3 m 铝合金分格 + 屋脊）。
+ * 原先玻璃是不反光的暗青灰、竖梃 0.14 m，60 m 外读成两块深灰平板（审查 g5）。
+ */
 function lightWells(b, env) {
   for (const [x0, x1, z0, z1] of [[-64, -15, 320, 356], [8, 60, 319, 356]]) {
     const y = Math.max(env.dy(x0, z0), env.dy(x1, z0), env.dy(x0, z1), env.dy(x1, z1));
     const H = 0.95, t = 0.45;
-    // 矮墙（四边）
-    b.box('stone', x0, y - 0.6, z0, x1, y + H, z0 + t, 0xb7b1a6, { skip: 'bottom' });
-    b.box('stone', x0, y - 0.6, z1 - t, x1, y + H, z1, 0xb7b1a6, { skip: 'bottom' });
-    b.box('stone', x0, y - 0.6, z0 + t, x0 + t, y + H, z1 - t, 0xb7b1a6, { skip: 'bottom' });
-    b.box('stone', x1 - t, y - 0.6, z0 + t, x1, y + H, z1 - t, 0xb7b1a6, { skip: 'bottom' });
+    const WALL = 0xb9b3a8, CAP = 0xdcd7cc;
+    // 矮墙（四边）+ 压顶
+    b.box('stone', x0, y - 0.6, z0, x1, y + H, z0 + t, WALL, { skip: 'bottom', colors: { top: CAP } });
+    b.box('stone', x0, y - 0.6, z1 - t, x1, y + H, z1, WALL, { skip: 'bottom', colors: { top: CAP } });
+    b.box('stone', x0, y - 0.6, z0 + t, x0 + t, y + H, z1 - t, WALL, { skip: 'bottom', colors: { top: CAP } });
+    b.box('stone', x1 - t, y - 0.6, z0 + t, x1, y + H, z1 - t, WALL, { skip: 'bottom', colors: { top: CAP } });
+    if (b.detail >= 1) {
+      // 不锈钢扶手：每 2 m 一根立杆 + 顶部扶手
+      const rail = [[x0 + t / 2, z0 + t / 2], [x1 - t / 2, z0 + t / 2], [x1 - t / 2, z1 - t / 2], [x0 + t / 2, z1 - t / 2], [x0 + t / 2, z0 + t / 2]];
+      b.sweep('metal', rail.map(([x, z]) => [x, y + H + 1.0, z]), [[-0.03, -0.03], [0.03, -0.03], [0.03, 0.03], [-0.03, 0.03]], 0xc8cacc, { caps: false });
+      for (let k = 0; k < 4; k++) {
+        const [ax, az] = rail[k], [bx, bz] = rail[k + 1];
+        const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / 2));
+        for (let i = 0; i < n; i++) {
+          const x = ax + ((bx - ax) * i) / n, z = az + ((bz - az) * i) / n;
+          b.box('metal', x - 0.025, y + H, z - 0.025, x + 0.025, y + H + 1.0, z + 0.025, 0xc8cacc);
+        }
+      }
+    }
     // 墙内一圈绿篱
     b.box('hgrass', x0 + t, y - 0.3, z0 + t, x1 - t, y + H - 0.1, z0 + t + 1.2, 0xffffff, { skip: 'bottom' });
     b.box('hgrass', x0 + t, y - 0.3, z1 - t - 1.2, x1 - t, y + H - 0.1, z1 - t, 0xffffff, { skip: 'bottom' });
-    // 玻璃采光顶（略起拱：中间高 0.6 m）+ 竖梃
+    // 双坡玻璃采光顶（中间高 0.6 m）：映天光的玻璃（hwell，夜间透出下沉空间的暖光）
     const gx0 = x0 + t + 1.2, gx1 = x1 - t - 1.2, gz0 = z0 + t + 1.2, gz1 = z1 - t - 1.2, zm = (gz0 + gz1) / 2;
-    b.quad('hskylight', [gx0, y + H, gz0], [gx1, y + H, gz0], [gx1, y + H + 0.6, zm], [gx0, y + H + 0.6, zm], 0xffffff);
-    b.quad('hskylight', [gx0, y + H + 0.6, zm], [gx1, y + H + 0.6, zm], [gx1, y + H, gz1], [gx0, y + H, gz1], 0xffffff);
-    b.box('paint', gx0, y - 0.3, gz0, gx1, y + H - 0.02, gz1, 0x3a3e42, { skip: 'bottom' });
-    // 竖梃（沿南北向，每 ~3 m 一根，贴着两坡玻璃）+ 屋脊
-    const nm = Math.max(4, Math.round((gx1 - gx0) / 3));
+    const R = 0.6;
+    // （quad 法线 = (b−a)×(d−a)：先沿 z、再沿 x 才朝上；hglass 为单面材质）
+    b.quad('hwell', [gx0, y + H, gz0], [gx0, y + H + R, zm], [gx1, y + H + R, zm], [gx1, y + H, gz0], 0xffffff);
+    b.quad('hwell', [gx0, y + H + R, zm], [gx0, y + H, gz1], [gx1, y + H, gz1], [gx1, y + H + R, zm], 0xffffff);
+    b.box('hcpaint', gx0, y - 0.3, gz0, gx1, y + H - 0.02, gz1, 0x3a3e42, { skip: 'bottom' });
+    // 分格：沿 x 每 2.4 m 一道竖梃（两坡）、沿 z 每 3 m 一道横档；屋脊与四周边框
+    const MC = 0x5c6164, mw = 0.13, mh = 0.09; // 深灰铝框（浅色框 + 蓝玻璃读成太阳能板）
+    const ym = (z) => y + H + R * (1 - Math.abs(z - zm) / (zm - gz0));
+    const nm = Math.max(4, Math.round((gx1 - gx0) / 2.4));
     for (let k = 0; k <= nm; k++) {
       const x = gx0 + ((gx1 - gx0) * k) / nm;
-      b.quad('paint', [x - 0.07, y + H + 0.02, gz0], [x + 0.07, y + H + 0.02, gz0], [x + 0.07, y + H + 0.62, zm], [x - 0.07, y + H + 0.62, zm], 0x5a6064);
-      b.quad('paint', [x - 0.07, y + H + 0.62, zm], [x + 0.07, y + H + 0.62, zm], [x + 0.07, y + H + 0.02, gz1], [x - 0.07, y + H + 0.02, gz1], 0x5a6064);
+      for (const [za, zb] of [[gz0, zm], [zm, gz1]]) b.quad('hcpaint', [x - mw, ym(za) + mh, za], [x - mw, ym(zb) + mh, zb], [x + mw, ym(zb) + mh, zb], [x + mw, ym(za) + mh, za], MC);
     }
-    b.box('paint', gx0, y + H + 0.55, zm - 0.12, gx1, y + H + 0.7, zm + 0.12, 0x5a6064, { skip: 'bottom' });
+    const nzm = Math.max(2, Math.round((zm - gz0) / 3));
+    for (let j = 0; j <= nzm; j++)
+      for (const z of [gz0 + ((zm - gz0) * j) / nzm, gz1 - ((gz1 - zm) * j) / nzm]) b.quad('hcpaint', [gx0, ym(z) + mh, z - mw], [gx0, ym(z) + mh, z + mw], [gx1, ym(z) + mh, z + mw], [gx1, ym(z) + mh, z - mw], MC);
+    b.box('hcpaint', gx0, y + H + R - 0.02, zm - 0.18, gx1, y + H + R + 0.16, zm + 0.18, MC, { skip: 'bottom' });
+    b.box('hcpaint', gx0 - 0.2, y + H - 0.15, gz0 - 0.2, gx1 + 0.2, y + H + 0.08, gz0 + 0.1, MC, { skip: 'bottom' });
+    b.box('hcpaint', gx0 - 0.2, y + H - 0.15, gz1 - 0.1, gx1 + 0.2, y + H + 0.08, gz1 + 0.2, MC, { skip: 'bottom' });
   }
 }
 
-/** 西安站站台雨棚：两大块平屋面（东西两侧）+ 东西向天窗带 + 立柱（落在各岛式站台中线上，站台位置按 rail.json 股道间距 > 10 m 求出） */
+/**
+ * 西安站站台雨棚（2021 年改扩建后）：每座站台一片独立雨棚（卫星：x 1182~1384 / 1522~1736、z -2201~-2004 呈东西向条带），
+ * 缓拱金属屋面（直立锁边板缝贴图）+ 屋脊采光带 + 檐口封边 + 站台中线一排 Y 形钢柱；股道上方留出约 5 m 天光缝。
+ * 站台位置按 rail.json 股道求出（相邻股道间距 > 10 m 处为岛式站台），雨棚两端各取一次，跟随股道的微小斜度。
+ * 原先两侧各一整块 180 m 见方的平板（低空看就是一块灰色占位平面，审查 g5/g6）。
+ */
 function canopies(b, env) {
   const rail = (env.data?.rail?.features || []).filter((f) => f.c === 0 && !f.t);
   const SX = env.sx, SZ = env.sz;
-  // 世界 X 处的站台中线（世界 Z）
-  const platformsAt = (X) => {
+  // 世界 X 处的股道（局部 z，升序）
+  const tracksAt = (X) => {
     const zs = [];
     for (const f of rail) {
       const p = f.p;
       for (let i = 0; i + 3 < p.length; i += 2) {
         const ax = p[i], az = p[i + 1], bx = p[i + 2], bz = p[i + 3];
         if ((ax - X) * (bx - X) > 0 || ax === bx) continue;
-        const z = az + ((bz - az) * (X - ax)) / (bx - ax);
-        if (z > SZ + 36 && z < SZ + 224) zs.push(z);
+        const z = az + ((bz - az) * (X - ax)) / (bx - ax) - SZ;
+        if (z > 20 && z < 232) zs.push(z);
       }
     }
-    zs.sort((a, b) => a - b);
-    const out = [];
-    for (let i = 0; i + 1 < zs.length; i++) if (zs[i + 1] - zs[i] > 10) out.push((zs[i] + zs[i + 1]) / 2);
-    return { tracks: zs, plat: out };
+    return zs.sort((a, b) => a - b);
   };
-  const Y = 11.5, T = 0.55;
-  for (const [x0, x1] of [[-242, -66], [72, 270]]) {
-    const ym = env.dy((x0 + x1) / 2, 130) + Y;
-    // 屋面（浅灰金属板，四周檐板）
-    b.box('hcanopy', x0, ym, 39, x1, ym + T, 219, 0xffffff, {});
-    // 天窗带：每对股道上方一条（站台之间），玻璃略高出屋面
-    const mid = platformsAt(SX + (x0 + x1) / 2);
-    for (let i = 0; i + 1 < mid.tracks.length; i++) {
-      const gap = mid.tracks[i + 1] - mid.tracks[i];
-      if (gap > 10 || gap < 3) continue;
-      const zc = (mid.tracks[i] + mid.tracks[i + 1]) / 2 - SZ;
-      b.box('hglass', x0 + 2, ym + T, zc - 1.8, x1 - 2, ym + T + 0.06, zc + 1.8, 0xffffff, { skip: 'bottom' });
-    }
-    // 立柱：每 24 m 一排，落在各站台中线
-    for (let x = x0 + 8; x <= x1 - 4; x += 24) {
-      for (const Zc of platformsAt(SX + x).plat) {
-        const z = Zc - SZ;
-        if (z < 40 || z > 218) continue;
-        b.box('paint', x - 0.35, Math.min(0, env.dy(x, z)) - 0.3, z - 0.35, x + 0.35, ym, z + 0.35, 0x8e8c88, { skip: 'bottom' });
+  // 站台条带 [z 下沿, z 上沿]：岛式站台 = 相邻股道间距 > 10 m；北侧基本站台（北站房檐下 → 第一股道）、南侧基本站台（末股道 → 222）
+  const strips = (X) => {
+    const t = tracksAt(X);
+    const out = [];
+    if (!t.length) return out;
+    if (t[0] > 36) out.push([31.5, t[0] - 0.4]);
+    for (let i = 0; i + 1 < t.length; i++) if (t[i + 1] - t[i] > 10) out.push([t[i] + 0.25, t[i + 1] - 0.25]);
+    if (t[t.length - 1] < 214) out.push([t[t.length - 1] + 0.4, 222]);
+    return out;
+  };
+  const Y = 7.8, RISE = 0.85, NS = 6;
+  for (const [x0, x1] of [[-262, -68], [74, 284]]) {
+    const A = strips(SX + x0 + 3), B = strips(SX + x1 - 3);
+    if (!A.length) continue;
+    for (let k = 0; k < A.length; k++) {
+      const a = A[k];
+      // 另一端：取中心最近的条带
+      const cA = (a[0] + a[1]) / 2;
+      let bb = B[0];
+      for (const q of B) if (Math.abs((q[0] + q[1]) / 2 - cA) < Math.abs((bb[0] + bb[1]) / 2 - cA)) bb = q;
+      if (!bb || Math.abs((bb[0] + bb[1]) / 2 - cA) > 6) bb = a;
+      const ym = Math.max(env.dy(x0, cA), env.dy(x1, cA), env.dy((x0 + x1) / 2, cA)) + Y;
+      const w0 = a[1] - a[0];
+      // 横截面：u∈[0,1] 从北檐到南檐，高度为抛物线拱
+      const P = (x, end, u, dy = 0) => {
+        const e = end ? bb : a;
+        const z = e[0] + (e[1] - e[0]) * u;
+        return [x, ym + RISE * 4 * u * (1 - u) * Math.min(1, w0 / 12) + dy, z];
+      };
+      const uv = (q) => [q[0], q[2]];
+      for (let i = 0; i < NS; i++) {
+        const u0 = i / NS, u1 = (i + 1) / NS;
+        const ridge = i === NS / 2 - 1 || i === NS / 2;
+        const q = [P(x0, 0, u0), P(x0, 0, u1), P(x1, 1, u1), P(x1, 1, u0)];
+        // 屋面（朝上：从上看逆时针 = 北 → 南 → 东）
+        b.quad(ridge && w0 > 9 ? 'hskylight' : 'hcanopy', q[0], q[1], q[2], q[3], 0xffffff, q.map(uv));
+        // 底面（吊顶，浅灰铝板）
+        const d = [P(x0, 0, u0, -0.32), P(x1, 1, u0, -0.32), P(x1, 1, u1, -0.32), P(x0, 0, u1, -0.32)];
+        b.quad('hcpaint', d[0], d[1], d[2], d[3], 0xb4b2ac);
+      }
+      // 檐口封边（南北两条）与两端封板
+      for (const u of [0, 1]) {
+        const s = u ? 1 : -1;
+        const o0 = P(x0, 0, u), o1 = P(x1, 1, u);
+        const q = [[o0[0], o0[1] - 0.55, o0[2] + s * 0.04], [o1[0], o1[1] - 0.55, o1[2] + s * 0.04], [o1[0], o1[1] + 0.12, o1[2] + s * 0.04], [o0[0], o0[1] + 0.12, o0[2] + s * 0.04]];
+        if (s > 0) b.quad('hcpaint', q[0], q[1], q[2], q[3], 0xd6d4ce);
+        else b.quad('hcpaint', q[1], q[0], q[3], q[2], 0xd6d4ce);
+      }
+      for (const [xe, end, sx] of [[x0, 0, -1], [x1, 1, 1]]) {
+        for (let i = 0; i < NS; i++) {
+          const t0 = P(xe, end, i / NS), t1 = P(xe, end, (i + 1) / NS);
+          const q = [[xe, t0[1] - 0.55, t0[2]], [xe, t1[1] - 0.55, t1[2]], [xe, t1[1] + 0.12, t1[2]], [xe, t0[1] + 0.12, t0[2]]];
+          if (sx > 0) b.quad('hcpaint', q[1], q[0], q[3], q[2], 0xd6d4ce);
+          else b.quad('hcpaint', q[0], q[1], q[2], q[3], 0xd6d4ce);
+        }
+      }
+      // Y 形钢柱：沿站台中线每 21 m 一根（窄条带只立直柱）
+      if (b.detail >= 1 || k % 2 === 0) {
+        for (let x = x0 + 9; x <= x1 - 6; x += 21) {
+          const t = (x - x0) / (x1 - x0);
+          const zc = (a[0] + a[1]) / 2 + ((bb[0] + bb[1]) / 2 - (a[0] + a[1]) / 2) * t;
+          const wz = (a[1] - a[0]) + ((bb[1] - bb[0]) - (a[1] - a[0])) * t;
+          const g = Math.min(0, env.dy(x, zc)) - 0.3;
+          const yk = ym - 1.9;
+          b.box('hcpaint', x - 0.28, g, zc - 0.28, x + 0.28, yk, zc + 0.28, 0xc9c7c1, { skip: 'bottom' });
+          if (wz > 9 && b.detail >= 1) {
+            const arm = Math.min(4.6, wz * 0.32);
+            for (const s of [-1, 1]) b.sweep('hcpaint', [[x, yk - 0.1, zc], [x, ym + 0.2, zc + s * arm]], [[-0.16, -0.16], [0.16, -0.16], [0.16, 0.16], [-0.16, 0.16]], 0xc9c7c1, { caps: true });
+          }
+        }
       }
     }
   }
@@ -353,7 +438,9 @@ function buildStation(b, env) {
   footing(b, env, -NW / 2 + 2, -ND / 2 + 1, NW / 2 - 2, ND / 2 - 1, 0.6, 0xc9c3b6);
   // 内部体量（深色，退后 3.5 m）+ 夜间透光窗
   const iw = CW / 2 - 3.5, id = CD / 2 - 3.5;
-  b.box('paint', -iw, 0.6, -id, iw, colTop, id, DARK, { skip: 'bottom' });
+  // 内侧玻璃幕墙（映天光；原先一个近黑方盒，柱间看着是黑洞，审查 g6）
+  b.box('hglass', -iw, 0.6, -id, iw, colTop, id, 0xffffff, { skip: 'bottom' });
+  b.box('paint', -iw + 0.3, colTop - 0.02, -id + 0.3, iw - 0.3, colTop + 0.4, id - 0.3, DARK, { skip: 'bottom' });
   // 列柱：前后各 17 根（间距 13.19 m）、两山各 4 根
   const n = 16, sp = CW / n;
   const col = (x, z) => b.box('plaster', x - 0.9, 0.6, z - 0.9, x + 0.9, colTop, z + 0.9, BEIGE, { skip: 'bottom' });
@@ -373,7 +460,7 @@ function buildStation(b, env) {
         if (zf < 0 && x1 > hall0 && x0 < hall1) continue;
         b.push(0, 0, zf, yaw);
         const xa = yaw ? -x1 : x0, xb = yaw ? -x0 : x1;
-        latticePanel(b, xa, xb, 3.2, colTop - 1.0, { pattern: 3, cell: 0.9, color: 0x2a2826, lit: i % 3 ? 0.9 : 0.5, paper: 0x4a463e, z: 0.06 });
+        latticePanel(b, xa, xb, 3.2, colTop - 1.0, { pattern: 3, cell: 0.9, color: 0x3c3a37, lit: i % 3 ? 0.9 : 0.5, paper: 0x6b7276, z: 0.06 });
         b.pop();
       }
   // 玻璃门厅（凸出到柱列线）+ 红字
@@ -389,9 +476,29 @@ function buildStation(b, env) {
 
   // —— 高架候车室（跨线）：玻璃体 + 大屋面 ——
   b.box('hglass', -64, 9, 32, 64, 21, 222, 0xffffff, {}); // 底面封上：立柱顶住底板（原先无底面，从桥下可看穿、立柱也没有顶到任何东西）
+  // 幕墙分格：竖梃每 3 m、窗台横梁 + 檐口（原先四面一整块深色玻璃，像没有立面的方盒，审查 g5）
+  {
+    const MUL = 0xc4c6c4, fin = 0.22, dep = 0.35;
+    const nx = Math.round(128 / (b.detail >= 1 ? 3.2 : 6.4)), nz = Math.round(190 / (b.detail >= 1 ? 3.2 : 6.4));
+    for (let i = 0; i <= nx; i++) {
+      const x = -64 + (128 * i) / nx;
+      for (const z of [32, 222]) b.box('hcpaint', x - fin / 2, 9, z - dep / 2, x + fin / 2, 21, z + dep / 2, MUL, { skip: 'bottom' });
+    }
+    for (let j = 0; j <= nz; j++) {
+      const z = 32 + (190 * j) / nz;
+      for (const x of [-64, 64]) b.box('hcpaint', x - dep / 2, 9, z - fin / 2, x + dep / 2, 21, z + fin / 2, MUL, { skip: 'bottom' });
+    }
+    for (const y of [9, 15, 20.4]) {
+      const hh = y === 20.4 ? 0.75 : 0.35;
+      b.box('hcpaint', -64 - dep, y, 32 - dep, 64 + dep, y + hh, 32 + 0.02, MUL, {});
+      b.box('hcpaint', -64 - dep, y, 222 - 0.02, 64 + dep, y + hh, 222 + dep, MUL, {});
+      b.box('hcpaint', -64 - dep, y, 32, -64 + 0.02, y + hh, 222, MUL, {});
+      b.box('hcpaint', 64 - 0.02, y, 32, 64 + dep, y + hh, 222, MUL, {});
+    }
+  }
   // 高架候车室立柱：柱脚按各自位置的地面高度下探（原先统一 y=0，平整区外的柱脚悬空）
   // （各级 LOD 都做：远景不做立柱时候车室整体悬空）
-  for (let x = -60; x <= 60; x += 20) for (let z = 40; z <= 216; z += 22) b.box('paint', x - 0.8, Math.min(0, env.dy(x, z)) - 0.3, z - 0.8, x + 0.8, 9, z + 0.8, 0x9a9690, { skip: 'bottom' });
+  for (let x = -60; x <= 60; x += 20) for (let z = 40; z <= 216; z += 22) b.box('hcpaint', x - 0.8, Math.min(0, env.dy(x, z)) - 0.3, z - 0.8, x + 0.8, 9, z + 0.8, 0x9a9690, { skip: 'bottom' });
   // 屋面：真实尺寸的平缓四坡顶（130×192 m，坡度 0.08，顶高约 26 m），无鸱吻。旧版把 32.5×48 m 的殿堂屋顶整体放大 4 倍，
   // 屋面高出南站房一大截、正吻变成十几米高的黑色尖刺（审查 g8）
   roof(b, { type: 'wudian', w: 128, d: 190, y: 21.15, overhang: 1.2, style: 'tang', color: STATION_ROOF, pitch: 0.08, ornament: 'none', beasts: 0, ridgeH: 0.5 });
@@ -477,6 +584,12 @@ function buildStation(b, env) {
     b.box('paint', -0.09, 13.4, cd + 0.2, 0.09, 14.75, cd + 0.26, 0x1e1c1a); // 分针（指向 12）
     b.box('paint', 0, 13.31, cd + 0.2, 1.0, 13.49, cd + 0.26, 0x1e1c1a); // 时针（指向 3）
   }
+  // “西安”大字的钢架底座：两根立柱 + 横梁，从正脊立起托住字（原先字悬在屋脊上方 0.65 m，像贴在后面的候车室上）
+  if (b.detail >= 1) {
+    const yr = rc.ridgeY, yb = rc.ridgeY + 0.75;
+    for (const x of [-4.2, 4.2]) b.box('paint', x - 0.12, yr - 0.4, 0.15, x + 0.12, yb, 0.55, 0x3a3634, { skip: 'bottom' });
+    b.box('paint', -5.6, yb - 0.18, 0.2, 5.6, yb, 0.5, 0x3a3634, {});
+  }
   b.pop();
   // 屋顶正中红色“西安”大字：透明底、字高 5.5 m，立在正脊上（由 build 用文字牌生成，ArchBuilder 的匾额只能带底色）
   return { topY: 27.7, labelY: 32, signs: [{ text: '西安', x: 5, y: rc.ridgeY + 3.4, z: 256.4, h: 5.5, color: '#d8231a' }] };
@@ -530,12 +643,20 @@ const SITES = [
     id: 'shanbo', label: '陕西历史博物馆', x: 760, z: 3925, fn: buildShanbo, flood: { color: 0xfff0dc, strength: 1.3, height: 34, top: 0.45 },
     flatten: [[-88, -116, 88, 100]], excl: [[-86, -114, 86, 98]],
     lights: [[0, 2, 60, 0xfff0d8, 60, 100], [0, 8, 30, 0xfff0d8, 40, 80]],
+    // 院落铺地：中灰花岗岩分格（反照率约 0.35），前院中轴甬道浅一档
+    paving: [{ polys: [[[-84, -80], [84, -80], [84, 92], [-84, 92]]], tile: 1.0, color: '#b0aa9f', seed: 31 }, { polys: [[[-7, 14], [7, 14], [7, 80], [-7, 80]]], tile: 0.9, color: '#c6c0b4', seed: 32, lift: 0.1 }],
+    // 前院草坪上的树（槐树）
+    courtTrees: [[-21, 39], [-13, 45], [-21, 51], [21, 39], [13, 45], [21, 51]],
   },
   {
-    id: 'station', label: '西安站', x: 1450, z: -2232, fn: buildStation, flood: { color: 0xffe4be, strength: 1.2, height: 40, top: 0.5 },
+    id: 'station', label: '西安站', x: 1450, z: -2232, fn: buildStation,
+    // 雨棚 / 采光井 / 幕墙分格的钢构铝框（hcpaint）不泛光；屋面不受泛光（upDim 0.95：原先候车室大屋面夜里一整块奶白）
+    flood: { color: 0xffe4be, strength: 1.05, height: 40, top: 0.45, upDim: 0.95, byKey: { hcanopy: false, hskylight: false, hwell: false, hgrass: false, hcpaint: false } },
     // 北站房 221×61 m、南站房 142.8×52 m（北站房原按 140 m 宽的放大殿堂建模，平整/排除范围随之扩大）
     flatten: [[-114, -36, 114, 36], [-72, 228, 82, 284]], excl: [[-112, -34, 112, 34], [-66, 30, 66, 224], [-70, 229, 80, 283], [-390, 34, 272, 228], [-90, 283, 100, 360]],
     lights: [[0, 3, -44, 0xffe4c0, 70, 120], [5, 3, 290, 0xffe4c0, 50, 100]],
+    // 南广场（南站房与北城墙之间，影像 x 1325~1665、z -1948~-1873）：浅米灰花岗岩分格铺装
+    paving: [{ polys: [[[-125, 284], [215, 284], [215, 359], [-125, 359]]], tile: 1.2, color: '#bab4a8', seed: 23 }],
   },
   {
     id: 'xingqing', label: '兴庆宫公园', x: 3365, z: 663, fn: buildXingqing, flood: { color: 0xffc98a, strength: 1.5, height: 22, top: 0.5 },
@@ -543,6 +664,32 @@ const SITES = [
     lights: [[0, 2, 18, 0xffc890, 30, 60], [168, 3, 16, 0xffc890, 30, 60]],
   },
 ];
+
+/** 院内小乔木（实例化：树干 + 两团树冠），pts 为世界坐标，y 为地面高 */
+function courtTrees(ctx, pts, y) {
+  const n = pts.length;
+  const trunkGeo = new THREE.CylinderGeometry(0.14, 0.2, 2.8, 6).translate(0, 1.4, 0);
+  const crownGeo = new THREE.IcosahedronGeometry(2.4, 1).scale(1.15, 0.85, 1.15).translate(0, 4.4, 0);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3c30, roughness: 0.95 });
+  const crownMat = new THREE.MeshStandardMaterial({ color: 0x50763c, roughness: 0.9, flatShading: true });
+  const t = new THREE.InstancedMesh(trunkGeo, trunkMat, n), c = new THREE.InstancedMesh(crownGeo, crownMat, n);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  pts.forEach(([x, z], i) => {
+    const k = 0.85 + ((i * 37) % 11) / 30;
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), i * 1.9);
+    m.compose(p.set(x, y, z), q, sc.set(k, k, k));
+    t.setMatrixAt(i, m);
+    c.setMatrixAt(i, m);
+    c.setColorAt(i, col.setHSL(0.25 + ((i * 13) % 7) / 220, 0.36, 0.28 + ((i * 7) % 5) / 70));
+  });
+  for (const o of [t, c]) {
+    o.castShadow = o.receiveShadow = true;
+    o.computeBoundingSphere();
+  }
+  t.name = '院内树干';
+  c.name = '院内树冠';
+  return [t, c];
+}
 
 function rectPts(x, z, r) {
   return [x + r[0], z + r[1], x + r[2], z + r[1], x + r[2], z + r[3], x + r[0], z + r[3]];
@@ -571,7 +718,34 @@ export default {
     ctx.scene.add(root);
     const glass = new THREE.MeshStandardMaterial({ color: 0x6d7f8c, metalness: 0.75, roughness: 0.12, emissive: 0xffd6a0, emissiveIntensity: 0, vertexColors: true });
     // 站台雨棚屋面：浅灰金属板（天光去蓝，免得整片读成淡蓝塑料板）
-    const canopy = new NeutralSkyMaterial({ color: 0xcfcbc3, metalness: 0.2, roughness: 0.55 });
+    // 直立锁边金属屋面：板宽 0.6 m 的板缝（UV = 局部米坐标，板缝沿南北向，垂直于站台）
+    const seam = (() => {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 8;
+      const g = c.getContext('2d');
+      g.fillStyle = '#d2cfc8';
+      g.fillRect(0, 0, 128, 8);
+      for (let i = 0; i < 4; i++) {
+        g.fillStyle = 'rgba(70,68,64,0.55)';
+        g.fillRect(i * 32, 0, 2, 8);
+        g.fillStyle = 'rgba(255,255,255,0.45)';
+        g.fillRect(i * 32 + 2, 0, 2, 8);
+        g.fillStyle = `rgba(0,0,0,${0.02 + (i % 3) * 0.015})`;
+        g.fillRect(i * 32 + 4, 0, 28, 8);
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(1 / 2.4, 1 / 2.4);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      return t;
+    })();
+    const canopy = new NeutralSkyMaterial({ color: 0xf4f2ec, map: seam, metalness: 0.25, roughness: 0.48 });
+    // 下沉采光井玻璃：与站房玻璃同质感，夜间只透出微弱暖光（共用 hglass 时夜里两块白板）
+    const wellGlass = glass.clone();
+    wellGlass.name = 'heritage.wellGlass';
+    ctx.night.register(wellGlass, { day: 0, night: 0.16 });
     canopy.name = 'heritage.canopy';
     // 采光顶玻璃：浅灰绿、低金属度（原 hglass 反射天空成一整块深蓝）
     const skylight = new NeutralSkyMaterial({ color: 0x9fb0b0, metalness: 0.15, roughness: 0.22, vertexColors: true, side: THREE.DoubleSide });
@@ -593,7 +767,7 @@ export default {
           const b = new ArchBuilder(ctx, { detail, style: 'tang', name: s.id });
           const r = s.fn(b, env);
           info = info || r;
-          const g = b.build({ flood: { ...s.flood, baseY: h0 + 0.5 }, name: s.id + '@' + detail, materials: { hglass: glass, hgrass: ctx.mats.get('grass'), hcanopy: canopy, hskylight: skylight, ...roofMaterials(ctx) } });
+          const g = b.build({ flood: { ...s.flood, baseY: h0 + 0.5 }, name: s.id + '@' + detail, materials: { hglass: glass, hwell: wellGlass, hgrass: ctx.mats.get('grass'), hcanopy: canopy, hskylight: skylight, hcpaint: getKit(ctx).mat('paint'), ...roofMaterials(ctx) } });
           g.traverse((m) => {
             if (m.isMesh && m.name === 'hglass' && !glassSeen.has(m.material)) {
               glassSeen.add(m.material);
@@ -606,6 +780,12 @@ export default {
         lod.position.set(s.x, h0, s.z);
         lod.name = 'heritage:' + s.id;
         root.add(lod);
+        // 地面铺装（世界坐标多边形；原先是贴地卫星影像，烘焙的车辆/白线/污渍一眼可辨）
+        for (const pv of s.paving || []) {
+          const polys = pv.polys.map((poly) => poly.map(([x, z]) => [s.x + x, s.z + z]));
+          root.add(pavedGround(ctx, polys, { tile: pv.tile ?? 1.2, color: pv.color ?? '#b8b2a6', seed: pv.seed ?? 21, night: 0.1, lift: pv.lift ?? 0.06, bias: pv.lift ? 0.0009 : 0.0006, name: s.label + '·铺装' }));
+        }
+        if (s.courtTrees) for (const m of courtTrees(ctx, s.courtTrees.map(([x, z]) => [s.x + x, s.z + z]), h0 + 0.34)) root.add(m);
         objs.push(lod);
         if (s.label) ctx.labels.add(s.label, new THREE.Vector3(s.x, h0 + (info?.labelY ?? 30), s.z), { category: 'landmark', priority: 3, maxDist: 6000 });
         // 透明底大字（站房屋脊上的“西安”等）：面朝 +Z（南）
