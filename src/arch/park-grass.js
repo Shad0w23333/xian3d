@@ -4,7 +4,17 @@ import * as THREE from 'three';
 import { grassTuftGeometry } from './park-props.js';
 import { M_PARK, M_GRASS, M_WATER, M_BLD, M_ROAD, M_EXCL, M_OCC, hash2 } from './park-index.js';
 
-const R = 36, STEP = 0.42;
+const R = 36, STEP = 0.36;
+
+/** 低频值噪声（世界坐标，cell 米一格，双线性），0..1：草丛成片疏密（修剪草坪里一片稀一片密，不再是均匀点阵） */
+function vnoise(x, z, cell, seed) {
+  const fx = x / cell, fz = z / cell;
+  const ix = Math.floor(fx), iz = Math.floor(fz);
+  let tx = fx - ix, tz = fz - iz;
+  tx = tx * tx * (3 - 2 * tx); tz = tz * tz * (3 - 2 * tz);
+  const a = hash2(ix, iz, seed), b = hash2(ix + 1, iz, seed), c = hash2(ix, iz + 1, seed), d = hash2(ix + 1, iz + 1, seed);
+  return a + (b - a) * tx + (c - a) * tz + (a - b - c + d) * tx * tz;
+}
 
 /** 风摆材质（草丛与花丛共用）：顶点按 uv.y² 摆动，摆幅随实例位置相位变化 */
 export function windMaterial(ctx, { amp = 0.05, side = THREE.DoubleSide, rough = 0.95, tintByUvX = false } = {}) {
@@ -82,7 +92,10 @@ export class GrassField {
         const d = Math.hypot(x - cx, z - cz);
         if (d > R) continue;
         // 远处抽稀：距离 > 10 m 线性降到 15%（远处的草丛小于一个像素，只剩成本）
-        const keep = d < 10 ? 1 : 1 - 0.85 * ((d - 10) / (R - 10));
+        let keep = d < 10 ? 1 : 1 - 0.85 * ((d - 10) / (R - 10));
+        // 成片疏密：7 m 与 2.3 m 两级噪声，草坪大部分只零星几撮，局部（树下、边角）成片
+        const nz = vnoise(x, z, 7, 5) * 0.65 + vnoise(x, z, 2.3, 9) * 0.35;
+        keep *= THREE.MathUtils.smoothstep(nz, 0.32, 0.72) * 0.9 + 0.1;
         if (hash2(gx, gz, 37) > keep) continue;
         const v = maskAt(x, z);
         if (v < 0 || !(v & (M_PARK | M_GRASS)) || v & BAD) continue;
@@ -90,7 +103,7 @@ export class GrassField {
         if (gr < 0.35 + 0.4 * hash2(gx, gz, 41)) continue;
         const y = heightAt(x, z);
         const fade = 1 - THREE.MathUtils.smoothstep(d, R - 8, R);
-        const s = (0.8 + 0.7 * hash2(gx, gz, 53)) * (0.4 + 0.6 * fade) * (1 + d * 0.012);
+        const s = (0.8 + 0.5 * hash2(gx, gz, 53)) * (0.4 + 0.6 * fade) * (1 + d * 0.012);
         const a = hash2(gx, gz, 61) * Math.PI * 2;
         const c = Math.cos(a) * s, sn = Math.sin(a) * s;
         const o = k * 16;
@@ -98,10 +111,10 @@ export class GrassField {
         M[o + 4] = 0; M[o + 5] = s * (0.8 + 0.5 * hash2(gx, gz, 71)); M[o + 6] = 0; M[o + 7] = 0;
         M[o + 8] = sn; M[o + 9] = 0; M[o + 10] = c; M[o + 11] = 0;
         M[o + 12] = x; M[o + 13] = y - 0.02; M[o + 14] = z; M[o + 15] = 1;
-        // 色差：十月草坪（偏黄绿，少量枯黄）
+        // 色差：十月草坪（轻微深浅、成片略枯黄；幅度小，不出现一丛丛亮点）
         const t = hash2(gx, gz, 83);
-        const dry = hash2(Math.floor(gx / 9), Math.floor(gz / 9), 91) > 0.82 ? 0.35 : 0;
-        C[k * 3] = 0.8 + 0.4 * t + dry; C[k * 3 + 1] = 0.85 + 0.3 * t + dry * 0.25; C[k * 3 + 2] = 0.8 + 0.25 * t;
+        const dry = vnoise(x, z, 11, 91) > 0.7 ? 0.12 : 0;
+        C[k * 3] = 0.9 + 0.18 * t + dry; C[k * 3 + 1] = 0.92 + 0.14 * t + dry * 0.3; C[k * 3 + 2] = 0.9 + 0.12 * t;
         k++;
       }
     }
