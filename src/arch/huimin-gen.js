@@ -85,6 +85,8 @@ const WALLS = {
   cream: { base: '#b2a283', line: null, grille: 0.5 },
   // 仿明清铺面（北院门/西羊市等主街）：青砖、木格窗，不画防盗网、空调外机、封闭阳台与晾衣
   trad: { base: '#5d6164', line: 'rgba(36,38,40,0.4)', brick: true, wood: true, grille: 0, trad: true },
+  // 仿明清铺面的白灰墙（青砖铺面之间穿插）：同样木格窗、无空调外机/防盗网/窗帘
+  tradw: { base: '#a29e95', line: null, wood: true, grille: 0, trad: true },
 };
 const STYLE_KEYS = Object.keys(WALLS);
 
@@ -314,7 +316,7 @@ function plainTex(st, seed) {
   const S = 256, c = cv(S, S), g = c.getContext('2d');
   paintWall(g, S, S, st, seed, 256);
   const r = rng(seed);
-  if (st !== 'brick' && st !== 'red' && st !== 'trad') for (let k = 0; k < 6; k++) streak(g, r() * S, 0, 3 + r() * 8, S * (0.3 + r() * 0.5), 0.08 + r() * 0.08);
+  if (st !== 'brick' && st !== 'red' && st !== 'trad' && st !== 'tradw') for (let k = 0; k < 6; k++) streak(g, r() * S, 0, 3 + r() * 8, S * (0.3 + r() * 0.5), 0.08 + r() * 0.08);
   return tex(c);
 }
 
@@ -784,7 +786,7 @@ export function buildHuimin(ctx, data) {
     // 北院门、西羊市主街：仿明清铺面（青砖木格窗，无空调外机）；其余老街以青砖为主；红砖、白瓷砖只留给背街自建房
     // （原先主街也有 12% 红砖、16% 水泥，暖光下一水红褐砖墙 + 外挂空调，像城中村；审查 g8）
     const mainTrad = !comp && fr.size > 0 && MAIN_TRAD.has(street);
-    const st = comp ? 'brick' : mainTrad ? (r < 0.86 ? 'trad' : 'plaster') : trad ? (r < 0.4 ? 'trad' : r < 0.72 ? 'brick' : r < 0.88 ? 'plaster' : 'wash')
+    const st = comp ? 'brick' : mainTrad ? (r < 0.72 ? 'trad' : 'tradw') : trad ? (r < 0.4 ? 'trad' : r < 0.72 ? 'brick' : r < 0.88 ? 'plaster' : 'wash')
       : r < 0.24 ? 'brick' : r < 0.42 ? 'tile' : r < 0.6 ? 'red' : r < 0.72 ? 'plaster' : r < 0.86 ? 'wash' : 'cream';
     const variant = r2 < 0.5 ? 0 : 1;
     const uoff = Math.floor(rand(bi, 1.7) * 4) / 4, voff = rand(bi, 2.9) < 0.5 ? 0 : 1;
@@ -1238,7 +1240,7 @@ export function buildHuiminFar(ctx, data) {
   // 屋面按近景实际构成加权：约 2/3 浅灰水泥平顶、1/5 深灰油毡、其余灰瓦（原先统一深褐 [0.15,0.13,0.11]，
   // 全城俯视时整片回坊是一块边界方正的褐红“地毯”，与四周灰白城区断开；审查 g1）
   const WALL = [0.25, 0.24, 0.225];
-  const ROOFS = [[0.27, 0.262, 0.245], [0.15, 0.145, 0.138], [0.115, 0.113, 0.108]];
+  const ROOFS = [[0.252, 0.247, 0.232], [0.15, 0.147, 0.14], [0.112, 0.112, 0.108]];
   let base = 0;
   for (const b of data.b) {
     const p = b.p;
@@ -1246,7 +1248,7 @@ export function buildHuiminFar(ctx, data) {
     if (n < 3 || !(b.h > 0)) continue;
     const [cx, cz] = centroidOf(p);
     const hv = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1; // 逐栋哈希
-    const kw = 0.8 + hv * 0.4, kr = 0.82 + ((hv * 7.31) % 1) * 0.36;
+    const kw = 0.74 + hv * 0.5, kr = 0.7 + ((hv * 7.31) % 1) * 0.58; // 明暗抖动拉大：与四周通用建筑（屋面 + 阴影）的对比度一致
     const rk = (hv * 13.7) % 1, ROOF = ROOFS[rk < 0.66 ? 0 : rk < 0.86 ? 1 : 2];
     const tint = (((hv * 29.3) % 1) - 0.5) * 0.04; // 轻微冷暖抖动
     const WALL_C = [WALL[0] * kw, WALL[1] * kw, WALL[2] * kw], ROOF_C = [ROOF[0] * kr * (1 + tint), ROOF[1] * kr, ROOF[2] * kr * (1 - tint)];

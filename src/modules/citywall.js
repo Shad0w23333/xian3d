@@ -552,6 +552,9 @@ function gateFrame(ring, g) {
  * 与瓮城 / 月城两侧到环城路之间的空地：花岗岩铺装 + 中轴浅色石带；夜景为中轴地埋灯、四周地埋灯与宫灯柱照亮的地面光斑。
  * 原先这里是贴地卫星影像（白天烘焙的车辆、白线一眼可辨；夜里几百米见方只有两盏庭院灯的光圈，审查 g1/g4）。
  */
+// 南门广场轮廓（世界坐标，北缘为护城河南岸；南缘随环城路弧线收口；影像实测）
+const SOUTH_PLAZA = [[-70, 1013], [57, 1013], [57, 1132], [56, 1142], [54, 1150], [51, 1158], [46, 1165], [40, 1172], [30, 1179], [-36, 1179], [-46, 1173], [-56, 1166], [-62, 1158], [-66, 1150], [-69, 1140], [-70, 1130]];
+
 function southGatePlaza(ctx, g, H) {
   const out = [];
   if (Math.abs(g.nz) < 0.95) return out;
@@ -559,8 +562,7 @@ function southGatePlaza(ctx, g, H) {
   const wet = (x, z) => moats.some((p) => pointInPoly(x, z, p.outer));
   const gx = g.x, gz = g.z, s = g.nz > 0 ? 1 : -1;
   const Z = (o) => gz + s * o; // 局部外凸距离 → 世界 z
-  // 广场（世界坐标，北缘为护城河南岸；南缘随环城路弧线收口）
-  const plaza = [[-70, 1013], [57, 1013], [57, 1132], [56, 1142], [54, 1150], [51, 1158], [46, 1165], [40, 1172], [30, 1179], [-36, 1179], [-46, 1173], [-56, 1166], [-62, 1158], [-66, 1150], [-69, 1140], [-70, 1130]];
+  const plaza = SOUTH_PLAZA;
   // 中轴石带（浅色，宽 14 m）
   const ax = gx;
   const axis = [[ax - 7, 1013.2], [ax + 7, 1013.2], [ax + 7, 1178.8], [ax - 7, 1178.8]];
@@ -571,7 +573,7 @@ function southGatePlaza(ctx, g, H) {
   if (gx + 58.4 < eRoad) sides.push([[gx + 58.4, Z(8.6)], [eRoad, Z(8.6)], [eRoad, Z(73.4)], [gx + 58.4, Z(73.4)]]);
   if (gx - 40.6 > wRoad) sides.push([[wRoad, Z(73.4)], [gx - 40.6, Z(73.4)], [gx - 40.6, Z(136)], [wRoad, Z(136)]]);
   if (gx - 58.4 > wRoad) sides.push([[wRoad, Z(8.6)], [gx - 58.4, Z(8.6)], [gx - 58.4, Z(73.4)], [wRoad, Z(73.4)]]);
-  out.push(pavedGround(ctx, [plaza, ...sides], { tile: 1.0, color: '#a69c8c', seed: 11, night: 0.1, skip: wet, name: '南门广场·铺装' }));
+  out.push(pavedGround(ctx, [plaza, ...sides], { tile: 1.0, color: '#b3ab9d', seed: 11, night: 0.1, skip: wet, name: '南门广场·铺装' }));
   out.push(pavedGround(ctx, [axis], { tile: 0.8, color: '#c4bbab', seed: 12, night: 0.12, lift: 0.09, bias: 0.0009, name: '南门广场·中轴' }));
   // 夜景：中轴两侧地埋灯（每 6 m）、广场四周地埋灯（每 9 m）、宫灯柱（中轴两侧 16 m，每 22 m）
   const ups = [], glow = [];
@@ -595,7 +597,8 @@ function southGatePlaza(ctx, g, H) {
   out.push(uplights(ctx, ups));
   out.push(groundGlow(ctx, glow, { color: 0xffbf72, intensity: 0.42 }));
   const b = new ArchBuilder(ctx, { detail: 1, instancing: true, minInstances: 4, name: 'south-plaza-posts' });
-  for (const [x, z] of posts) lanternPost(b, x, ctx.terrain.heightAt(x, z), z, 4.2, { kind: 'palace', size: 0.9, yaw: x < ax ? 0 : Math.PI, arm: 0.7 });
+  // hookY 为绝对高度（与 y0 同一坐标系）
+  for (const [x, z] of posts) { const y0 = ctx.terrain.heightAt(x, z); lanternPost(b, x, y0, z, y0 + 4.2, { kind: 'palace', size: 0.9, yaw: x < ax ? 0 : Math.PI, arm: 0.7 }); }
   out.push(b.build({ castShadow: true, name: '南门广场·宫灯柱' }));
   // 行人与树能被照亮：两盏高位暖光（点光源池按距离分配，只在近处生效）
   for (const z of [1060, 1130]) ctx.lights.add({ position: new THREE.Vector3(ax, ctx.terrain.heightAt(ax, z) + 9, z), color: 0xffc27a, intensity: 260, distance: 45, nightOnly: true, priority: 1.4 });
@@ -617,6 +620,8 @@ export default {
       ctx.exclusions.add({ points: [ax + sg.nx * o0, az + sg.nz * o0, bx + sg.nx * o0, bz + sg.nz * o0, bx + sg.nx * o1, bz + sg.nz * o1, ax + sg.nx * o1, az + sg.nz * o1], name: '城墙' }, { buildings: true, trees: true, pois: false });
     }
     for (const c of Object.values(CORNERS)) ctx.exclusions.add({ circle: [c[0], c[1], 40], name: '角楼' }, { buildings: true, trees: true });
+    // 南门广场：入城式开敞广场，不种通用行道树/绿地树（原先满场随机大树，挡住朝永宁门的视线）
+    ctx.exclusions.add({ points: SOUTH_PLAZA.flat(), name: '南门广场' }, { buildings: true, trees: true, pois: false });
     const gates = ctx.data?.landmarks?.gates || [];
     for (const g of gates) {
       const spec = MAIN[g.id];
@@ -783,6 +788,7 @@ export default {
     for (const r of runs(bodyCuts)) emitBody(bufs, r, WSEC);
     const shiftPts = (r, oc) => r.map((p) => ({ x: p.x + p.nx * oc * p.sc, z: p.z + p.nz * oc * p.sc, y: p.b + H, nx: p.nx, nz: p.nz, sc: p.sc, s: p.s }));
     const outlineRuns = [];
+    const innerLedRuns = [];
     // 西南城角两侧垛墙：端点顺直线方向延伸至圆台台身（半径 rH − 0.3）
     const swExtend = (pts) => {
       for (const [iE, iP] of [[0, 1], [pts.length - 1, pts.length - 2]]) {
@@ -805,6 +811,9 @@ export default {
     for (const r of runs(inCuts_)) {
       const pts = shiftPts(r, IT + PIN.t / 2);
       emitParapet(bufs.brick, pts, PIN.t, PIN.h, null, false, 0.3);
+      // 内侧女墙顶的轮廓灯带（朝城内；原先只有外侧垛口有灯带，城内看墙顶没有轮廓，审查 g7）
+      innerLedRuns.push(pts);
+      outlineRuns.push(pts.map((p) => [p.x - p.nx * (PIN.t / 2 + 0.05) * p.sc, p.y + PIN.h - 0.05, p.z - p.nz * (PIN.t / 2 + 0.05) * p.sc]));
       // 灯杆：每 24 m
       let acc = 12;
       for (let k = 0; k < pts.length - 1; k++) {
@@ -1044,6 +1053,31 @@ export default {
     merlons.computeBoundingSphere();
     leds.computeBoundingSphere();
     root.add(merlons, leds);
+    // 内侧女墙灯带：女墙内皮顶下 2~8 cm 一条发光带（与垛口灯带同材质）
+    {
+      const pos = [], nrm = [];
+      for (const pts of innerLedRuns) {
+        for (let k = 0; k < pts.length - 1; k++) {
+          const a = pts[k], b = pts[k + 1];
+          const P = (p, dy) => [p.x - p.nx * (PIN.t / 2 + 0.012) * p.sc, p.y + PIN.h + dy, p.z - p.nz * (PIN.t / 2 + 0.012) * p.sc];
+          const a0 = P(a, -0.08), a1 = P(a, -0.02), b0 = P(b, -0.08), b1 = P(b, -0.02);
+          // 朝城内（-n）：从城内看逆时针
+          const tri = [a0, b0, b1, a0, b1, a1];
+          const ex = b0[0] - a0[0], ez = b0[2] - a0[2];
+          const flip = ex * -a.nz - ez * -a.nx; // 叉积符号：决定绕序
+          const T = flip > 0 ? tri : [a0, b1, b0, a0, a1, b1];
+          for (const q of T) { pos.push(...q); nrm.push(-a.nx, 0, -a.nz); }
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+      g.computeBoundingSphere();
+      const innerLed = new THREE.Mesh(g, ledMat);
+      innerLed.name = '城墙·女墙轮廓灯';
+      leds.userData.inner = innerLed;
+      root.add(innerLed);
+    }
 
     // —— 远景轮廓灯线（屏幕恒宽） ——
     const outline = outlineLines(ctx, outlineRuns, { color: 0xffb55a, intensity: 2.4, pix: 0.0008 });
@@ -1333,6 +1367,7 @@ export default {
       smallGroup.visible = dWall < 1400;
       plazaGroup.visible = dWall < 2600;
       leds.visible = dWall < 2200;
+      if (leds.userData.inner) leds.userData.inner.visible = leds.visible;
       // 垛口（1 m 高）几公里外亚像素（按画质 1.6~3.6 km）；阴影只在阴影贴图覆盖范围内投射
       merlons.visible = dWall < ([1600, 2400, 3000, 3600][ctx.quality.level ?? 2] ?? 3000);
       merlons.castShadow = dWall < shadowReach(ctx, 1500, 12);

@@ -277,9 +277,11 @@ export function wallMaterial(ctx, kind = 'brick', o = {}) {
           // （原先整面墙同一亮度，像墙体自发光；审查 g7）
           float hh = clamp(vCwH.x / 12.0, 0.0, 1.0);
           float ph = fract((vCwW.x + vCwW.z) / 22.0) - 0.5;
-          float bw = mix(0.13, 0.4, hh);
+          // 光束随高度张开（墙根 ±2 m 的亮斑 → 墙顶 ±9 m 连成一片）；两灯之间压到 0.3，顶部压到墙根的一半，
+          // 否则色调映射把整面墙压成同一亮度（审查 g7 顺城东路：仍像整面自发光）
+          float bw = mix(0.09, 0.42, sqrt(hh));
           float beam = exp(-ph * ph / (bw * bw));
-          float pat = mix(0.5, 1.3, beam) * (1.12 - 0.3 * hh);
+          float pat = mix(0.3, 1.9, beam) * (1.2 - 0.6 * hh);
           totalEmissiveRadiance += diffuseColor.rgb * uCwFlood * (uNight * uCwFloodK * vCwH.y * pat);
         }`
       );
