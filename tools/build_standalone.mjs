@@ -6,6 +6,7 @@ import { build } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readStandaloneData } from './standalone-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -55,15 +56,10 @@ if (leftover.length > 1) console.warn('⚠ 以下 JS 块未被内联（可能是
 
 console.log('② 嵌入数据……');
 const dataDir = path.join(root, 'public', 'data');
-const embed = {};
-let total = 0;
-for (const f of fs.readdirSync(dataDir).sort()) {
-  if (skip.has(f) || f.startsWith('.')) continue;
-  const buf = fs.readFileSync(path.join(dataDir, f));
-  embed[f] = buf.toString('base64');
-  total += buf.length;
-  console.log(`   ${f.padEnd(26)} ${(buf.length / 1048576).toFixed(2)} MB`);
-}
+const { embed, total } = readStandaloneData(dataDir, {
+  skip,
+  onFile: (f, size) => console.log(`   ${f.padEnd(26)} ${(size / 1048576).toFixed(2)} MB`),
+});
 // meta.json 里去掉被跳过的底图
 if (embed['meta.json']) {
   const meta = JSON.parse(Buffer.from(embed['meta.json'], 'base64').toString('utf8'));
