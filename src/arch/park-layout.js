@@ -4,7 +4,7 @@
 // → 入口导览牌与花境 → 沿路庭院灯、座椅（背向草地、面向园路，每 25~40 m）、分类垃圾桶、健身步道标识、绿篱/花境 → 湖滨步道的
 // 灯与座椅（面向水面）→ 孤植树下的树池环凳 → “爱护花草”小牌。每放一件在掩膜里登记占用，后放的避让。
 import * as THREE from 'three';
-import { M_PARK, M_GRASS, M_WATER, M_BLD, M_ROAD, M_EXCL, M_SOFT, M_OCC, CELL, hash2, pip, segDist, polyline, SOFT_EXCL, greenGrid, lowAt, greenAt } from './park-index.js';
+import { M_PARK, M_GRASS, M_WATER, M_BLD, M_ROAD, M_EXCL, M_SOFT, M_OCC, CELL, hash2, pip, segDist, polyline, SOFT_EXCL, greenGrid, lowAt, greenAt, SITE_SOFT, SITE_HARD, SITE_PAVED } from './park-index.js';
 import { MeshBuf, lin, strip, resamplePts } from './park-geom.js';
 import { InstanceList } from './park-props.js';
 import { L, SIGN_BANDS } from './park-tex.js';
@@ -418,6 +418,51 @@ export function* buildChunk(env, gx, gz) {
   return { geo, inst: inst.freeze(), lamps, structs, mk, st, paved: out.paved, green };
 }
 
+// ───────────── 园桥判定 ─────────────
+const POOL_RE = /喷泉|泳|水景|水池/;
+/**
+ * 园路上哪些点是“跨水的园桥”。只认真正横跨水面的段：
+ *  · 水体是 water 模块按岸高重定过水位的湖/池/河/护城河（lvKind 有值）——喷泉池、广场水景（basin）、泳池不算；
+ *  · 不在精建场地里（site[i] ≥ SITE_HARD：地标模块自建水池与桥，如大雁塔北广场音乐喷泉）；曲江三园（SITE_SOFT）只认 OSM 标的桥；
+ *  · 一段连续的水上点两头都要回到岸上（园路尽头伸进水里的是栈道/码头，不是桥）；
+ *  · 横穿而不是贴岸走：水上段离岸最远 ≥ 1.2 m，且水上段长度 ≤ 6 × 离岸最远 + 6 m
+ *    （园路数据与水面多边形错位时，沿池边走的园路会有一长串点“落水”，但离岸始终只有 1 m 左右）。
+ * OSM 标了 bridge 的园路：放宽到离岸 ≥ 0.5 m、不看长度比例（仍要两头上岸、不在精建场地里）。
+ * 返回 {wet: Uint8Array（1 = 桥上水面点，pts[i].wy 为水面高度）, any}。
+ */
+export function bridgeSpans(idx, pts, Lx, site) {
+  const n = pts.length;
+  const wet = new Uint8Array(n);
+  const cand = new Uint8Array(n);
+  const wy = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    if (site && (site[i] >= SITE_HARD || (site[i] === SITE_SOFT && !Lx.b))) continue;
+    const w = idx.waterAt(pts[i].x, pts[i].z);
+    if (!w || !Number.isFinite(w.planeY)) continue;
+    // OSM 标了 bridge 的也可以跨没重定水位的水体（水库、远郊河），但喷泉池/广场水景/泳池一律不算
+    if (w.lvKind || (Lx.b && w.k !== 'basin' && !POOL_RE.test(w.n || ''))) { cand[i] = 1; wy[i] = w.planeY; }
+  }
+  let any = false;
+  for (let a = 0; a < n; a++) {
+    if (!cand[a]) continue;
+    let b = a;
+    while (b + 1 < n && cand[b + 1]) b++;
+    const ok0 = a > 0 && b < n - 1 && !(site && (site[a - 1] >= SITE_HARD || site[b + 1] >= SITE_HARD));
+    if (ok0) {
+      let far = 0, len = 0;
+      for (let i = a; i <= b; i++) far = Math.max(far, idx.shoreDist(pts[i].x, pts[i].z, 30));
+      for (let i = a; i <= b + 1; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
+      const ok = Lx.b ? far >= 0.5 : far >= 1.2 && len <= 6 * far + 6;
+      if (ok) {
+        for (let i = a; i <= b; i++) { wet[i] = 1; pts[i].wy = wy[i]; }
+        any = true;
+      }
+    }
+    a = b;
+  }
+  return { wet, any };
+}
+
 // ───────────── 园路 ─────────────
 function pathGeometry(E, Lx) {
   const { T, mk, buf, idx } = E;
@@ -426,19 +471,20 @@ function pathGeometry(E, Lx) {
   const n = pts.length;
   const own = Lx.own;
   const hw = Lx.w / 2;
-  // 每个点：是否在水面上（园桥）
-  const wet = new Uint8Array(n);
-  let anyWet = false;
-  for (let i = 0; i < n; i++) {
-    const w = idx.waterAt(pts[i].x, pts[i].z);
-    if (w) { wet[i] = 1; anyWet = true; pts[i].wy = w.planeY; }
-  }
-  const bridge = Lx.b || anyWet;
+  // 精建场地等级（见 ParkIndex.siteAt）：SITE_PAVED 里的段不画（场地铺装由地标模块自建，roads.json 园路也不补路缘石）
+  const site = new Uint8Array(n);
+  let nPaved = 0;
+  for (let i = 0; i < n; i++) if ((site[i] = idx.siteAt(pts[i].x, pts[i].z)) === SITE_PAVED) nPaved++;
+  if (nPaved === n) return;
+  // 每个点：是否是跨水园桥上的点
+  const { wet, any: anyWet } = bridgeSpans(idx, pts, Lx, site);
+  // OSM 标了 bridge 却没跨任何水面（小沟、干涸河道、数据里没有的水渠）：整条按桥面画（精建地标场地外）
+  const dryBridge = !!Lx.b && !anyWet;
   // 路面高度
   let ys;
   if (own) {
     ys = pts.map((p) => T.heightAt(p.x, p.z) + 0.07);
-    if (bridge) {
+    if (anyWet) {
       for (let i = 0; i < n; i++) if (wet[i]) ys[i] = Math.max(ys[i], pts[i].wy + 0.85);
       // 引坡：坡度 ≤ 8%
       for (let k = 0; k < 2; k++) {
@@ -458,17 +504,26 @@ function pathGeometry(E, Lx) {
       return y == null ? T.heightAt(p.x, p.z) + 0.25 : y;
     });
   }
-  // 本块负责的连续段（段中点在块内）
-  let run = [];
+  // 桥面点：跨水点 + 引坡（路面高出地面 0.15 m 以上）；OSM 旱桥整条
+  const isBr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (site[i] >= SITE_HARD) continue;
+    if (dryBridge || wet[i]) isBr[i] = 1;
+    else if (own && anyWet && ys[i] > T.heightAt(pts[i].x, pts[i].z) + 0.15) isBr[i] = 1;
+  }
+  // 本块负责的连续段（段中点在块内）；桥面段与普通园路段分开出（交界点共用）
+  let run = [], runBr = 0;
   const flush = () => {
-    if (run.length >= 2) emitPath(E, Lx, run, ys, bridge, wet);
+    if (run.length >= 2) emitPath(E, Lx, run, ys, runBr, wet);
     run = [];
   };
   for (let i = 0; i + 1 < n; i++) {
     const mx = (pts[i].x + pts[i + 1].x) / 2, mz = (pts[i].z + pts[i + 1].z) / 2;
     const inC = mx >= mk.x0 && mx < mk.x1 && mz >= mk.z0 && mz < mk.z1;
-    if (!inC) { flush(); continue; }
-    if (!run.length) run.push(i);
+    if (!inC || site[i] === SITE_PAVED || site[i + 1] === SITE_PAVED) { flush(); continue; }
+    const br = (isBr[i] && isBr[i + 1]) || wet[i] || wet[i + 1] ? 1 : 0;
+    if (run.length && br !== runBr) flush();
+    if (!run.length) { run.push(i); runBr = br; }
     run.push(i + 1);
   }
   flush();
