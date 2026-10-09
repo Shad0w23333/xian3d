@@ -240,6 +240,12 @@ export function solidMats(ctx) {
     ledRed: new THREE.MeshStandardMaterial({ color: 0x8a2a2a, emissive: 0xff3a2a, emissiveIntensity: 0, roughness: 0.5 }),
   };
   ctx.night.register(m.membrane, { day: 0, night: 0.9 });
+  // 平屋面夜间保留城区天光/周边泛光的微弱照度（原先夜里纯黑一块，看不出分格与女儿墙，审查 g8 钟楼饭店）
+  m.roof.emissive = new THREE.Color(0x8a8070);
+  if (m.roof.map) m.roof.emissiveMap = m.roof.map;
+  ctx.night.register(m.roof, { day: 0, night: 0.16 });
+  m.parapet.emissive = new THREE.Color(0x6a6c70);
+  ctx.night.register(m.parapet, { day: 0, night: 0.1 });
   ctx.night.register(m.ledBlue, { day: 0, night: 3.2 });
   ctx.night.register(m.ledRed, { day: 0.05, night: 3.0 });
   return m;

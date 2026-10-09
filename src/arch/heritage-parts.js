@@ -279,8 +279,19 @@ export function whiteBlock(b, o) {
   b.box('stone', -w / 2 - 0.15, y0, -d / 2 - 0.15, w / 2 + 0.15, y0 + 0.9, d / 2 + 0.15, 0xb4ada2, { skip: 'bottom' });
   b.box('plaster', -w / 2, y0 + 0.9, -d / 2, w / 2, y0 + h, d / 2, col, { skip: 'bottom' });
   const floors = o.floors ?? Math.max(1, Math.round(h / 4.5));
+  // 石材分缝（o.joints：横缝间距，米）：每道一圈略凸出的浅灰细线，素白墙面不至于是一整块白板
+  if (o.joints && b.detail >= 1) {
+    const jc = o.jointColor ?? 0xd2cdc3, e = 0.025, th = 0.05;
+    for (let y = y0 + 0.9 + o.joints; y < y0 + h - 0.4; y += o.joints) {
+      b.box('plaster', -w / 2 - e, y, d / 2, w / 2 + e, y + th, d / 2 + e, jc, { skip: 'bottom' });
+      b.box('plaster', -w / 2 - e, y, -d / 2 - e, w / 2 + e, y + th, -d / 2, jc, { skip: 'bottom' });
+      b.box('plaster', w / 2, y, -d / 2, w / 2 + e, y + th, d / 2, jc, { skip: 'bottom' });
+      b.box('plaster', -w / 2 - e, y, -d / 2, -w / 2, y + th, d / 2, jc, { skip: 'bottom' });
+    }
+  }
   if (o.windows === false || b.detail < 1) return;
   const R = rnd(o.seed ?? 3);
+  const rate = o.winRate ?? 1; // 开窗率：每个开间有窗的概率（陕历博台体以素白实墙为主，开窗很少）
   const fh = (h - 1.2) / floors;
   const sides = o.sides ?? ['front', 'back', 'left', 'right'];
   const defs = { front: [0, d / 2, w], back: [Math.PI, d / 2, w], left: [-Math.PI / 2, w / 2, d], right: [Math.PI / 2, w / 2, d] };
@@ -293,6 +304,7 @@ export function whiteBlock(b, o) {
     for (let f = 0; f < floors; f++) {
       const yb = y0 + 1.2 + f * fh + fh * 0.28, yt = yb + fh * 0.5;
       for (let k = 0; k < n; k++) {
+        if (rate < 1 && R() > rate) continue;
         const xa = x0 + k * bay + bay * 0.22, xb = x0 + (k + 1) * bay - bay * 0.22;
         glowQuad(b, xa, xb, yb, yt, off + 0.03, R() < 0.55 ? 0.35 + R() * 0.5 : 0.05, o.winColor ?? 0x2e3438);
         if (b.detail >= 2) b.box('paint', xa - 0.12, yb - 0.14, off, xb + 0.12, yb, off + 0.16, 0xd9d4ca, { skip: 'bottom' });
