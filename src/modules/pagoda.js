@@ -13,7 +13,7 @@
 // 夜景：塔身暖金泛光；北广场以暖白/金色灯光为主，只有音乐喷泉表演（约 12、16、19、21 点各一场）时水柱与水面才变彩色。
 import * as THREE from 'three';
 import { ArchBuilder, floodlit, hall, multiStoreyTower, corridor, yardWall, lantern, lanternPost, getKit, stats } from '../arch/chinese.js';
-import { dayanta, dayantaLights } from '../arch/pagoda-tower.js';
+import { dayanta, dayantaLights, weatherBrick } from '../arch/pagoda-tower.js';
 import { buildFountain, showFactor } from '../arch/pagoda-fountain.js';
 import { xuanzangStatue, tangLampPost, bronzeGroup, censer } from '../arch/pagoda-figures.js';
 import { readBuildings, obb, signedArea, tangFromFootprint } from '../arch/qujiang-gen.js';
@@ -181,7 +181,7 @@ export default {
     pwin.name = 'pagodaInterior';
     ctx.night.register(pwin, { day: 0, night: 1.35 });
     const flood = { color: 0xffb35c, strength: 2.1, baseY: H_T, height: 72, top: 0.55, upDim: 0.55, ctx };
-    const brickF = floodlit(kit.mat('brick').clone(), flood);
+    const brickF = weatherBrick(floodlit(kit.mat('brick').clone(), flood), H_T);
     const stoneF = floodlit(kit.mat('stone').clone(), flood);
     const towerMats = { brick: brickF, stone: stoneF, pwin };
     const lodT = new THREE.LOD();
@@ -230,6 +230,7 @@ export default {
     root.add(statue);
 
     // ───── 铺装地坪 ─────
+    let yardTrees = [];
     const batch = new Batcher();
     const pave = ctx.mats.get('stonePaving');
     // 北广场：浅灰花岗岩，0.6 m 分格（原先沿用通用铺装：偏青、1 m 以上大块，贴图里的大块暗斑成排重复，像一排阴影）
@@ -241,12 +242,33 @@ export default {
     paveN.depthWrite = true;
     const stepStone = new THREE.MeshStandardMaterial({ color: 0x6c675f, roughness: 0.7 });
     const marble = ctx.mats.get('marble');
+    // 池沿：1.3 m 一块的花岗岩条石（竖缝 + 逐块色差，立面比压顶深一级；原先几十米一整条灰白长方体，审查 g7）
+    const rimMat = new THREE.MeshStandardMaterial({ map: rimStoneTexture(), roughness: 0.78 });
+    rimMat.name = 'pagoda.rimStone';
+    const capMat = new THREE.MeshStandardMaterial({ color: 0xd6d1c6, roughness: 0.7 });
+    capMat.name = 'pagoda.rimCap';
     const dark = ctx.mats.get('wallBrickDark');
     // 塔院与中轴甬道
     paving(batch, pave, CX - 40, TZ - 46, CX + 40, TZ + 36, H_T + 0.06);
     paving(batch, pave, CX - 8, TZ + 36, CX + 8, TZ + 196, H_T + 0.05);
     paving(batch, pave, CX - 20, TZ + 84, CX + 20, TZ + 104, H_T + 0.055);
-    paving(batch, pave, CX - 44, TZ - 122, CX + 44, TZ - 56, H_T + 0.05);
+    // 玄奘三藏院：0.6 m 方砖分格铺装（压暗；原先通用浅色铺装在 75 m 外是一片发白的占位平面，审查 g3）
+    const paveY = new THREE.MeshStandardMaterial({ map: plazaPavingTexture(), color: 0xb4aea3, roughness: 0.85 });
+    paveY.name = 'pagoda.yardPaving';
+    paveY.transparent = true;
+    paveY.depthWrite = true;
+    paving(batch, paveY, CX - 44, TZ - 122, CX + 44, TZ - 56, H_T + 0.05);
+    // 院内花坛（花岗岩路缘 + 草坪）与甬道两侧的古树
+    for (const sx of [-1, 1]) {
+      const x0 = CX + sx * 6, x1 = CX + sx * 16;
+      const curb = new THREE.BoxGeometry(Math.abs(x1 - x0) + 0.6, 0.52, 10.6);
+      curb.translate((x0 + x1) / 2, H_T + 0.16, TZ - 79);
+      batch.add(curb, stepStone, null, { worldUV: 1 });
+      const lawn = new THREE.BoxGeometry(Math.abs(x1 - x0), 0.1, 10);
+      lawn.translate((x0 + x1) / 2, H_T + 0.4, TZ - 79);
+      batch.add(lawn, ctx.mats.get('grass'), null, { worldUV: 1 });
+    }
+    yardTrees = [[-22, -62], [22, -62], [-22, -80], [22, -80], [-12, -66], [12, -66], [-30, -116], [30, -116], [-12, -118], [12, -118]].map(([x, z]) => [CX + x, TZ + z]);
     // 南广场
     paving(batch, pave, 1540, 4786, 1604, 4946, H_S + 0.06);
     paving(batch, pave, 1506, 4832, 1638, 4868, H_S + 0.055);
@@ -272,9 +294,13 @@ export default {
     const front = { z0: 4148, z1: TZ0, w: 64, y: H_N + 0.3 };
     {
       const x0 = cxF - front.w / 2, x1 = cxF + front.w / 2, top = H_N + 0.48;
-      box(marble, x0 - RIM, H_N - 0.2, front.z0 - RIM, x1 + RIM, top, front.z0);
-      box(marble, x0 - RIM, H_N - 0.2, front.z0, x0, top, front.z1);
-      box(marble, x1, H_N - 0.2, front.z0, x1 + RIM, top, front.z1);
+      box(rimMat, x0 - RIM, H_N - 0.2, front.z0 - RIM, x1 + RIM, top - 0.1, front.z0);
+      box(rimMat, x0 - RIM, H_N - 0.2, front.z0, x0, top - 0.1, front.z1);
+      box(rimMat, x1, H_N - 0.2, front.z0, x1 + RIM, top - 0.1, front.z1);
+      // 压顶：外挑 5 cm
+      box(capMat, x0 - RIM - 0.05, top - 0.1, front.z0 - RIM - 0.05, x1 + RIM + 0.05, top, front.z0 + 0.03);
+      box(capMat, x0 - RIM - 0.05, top - 0.1, front.z0 + 0.03, x0 + 0.03, top, front.z1);
+      box(capMat, x1 - 0.03, top - 0.1, front.z0 + 0.03, x1 + RIM + 0.05, top, front.z1);
       box(dark, x0, H_N - 0.2, front.z0, x1, H_N - 0.12, front.z1);
     }
     // 八级叠水池：每级池面比上一级低 0.45 m，北沿为跌水堰
@@ -282,10 +308,10 @@ export default {
     for (let i = 0; i < NT; i++) {
       const zN = TZ0 + TD * i, zS = zN + TD, yT = tierTop(i), rimTop = yT + 0.14, last = i === NT - 1;
       pools.push({ z0: zN + RIM, z1: last ? zS - RIM : zS, w: POOL_W, y: yT - 0.06, rimTop, zN, zS });
-      box(marble, pX0, H_N - 0.3, zN, pX1, rimTop, zN + RIM); // 北沿（堰）
-      box(marble, pX0, yT - 0.7, zN + RIM, wX0, rimTop, zS);
-      box(marble, wX1, yT - 0.7, zN + RIM, pX1, rimTop, zS);
-      if (last) box(marble, pX0, yT - 0.7, zS - RIM, pX1, rimTop, zS);
+      box(rimMat, pX0, H_N - 0.3, zN, pX1, rimTop, zN + RIM); // 北沿（堰）
+      box(rimMat, pX0, yT - 0.7, zN + RIM, wX0, rimTop, zS);
+      box(rimMat, wX1, yT - 0.7, zN + RIM, pX1, rimTop, zS);
+      if (last) box(rimMat, pX0, yT - 0.7, zS - RIM, pX1, rimTop, zS);
       box(dark, wX0, yT - 0.62, zN + RIM, wX1, yT - 0.52, last ? zS - RIM : zS);
     }
     // 南端跌水（第八级 → 寺院台地）：中间 44 m 水阶，两侧通宽石阶
@@ -302,6 +328,7 @@ export default {
     }
     const ground = batch.build({ castShadow: false, receiveShadow: true, name: '铺装与水池' });
     root.add(ground);
+    for (const m of yardTreeMeshes(yardTrees, H_T + 0.05)) root.add(m);
 
     // 叠水水面（与喷泉共用水材质）+ 跌水水帘
     const fountain = buildFountain(ctx, { cx: cxF, front, pools });
@@ -454,6 +481,65 @@ function templeExtras(ctx, flood) {
 }
 
 /** 北广场花岗岩铺装：浅暖灰，0.6 m 方格（贴图 2.4 m = 4×4 块），细麻点，不带大块暗斑 */
+/** 院内古树（实例化：树干 + 两团树冠；国槐 / 松柏两种色调） */
+function yardTreeMeshes(pts, y) {
+  const n = pts.length;
+  if (!n) return [];
+  const trunkGeo = new THREE.CylinderGeometry(0.2, 0.32, 3.6, 7).translate(0, 1.8, 0);
+  const a = new THREE.IcosahedronGeometry(3.0, 1).scale(1.15, 0.8, 1.1).translate(0, 5.6, 0);
+  const c2 = new THREE.IcosahedronGeometry(2.1, 1).scale(1, 0.85, 1).translate(1.2, 6.8, -0.6);
+  const crownGeo = mergeGeos([a, c2]);
+  const trunk = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4b3d31, roughness: 0.95 }), n);
+  const crown = new THREE.InstancedMesh(crownGeo, new THREE.MeshStandardMaterial({ color: 0x55783e, roughness: 0.9, flatShading: true }), n);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  pts.forEach(([x, z], i) => {
+    const k = 0.85 + ((i * 37) % 11) / 35;
+    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), i * 2.1);
+    m.compose(p.set(x, y, z), q, s.set(k, k, k));
+    trunk.setMatrixAt(i, m);
+    crown.setMatrixAt(i, m);
+    crown.setColorAt(i, i % 3 === 2 ? col.setHSL(0.36, 0.3, 0.22) : col.setHSL(0.25 + ((i * 13) % 7) / 220, 0.38, 0.3));
+  });
+  for (const o of [trunk, crown]) {
+    o.castShadow = o.receiveShadow = true;
+    o.computeBoundingSphere();
+  }
+  trunk.name = '三藏院树干';
+  crown.name = '三藏院树冠';
+  return [trunk, crown];
+}
+
+/** 池沿条石贴图：2 块（每块 1.3 m）× 0.65 m，竖缝 + 逐块色差 + 石材颗粒；配合 worldUV（米） */
+function rimStoneTexture() {
+  const W = 256, H = 64;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  let s = 41;
+  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 2; i++) {
+    const v = 168 + r() * 18;
+    g.fillStyle = `rgb(${v},${v - 4},${v - 11})`;
+    g.fillRect(i * 128, 0, 128, H);
+  }
+  for (let k = 0; k < 2600; k++) {
+    const v = r() < 0.5 ? 110 + r() * 40 : 200 + r() * 40;
+    g.fillStyle = `rgba(${v},${v - 3},${v - 8},0.3)`;
+    g.fillRect(r() * W, r() * H, 1.2, 1.2);
+  }
+  g.fillStyle = 'rgba(60,56,50,0.75)';
+  for (const x of [0, 128]) g.fillRect(x, 0, 2, H);
+  g.fillStyle = 'rgba(255,255,255,0.25)';
+  for (const x of [2, 130]) g.fillRect(x, 0, 1, H);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1 / 2.6, 1 / 0.65);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
 function plazaPavingTexture() {
   const S = 512, N = 4, px = S / N;
   const c = document.createElement('canvas');
