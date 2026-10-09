@@ -21,6 +21,7 @@ import { courtyardTrees } from './streetscape-trees.js';
 
 const BAY = 3.2; // 开间（米）
 const TRAD_LANES = new Set(['北院门', '西羊市', '大皮院', '化觉巷', '北广济街', '小皮院', '大学习巷']);
+const MAIN_TRAD = new Set(['北院门', '西羊市']);
 // 夜里铺面前石板路铺暖光的主街（回坊环线 + 洒金桥等小吃街）
 const GLOW_LANES = new Set([...TRAD_LANES, '洒金桥', '大麦市街', '庙后街', '西仓南巷', '光明巷', '麦苋街', '桥梓口']);
 // 寺院 / 庙宇院落（世界坐标矩形，调研 §3）：院内建筑一律做古建大屋顶，不挂招牌
@@ -82,6 +83,8 @@ const WALLS = {
   plaster: { base: '#8e8a82', line: null, grille: 0.5 },
   wash: { base: '#8c867b', grain: true, grille: 0.55 },
   cream: { base: '#b2a283', line: null, grille: 0.5 },
+  // 仿明清铺面（北院门/西羊市等主街）：青砖、木格窗，不画防盗网、空调外机、封闭阳台与晾衣
+  trad: { base: '#5d6164', line: 'rgba(36,38,40,0.4)', brick: true, wood: true, grille: 0, trad: true },
 };
 const STYLE_KEYS = Object.keys(WALLS);
 
@@ -173,7 +176,7 @@ function upperAtlas(st, v, seed) {
       g.fillRect(X, Y + CELL - 8, CELL, 8);
       L.W.forEach(([a, b, c2, d], k) => {
         const x0 = X + a * CELL, y0 = Y + b * CELL, x1 = X + c2 * CELL, y1 = Y + d * CELL;
-        const balc = L.type === 'balc';
+        const balc = L.type === 'balc' && !S.trad;
         if (balc) {
           // 封闭阳台：下部实心栏板（墙色略深）+ 上部铝合金推拉窗
           g.fillStyle = 'rgba(0,0,0,0.12)';
@@ -197,7 +200,7 @@ function upperAtlas(st, v, seed) {
           g.fillRect(px0, y0 + 4, px1 - px0, y1 - y0 - 8);
           // 窗帘（颜色、拉开程度逐窗不同）
           const cf = L.lights[k].cur;
-          if (cf > 0.25) {
+          if (cf > 0.25 && !S.trad) {
             g.fillStyle = `rgba(${140 + r() * 100 | 0},${110 + r() * 70 | 0},${80 + r() * 60 | 0},0.55)`;
             g.fillRect(px0, y0 + 4, (px1 - px0) * Math.min(1, cf * 0.9), y1 - y0 - 8);
           }
@@ -239,7 +242,7 @@ function upperAtlas(st, v, seed) {
         }
       });
       // 空调外机
-      if (L.ac) {
+      if (L.ac && !S.trad) {
         const ax = L.acSide ? X + CELL * 0.84 : X + CELL * 0.02, ay = Y + CELL * 0.6;
         g.fillStyle = '#e4e4e0';
         g.fillRect(ax, ay, CELL * 0.14, CELL * 0.12);
@@ -311,7 +314,7 @@ function plainTex(st, seed) {
   const S = 256, c = cv(S, S), g = c.getContext('2d');
   paintWall(g, S, S, st, seed, 256);
   const r = rng(seed);
-  if (st !== 'brick' && st !== 'red') for (let k = 0; k < 6; k++) streak(g, r() * S, 0, 3 + r() * 8, S * (0.3 + r() * 0.5), 0.08 + r() * 0.08);
+  if (st !== 'brick' && st !== 'red' && st !== 'trad') for (let k = 0; k < 6; k++) streak(g, r() * S, 0, 3 + r() * 8, S * (0.3 + r() * 0.5), 0.08 + r() * 0.08);
   return tex(c);
 }
 
@@ -571,9 +574,10 @@ function makeMaterials(ctx) {
   const rt = ctx.tex.roofTiles({ color: '#5a5855' });
   M.roofTile = nstd({ map: rt.map, normalMap: rt.normalMap, roughness: 0.86, name: 'huimin-roofTile', side: THREE.DoubleSide });
   // 平顶：暖灰水泥 / 褐色油毡（真实回坊屋面以深灰、褐色水泥平顶为主）
-  const gr = ctx.tex.grain({ color: '#6f685f', amp: 30, seed: 21, spots: 60 });
+  // 平顶改中性浅灰水泥 / 深灰油毡（原 #6f685f / #53483e 偏褐，俯视整片回坊发红褐）
+  const gr = ctx.tex.grain({ color: '#7e7a73', amp: 30, seed: 21, spots: 60 });
   M.roofFlat = nstd({ map: gr.map || gr, roughness: 0.95, name: 'huimin-roofFlat' });
-  const gr2 = ctx.tex.grain({ color: '#53483e', amp: 26, seed: 23, spots: 40 });
+  const gr2 = ctx.tex.grain({ color: '#57524c', amp: 26, seed: 23, spots: 40 });
   M.roofFelt = nstd({ map: gr2.map || gr2, roughness: 0.97, name: 'huimin-roofFelt' });
   M.ridge = nstd({ color: 0x3e3d3b, roughness: 0.85, name: 'huimin-ridge' });
   M.wood = std({ color: 0x4a2f1c, roughness: 0.7, name: 'huimin-wood' });
@@ -777,7 +781,10 @@ export function buildHuimin(ctx, data) {
     const r = rand(cx, cz);
     const r2 = rand(cz * 1.3, cx * 0.7);
     // 墙面风格：回坊主街多青砖；街坊内部自建房青砖、红砖、白瓷砖、水刷石、米黄涂料混用
-    const st = comp ? 'brick' : trad ? (r < 0.62 ? 'brick' : r < 0.78 ? 'plaster' : r < 0.9 ? 'red' : 'wash')
+    // 北院门、西羊市主街：仿明清铺面（青砖木格窗，无空调外机）；其余老街以青砖为主；红砖、白瓷砖只留给背街自建房
+    // （原先主街也有 12% 红砖、16% 水泥，暖光下一水红褐砖墙 + 外挂空调，像城中村；审查 g8）
+    const mainTrad = !comp && fr.size > 0 && MAIN_TRAD.has(street);
+    const st = comp ? 'brick' : mainTrad ? (r < 0.86 ? 'trad' : 'plaster') : trad ? (r < 0.4 ? 'trad' : r < 0.72 ? 'brick' : r < 0.88 ? 'plaster' : 'wash')
       : r < 0.24 ? 'brick' : r < 0.42 ? 'tile' : r < 0.6 ? 'red' : r < 0.72 ? 'plaster' : r < 0.86 ? 'wash' : 'cream';
     const variant = r2 < 0.5 ? 0 : 1;
     const uoff = Math.floor(rand(bi, 1.7) * 4) / 4, voff = rand(bi, 2.9) < 0.5 ? 0 : 1;
@@ -947,7 +954,7 @@ export function buildHuimin(ctx, data) {
       const contour = [];
       for (let i = 0; i < n; i++) contour.push(new THREE.Vector2(p[i * 2], p[i * 2 + 1]));
       const tris = THREE.ShapeUtils.triangulateShape(contour, []);
-      const RF = A(rand(bi, 3.3) < 0.35 ? 'roofFelt' : 'roofFlat');
+      const RF = A(rand(bi, 3.3) < 0.25 ? 'roofFelt' : 'roofFlat');
       for (const [a, c2, d] of tris) {
         const P = (k) => [p[k * 2], top, p[k * 2 + 1]];
         const U = (k) => [p[k * 2] / 4, p[k * 2 + 1] / 4];
@@ -1228,7 +1235,10 @@ export function buildHuiminFar(ctx, data) {
   const streets = data.streets || [];
   const pos = [], col = [], idx = [];
   // 颜色压暗 + 逐栋明暗变化：远看要与精细街区（青砖、灰瓦、少量白墙）的整体色调一致，否则全城俯视时街区成一块平板亮斑
-  const WALL = [0.24, 0.22, 0.2], ROOF = [0.15, 0.13, 0.11];
+  // 屋面按近景实际构成加权：约 2/3 浅灰水泥平顶、1/5 深灰油毡、其余灰瓦（原先统一深褐 [0.15,0.13,0.11]，
+  // 全城俯视时整片回坊是一块边界方正的褐红“地毯”，与四周灰白城区断开；审查 g1）
+  const WALL = [0.25, 0.24, 0.225];
+  const ROOFS = [[0.27, 0.262, 0.245], [0.15, 0.145, 0.138], [0.115, 0.113, 0.108]];
   let base = 0;
   for (const b of data.b) {
     const p = b.p;
@@ -1236,8 +1246,10 @@ export function buildHuiminFar(ctx, data) {
     if (n < 3 || !(b.h > 0)) continue;
     const [cx, cz] = centroidOf(p);
     const hv = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1; // 逐栋哈希
-    const kw = 0.75 + hv * 0.6, kr = 0.8 + ((hv * 7.31) % 1) * 0.5;
-    const WALL_C = [WALL[0] * kw, WALL[1] * kw, WALL[2] * kw], ROOF_C = [ROOF[0] * kr, ROOF[1] * kr, ROOF[2] * kr];
+    const kw = 0.8 + hv * 0.4, kr = 0.82 + ((hv * 7.31) % 1) * 0.36;
+    const rk = (hv * 13.7) % 1, ROOF = ROOFS[rk < 0.66 ? 0 : rk < 0.86 ? 1 : 2];
+    const tint = (((hv * 29.3) % 1) - 0.5) * 0.04; // 轻微冷暖抖动
+    const WALL_C = [WALL[0] * kw, WALL[1] * kw, WALL[2] * kw], ROOF_C = [ROOF[0] * kr * (1 + tint), ROOF[1] * kr, ROOF[2] * kr * (1 - tint)];
     let ground = T.heightAt(cx, cz);
     for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 4))) ground = Math.min(ground, T.heightAt(p[i * 2], p[i * 2 + 1]));
     const y0 = ground - 0.4, y1 = ground + houseDims(b, streets).h;
