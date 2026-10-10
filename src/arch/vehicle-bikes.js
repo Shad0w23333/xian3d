@@ -61,42 +61,89 @@ function wheel(B, cx, cz, r, w, { seg = 12, rim = SILVER, spokes = 0, hub = 0.3 
   }
 }
 
+/** 任意截面放样：secs[i] = 闭合环（[x,y,z] 点数一致），ref = 内部参考点；capA/capB 为首末封口材质（null 不封） */
+function loft3(B, secs, m, ref, capA = null, capB = null) {
+  const n = secs[0].length;
+  for (let i = 0; i + 1 < secs.length; i++)
+    for (let k = 0; k < n; k++) {
+      const k2 = (k + 1) % n;
+      B.quad(secs[i][k], secs[i][k2], secs[i + 1][k2], secs[i + 1][k], m, ref);
+    }
+  for (const [S, cm] of [[secs[0], capA], [secs[secs.length - 1], capB]]) {
+    if (!cm) continue;
+    const c = S.reduce((a, p) => [a[0] + p[0] / n, a[1] + p[1] / n, a[2] + p[2] / n], [0, 0, 0]);
+    for (let k = 0; k < n; k++) B.tri(c, S[k], S[(k + 1) % n], cm, ref);
+  }
+}
+/** x-y 平面内的圆角矩形环（中心 cx，半宽 w，y0~y1，下角半径 rb、上角半径 rt），放在 z 处；11 点（逆时针） */
+function rrect(w, y0, y1, rb, rt, z, cx = 0) {
+  const pts = [];
+  const arc = (xc, yc, r, a0, a1) => { for (let k = 0; k <= 1; k++) { const a = a0 + ((a1 - a0) * (k + 0.5)) / 2; pts.push([cx + xc + Math.cos(a) * r, yc + Math.sin(a) * r, z]); } };
+  pts.push([cx + w, y0 + rb, z]);
+  arc(w - rt, y1 - rt, rt, 0, Math.PI / 2);
+  pts.push([cx + w - rt, y1, z]);
+  arc(-w + rt, y1 - rt, rt, Math.PI / 2, Math.PI);
+  pts.push([cx - w, y0 + rb, z]);
+  arc(-w + rb, y0 + rb, rb, Math.PI, 1.5 * Math.PI);
+  arc(w - rb, y0 + rb, rb, 1.5 * Math.PI, 2 * Math.PI);
+  return pts;
+}
+
 /** 踏板电动车 */
 function buildScooter(B) {
   const rF = 0.235, rR = 0.235, zF = 0.62, zR = -0.6;
-  wheel(B, 0, zF, rF, 0.085, { seg: 12 });
-  wheel(B, 0, zR, rR, 0.095, { seg: 12 });
-  // 前叉、挡泥板
-  for (const sd of [1, -1]) B.tube([sd * 0.065, rF, zF], [sd * 0.05, 0.86, 0.52], 0.018, SILVER, 5);
-  B.obox(0, rF + 0.2, zF - 0.02, 0.13, 0.03, 0.42, 0.25, BODY);
-  // 前护板（挡风围板）：自踏板前端斜向上到车把
-  B.obox(0, 0.62, 0.47, 0.4, 0.66, 0.1, -0.24, BODY);
-  B.obox(0, 0.6, 0.41, 0.34, 0.62, 0.05, -0.24, PLASTIC, 'front');
+  wheel(B, 0, zF, rF, 0.085, { seg: 16 });
+  wheel(B, 0, zR, rR, 0.095, { seg: 16 });
+  // 前叉、前挡泥板（沿轮弧弯曲的窄壳）
+  for (const sd of [1, -1]) B.tube([sd * 0.065, rF, zF], [sd * 0.05, 0.86, 0.52], 0.018, SILVER, 6);
+  {
+    const R = rF + 0.045, n = 6;
+    for (let k = 0; k < n; k++) {
+      const a0 = 0.15 + (k / n) * 1.9, a1 = 0.15 + ((k + 1) / n) * 1.9;
+      const p = (a, x, rr) => [x, rF + Math.sin(a) * rr, zF + Math.cos(a) * rr];
+      B.quad(p(a0, 0.065, R), p(a1, 0.065, R), p(a1, -0.065, R), p(a0, -0.065, R), BODY, [0, rF, zF]);
+      for (const sd of [1, -1]) B.quad(p(a0, sd * 0.065, R), p(a1, sd * 0.065, R), p(a1, sd * 0.065, R - 0.03), p(a0, sd * 0.065, R - 0.03), BODY, { n: [sd, 0, 0] });
+    }
+  }
+  // 前护板（挡风围板）：自踏板前端上到车把，下宽上窄、前凸的曲面壳；内侧黑色内衬
+  {
+    const lv = [[0.29, 0.43, 0.2], [0.48, 0.47, 0.195], [0.68, 0.505, 0.175], [0.88, 0.535, 0.15]];
+    const ring = ([y, zc, w]) => {
+      const pts = [];
+      for (let k = 0; k <= 6; k++) { const a = Math.PI * (k / 6); pts.push([Math.cos(a) * w, y, zc + 0.02 + Math.sin(a) * 0.075]); }
+      pts.push([-w * 0.92, y, zc - 0.03], [w * 0.92, y, zc - 0.03]);
+      return pts;
+    };
+    loft3(B, lv.map(ring), BODY, [0, 0.6, 0.44], PLASTIC, BODY);
+  }
   // 踏板（脚踏面黑色橡胶）
   B.box(0, 0.25, 0.13, 0.34, 0.08, 0.6, BODY);
   B.box(0, 0.295, 0.13, 0.3, 0.012, 0.56, RUBBER);
-  // 座下车身：两段斜盒拼出前低后高、尾部上翘的坐垫箱
-  B.obox(0, 0.48, -0.32, 0.34, 0.38, 0.56, 0.12, BODY);
-  B.obox(0, 0.56, -0.72, 0.3, 0.3, 0.34, 0.35, BODY);
+  // 座下车身：前低后高、尾部收圆上翘的壳体
+  const body = [[-0.1, 0.17, 0.27, 0.5], [-0.3, 0.172, 0.27, 0.71], [-0.55, 0.165, 0.31, 0.74], [-0.76, 0.145, 0.4, 0.735], [-0.9, 0.11, 0.5, 0.7], [-0.95, 0.07, 0.56, 0.67]];
+  loft3(B, body.map(([z, w, y0, y1]) => rrect(w, y0, y1, 0.03, Math.min(0.08, (y1 - y0) / 2.2), z)), BODY, [0, 0.5, -0.5], BODY, BODY);
   B.box(0, 0.25, -0.38, 0.22, 0.12, 0.6, GREY); // 电机/后摇臂
-  // 坐垫
-  B.obox(0, 0.775, -0.42, 0.3, 0.07, 0.66, 0.04, SEATM);
+  // 坐垫：圆鼓的软垫，前低后高
+  const seat = [[-0.1, 0.12, 0.69, 0.74], [-0.22, 0.15, 0.7, 0.79], [-0.45, 0.155, 0.725, 0.81], [-0.66, 0.145, 0.73, 0.805], [-0.76, 0.12, 0.725, 0.78]];
+  loft3(B, seat.map(([z, w, y0, y1]) => rrect(w, y0, y1, 0.015, Math.min(0.05, (y1 - y0) / 2.1), z)), SEATM, [0, 0.74, -0.45], SEATM, SEATM);
   // 尾灯 + 扶手 + 号牌
-  B.obox(0, 0.66, -0.9, 0.2, 0.06, 0.04, 0.35, M.tail);
+  B.obox(0, 0.66, -0.94, 0.18, 0.05, 0.03, 0.4, M.tail);
   B.box(0, 0.79, -0.82, 0.26, 0.03, 0.1, PLASTIC);
   B.panelZ(0, 0.48, -0.902, 0.15, 0.1, WHITE, -1);
-  // 车把：龙头罩（车身色）+ 横把 + 握把 + 前大灯 + 后视镜
-  B.obox(0, 0.97, 0.53, 0.3, 0.14, 0.2, -0.2, BODY);
-  B.box(0, 0.985, 0.6, 0.12, 0.08, 0.04, M.head);
-  B.tube([-0.31, 1.0, 0.5], [0.31, 1.0, 0.5], 0.013, PLASTIC, 5);
+  // 车把：圆角龙头罩（车身色）+ 前大灯 + 横把 + 握把 + 后视镜
+  const hd = [[0.64, 0.13, 0.9, 0.99], [0.57, 0.15, 0.89, 1.02], [0.47, 0.14, 0.9, 1.03], [0.42, 0.11, 0.92, 1.0]];
+  loft3(B, hd.map(([z, w, y0, y1]) => rrect(w, y0, y1, 0.03, 0.04, z)), BODY, [0, 0.96, 0.53], BODY, BODY);
+  B.box(0, 0.958, 0.645, 0.13, 0.05, 0.012, M.head);
+  B.tube([-0.31, 1.0, 0.5], [0.31, 1.0, 0.5], 0.013, PLASTIC, 6);
   for (const sd of [1, -1]) {
-    B.tube([sd * 0.24, 1.0, 0.5], [sd * 0.33, 1.0, 0.5], 0.019, RUBBER, 6, true);
+    B.tube([sd * 0.24, 1.0, 0.5], [sd * 0.33, 1.0, 0.5], 0.019, RUBBER, 8, true);
     B.tube([sd * 0.2, 1.0, 0.52], [sd * 0.25, 1.24, 0.48], 0.006, PLASTIC, 4);
-    B.box(sd * 0.26, 1.25, 0.48, 0.1, 0.06, 0.02, PLASTIC);
+    B.obox(sd * 0.26, 1.25, 0.48, 0.1, 0.055, 0.02, 0.1, PLASTIC);
   }
-  // 选项：外卖箱（后座上方，第二色）、前车筐、挡风罩
-  B.box(0, 1.03, -0.62, 0.44, 0.4, 0.42, opt(SECOND, OPT.BOX));
-  B.box(0, 1.235, -0.62, 0.45, 0.012, 0.43, opt(PLASTIC, OPT.BOX));
+  // 选项：外卖箱（后座上方，第二色：圆角箱体 + 黑色箱盖沿）、前车筐、挡风罩
+  const bx = [[-0.41, 0.22, 0.83, 1.23], [-0.83, 0.22, 0.83, 1.23]];
+  loft3(B, bx.map(([z, w, y0, y1]) => rrect(w, y0, y1, 0.03, 0.04, z)), opt(SECOND, OPT.BOX), [0, 1.03, -0.62], opt(SECOND, OPT.BOX), opt(SECOND, OPT.BOX));
+  B.box(0, 1.17, -0.62, 0.452, 0.025, 0.432, opt(PLASTIC, OPT.BOX));
   B.box(0, 0.82, -0.62, 0.3, 0.03, 0.34, opt(PLASTIC, OPT.BOX));
   B.box(0, 0.83, 0.66, 0.34, 0.2, 0.24, opt(BASKET, OPT.BASKET));
   B.obox(0, 1.22, 0.56, 0.44, 0.34, 0.01, -0.35, opt({ c: col(0x0d1114), paint: PM.GLASS, rough: 0.05, metal: 0 }, OPT.SHIELD));

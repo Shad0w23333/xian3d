@@ -32,7 +32,7 @@ const HOTSPOTS = [
   [108.9395, 34.2632, 420, 5], // 鼓楼 · 回民街
   [108.9595, 34.2120, 700, 3.5], // 大唐不夜城
   [108.9642, 34.2196, 420, 3], // 大雁塔
-  [108.9458, 34.2238, 650, 6], // 小寨（长安路 × 小寨东/西路十字，赛格、百汇、金莎）
+  [108.9458, 34.2238, 650, 8], // 小寨（长安路 × 小寨东/西路十字，赛格、百汇、金莎）
   [108.9423, 34.2515, 260, 2], // 永宁门
   [108.9440, 34.2620, 1800, 1.6], // 明城墙内
   [108.9780, 34.2050, 800, 1.6], // 曲江池
@@ -60,8 +60,9 @@ const HOT_STREETS = [
 const LANDMARK_PLAZAS = [
   { n: '钟鼓楼广场', w: 3.5, p: [-290, -92, -72, -92, -72, -20, -290, -20] },
   { n: '鼓楼南广场', w: 2.5, p: [-350, -58, -297, -58, -297, -20, -350, -20] },
-  { n: '大雁塔北广场西侧', w: 4, p: [1490, 4104, 1527, 4104, 1527, 4448, 1490, 4448] },
-  { n: '大雁塔北广场东侧', w: 4, p: [1617, 4104, 1654, 4104, 1654, 4448, 1617, 4448] },
+  // 两侧台地一直铺到叠水池池沿（池宽 56 m、池沿 0.7 m，中线 x 1571）：池边、灯柱间都有游客
+  { n: '大雁塔北广场西侧', w: 4, p: [1490, 4104, 1541, 4104, 1541, 4448, 1490, 4448] },
+  { n: '大雁塔北广场东侧', w: 4, p: [1601, 4104, 1654, 4104, 1654, 4448, 1601, 4448] },
   { n: '大雁塔北广场北端', w: 3, p: [1490, 4104, 1654, 4104, 1654, 4140, 1490, 4140] },
   { n: '大雁塔南广场', w: 3, p: [1508, 4792, 1637, 4792, 1637, 4940, 1508, 4940] },
 ];
@@ -168,7 +169,8 @@ export default {
       let sides = null;
       const W = Math.min(42, Math.max(Number(f.w) || MIN_W[c] || 5, MIN_W[c] || 5, c >= 1 && c <= 4 ? Math.max(1, f.l | 0 || 1) * (c <= 2 ? 3.4 : 3.1) : 0));
       if (c === 12) sides = [[0, W * 0.8, 1.6]];
-      else if (c === 13) sides = [[0, Math.min(W, 3) * 0.6, 1.1]];
+      // 人行步道：OSM 多沿人行道中线画，横向散开 ±0.9 m 左右（不再排成一条线走在盲道边）
+      else if (c === 13) sides = [[0, Math.min(Math.max(W, 2.2), 3) * 0.8, 1.1]];
       else if (c >= 1 && c <= 4) {
         const sw = SIDEWALK[c];
         const a = TREE_D[c] + 0.7, b = Math.max(a + 0.2, sw - 0.3);
@@ -607,6 +609,33 @@ export default {
         for (let i = 0; i < N; i++) out.push({ x: wX[i], y: wY[i], z: wZ[i], yaw: wYaw[i], v: wSpd[i] });
         return out;
       },
+      /** 调试：(x,z) 半径 r 内的行人（位置、所在路径的道路名/等级/偏移） */
+      debugNear(x, z, r = 80) {
+        const out = [];
+        for (let i = 0; i < N; i++) {
+          const d = Math.hypot(wX[i] - x, wZ[i] - z);
+          if (d > r) continue;
+          const p = paths[wPath[i]];
+          out.push({ x: +wX[i].toFixed(1), z: +wZ[i].toFixed(1), d: +d.toFixed(1), n: p.f ? p.f.n || '' : p.plaza ? 'plaza' : '', c: p.cls, off: +wOff[i].toFixed(1), v: +wSpd[i].toFixed(2) });
+        }
+        return out.sort((a, b) => a.d - b.d);
+      },
+      /** 调试：某点附近的路径（道路名、等级、偏移、权重） */
+      debugPaths(x, z, r = 60) {
+        const out = [];
+        paths.forEach((p, pi) => {
+          for (let g = 0; g < p.n - 1; g++) {
+            const ax = p.pts[g * 2], az = p.pts[g * 2 + 1], bx = p.pts[g * 2 + 2], bz = p.pts[g * 2 + 3];
+            const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1;
+            const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+            const d = Math.hypot(ax + dx * t - x, az + dz * t - z);
+            if (d < r) { out.push({ pi, g, n: p.f ? p.f.n || '' : 'plaza', c: p.cls, fc: p.f ? p.f.c : -1, o: p.f ? p.f.o : 0, off: p.off, w: p.w, sw: +p.sw[g].toFixed(2), d: +d.toFixed(1), len: Math.round(p.len) }); break; }
+          }
+        });
+        return out.sort((a, b) => a.d - b.d).slice(0, 40);
+      },
+      /** 调试：某点的密度倍率（热点、店铺、地铁口） */
+      debugDensity(x, z) { return { hot: +hotAt(x, z).toFixed(2), poi: +poiAt(x, z).toFixed(2), metro: +metroAt(x, z).toFixed(2) }; },
       stats() {
         return { walkers: N, drawn: WN.mesh.count + WF.mesh.count, near: WN.mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, plazaPaths: nPlazaPaths, cand: nCand };
       },

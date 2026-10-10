@@ -38,7 +38,8 @@ export const M = {
   // 车窗：金属度 0、极低粗糙度 → 环境贴图按菲涅耳反射天空/街景（正视发暗、斜视发亮），漫反射为透见的车内（着色器）
   glass: { c: col(0x0b0e12), paint: PM.GLASS, rough: 0.04, metal: 0.0 },
   lamp: { c: col(0x2a2c30), rough: 0.25, metal: 0.6 }, // 灯腔（深色反光碗）
-  glassBus: { c: col(0x0a0c0f), rough: 0.06, metal: 0.3, em: EM.INTERIOR },
+  // 公交车窗：深色玻璃（金属度低，夜里不再把环境反射成一整块白板），夜间车内灯光与窗框分格在着色器里画
+  glassBus: { c: col(0x0a0c0f), rough: 0.07, metal: 0.05, em: EM.INTERIOR },
   black: { c: col(0x141516), rough: 0.7, metal: 0.0 },
   trim: { c: col(0x1d1f22), rough: 0.45, metal: 0.3 },
   under: { c: col(0x060606), rough: 1.0, metal: 0.0 },
@@ -54,6 +55,8 @@ export const M = {
   led: { c: col(0x1a0c06), rough: 0.3, metal: 0.0, em: EM.LED },
   taxiSign: { c: col(0xf2f2ee), rough: 0.35, metal: 0.0, em: EM.TAXI },
   taxiBand: { c: col(0x1f4f9a), rough: 0.35, metal: 0.0 },
+  // 出租车顶灯字面（号牌图集里的“出租 TAXI”格，u ∈ [2, 3]），夜里随顶灯一起亮
+  taxiText: { c: [1, 1, 1], paint: PM.PLATE, rough: 0.35, metal: 0.0, em: EM.TAXI },
   greyLight: { c: col(0xc9ccd0), rough: 0.5, metal: 0.2 },
   greyDark: { c: col(0x3a3d41), rough: 0.6, metal: 0.2 },
 };
@@ -340,20 +343,89 @@ function buildBus(B, part = 'single') {
   B.quad([1.35, 0.03, zF + 0.2], [-1.35, 0.03, zF + 0.2], [-1.35, 0.03, zR - 0.2], [1.35, 0.03, zR - 0.2], M.under, { n: [0, 1, 0] });
 }
 
+/** 圆角矩形环（半宽 hw、y0~y1、顶角半径 r，左右对称；自左下逆时针） */
+function cabRing(hw, y0, y1, r) {
+  const pts = [[hw, y0], [hw, y1 - r]];
+  for (let k = 1; k < 4; k++) { const a = (k / 4) * (Math.PI / 2); pts.push([hw - r + Math.cos(a) * r, y1 - r + Math.sin(a) * r]); }
+  pts.push([hw - r, y1]);
+  const L = pts.slice();
+  return [...L, ...L.slice().reverse().map(([x, y]) => [-x, y])];
+}
 function truckCab(B, z0, z1, hw, y0, y1, cabMat) {
-  // 平头驾驶室：箱体 + 前挡风 + 侧窗
+  // 平头驾驶室：圆角放样体，前上沿倒角（前脸上部后倾），侧面车门分缝、门把手、侧窗与小三角窗
+  const H = y1 - y0;
+  const secs = [
+    { z: z0, ring: cabRing(hw, y0, y1, 0.16) },
+    { z: z1 - 0.32, ring: cabRing(hw, y0, y1, 0.16) },
+    { z: z1 - 0.06, ring: cabRing(hw - 0.03, y0, y1 - 0.12, 0.13) },
+    { z: z1, ring: cabRing(hw - 0.06, y0, y1 - 0.3, 0.1) },
+  ];
+  const nR = secs[0].ring.length;
+  const ref = [0, (y0 + y1) / 2, (z0 + z1) / 2];
+  for (let i = 0; i + 1 < secs.length; i++) {
+    const A = secs[i], Bs = secs[i + 1];
+    for (let k = 0; k < nR; k++) {
+      const k2 = (k + 1) % nR;
+      if (k === nR - 1) continue; // 底面
+      B.quad([A.ring[k][0], A.ring[k][1], A.z], [A.ring[k2][0], A.ring[k2][1], A.z], [Bs.ring[k2][0], Bs.ring[k2][1], Bs.z], [Bs.ring[k][0], Bs.ring[k][1], Bs.z], cabMat, ref);
+    }
+  }
+  for (const S of [secs[0], secs[secs.length - 1]]) {
+    const c = [0, (y0 + y1) / 2 - 0.1, S.z], dir = S === secs[0] ? -1 : 1;
+    for (let k = 0; k < nR; k++) { const k2 = (k + 1) % nR; B.tri(c, [S.ring[k][0], S.ring[k][1], S.z], [S.ring[k2][0], S.ring[k2][1], S.z], cabMat, { n: [0, 0, dir] }); }
+  }
+  // 前挡风（在后倾的前脸上部）+ 黑色胶条
+  const yw0 = lerp(y0, y1, 0.52), yw1 = y1 - 0.34;
+  B.panelZ(0, (yw0 + yw1) / 2, z1 + 0.012, hw * 1.84, yw1 - yw0 + 0.06, M.black, 1);
+  B.panelZ(0, (yw0 + yw1) / 2, z1 + 0.016, hw * 1.76, yw1 - yw0, M.glass, 1);
   const zc = (z0 + z1) / 2;
-  B.box(0, (y0 + y1) / 2, zc, hw * 2, y1 - y0, z1 - z0, cabMat, 'bottom');
-  B.panelZ(0, lerp(y0, y1, 0.66), z1 + 0.01, hw * 1.8, (y1 - y0) * 0.36, M.glass, 1);
-  for (const sd of [1, -1]) B.panelX(sd * (hw + 0.01), lerp(y0, y1, 0.66), zc + 0.1, (z1 - z0) * 0.6, (y1 - y0) * 0.32, M.glass, sd);
-  // 前保险杠与大灯
+  for (const sd of [1, -1]) {
+    const xs = sd * (hw + 0.008);
+    // 侧窗（门窗 + 前角小三角窗）与门缝、门把手、门下脚踏
+    B.panelX(xs, lerp(y0, y1, 0.7), zc + 0.12, (z1 - z0) * 0.5, H * 0.3, M.glass, sd);
+    B.panelX(xs, lerp(y0, y1, 0.7), z1 - 0.2, 0.18, H * 0.26, M.glass, sd);
+    B.panelX(sd * (hw + 0.004), (y0 + y1) / 2 - 0.05, z0 + 0.12, 0.025, H * 0.86, M.black, sd);
+    B.panelX(sd * (hw + 0.004), (y0 + y1) / 2 - 0.05, z1 - 0.06, 0.025, H * 0.8, M.black, sd);
+    B.box(sd * (hw + 0.02), lerp(y0, y1, 0.48), z0 + 0.26, 0.03, 0.04, 0.16, M.chrome);
+    B.box(sd * (hw - 0.1), y0 - 0.12, (z0 + z1) / 2 - 0.1, 0.32, 0.05, 0.5, M.greyDark);
+    // 后视镜（支架 + 镜壳）
+    B.box(sd * (hw + 0.08), lerp(y0, y1, 0.78), z1 - 0.08, 0.16, 0.03, 0.03, M.black);
+    B.box(sd * (hw + 0.17), lerp(y0, y1, 0.62), z1 - 0.1, 0.08, 0.42, 0.12, M.black);
+  }
+  // 格栅（挡风下方：黑底 + 三道镀铬横条）、前保险杠、大灯组嵌在保险杠两端
+  const yg = lerp(y0, y1, 0.3);
+  B.panelZ(0, yg, z1 + 0.008, hw * 1.2, H * 0.26, M.black, 1);
+  for (const k of [-1, 0, 1]) B.box(0, yg + k * H * 0.07, z1 + 0.02, hw * 1.16, 0.025, 0.02, M.chrome);
   B.box(0, y0 - 0.2, z1 + 0.06, hw * 2, 0.35, 0.18, M.greyDark);
   for (const sd of [1, -1]) {
-    B.box(sd * (hw - 0.35), y0 - 0.2, z1 + 0.16, 0.36, 0.14, 0.04, M.head);
-    B.box(sd * (hw - 0.08), y0 - 0.2, z1 + 0.16, 0.1, 0.1, 0.04, sd > 0 ? M.turnL : M.turnR);
-    B.box(sd * (hw + 0.12), lerp(y0, y1, 0.62), z1 - 0.1, 0.08, 0.4, 0.12, M.black);
+    B.box(sd * (hw - 0.33), y0 - 0.17, z1 + 0.15, 0.4, 0.16, 0.02, M.lamp);
+    B.box(sd * (hw - 0.37), y0 - 0.17, z1 + 0.16, 0.26, 0.11, 0.02, M.head);
+    B.box(sd * (hw - 0.1), y0 - 0.17, z1 + 0.16, 0.1, 0.1, 0.02, sd > 0 ? M.turnL : M.turnR);
   }
   B.plateZ(0, y0 - 0.02, z1 + 0.16, 0.44, 0.14, M.plate, 1);
+}
+/** 前轮挡泥板（驾驶室下、轮胎上方的黑色半圆弧罩） */
+function fender(B, sd, xc, zc, r, w) {
+  const n = 6, R = r + 0.08;
+  for (let k = 0; k < n; k++) {
+    const a0 = (Math.PI * k) / n, a1 = (Math.PI * (k + 1)) / n;
+    const p = (a, x) => [x, r + Math.sin(a) * R, zc + Math.cos(a) * R];
+    B.quad(p(a0, xc - w / 2), p(a1, xc - w / 2), p(a1, xc + w / 2), p(a0, xc + w / 2), M.black, [xc, r, zc]);
+  }
+}
+/** 货箱细节：侧面竖筋、侧防护栏、后门（中缝、铰链、锁杆） */
+function cargoDetail(B, hw, y0, y1, zA, zB, ribMat) {
+  for (let z = zB + 0.5; z < zA - 0.3; z += 0.62)
+    for (const sd of [1, -1]) B.box(sd * (hw + 0.012), (y0 + y1) / 2, z, 0.024, y1 - y0 - 0.1, 0.05, ribMat);
+  for (const sd of [1, -1]) {
+    B.box(sd * (hw + 0.012), y1 - 0.04, (zA + zB) / 2, 0.03, 0.06, zA - zB, M.greyDark);
+  }
+  const zr = zB - 0.01;
+  B.panelZ(0, (y0 + y1) / 2, zr - 0.002, 0.03, y1 - y0 - 0.12, M.black, -1);
+  for (const sd of [1, -1]) {
+    for (const yy of [y0 + 0.35, y1 - 0.35]) B.box(sd * (hw - 0.06), yy, zr - 0.02, 0.06, 0.1, 0.04, M.greyDark);
+    for (const xx of [0.32, 0.72]) B.box(sd * xx, (y0 + y1) / 2, zr - 0.025, 0.035, y1 - y0 - 0.2, 0.03, M.chrome);
+  }
 }
 
 function buildDump(B) {
@@ -373,6 +445,7 @@ function buildDump(B) {
     B.box(sd * 1.0, 0.95, -4.33, 0.3, 0.14, 0.06, M.tail);
     B.box(sd * 0.72, 0.95, -4.33, 0.14, 0.14, 0.06, sd > 0 ? M.turnL : M.turnR);
     B.wheel(sd * 1.0, 3.45, 0.52, 0.32, sd, 12, 0.5);
+    fender(B, sd, sd * 1.0, 3.45, 0.52, 0.38);
     B.wheel(sd * 0.95, -1.5, 0.52, 0.6, sd, 12, 0.5);
     B.wheel(sd * 0.95, -2.85, 0.52, 0.6, sd, 12, 0.5);
   }
@@ -388,10 +461,17 @@ function buildBoxTruck(B) {
   B.box(0, 0.7, -0.3, 0.85, 0.36, 7.2, M.black);
   B.box(0, 2.2, -0.75, 2.4, 2.3, 6.1, M.second);
   B.box(0, 1.03, -0.75, 2.44, 0.1, 6.14, M.greyDark);
+  cargoDetail(B, 1.2, 1.05, 3.35, 2.3, -3.8, M.second);
   for (const sd of [1, -1]) {
     B.box(sd * 0.95, 1.2, -3.82, 0.24, 0.14, 0.05, M.tail);
+    B.box(sd * 0.95, 1.38, -3.82, 0.24, 0.08, 0.05, sd > 0 ? M.turnL : M.turnR);
     B.wheel(sd * 0.98, 2.95, 0.45, 0.28, sd, 12, 0.5);
     B.wheel(sd * 0.93, -2.1, 0.45, 0.52, sd, 12, 0.5);
+    fender(B, sd, sd * 0.98, 2.95, 0.45, 0.34);
+    fender(B, sd, sd * 0.93, -2.1, 0.45, 0.56);
+    // 侧防护栏（两轮之间的两道横杆 + 立柱）
+    for (const yy of [0.62, 0.86]) B.box(sd * 1.14, yy, 0.4, 0.04, 0.06, 2.9, M.greyLight);
+    for (const zz of [-0.9, 0.4, 1.75]) B.box(sd * 1.12, 0.78, zz, 0.06, 0.4, 0.05, M.greyDark);
   }
   B.plateZ(0, 0.8, -3.84, 0.44, 0.14, M.plate, -1);
   B.quad([1.25, 0.03, 4.0], [-1.25, 0.03, 4.0], [-1.25, 0.03, -3.9], [1.25, 0.03, -3.9], M.under, { n: [0, 1, 0] });
@@ -410,6 +490,7 @@ function buildSemi(B) {
   for (const sd of [1, -1]) {
     B.box(sd * 1.0, 1.1, -8.12, 0.26, 0.14, 0.05, M.tail);
     B.wheel(sd * 1.0, 7.35, 0.52, 0.32, sd, 12, 0.5);
+    fender(B, sd, sd * 1.0, 7.35, 0.52, 0.38);
     B.wheel(sd * 0.95, 5.1, 0.52, 0.6, sd, 12, 0.5);
     B.wheel(sd * 0.95, 3.8, 0.52, 0.6, sd, 12, 0.5);
     for (const z of [-5.0, -6.3, -7.6]) B.wheel(sd * 0.95, z, 0.5, 0.55, sd, 10, 0.5);
@@ -750,7 +831,7 @@ export function trainFarGeometry() {
 // ======================================================================
 // 中国乘用车颜色分布（白色约一半，其次黑、灰银、蓝、红等）
 const CAR_COLORS = [
-  [0xeeeeea, 30], [0xf4f3ef, 12], [0x16181b, 14], [0x2b2e33, 4], [0x9ea3a8, 8], [0x6f757c, 6], [0xc4c7ca, 5],
+  [0xeeeeea, 22], [0xf4f3ef, 9], [0xe4e7ea, 7], [0x16181b, 15], [0x2b2e33, 5], [0x9ea3a8, 9], [0x6f757c, 7], [0xc4c7ca, 6],
   [0x1f3f73, 4], [0x3a5f8a, 2], [0x8c1c1c, 3], [0xb3262b, 2], [0x6e5a45, 2], [0xc8b28f, 2], [0x2f4a3a, 1], [0xd96f2b, 1], [0x5e6f5c, 1],
 ];
 const CAR_SUM = CAR_COLORS.reduce((s, c) => s + c[1], 0);

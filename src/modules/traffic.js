@@ -585,10 +585,14 @@ export default {
     let capNow = CAP_BY_LEVEL[level];
 
     const colTmp = new THREE.Color();
-    function setColor(i, hex) {
+    function setColor(i, hex, jit = 0) {
       colTmp.setHex(hex);
-      vCol[i * 3] = colTmp.r; vCol[i * 3 + 1] = colTmp.g; vCol[i * 3 + 2] = colTmp.b;
+      // 车漆明度轻微抖动（同为白车也有珍珠白/象牙白/冷白之分，不再一模一样）
+      const k = jit ? 1 + (rnd() - 0.5) * jit : 1;
+      vCol[i * 3] = colTmp.r * k; vCol[i * 3 + 1] = colTmp.g * k; vCol[i * 3 + 2] = colTmp.b * Math.min(1.08, k * (jit ? 0.985 + rnd() * 0.03 : 1));
     }
+    // 上一辆生成的私家车（车色、车形）：相邻生成的多在同一车道前后，同色同形就重抽一次
+    let lastHex = -1, lastShape = -1;
     function pickType(r, cls, x, z) {
       const h = ((ctx.sky?.hours ?? 14) % 24 + 24) % 24;
       const night = h < 6 || h >= 22;
@@ -622,9 +626,12 @@ export default {
       const r = rnd();
       switch (type) {
         case VK.CAR: {
-          setColor(i, pickCarColor(rnd()));
           // 轿车约一半、SUV 约四成、MPV 约一成
-          vSuv[i] = r < 0.5 ? 0 : r < 0.88 ? 1 : 2;
+          let hex = pickCarColor(rnd()), shp = r < 0.5 ? 0 : r < 0.88 ? 1 : 2;
+          if (hex === lastHex && shp === lastShape) { hex = pickCarColor(rnd()); const r2 = rnd(); shp = r2 < 0.5 ? 0 : r2 < 0.88 ? 1 : 2; }
+          lastHex = hex; lastShape = shp;
+          setColor(i, hex, 0.07);
+          vSuv[i] = shp;
           second = rnd() < 0.08 ? 7 : -1;
           plate = rnd() < 0.32 ? 1 : 0; // 新能源绿牌约三成
           break;
@@ -633,7 +640,7 @@ export default {
           // 西安纯电动出租车（比亚迪 e5）：荷叶绿车身 + 黑色车顶、绿牌；其余为甲醇车（车身色按推测取琉璃黄）
           const green = r < 0.74;
           setColor(i, green ? TAXI_GREEN : TAXI_YELLOW);
-          vSuv[i] = green && rnd() < 0.12 ? 1 : 0;
+          vSuv[i] = 0; // 西安出租车都是轿车（比亚迪 e5/秦、吉利帝豪）
           second = green ? 7 : -1;
           plate = green ? 1 : 0;
           break;
@@ -650,7 +657,7 @@ export default {
         case VK.SEMI: setColor(i, TRUCK_CAB_COLORS[(r * TRUCK_CAB_COLORS.length) | 0]); second = [2, 3, 4, 5, 6, 1, 0][(rnd() * 7) | 0]; plate = 2; break;
       }
       if (second < 0) second = 8; // 8 = 车顶与车身同色
-      vPack[i] = second + plate * 16 + ((rnd() * 12) | 0) * 64;
+      vPack[i] = second + plate * 16 + ((rnd() * 4096) | 0) * 64; // 号牌种子 0~4095（着色器逐位拼序号）
       if (type <= 1) vLen[i] = CAR_LEN[vSuv[i]];
       vVf[i] = 0.86 + rnd() * 0.28;
     }
@@ -1473,8 +1480,9 @@ export default {
               const h2 = parkHash(key + 11);
               const shape = h2 < 0.52 ? 0 : h2 < 0.88 ? 1 : 2;
               colTmp.setHex(pickCarColor(parkHash(key + 13)));
+              colTmp.multiplyScalar(1 + (parkHash(key + 23) - 0.5) * 0.07);
               const plate = parkHash(key + 17) < 0.3 ? 1 : 0;
-              const pack = 8 + plate * 16 + ((parkHash(key + 19) * 12) | 0) * 64;
+              const pack = 8 + plate * 16 + ((parkHash(key + 19) * 4096) | 0) * 64;
               out.push(x, y0, z, fxx, fy, fzz, colTmp.r, colTmp.g, colTmp.b, shape, pack, CAR_LEN[shape]);
             }
           }
@@ -1925,7 +1933,7 @@ export default {
     let statsShown = false;
     let perfMs = 0;
     const prof = { refresh: 0, sim: 0, balance: 0, drawV: 0, drawT: 0 };
-    let refreshT = 0, balT = 0, first = true;
+    let refreshT = 0, balT = 0, first = true, frozen = false;
     const inst = {
       update(dt) {
         if (!enabled) return;
@@ -1943,12 +1951,14 @@ export default {
             first = false;
           }
           mark('refresh');
-          // 大步长时分两次积分
-          if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
-          bikeSim(dt, simTime);
+          // 大步长时分两次积分（调试冻结时停仿真，便于对准某辆车拍特写）
+          if (!frozen) {
+            if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
+            bikeSim(dt, simTime);
+          }
           mark('sim');
           balT -= dt;
-          if (balT <= 0) { balance(); bikeBalance(); balT = 0.25; }
+          if (balT <= 0 && !frozen) { balance(); bikeBalance(); balT = 0.25; }
           mark('balance');
         }
         camera.updateMatrixWorld();
@@ -2008,8 +2018,24 @@ export default {
       /** 调试：已生成的路边停车（前 n 辆，世界坐标） */
       debugParked(n = 20) {
         const out = [];
-        for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1)]);
+        for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1), +c.a[q + 3].toFixed(3), +c.a[q + 5].toFixed(3), c.a[q + 9]]);
         return out;
+      },
+      /** 调试：冻结/恢复车流仿真 */
+      debugFreeze(on = true) { frozen = !!on; return frozen; },
+      /** 调试：(x,z) 半径 r 内的行驶车辆（车型、位置、朝向） */
+      debugVehicles(x, z, r = 200) {
+        const out = [];
+        for (let k = 0; k < nAlive; k++) {
+          const i = alive[k];
+          vehiclePose(i);
+          const o = i * 6;
+          const d = Math.hypot(vPose[o] - x, vPose[o + 2] - z);
+          if (d > r) continue;
+          const fl = Math.hypot(vPose[o + 3], vPose[o + 5]) || 1;
+          out.push({ type: vType[i], shape: vSuv[i], x: +vPose[o].toFixed(1), y: +vPose[o + 1].toFixed(2), z: +vPose[o + 2].toFixed(1), fx: +(vPose[o + 3] / fl).toFixed(3), fz: +(vPose[o + 5] / fl).toFixed(3), d: +d.toFixed(1), v: +vV[i].toFixed(1) });
+        }
+        return out.sort((a, b) => a.d - b.d);
       },
       /** 调试：禁车区（封闭的边按道路名汇总、整条禁车的道路） */
       debugCarFree() {
