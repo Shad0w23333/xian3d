@@ -242,7 +242,7 @@ function featureInfo(f) {
 /**
  * 构建道路网络：拆边 + 路口分析 + 配对。
  * 返回 {edges, feats}，edges 为数组：
- *  {fi, i0, i1, s0, s1, len, W, lanes, flags, cls, R0, R1, trim0, trim1, sw0, sw1, swR, swL, gap, pairF}
+ *  {fi, i0, i1, s0, s1, len, W, lanes, flags, cls, R0, R1, trim0, trim1, sw0, sw1, lx0, lx1, swR, swL, gap, pairF}
  */
 export function buildRoadNet(roads, { inDetail }) {
   const feats = roads?.features || [];
@@ -382,9 +382,11 @@ export function buildRoadNet(roads, { inDetail }) {
     const node = atStart ? E.n0 : E.n1;
     const vi = atStart ? E.i0 : E.i1;
     const me = info[fi];
-    const res = { R: 0, trim: 0, sw: 0, nX: 0, nXcw: 0, cw: false, turn: 0 };
+    const res = { R: 0, trim: 0, sw: 0, nX: 0, nXcw: 0, cw: false, turn: 0, lx: 0 };
     if (degAll[node] < 3 && !(me.cfg.link && degAll[node] >= 2)) return res;
     dirAt(fi, vi, atStart ? 1 : -1, dA);
+    // 本端行进方向（起点端 = dA，终点端 = -dA）的左侧 = 双幅路中央分隔带一侧
+    const lx = atStart ? dA[1] : -dA[1], lz = atStart ? -dA[0] : dA[0];
     // 驶向本端的车辆可用的转向（单行道只在终点端有来车）
     if (me.cfg.major && (!feats[fi].o || !atStart)) res.turn = turnMaskAt(node, -dA[0], -dA[1], 1);
     for (let e = head[node]; e >= 0; e = next[e]) {
@@ -407,6 +409,8 @@ export function buildRoadNet(roads, { inDetail }) {
           continue;
         }
         const k = 1 / Math.max(sin, 0.45);
+        // 从分隔带一侧接进来的横街（要穿过中央分隔带）：分隔带在此断开；只在外侧接入的丁字口分隔带连续通过
+        if (fj !== fi && !oth.cfg.paving && dB[0] * lx + dB[1] * lz > 0.25) res.lx++;
         if (me.cfg.major) {
           if (oth.cfg.major) {
             res.R = Math.max(res.R, hw * k + 0.6);
@@ -461,6 +465,7 @@ export function buildRoadNet(roads, { inDetail }) {
     E.R0 = a.R; E.R1 = b.R;
     E.trim0 = a.trim; E.trim1 = b.trim;
     E.sw0 = a.sw; E.sw1 = b.sw;
+    E.lx0 = a.lx; E.lx1 = b.lx; // 本端左侧（分隔带一侧）接入的横街数
     let flags = 0;
     if (E.oneway) flags |= F.ONEWAY;
     if (cfg.dashLong) flags |= F.DASHLONG;
@@ -500,9 +505,10 @@ export function buildRoadNet(roads, { inDetail }) {
   const CELL = 60;
   const segGrid = new Map();
   const gkey = (cx, cz) => cx * 100003 + cz;
+  // 单行主路是配对候选；双向主路也入网格，只作“挡板”（见 probe）
   for (let fi = 0; fi < nF; fi++) {
     const f = feats[fi];
-    if (!chain[fi] || !f.o || !info[fi].cfg.major || info[fi].cfg.link) continue;
+    if (!chain[fi] || !info[fi].cfg.major || info[fi].cfg.link) continue;
     const p = f.p;
     for (let i = 0; i + 3 < p.length; i += 2) {
       // 长线段按 CELL/2 步长栅格化到经过的所有格子（数据里有 2 km 的直线段）
@@ -523,7 +529,9 @@ export function buildRoadNet(roads, { inDetail }) {
     }
   }
   const probe = (E, t) => {
-    // 在边上 t 比例处向左发射射线，找反向的单行主路
+    // 在边上 t 比例处向左发射射线，找反向的单行主路。射线先碰到与本路平行的同向单行主路或双向主路（挡板）时不配对：
+    // 本路是辅路，左侧隔着同向主路才是对向车道（友谊西路西行辅路配到了隔一条西行主路的东行主路上，
+    // 按 10 m“中分带”铺的路缘草坪压在主路车道上，车在草坪上跑，审查 P2）
     const f = feats[E.fi], p = f.p, ch = chain[E.fi];
     const s = E.s0 + (E.s1 - E.s0) * t;
     let i = E.i0;
@@ -534,7 +542,7 @@ export function buildRoadNet(roads, { inDetail }) {
     const u = (s - ch[i]) / L;
     const ox = ax + (bx - ax) * u, oz = az + (bz - az) * u;
     const lx = dz, lz = -dx; // 左法线 = -右法线（右法线 = (-dz, dx)）
-    let best = Infinity, bestF = -1;
+    let best = Infinity, bestF = -1, block = Infinity, blockF = -1;
     const maxT = E.W / 2 + 68;
     const c0x = Math.floor(Math.min(ox, ox + lx * maxT) / CELL), c1x = Math.floor(Math.max(ox, ox + lx * maxT) / CELL);
     const c0z = Math.floor(Math.min(oz, oz + lz * maxT) / CELL), c1z = Math.floor(Math.max(oz, oz + lz * maxT) / CELL);
@@ -548,7 +556,10 @@ export function buildRoadNet(roads, { inDetail }) {
           const q = feats[fj].p, j = arr[k + 1];
           const qx = q[j], qz = q[j + 1], rx = q[j + 2] - qx, rz = q[j + 3] - qz;
           const rl = Math.hypot(rx, rz) || 1;
-          if ((rx * dx + rz * dz) / rl > -0.85) continue; // 需反向
+          const cs = (rx * dx + rz * dz) / rl;
+          const opp = cs <= -0.85 && feats[fj].o;
+          // 只看平行的：反向单行 = 候选，同向单行 / 双向 = 挡板（挡板只认同层：地面路不被高架挡，高架不被地面路挡）
+          if (!opp && (Math.abs(cs) < 0.85 || !feats[fj].b !== !f.b)) continue;
           // 射线 o + l*t 与线段 q + r*w 求交
           const den = lx * rz - lz * rx;
           if (Math.abs(den) < 1e-6) continue;
@@ -556,19 +567,23 @@ export function buildRoadNet(roads, { inDetail }) {
           const tt = (wx * rz - wz * rx) / den;
           const w = (wx * lz - wz * lx) / den;
           if (w < -0.02 || w > 1.02 || tt <= E.W * 0.3 || tt > maxT) continue;
-          if (tt < best) { best = tt; bestF = fj; }
+          if (opp) { if (tt < best) { best = tt; bestF = fj; } }
+          else if (tt < block) { block = tt; blockF = fj; }
         }
       }
-    return bestF >= 0 ? { t: best, f: bestF } : null;
+    if (bestF >= 0 && best >= block) probe.blockF = blockF;
+    return bestF >= 0 && best < block ? { t: best, f: bestF } : null;
   };
   for (const E of edges) {
     const cfg = info[E.fi].cfg;
     if (!E.oneway || !cfg.major || cfg.link || E.len < 20) continue;
     const hits = [];
+    probe.blockF = -1;
     for (const t of E.len > 60 ? [0.25, 0.5, 0.75] : [0.5]) {
       const h = probe(E, t);
       if (h) hits.push(h);
     }
+    E.blockF = probe.blockF; // 诊断：被挡板挡掉配对时记下挡板要素
     if (!hits.length || (E.len > 60 && hits.length < 2)) continue;
     hits.sort((a, b) => a.t - b.t);
     const h = hits[hits.length >> 1];
@@ -587,6 +602,31 @@ export function buildRoadNet(roads, { inDetail }) {
     return out;
   };
   const net = { edges, feats, info, chain, total, inDetail, attachedTo };
+  // 辅路（配对被同向主路/双向主路挡住）：左侧不是人行道而是与相邻主路之间的机非分隔带（roads 模块从辅路左缘画到主路路缘，
+  // 主路这一侧的人行道在分隔带范围内不画）。sideF = 相邻主路要素，sideGap = 三点探测的分隔带宽中位数
+  for (const E of edges) {
+    E.sideF = -1;
+    if ((E.flags & F.PAIRED) || !(E.blockF >= 0) || E.b) continue;
+    const p = feats[E.fi].p, ch = chain[E.fi];
+    const gs = [];
+    let i = E.i0;
+    for (const t of [0.25, 0.5, 0.75]) {
+      const s = E.s0 + E.len * t;
+      while (i < E.i1 - 1 && ch[i + 1] < s) i++;
+      const L = ch[i + 1] - ch[i] || 1;
+      const dx = (p[i * 2 + 2] - p[i * 2]) / L, dz = (p[i * 2 + 3] - p[i * 2 + 1]) / L;
+      const u = s - ch[i];
+      const g = pairGapAt(net, E, p[i * 2] + dx * u, p[i * 2 + 1] + dz * u, -dz, dx, E.blockF);
+      if (g !== null) gs.push(g);
+    }
+    if (gs.length < 2) continue;
+    gs.sort((a, b) => a - b);
+    const g = gs[gs.length >> 1];
+    if (g < 0.3 || g > 12) continue;
+    E.sideF = E.blockF;
+    E.sideGap = g;
+    E.swL = false;
+  }
   // 中分带宽沿路变化很大（东大街一条边 1.4 km，两端 0.2 m、中段 3.7 m）：E.gap 只是三点探测的中位数，
   // 这里再沿边每 ~40 m 取局部宽度，记中位数 gapMed（路灯/光斑判定用）；建模与布灯逐断面用 pairGapAt
   for (const E of edges) {
@@ -768,10 +808,11 @@ export function pavingCuts(net, inRegion, ci = null) {
 /**
  * 双幅路局部中分带宽（米）：从路中心点 (x,z) 沿左法线（右法线 (rx,rz) 取反）射向配对要素折线，
  * 交点距离减去两幅半宽。没有交点（配对要素在此处已结束等）返回 null。
+ * fj：射向的要素（默认配对要素；辅路的机非分隔带传相邻主路 E.sideF）
  */
-export function pairGapAt(net, E, x, z, rx, rz) {
-  if (E.pairF < 0) return null;
-  const q = net.feats[E.pairF].p;
+export function pairGapAt(net, E, x, z, rx, rz, fj = E.pairF) {
+  if (fj < 0) return null;
+  const q = net.feats[fj].p;
   const rl = Math.hypot(rx, rz) || 1;
   const lx = -rx / rl, lz = -rz / rl;
   const maxT = E.W / 2 + 75;
@@ -787,7 +828,7 @@ export function pairGapAt(net, E, x, z, rx, rz) {
     if (t < best) best = t;
   }
   if (best === Infinity) return null;
-  return best - E.W / 2 - net.info[E.pairF].W / 2;
+  return best - E.W / 2 - net.info[fj].W / 2;
 }
 
 /**
@@ -899,7 +940,8 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
           const x = cx - rx * m, z = cz - rz * m;
           push(x, gY(x, z) + 0.2, z, yawL, style === LAMP.PALACE ? LAMP.PALACE : style === LAMP.KNOT ? knotT : LAMP.DOUBLE);
         }
-      } else {
+      } else if (!(E.sideF >= 0)) {
+        // 辅路左侧是机非分隔带时不另立一排（相邻主路右侧的灯就立在分隔带里）
         const x = cx - rx * (hw + off), z = cz - rz * (hw + off);
         push(x, baseY(x, z), z, yawL, sideType);
         // 宽的双向路：中间再加一排双臂灯
