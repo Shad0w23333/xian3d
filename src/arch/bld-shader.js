@@ -922,7 +922,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
       // —— 小区楼：按户型开间组合（周期 eP）排布：南向 阳台 / 卧室窗（飘窗）/ 厨卫窗 + 空调百叶；其他朝向 窗 + 百叶 / 小窗 / 窗 ——
       bool oldS = eSch == 5;
       if (fi == 0 && eStreet) {
-        et = 4; wr = vec4(0.12, 0.25, bw - 0.12, gf - 1.1); et2 = 12; wr2 = vec4(0.0, gf - 0.95, bw, gf - 0.2);
+        et = 4; wr = vec4(0.12, 0.25, bw - 0.12, gf - 1.1); et2 = 12; wr2 = vec4(-0.6, gf - 0.95, bw + 0.6, gf - 0.2);
       } else if (fi == 0) {
         et = 1; wr = vec4(cx - 0.75, 0.9, cx + 0.75, min(2.5, gf - 0.45));
       } else if (eCore) {
@@ -946,7 +946,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
       int k = bi % P;
       if (fi == 0) {
         if (lobby) { et = 4; wr = vec4(0.3, 0.0, bw - 0.3, min(2.85, gf - 0.5)); }
-        else if (eStreet) { et = 4; wr = vec4(0.12, 0.25, bw - 0.12, gf - 1.1); et2 = 12; wr2 = vec4(0.0, gf - 0.95, bw, gf - 0.2); }
+        else if (eStreet) { et = 4; wr = vec4(0.12, 0.25, bw - 0.12, gf - 1.1); et2 = 12; wr2 = vec4(-0.6, gf - 0.95, bw + 0.6, gf - 0.2); }
         else { et = 1; wr = vec4(cx - 0.9, 0.9, cx + 0.9, min(2.6, gf - 0.4)); }
       } else if (gable) {
         if (rb < 0.45) { et = 1; wr = vec4(cx - 0.45, 1.05, cx + 0.45, 2.25); et2 = 3; wr2 = vec4(cx + 0.6, 0.2, min(cx + 1.35, bw - 0.1), 0.95); }
@@ -968,7 +968,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
       if (fi == 0 && eStreet) {
         // 临街铺面：营业时段绝大多数开门（橱窗/玻璃门），打烊后才陆续落卷帘（审查 fs_含光路/fs_科技路：下午整排卷帘像歇业）
         et = bRand(sd, kBay, 76) < shutP ? 7 : 4; wr = vec4(0.2, 0.0, bw - 0.2, min(gf - 0.35, 2.9));
-        if (gf > 3.3) { et2 = 12; wr2 = vec4(0.0, gf - 0.3 - 0.6, bw, gf - 0.2); wr.w = min(wr.w, wr2.y - 0.12); }
+        if (gf > 3.3) { et2 = 12; wr2 = vec4(-0.6, gf - 0.3 - 0.6, bw + 0.6, gf - 0.2); wr.w = min(wr.w, wr2.y - 0.12); }
       } else if (entBay) {
         if (fi == 0) { et = 13; wr = vec4(cx - 0.62, 0.0, cx + 0.62, min(2.35, gf - 0.3)); }        // 单元门（上方有雨棚）
         else { et = 1; eyo = 0.5 * fH; wr = vec4(cx - 0.5, 0.95, cx + 0.5, 1.95); }                 // 楼梯间半层窗
@@ -995,7 +995,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
         if (!((variant & 2) != 0 && bi % 4 == 3)) { et = 5; wr = vec4(0.04, 0.95, bw - 0.04, fH - 0.55); }
       } else { et = 1; wr = vec4(cx - 0.85, 0.9, cx + 0.85, fH - 0.55); }
     } else if (st == 4) {
-      if (fi == 0) { et = 4; wr = vec4(0.1, 0.25, bw - 0.1, gf - 1.35); et2 = 12; wr2 = vec4(0.0, gf - 1.2, bw, gf - 0.2); }
+      if (fi == 0) { et = 4; wr = vec4(0.1, 0.25, bw - 0.1, gf - 1.35); et2 = 12; wr2 = vec4(-0.6, gf - 1.2, bw + 0.6, gf - 0.2); }
       else {
         float rg = bRand(sd, bi / 2 + 997 * eIdx, 21);
         if (rg < 0.14 && roofV > gf + 4.0) {
@@ -1004,7 +1004,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
 #ifdef BLD_HI
           solo = pairL && bi + 1 >= int(nb);
 #endif
-          et = 6; ey = v; wr = vec4(pairL ? 0.35 : -0.01, gf + 0.7, pairL && !solo ? bw + 0.01 : bw - 0.35, roofV - 0.9);
+          et = 6; ey = v; wr = vec4(pairL ? 0.35 : -0.6, gf + 0.7, pairL && !solo ? bw + 0.6 : bw - 0.35, roofV - 0.9);   // 两开间交界处外扩，免得盒式滤波在交界露出一道墙缝
         }
         else if (rg < 0.68) { et = 5; wr = vec4(0.08, 0.8, bw - 0.08, fH - 0.6); }
         else { et = 1; wr = vec4(cx - 1.1, 1.0, cx + 1.1, fH - 1.1); }
@@ -1427,7 +1427,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
 #ifdef BLD_HI
         if ((bi / 2) * 2 + 1 >= int(nb)) shopW = bw;
 #endif
-        float sx = lq.x + float(bi % 2) * bw;
+        float sx = p2.x + float(bi % 2) * bw;   // 店招内横坐标（两开间连成一块）
         if (uSgn > 0.0) sx = shopW - sx;   // 从外面看从左往右排字、店标在左
         n2 = vec3(0.0, 0.0, 1.0);          // 招牌板是平的：不继承墙面砖缝/卷帘的法线起伏（审查 fs_含光路：红蓝招牌带上有横向楞纹）
         float chH = clamp(ws.y * 0.6, 0.25, 0.75);
@@ -1485,7 +1485,7 @@ vec3 bldScX = dFdx(vDirectionalShadowCoord[0].xyz), bldScY = dFdy(vDirectionalSh
     vec3 aAvg = mix(aBase, gAvg, wf);
     float rAvg = mix(partDone ? rou : rouW, st == 2 ? 0.12 : 0.3, wf);
     float mAvg = mix(partDone ? met : metW, (st == 2 || st == 3) ? 0.55 : 0.0, wf);
-    vec3 lampAvg = litCls == 1 ? vec3(0.86, 0.92, 1.0) : vec3(1.0, 0.76, 0.5);
+    vec3 lampAvg = litCls == 1 ? vec3(0.93, 0.92, 0.86) : vec3(1.0, 0.76, 0.5);   // 办公中性白（远看不再是冷白条码）
     float iAvg = litCls == 1 ? 0.3 : 0.38;   // 与近景亮窗的平均亮度一致（灯色 × 室内反照率 × 0.4~1.0 亮度）
     // 远看：亮窗按“每层 × 约 3 开间”成组亮灭（矩形块，不是整面墙均匀发光）；块小于约 1 像素时换成期望值（防闪烁）
     float cellW = litCls == 1 ? bw * 6.0 : bw * 3.0, cellH = max(fh, 2.5);   // 办公按半层成片亮
