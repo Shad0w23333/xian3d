@@ -1328,6 +1328,8 @@ export default {
       console.warn('[citywall] 南门广场构建失败', e);
     }
     root.add(plazaGroup);
+    // 贴地光斑（加色混合、亮度 × uNight）：白天全是 0，收起省一次绘制
+    const plazaGlow = plazaGroup.children.filter((o) => o.name === '贴地光斑');
 
     // —— LOD 管理 ——
     const cam = ctx.camera;
@@ -1373,6 +1375,7 @@ export default {
       merlons.castShadow = dWall < shadowReach(ctx, 1500, 12);
       outline.visible = ctx.uniforms.uNight.value > 0.02;
       towerOutline.visible = outline.visible;
+      for (const o of plazaGlow) o.visible = ctx.uniforms.uNight.value > 0;
     };
     update();
     console.info(`[citywall] 构建 ${(performance.now() - t0).toFixed(0)} ms：墙体三角 ${((bufs.brick.i.length + bufs.pave.i.length + bufs.stone.i.length) / 3) | 0}，垛 ${merl.length}，灯 ${lamps.length}，马面 ${mamian.length}，城门群 ${complexes.length}｜${tl.join(' / ')}`);
