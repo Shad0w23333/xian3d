@@ -2164,7 +2164,15 @@ export function createGenerator() {
       estateRoofProps(i, n, push, pr, yr, eR === EST_ROOF.FRAME ? lift2(col, 0.8) : col);
     }
     if (eR === EST_ROOF.DECO || eR === EST_ROOF.CORNICE) return;
-    const hutCol = lift(col, 0.75);
+    /** 去饱和 s、乘明度 k（出屋面小屋、排风道：水泥砂浆/涂料，比楼体略灰略暗） */
+    const mute = (c, k, s) => {
+      const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255, l = 0.3 * r + 0.59 * g + 0.11 * b;
+      const f = (v) => Math.min(255, Math.round((v + (l - v) * s) * k));
+      return f(r) * 65536 + f(g) * 256 + f(b);
+    };
+    // 机房/楼梯间：与楼体同色系、略灰略暗（原来向浅灰提亮，浅色楼顶上是一个个过曝的纯白方盒，审查 fe_高新小区；红砖楼顶上是粉橙色，审查 st_res_west）
+    const hutCol = mute(col, 0.86, 0.45);
+    const shaftCol = mute(col, 0.72, 0.8);
     if (st === STYLE.TOWER || (H >= 45 && st === STYLE.HOTEL)) {
       // —— 高层住宅：每个核心筒一组电梯机房（高）+ 楼梯间（低）并排，机房顶水箱 ——
       const cores = L > 34 ? 2 : 1;
@@ -2188,7 +2196,7 @@ export function createGenerator() {
         // 排风道出屋面（核心筒旁 2 个）
         for (const q of [-1, 1]) {
           const sv = s + q * (mx * 0.5 + 0.9), tv = tc - dir * (mz * 0.5 - 0.4);
-          push(9, sv, tv, yr, 0.7, 1.6, 0.5, rot, hutCol);
+          push(9, sv, tv, yr, 0.7, 1.6, 0.5, rot, shaftCol);
         }
         // 排风机
         if (rnd(13 + c) < 0.5) push(0, s - (mx * 0.5 + 1.2) * (rnd(5 + c) < 0.5 ? 1 : -1), tc - dir * (mz * 0.5 - 0.6), yr, 0.9, 0.9, 0.9, rot, 0x9a9ea2);
@@ -2244,10 +2252,11 @@ export function createGenerator() {
       for (let c = 0; c < ns; c++) {
         const s = pr.s0 + (L * (c + 0.5)) / ns;
         if (!hut(s, tN, 2.6, 2.6 + rnd(30 + c) * 0.4, Math.min(2.8, W * 0.32), -northT, hutCol)) hut(s, tc, 2.2, 2.4, Math.min(2.4, W * 0.3), -northT, hutCol);
-        // 厨卫排风道出屋面（每单元两个，砌体 + 混凝土风帽板）
-        for (const q of [-1, 1]) {
+        // 厨卫排风道出屋面（每单元 0~2 个，平均约 1 个；水泥灰。原来每单元两个、随楼色提亮成粉橙色，整片像欧洲排屋的烟囱，审查 st_res_west）
+        const nv = rnd(36 + c) < 0.3 ? 0 : rnd(37 + c) < 0.75 ? 1 : 2;
+        for (const q of nv === 2 ? [-1, 1] : nv === 1 ? [rnd(38 + c) < 0.5 ? -1 : 1] : []) {
           const sv = s + q * (2.2 + rnd(33 + c) * 1.2), tv = tc + (northT > 0 ? -1 : 1) * Math.min(1.2, W * 0.15);
-          push(9, sv, tv, yr, 0.6, 1.25 + rnd(35 + c) * 0.35, 0.45, rot, hutCol);
+          push(9, sv, tv, yr, 0.6, 1.0 + rnd(35 + c) * 0.3, 0.45, rot, shaftCol);
         }
       }
       // 太阳能热水器（朝南）：老楼 2~4 排、新楼 0~2 排
