@@ -905,10 +905,12 @@ const shengtiguan = {
     { name: 'plinth', fp: 'b24cc210-cee2-46eb-9246-5e4527b5e6ad', base: 0, top: 10, roof: { mech: false, parapet: 0.1 },
       style: { pattern: 'stoneWindows', spd: '#cdb89a', tint: '#3a5566', floorH: 5, colW: 3.4, spandrel: 0.4, mullW: 0.8, lit: 0.7 },
       crown: [
-        { type: 'ribbonShell', at: [-5470, 6236], r: [44, 38], h: 12, n: 10, twist: 40, wash: 0.12 },
-        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 12.8, mat: { color: '#34424c', roughness: 0.3, metalness: 0.35 }, ring: false }, // 中部椭圆开洞（深色采光玻璃，略高出连接壳以便可见）
-        { type: 'ribbonShell', at: [-5398, 6253], r: [52, 64], h: 30, n: 18, twist: 80 }, // 10 + 30 = 40 m（协会页建筑高度）
-        { type: 'ribbonShell', at: [-5545, 6246], r: [52, 43], h: 21, n: 14, twist: -70 },
+        // 丝带沿长轴流动（flow）、剖面压扁（p 1.3 / q 1.5：壳顶仍 40 m，但腰部降低约 4 成、檐口坡度更缓，不再像鼓起的枕头）；
+        // 银灰金属板反照率约 0.45~0.5（原 #b9bec3 + 低粗糙度，下午阳光下过曝成白色，审查 g6）
+        { type: 'ribbonShell', at: [-5470, 6236], r: [44, 38], h: 10, n: 8, flow: true, p: 1.3, q: 1.5, color: '#a3a8ad', roughness: 0.66, wash: 0.12 },
+        { type: 'dome', at: [-5483, 6232], r: [15, 25], h: 10.6, mat: { color: '#34424c', roughness: 0.3, metalness: 0.35 }, ring: false }, // 中部椭圆开洞（深色采光玻璃，略高出连接壳以便可见）
+        { type: 'ribbonShell', at: [-5398, 6253], r: [64, 52], h: 30, n: 16, flow: true, p: 1.3, q: 1.5, rot: 90, color: '#a3a8ad', roughness: 0.66 }, // 10 + 30 = 40 m（协会页建筑高度）
+        { type: 'ribbonShell', at: [-5545, 6246], r: [52, 43], h: 21, n: 13, flow: true, p: 1.3, q: 1.5, color: '#a3a8ad', roughness: 0.66 },
       ] },
   ],
   bands: [{ part: 'plinth', levels: [9.4], h: 0.6, depth: 0.8, color: '#e6e8ea', glow: '#bfe0ff', strength: 0.8 }],

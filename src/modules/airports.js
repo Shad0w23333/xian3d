@@ -390,7 +390,8 @@ export default {
 
     // ===== 材质 =====
     const pav = pavementTex();
-    const matApron = new THREE.MeshStandardMaterial({ map: pav, color: 0xd6d3cc, roughness: 0.9 });
+    const matApron = new THREE.MeshStandardMaterial({ map: pav, color: 0xd6d3cc, roughness: 0.9, emissive: 0xffd9a8, emissiveMap: pav, emissiveIntensity: 0 });
+    ctx.night.register(matApron, { day: 0, night: 0.06 }); // 机坪整体在高杆灯下有一层暖白底亮（光池叠在上面）
     const matTaxi = new THREE.MeshStandardMaterial({ map: pav, color: 0xcbc8c1, roughness: 0.9 });
     const matRwy = new THREE.MeshStandardMaterial({ map: pav, color: 0xd0cdc6, roughness: 0.88, vertexColors: true });
     ctx.overlay(matApron, 0.00012); ctx.overlay(matTaxi, 0.0002); ctx.overlay(matRwy, 0.00026);
@@ -972,7 +973,8 @@ export default {
         const head = new THREE.CylinderGeometry(2.2, 2.2, 0.9, 10); head.translate(x, y + 30.2, z);
         C.detail.add(head, matLamp);
         L.add(x, y + 29.5, z, LC.mast, 2.6);
-        C.pools.push([x, y + 0.35, z, 110]);
+        // 光池：直径 150 m（半径 75 m，相邻高杆约 140 m 一盏，光池连成片；原 110 m 且很淡，机坪大片漆黑，审查 g3）
+        C.pools.push([x, y + 0.35, z, 150]);
       }
       for (const q of resampleArr(ring, 60)) {
         const fn = facades.nearest(q.x, q.z);
@@ -1206,7 +1208,7 @@ export default {
         staticPts.material.uniforms.uScale.value = sc;
         dynPts.material.uniforms.uScale.value = sc;
         const nt = ctx.uniforms.uNight.value;
-        matPool.opacity = nt * 0.32;
+        matPool.opacity = nt * 0.62;
         matDeckPool.opacity = nt * 0.3;
         if ((lodT -= d) <= 0) {
           lodT = 0.25;

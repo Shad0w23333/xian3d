@@ -49,14 +49,30 @@ function ceramicCanvas(ctx) {
   }
   return c;
 }
-/** 深红色竖向褶皱板（每道褶约 0.5 m：亮面—暗面交替） */
+/**
+ * 赭红釉面陶板竖向褶皱板（每道褶约 0.5 m：亮面—暗面交替）+ 陶板横缝（每块约 1.2 m 高）+ 逐块窑变色差。
+ * 原先饱和大红平涂、远看像积木玩具（审查 g6）；Heatherwick 的实物是赭红/陶土色釉面陶板，有分片与质感。
+ */
 function pleatCanvas(ctx) {
   const c = ctx.tex.canvas(256, 64), g = c.getContext('2d');
   const n = 8, w = 256 / n;
+  let s = 17;
+  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   for (let i = 0; i < n; i++) {
+    const k = 0.9 + r() * 0.2;
+    const col = (h) => {
+      const v = parseInt(h.slice(1), 16);
+      return `rgb(${Math.min(255, ((v >> 16) & 255) * k) | 0},${Math.min(255, ((v >> 8) & 255) * k) | 0},${Math.min(255, (v & 255) * k) | 0})`;
+    };
     const gr = g.createLinearGradient(i * w, 0, (i + 1) * w, 0);
-    gr.addColorStop(0, '#5a1719'); gr.addColorStop(0.35, '#8e2c2c'); gr.addColorStop(0.55, '#a8413b'); gr.addColorStop(1, '#4a1214');
+    gr.addColorStop(0, col('#5e2a1e')); gr.addColorStop(0.35, col('#86432e')); gr.addColorStop(0.55, col('#9c5639')); gr.addColorStop(1, col('#4e2318'));
     g.fillStyle = gr; g.fillRect(i * w, 0, w, 64);
+    // 陶板横缝（两块）与釉面高光
+    g.fillStyle = 'rgba(30,14,8,0.55)';
+    g.fillRect(i * w, 0, w, 1.5);
+    g.fillRect(i * w, 32, w, 1.5);
+    g.fillStyle = 'rgba(255,230,200,0.12)';
+    g.fillRect(i * w + w * 0.42, 2, w * 0.1, 60);
   }
   return c;
 }

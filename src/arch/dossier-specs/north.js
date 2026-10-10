@@ -623,12 +623,14 @@ const ehb = {
   id: 'n-ehb', name: 'EHB 企业总部大厦', center: [-145, -8980.5],
   parts: [{
     name: 'tower', pts: rect(-169.9, -120.1, -8998.7, -8962.4), base: 0, top: 152,
-    style: { pattern: 'verticalFins', tint: '#2f6f7a', spd: '#6d8f96', floorH: 4.34, colW: 1.5, spandrel: 0.14, mullW: 0.22, lit: 0.4 },
+    // 夜间按整层成片亮冷白灯（office 模式；原 verticalFins 逐格随机冷暖亮暗，远看像屏幕花屏，审查 g3）
+    style: { pattern: 'verticalFins', mode: 10, tint: '#2f6f7a', spd: '#6d8f96', floorH: 4.34, colW: 1.5, spandrel: 0.14, mullW: 0.22, lit: 0.45 },
     crown: [{ type: 'lantern', h: 8, color: '#9fd4dc', tint: '#2f6f7a', colW: 1.5 }],
   }],
   bands: [{ part: 'tower', levels: [18, 78], h: 3.2, depth: 0.25, color: '#c9d3d6' }],
   night: {
-    media: ['S', 'E', 'N', 'W'].map((f, i) => ({ part: 'tower', face: f, from: 22, to: 148, width: 13, shift: i % 2 ? -7 : -9, pattern: 'media', tint: '#2f6f7a', spd: '#6d8f96' })),
+    // 媒体带压暗（lit 0.11 → 亮度 ×0.55）、收窄，与窗灯分开
+    media: ['S', 'E', 'N', 'W'].map((f, i) => ({ part: 'tower', face: f, from: 22, to: 148, width: 9, shift: i % 2 ? -9 : -11, pattern: 'media', tint: '#2f6f7a', spd: '#6d8f96', style: { lit: 0.11 } })),
   },
   signs: [{ text: 'EHB 企业总部大厦', part: 'tower', face: ['S', 'E'], y: 156.5, h: 3.4, color: '#ffffff' }],
   supersede: { keys: ['ehb'], names: ['EHB 企业总部大厦', 'EHB企业总部大厦'] },
