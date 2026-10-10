@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 
 const CELL = 600, NEAR = 1600, FAR = 1900;
+const CAR_LOD = 150; // 停放车辆细模只画相机 150 m 内（机场等大车场上万辆车，全用细模三角形会多出一百多万）
 const STALL_W = 2.5, STALL_D = 5.3, AISLE = 6.0, MOD = STALL_D * 2 + AISLE;
 const CAR_COLORS = [
   ['#e8e8e6', 0.32], ['#1c1d20', 0.2], ['#9a9da2', 0.14], ['#c3c6ca', 0.1], ['#3a4250', 0.06], ['#7a1e22', 0.05],
@@ -99,6 +100,25 @@ function carGeometry() {
     g.translate(x, 0.33, sd * 0.78);
     colAttr(g, '#151515');
   }
+  const g = mergeNonIndexed(parts);
+  g.computeVertexNormals();
+  return g;
+}
+/** 远处停放车辆简模（约 46 个三角形）：车身、深色座舱、每轴一块轮子 */
+function carGeometryLo() {
+  const parts = [];
+  const add = (w, h, d, x, y, z, col) => {
+    const g = new THREE.BoxGeometry(w, h, d, 1, 1, 1).toNonIndexed();
+    g.translate(x, y, z);
+    const c = new THREE.Color(col);
+    const cols = new Float32Array(g.attributes.position.count * 3);
+    for (let i = 0; i < cols.length; i += 3) { cols[i] = c.r; cols[i + 1] = c.g; cols[i + 2] = c.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    parts.push(g);
+  };
+  add(4.46, 0.62, 1.78, 0, 0.66, 0, '#ffffff');
+  add(2.4, 0.5, 1.5, -0.25, 1.2, 0, '#1d2329');
+  for (const x of [1.4, -1.36]) add(0.66, 0.66, 1.72, x, 0.33, 0, '#151515');
   const g = mergeNonIndexed(parts);
   g.computeVertexNormals();
   return g;
@@ -220,7 +240,7 @@ export default {
     const matPole = new THREE.MeshStandardMaterial({ color: 0x6f7378, roughness: 0.6, metalness: 0.5 });
     const matLamp = new THREE.MeshStandardMaterial({ color: 0xf2efe6, emissive: 0xffe6bf, emissiveIntensity: 0 });
     ctx.night.register(matLamp, { day: 0, night: 1.8 });
-    const carGeo = carGeometry();
+    const carGeo = carGeometry(), carGeoLo = carGeometryLo();
     const poleGeo = new THREE.CylinderGeometry(0.07, 0.1, 9, 6).translate(0, 4.5, 0);
     const headGeo = new THREE.BoxGeometry(0.9, 0.18, 0.35).translate(0, 9, 0);
 
@@ -364,6 +384,25 @@ export default {
       return { cars, poles, islands };
     };
 
+    const splitCars = (P) => {
+      const x = cam.position.x, z = cam.position.z, r2 = CAR_LOD * CAR_LOD;
+      let nh = 0, nl = 0;
+      const H = P.hi.instanceMatrix.array, Hc = P.hi.instanceColor.array, Lm = P.lo.instanceMatrix.array, Lc = P.lo.instanceColor.array;
+      for (let k = 0; k < P.n; k++) {
+        const dx = P.xz[k * 2] - x, dz = P.xz[k * 2 + 1] - z;
+        const m = P.mats.subarray(k * 16, k * 16 + 16), c = P.cols.subarray(k * 3, k * 3 + 3);
+        if (dx * dx + dz * dz < r2) { H.set(m, nh * 16); Hc.set(c, nh * 3); nh++; }
+        else { Lm.set(m, nl * 16); Lc.set(c, nl * 3); nl++; }
+      }
+      for (const [im, cnt] of [[P.hi, nh], [P.lo, nl]]) {
+        im.count = cnt;
+        im.visible = cnt > 0;
+        im.instanceMatrix.needsUpdate = true;
+        im.instanceColor.needsUpdate = true;
+        if (cnt) im.computeBoundingSphere();
+      }
+      P.at = [x, z];
+    };
     const buildCell = (key) => {
       const ids = grid.get(key) || [];
       const group = new THREE.Group();
@@ -378,18 +417,28 @@ export default {
         allIslands.push(...r.islands);
       }
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s1 = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0), pv = new THREE.Vector3();
+      let carPool = null;
       if (allCars.length) {
-        const im = new THREE.InstancedMesh(carGeo, matCar, allCars.length);
+        // 细模/简模两个实例池；矩阵与颜色先算好，相机移动时按距离重分（splitCars）
+        const n = allCars.length;
+        const mats = new Float32Array(n * 16), cols = new Float32Array(n * 3), xz = new Float32Array(n * 2);
         const c = new THREE.Color();
         allCars.forEach(([x, y, z, yaw, h], k) => {
           q.setFromAxisAngle(up, -yaw);
-          im.setMatrixAt(k, m4.compose(pv.set(x, y + 0.02, z), q, s1));
-          im.setColorAt(k, c.set(pickColor(h)));
+          m4.compose(pv.set(x, y + 0.02, z), q, s1).toArray(mats, k * 16);
+          c.set(pickColor(h)).toArray(cols, k * 3);
+          xz[k * 2] = x; xz[k * 2 + 1] = z;
         });
-        im.castShadow = true;
-        im.receiveShadow = true;
-        im.computeBoundingSphere();
-        group.add(im);
+        const mk = (geo) => {
+          const im = new THREE.InstancedMesh(geo, matCar, n);
+          im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
+          im.castShadow = true;
+          im.receiveShadow = true;
+          group.add(im);
+          return im;
+        };
+        carPool = { n, mats, cols, xz, hi: mk(carGeo), lo: mk(carGeoLo), at: null };
+        splitCars(carPool);
       }
       if (allIslands.length) {
         const im = new THREE.InstancedMesh(islandGeo, matIsland, allIslands.length);
@@ -418,11 +467,11 @@ export default {
         }
       }
       root.add(group);
-      return { group, lights, cars: allCars.length };
+      return { group, lights, cars: allCars.length, carPool };
     };
     const disposeCell = (c) => {
       root.remove(c.group);
-      c.group.traverse((o) => { if (o.geometry && o.geometry !== carGeo && o.geometry !== poleGeo && o.geometry !== headGeo && o.geometry !== islandGeo) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
+      c.group.traverse((o) => { if (o.geometry && o.geometry !== carGeo && o.geometry !== carGeoLo && o.geometry !== poleGeo && o.geometry !== headGeo && o.geometry !== islandGeo) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
       for (const l of c.lights) if (ctx.lights.remove) ctx.lights.remove(l); else l.enabled = false;
     };
 
@@ -443,6 +492,11 @@ export default {
         const [gx, gz] = k.split(',').map(Number);
         const cx = (gx + 0.5) * CELL, cz = (gz + 0.5) * CELL;
         if (!want.has(k) && (near === 0 || Math.hypot(cx - x, cz - z) > FAR + CELL)) { disposeCell(c); built.delete(k); }
+      }
+      // 相机移动超过 10 m 的格重分细模/简模
+      for (const c of built.values()) {
+        const P = c.carPool;
+        if (P && Math.hypot(P.at[0] - x, P.at[1] - z) > 10) splitCars(P);
       }
       pending = [...want].filter((k) => !built.has(k)).sort((a, b) => {
         const [ax, az] = a.split(',').map(Number), [bx, bz] = b.split(',').map(Number);
