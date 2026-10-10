@@ -16,7 +16,7 @@
 import * as THREE from 'three';
 import { buildLOD, multiStoreyTower, cityPlatform, eaveLights, lantern, stats } from '../arch/chinese.js';
 import { crossPlatform, bronzeBell, bellFrame, drum, wallStair, plazaLamp } from '../arch/belltower-parts.js';
-import { overlay } from '../core/util.js';
+import { overlay, ObjectBatcher, hasMultiDraw } from '../core/util.js';
 import { outlineLines } from '../arch/citywall-kit.js';
 
 const BELL_C = [0, 0];
@@ -311,6 +311,8 @@ export default {
 
     // 远景轮廓灯线（屏幕恒宽，近处 300 m 内淡出让位于实体灯带）：几公里外俯视时，实体灯带与泛光都不到 1 像素，
     // 钟楼在老城中心与普通路口一样暗（原先四座城门有轮廓灯线、钟楼没有；审查 g7 p1_night）
+    // 加色混合、亮度 × uNight：白天（uNight = 0）整条线加 0，update() 里直接收起，省两次绘制
+    const outlines = [];
     {
       const lines = [];
       const add = (info, cx, cy, cz, plat) => {
@@ -330,6 +332,7 @@ export default {
       const farther = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.6, pix: 0.0012, fadeNear: 2500, fadeFar: 5000 });
       farther.name = '钟鼓楼轮廓灯线（远）';
       root.add(farther);
+      outlines.push(far, farther);
     }
 
     // 广场 + 绿岛（不泛光）
@@ -351,13 +354,16 @@ export default {
     // 绿篱与红花带之间的两圈草坪（避开凸起的花带/绿篱，见上）
     shapes.push(new THREE.RingGeometry(27.7, 31.1, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0));
     shapes.push(new THREE.RingGeometry(32.5, 36.5, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0));
+    // 五块草坪同一材质：合成一个 BatchedMesh（一次绘制，仍逐块视锥裁剪；原先五个网格五次绘制）
+    const lawnBatch = new ObjectBatcher({ multiDraw: hasMultiDraw(ctx.renderer) });
     for (const g of shapes) {
       const uv = g.attributes.uv, pos = g.attributes.position;
       for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 4, pos.getZ(i) / 4);
-      const mesh = new THREE.Mesh(g, grassMat);
-      mesh.receiveShadow = true;
-      mesh.name = '草坪';
-      root.add(mesh);
+      lawnBatch.add(g, grassMat);
+    }
+    for (const m of [...lawnBatch.build({ castShadow: false, receiveShadow: true, name: '草坪' }).group.children]) {
+      m.name = '草坪';
+      root.add(m);
     }
 
     // 树阵：广场南北两排 + 草坪四周
@@ -387,11 +393,15 @@ export default {
     const st = { bell: stats(bell.levels[0].object), drum: stats(drumT.levels[0].object), plaza: stats(plazaLOD.levels[0].object), bellTop: +bInfo.topY.toFixed(1), drumTop: +dInfo.topY.toFixed(1), buildMs: Math.round(ms) };
     console.warn('[belltower] ' + JSON.stringify(st));
     return {
+      update() {
+        const night = ctx.uniforms.uNight.value > 0;
+        for (const o of outlines) o.visible = night;
+      },
       setLayer(layer, visible) {
         if (layer === 'landmarks') root.visible = visible;
       },
       dispose() {
-        root.traverse((o) => o.geometry && o.geometry.dispose());
+        root.traverse((o) => (o.isBatchedMesh ? o.dispose() : o.geometry && o.geometry.dispose()));
         ctx.scene.remove(root);
       },
     };

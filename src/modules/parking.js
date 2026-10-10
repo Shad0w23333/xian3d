@@ -10,6 +10,7 @@
 // 跳过：精建模块已登记“通用建筑让位”的地块（街景片区停车场、地标广场等），以及住宅/校园用地内的（由小区模块负责）。
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
+import { ObjectBatcher, MatTable, hasMultiDraw } from '../core/util.js';
 
 const CELL = 600, NEAR = 1600, FAR = 1900;
 const CAR_LOD = 150; // 停放车辆细模只画相机 150 m 内（机场等大车场上万辆车，全用细模三角形会多出一百多万）
@@ -243,8 +244,31 @@ export default {
     const carGeo = carGeometry(), carGeoLo = carGeometryLo();
     const poleGeo = new THREE.CylinderGeometry(0.07, 0.1, 9, 6).translate(0, 4.5, 0);
     const headGeo = new THREE.BoxGeometry(0.9, 0.18, 0.35).translate(0, 9, 0);
+    const lampTable = new MatTable('parking.matTable');
+    const poleLampMat = lampTable.material(matPole);
+    const poleLampGeo = (() => {
+      const parts = [[poleGeo, lampTable.index(matPole)], [headGeo, lampTable.index(matLamp)]].map(([g0, row]) => {
+        const g = g0.toNonIndexed();
+        g.setAttribute('aMt', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(row), 1));
+        return g;
+      });
+      const n = parts.reduce((a, g) => a + g.attributes.position.count, 0);
+      const out = new THREE.BufferGeometry();
+      for (const [k, size] of [['position', 3], ['normal', 3], ['uv', 2], ['aMt', 1]]) {
+        const arr = new Float32Array(n * size);
+        let o = 0;
+        for (const g of parts) { arr.set(g.attributes[k].array, o); o += g.attributes[k].array.length; }
+        out.setAttribute(k, new THREE.BufferAttribute(arr, size));
+      }
+      return out;
+    })();
+    lampTable.build();
 
     const built = new Map(); // 格键 → { group, lights[] }
+    // 每格的地面/路缘石/车位线：原先每块停车场各一个网格（大唐不夜城夜景 30 块地 → 74 次绘制），
+    // 现按格、按材质各合成一个 BatchedMesh（逐块地仍做视锥裁剪，三角形不变多）
+    let obGround = null, obLine = null;
+    const multiDraw = hasMultiDraw(ctx.renderer); // 不支持多重绘制时退回每格每材质一个普通网格
     const buildLot = (L, group, lights) => {
       const { p, bb } = L;
       const blds = buildingsNear(bb);
@@ -309,18 +333,14 @@ export default {
         g.setAttribute('position', new THREE.Float32BufferAttribute(gp, 3));
         g.setAttribute('color', new THREE.Float32BufferAttribute(gc, 3));
         g.computeVertexNormals();
-        const m = new THREE.Mesh(g, matGround);
-        m.receiveShadow = true;
-        group.add(m);
+        obGround.add(g, matGround);
       }
       if (cp.length) {
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3));
         g.setAttribute('color', new THREE.Float32BufferAttribute(cc, 3));
         g.computeVertexNormals();
-        const m = new THREE.Mesh(g, matCurb);
-        m.receiveShadow = true;
-        group.add(m);
+        obGround.add(g, matCurb);
       }
       // 车位：沿 v 方向排模块（双排 + 通道），沿 u 方向排车位
       const lp = [];
@@ -379,7 +399,7 @@ export default {
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
         g.computeVertexNormals();
-        group.add(new THREE.Mesh(g, matLine));
+        obLine.add(g, matLine);
       }
       return { cars, poles, islands };
     };
@@ -407,6 +427,8 @@ export default {
       const ids = grid.get(key) || [];
       const group = new THREE.Group();
       const allCars = [], allPoles = [], allIslands = [], lights = [];
+      obGround = new ObjectBatcher({ multiDraw });
+      obLine = new ObjectBatcher({ multiDraw });
       for (const i of ids) {
         const L = lots[i];
         // 跨格的停车场只在它中心所在的格里建
@@ -416,6 +438,9 @@ export default {
         allPoles.push(...r.poles);
         allIslands.push(...r.islands);
       }
+      group.add(obGround.build({ castShadow: false, receiveShadow: true, name: '地面' }).group);
+      group.add(obLine.build({ castShadow: false, receiveShadow: false, name: '车位线' }).group);
+      obGround = obLine = null;
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s1 = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0), pv = new THREE.Vector3();
       let carPool = null;
       if (allCars.length) {
@@ -452,15 +477,14 @@ export default {
         group.add(im);
       }
       if (allPoles.length) {
-        const pm = new THREE.InstancedMesh(poleGeo, matPole, allPoles.length);
-        const hm = new THREE.InstancedMesh(headGeo, matLamp, allPoles.length);
+        // 灯杆与灯头：同一组实例矩阵，几何合一、材质走参数表（灯头夜间发光照常由 matLamp 驱动），一次绘制（原两次）
+        const pm = new THREE.InstancedMesh(poleLampGeo, poleLampMat, allPoles.length);
         allPoles.forEach(([x, y, z], k) => {
           m4.makeTranslation(x, y, z);
           pm.setMatrixAt(k, m4);
-          hm.setMatrixAt(k, m4);
         });
-        pm.computeBoundingSphere(); hm.computeBoundingSphere();
-        group.add(pm, hm);
+        pm.computeBoundingSphere();
+        group.add(pm);
         for (let k = 0; k < allPoles.length; k += 4) {
           const [x, y, z] = allPoles[k];
           lights.push(ctx.lights.add({ position: new THREE.Vector3(x, y + 8.6, z), color: 0xffe2b8, intensity: 260, distance: 30, nightOnly: true, priority: 0.35 }));
@@ -471,7 +495,7 @@ export default {
     };
     const disposeCell = (c) => {
       root.remove(c.group);
-      c.group.traverse((o) => { if (o.geometry && o.geometry !== carGeo && o.geometry !== carGeoLo && o.geometry !== poleGeo && o.geometry !== headGeo && o.geometry !== islandGeo) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
+      c.group.traverse((o) => { if (o.geometry && o.geometry !== carGeo && o.geometry !== carGeoLo && o.geometry !== poleLampGeo && o.geometry !== islandGeo) o.geometry.dispose(); if (o.isInstancedMesh || o.isBatchedMesh) o.dispose(); });
       for (const l of c.lights) if (ctx.lights.remove) ctx.lights.remove(l); else l.enabled = false;
     };
 
@@ -509,6 +533,7 @@ export default {
     console.warn(`[parking] 地面停车场 ${lots.length} 处（OSM），首批 ${built.size} 格`);
     return {
       update() {
+        lampTable.update();
         if ((++frame & 15) === 0) refresh();
         if (pending.length) { const k = pending.shift(); if (!built.has(k)) built.set(k, buildCell(k)); } // 每帧至多建一格
       },

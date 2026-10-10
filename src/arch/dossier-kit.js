@@ -299,6 +299,7 @@ function washMat(env, color, strength, { fall = 1.7, spot = 0 } = {}) {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
   });
   m.userData.ownUV = true;
+  m.userData.nightOnly = true; // uNight = 0（白天）时片元全部丢弃：dossier 模块白天直接收起这些网格，省绘制调用
   env.dk.set(key, m);
   return m;
 }

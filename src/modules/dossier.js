@@ -5,23 +5,15 @@
 //   （按 key / 名称，或质心落在档案建筑轮廓内）。
 //   本模块须注册在 skyline（及其他会被替代的地标模块）之前——见 src/modules/index.js。
 import * as THREE from 'three';
-import { Batcher } from '../core/util.js';
 import * as G from '../arch/sky-geom.js';
 import { createFacadeMaterial } from '../arch/sky-facade.js';
 import { SignAtlas, Beacons, solidMats } from '../arch/sky-towers.js';
 import { loadJSON } from '../core/data.js';
 import { setFootprints, resolveSpec, buildDossier } from '../arch/dossier-kit.js';
 import { DOSSIER_SPECS } from '../arch/dossier-specs/index.js';
+import { SkyBatch } from '../arch/sky-batch.js';
 
-/** 有贴图的材质自动套米制 UV（同 skyline） */
-class SBatcher extends Batcher {
-  add(g, m, mtx = null, o = {}) {
-    if (m.map && !m.userData.ownUV && !o.worldUV) o = { ...o, worldUV: 1 };
-    return super.add(g, m, mtx, o);
-  }
-}
-
-const CELL = 6000; // 合批分组：6 km 网格（原 3 km：全城俯视时 187 栋档案建筑要 420 多个 draw call，改为 6 km 后约减半）
+const CELL = 6000; // 细部距离 LOD 的片区：6 km 网格（合批已改为逐栋 BatchedMesh，片区只用于 LOD 判定与泛光光幕合并）
 let RESOLVED = [];
 
 /** 登记替代信息（其他模块也可在自己的 prepare 里读 ctx.superseded） */
@@ -92,43 +84,26 @@ export default {
     // 招牌图集：4096×2048、行高 110（每页约 140 条），写满自动开新页；字牌双面正读（背面不是镜像字）
     const signs = new SignAtlas(ctx, 4096, 2048, { rowH: 110, tag: 'dossier' });
     const beacons = new Beacons(ctx);
-    const envs = new Map();
-    const env = (x, z) => {
-      const id = Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
-      if (!envs.has(id)) envs.set(id, { ctx, id, fb: new G.FacadeBuilder(), solid: new SBatcher(), detail: new SBatcher(), mats, signs, beacons });
-      return envs.get(id);
-    };
+    // 合批（第三轮性能修复，见 src/arch/sky-batch.js）：材质参数表 + 逐栋 BatchedMesh，同材质全模块一次绘制、仍逐栋视锥裁剪；
+    // 细部距离 LOD 仍按 6 km 片区判定；泛光光幕按片区合并、白天收起。原先每片区每材质一个网格，人眼机位约 290 次绘制/帧。
+    const B = new SkyBatch(ctx, { name: 'dossier', fmat, mats, signs, beacons });
+    const zoneOf = (x, z) => Math.floor(x / CELL) + ',' + Math.floor(z / CELL);
     const errors = [];
     const built = [];
     for (const R of RESOLVED) {
       try {
-        const r = buildDossier(env(R.center.x, R.center.z), R);
+        const r = B.run(zoneOf(R.center.x, R.center.z), (E) => buildDossier(E, R));
         built.push({ id: R.spec.id, name: R.spec.name, ...r });
       } catch (e) {
         console.error('[dossier] 构建失败', R.spec.id, e);
         errors.push(R.spec.id);
       }
     }
-    const lod = [];
-    for (const E of envs.values()) {
-      const grp = new THREE.Group();
-      grp.name = 'dossier-' + E.id;
-      if (E.fb.count) {
-        const m = new THREE.Mesh(E.fb.geometry(), fmat);
-        m.castShadow = true; m.receiveShadow = true; m.name = '幕墙';
-        grp.add(m);
-      }
-      grp.add(E.solid.build({ castShadow: true, receiveShadow: true, name: '实体' }));
-      const det = E.detail.build({ castShadow: false, receiveShadow: false, name: '细部' });
-      grp.add(det);
-      const bs = new THREE.Box3().setFromObject(det);
-      if (!bs.isEmpty()) lod.push({ obj: det, box: bs, range: 3200 });
-      root.add(grp);
-    }
+    const { lod } = B.build(root);
     const sm = signs.build();
     if (sm) {
       root.add(sm);
-      lod.push({ obj: sm, box: new THREE.Box3().setFromObject(sm), range: 9000 });
+      lod.push({ box: new THREE.Box3().setFromObject(sm), range: 9000, on: true, set: (v) => (sm.visible = v) });
     }
     root.add(beacons.build());
     const stats = { count: built.length, errors, ms: Math.round(performance.now() - t0) };
@@ -143,7 +118,7 @@ export default {
         ),
       update() {
         beacons.update(ctx.renderer, ctx.camera);
-        for (const l of lod) l.obj.visible = l.box.distanceToPoint(ctx.camera.position) < l.range;
+        B.update(); // 材质参数表、夜间专用网格、细部与招牌的距离 LOD
       },
       setLayer(layer, v) {
         if (layer === 'buildings') root.visible = v;
@@ -152,7 +127,7 @@ export default {
         for (const l of lod) l.range = q.level === 0 ? (l.range > 5000 ? 6000 : 1800) : l.range > 5000 ? 9000 : 3200;
       },
       dispose() {
-        root.traverse((o) => o.geometry && o.geometry.dispose());
+        root.traverse((o) => (o.isBatchedMesh ? o.dispose() : o.geometry && o.geometry.dispose()));
         ctx.scene.remove(root);
       },
     };

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 按模块统计绘制调用：拦截 renderer.renderBufferDirect，沿父节点找 userData.module 记账（含阴影、倒影等所有渲染遍）。
 // 用法：node tools/drawcalls_by_module.mjs --list tools/tour_spots.json --only id1,id2 [--frames 3] [--out shots/dc.json]
-//   输出每个机位：总调用、总三角形，以及按模块的 {calls, tris}（三角形按索引数/3 × 实例数估算）。
+//   输出每个机位：总调用、总三角形，以及按模块的 {calls, tris}（三角形按索引数/3 × 实例数估算；BatchedMesh 按本遍实际提交的段计）。
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import path from 'node:path';
@@ -38,7 +38,12 @@ await page.evaluate(() => {
       const idx = geometry.index ? geometry.index.count : geometry.attributes.position ? geometry.attributes.position.count : 0;
       const cnt = group ? group.count : idx;
       const inst = object.isInstancedMesh ? object.count : geometry.isInstancedBufferGeometry ? geometry.instanceCount : 1;
-      e.tris += (Math.min(cnt, idx) / 3) * (inst === Infinity ? 1 : inst);
+      if (object.isBatchedMesh) {
+        // BatchedMesh（多重绘制）：只计本遍视锥裁剪后实际提交的各段（onBeforeRender / onBeforeShadow 已算好）
+        let t = 0;
+        for (let i = 0; i < object._multiDrawCount; i++) t += object._multiDrawCounts[i];
+        e.tris += t / 3;
+      } else e.tris += (Math.min(cnt, idx) / 3) * (inst === Infinity ? 1 : inst);
     }
     return orig(camera, scene, geometry, material, object, group);
   };
