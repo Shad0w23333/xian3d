@@ -228,6 +228,28 @@ class BoxGrid {
   }
 }
 
+/** BoxGrid 打包成类型化数组（交给 Worker，结构化克隆快得多）；格内 id 顺序不变 */
+export function packBoxGrid(g) {
+  let tot = 0;
+  for (const a of g.m.values()) tot += a.length;
+  const n = g.m.size;
+  const keys = new Float64Array(n), start = new Int32Array(n + 1), ids = new Int32Array(tot);
+  let i = 0, o = 0;
+  for (const [k, a] of g.m) {
+    keys[i] = k;
+    start[i++] = o;
+    for (let q = 0; q < a.length; q++) ids[o++] = a[q];
+  }
+  start[n] = o;
+  return { cell: g.cell, keys, start, ids };
+}
+/** packBoxGrid 的逆：还原成 BoxGrid（each 的回调顺序与原网格相同） */
+export function unpackBoxGrid(p) {
+  const g = new BoxGrid(p.cell);
+  for (let i = 0; i < p.keys.length; i++) g.m.set(p.keys[i], Array.from(p.ids.subarray(p.start[i], p.start[i + 1])));
+  return g;
+}
+
 // 道路等级（roads.json classes 下标）→ [是否为市政机动车道, 人行道宽]
 const ROAD_SW = [0, 4.5, 5, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const MIN_W = [7.5, 7, 7, 6.5, 6, 5, 3.5, 5, 4.5, 4.5, 4.5, 4, 4, 2];
