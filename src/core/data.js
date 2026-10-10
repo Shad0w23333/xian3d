@@ -14,6 +14,7 @@ function emit() {
 
 function embedded(name) {
   const e = typeof window !== 'undefined' && window.__XIAN3D_EMBED__;
+  if (e && LOCAL_OVERRIDE.has(name) && e['local/' + name]) return e['local/' + name];
   return e && e[name] ? e[name] : null;
 }
 
