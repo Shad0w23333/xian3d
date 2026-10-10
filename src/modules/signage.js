@@ -502,6 +502,14 @@ if (sTex) {
     const smat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.35 });
     this.shelters = new THREE.InstancedMesh(shelterGeometry(), smat, CAP_SHELTER);
     this.canopies = new THREE.InstancedMesh(canopyGeometry(), smat, CAP_CANOPY);
+    // 地铁口玻璃：半透明（看得见亭内楼梯口与扶梯栏板），与雨棚共用实例矩阵
+    const gmat = new THREE.MeshPhysicalMaterial({ vertexColors: true, transparent: true, opacity: 0.3, roughness: 0.06, metalness: 0.1, depthWrite: false, side: THREE.DoubleSide });
+    this.canopyGlass = new THREE.InstancedMesh(canopyGlassGeometry(), gmat, CAP_CANOPY);
+    this.canopyGlass.instanceMatrix = this.canopies.instanceMatrix;
+    this.canopyGlass.count = 0;
+    this.canopyGlass.frustumCulled = false;
+    this.canopyGlass.renderOrder = 2;
+    this.canopyGlass.name = 'signage-metro-glass';
     for (const m of [this.shelters, this.canopies]) {
       m.count = 0;
       m.frustumCulled = false;
@@ -513,7 +521,7 @@ if (sTex) {
     this.canopies.name = 'signage-metro';
     this.group = new THREE.Group();
     this.group.name = 'signage';
-    this.group.add(mesh, this.shelters, this.canopies);
+    this.group.add(mesh, this.shelters, this.canopies, this.canopyGlass);
     ctx.scene.add(this.group);
   }
 
@@ -938,10 +946,11 @@ if (sTex) {
     plan.struct(plan.cn, x, g + 0.05, z, fx, fz);
     const hy = g + 0.05 + 3.12;
     for (const sgn of [1, -1]) {
-      plan.sign(x + fx * sgn * (L / 2 + 0.31), hy, z + fz * sgn * (L / 2 + 0.31), fx * sgn, fz * sgn, W + 0.2, 0.9, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
+      const eo = sgn > 0 ? 0.31 : 0.79; // 后端顶盖出挑 0.7 m，门头字挂在后门头背板外侧
+      plan.sign(x + fx * sgn * (L / 2 + eo), hy, z + fz * sgn * (L / 2 + eo), fx * sgn, fz * sgn, W + 0.2, 0.9, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
       // 两侧檐口也挂站名门头：从马路上看过去是雨棚的长边，只有开口端有站名时认不出是地铁口
       const sx = fz * sgn, sz = -fx * sgn;
-      plan.sign(x + sx * (W / 2 + 0.31), g + 0.05 + 3.1, z + sz * (W / 2 + 0.31), sx, sz, L * 0.8, 0.72, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
+      plan.sign(x + sx * (W / 2 + 0.79), g + 0.05 + 3.1, z + sz * (W / 2 + 0.79), sx, sz, L * 0.8, 0.72, 0.08, key, G_METRO, 0, 0, 0, col('#2a2f35'), 0.35);
     }
     // 顶棚灯带
     plan.sign(x - fx * (L / 2 - 0.6), g + 0.05 + 2.93, z - fz * (L / 2 - 0.6), fx, fz, 2.8, 0.05, L - 1.2, null, G_STRIP, 0, 0, F_EMIT, col('#fff1dc'), 0.5);
@@ -1038,6 +1047,9 @@ if (sTex) {
     else if (grade === 1) set = r < 0.5 ? K.main : r2 < 0.5 ? K.food2 : K.shop2;
     else if (grade === 2 || grade === 4) set = r < 0.18 ? K.main : r2 < 0.5 ? K.food : K.shop;
     else set = r2 < 0.5 ? K.food : K.shop;
+    // 已接入高德全量店铺（fillK < 1）：真实的银行、连锁酒店、品牌店都在 POI 里，补位再挂品牌名就是编造位置
+    // （南大街人行道边 6 m 小楼挂“全季酒店”，全城 20 多家全季没有一家在这里，审查 g8 fs_南大街_n）→ 改挂体面的通用小店名
+    if ((this.fillK ?? 1) < 1 && (set === K.main || set === K.mainHotel || set === K.mainOffice)) set = r2 < 0.5 ? K.food2 : K.shop2;
     if (!set || !set.length) return null;
     const brand = set === K.main || set === K.mainHotel || set === K.mainOffice;
     const i0 = hs >>> 5;
@@ -1081,6 +1093,8 @@ if (sTex) {
         if (P.minDm[b] !== 0 || this.exitBoxes.has(b)) return;
         if (P.hDm[b] < 30) return;
         if (ex && ex.test(axb, azb, 'pois')) return;
+        // 占地 < 60 m² 的小构筑物（风亭、配电房、门卫、报刊亭被提取成“楼”）不补门头
+        if (bi.area(b) < 60) return;
         const I = this.binfo(b);
         const st = I.st;
         const rp = st >= 0 && st < ROW_P.length ? ROW_P[st] : ROW_P_UNKNOWN;
@@ -1094,24 +1108,30 @@ if (sTex) {
           const mx = E.ax + E.tx * E.L / 2, mz = E.az + E.tz * E.L / 2;
           if (bi.inside(mx + E.nx * 2, mz + E.nz * 2, b) >= 0) continue;
           // 街道等级按“临街的最高等级道路”定：主次干道人行道常被 OSM 单独画成 footway，最近的那条线往往是人行道
+          // 住宅/城中村只在临街底商边（立面画了橱窗/卷帘门）挂；商业/办公/酒店/传统风貌首层本就是铺面
+          const eSt = this.edgeStreet(E, I);
+          if (!eSt && (st === 0 || st === 1 || st === 5)) continue;
+          // 立面着色器在这条边上画了门头色带（bld-shader：高层住宅/老式多层的临街底商、商业裙房）：
+          // 这里一定是铺面排——原先按 30% 抽签，七成色带上没有任何店名，只剩红/品红/黄蓝色带和空白灯箱块（审查 g5 fs_唐延路、g8 fs_长乐中路、g6 fs_科技路）
+          const shaderBand = st === 4 || ((st === 0 || st === 1) && eSt);
           let grade, footOnly = false;
           const rm = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 32, this.acceptMajor, E.tx, E.tz, 0.8);
           if (rm) grade = this.grade.get(rm.c);
           else {
             const r = this.ri.nearest(mx + E.nx * 3, mz + E.nz * 3, 18, this.acceptFill, E.tx, E.tz, 0.8);
-            if (!r) continue;
-            grade = this.grade.has(r.c) ? this.grade.get(r.c) : 3;
-            footOnly = r.c === this.clsFootway;
+            if (r) {
+              grade = this.grade.has(r.c) ? this.grade.get(r.c) : 3;
+              footOnly = r.c === this.clsFootway;
+            } else if (shaderBand) grade = 2; // 色带立面朝向转角/绿地（没有平行的路）：按次干道业态补
+            else continue;
           }
-          if (campus && grade >= 2) continue; // 校园/大院内部步道旁不开店
+          if (campus && grade >= 2 && !shaderBand) continue; // 校园/大院内部步道旁不开店
           const main = grade <= 1;
-          // 住宅/城中村只在临街底商边（立面画了橱窗/卷帘门）挂；商业/办公/酒店/传统风貌首层本就是铺面
-          const eSt = this.edgeStreet(E, I);
-          if (!eSt && (st === 0 || st === 1 || st === 5)) continue;
           const hb = strHash(`${b}:${e}`);
           let rowP = rp[main ? 0 : 1] + (dist === 'street' ? 0.2 : 0) + (dist === 'wall' && !main ? 0.1 : 0);
           if (footOnly) rowP *= 0.35; // 只临小区/广场步道（没有车行道）的立面多不是铺面
           rowP *= this.fillK ?? 1;
+          if (shaderBand) rowP = 1;
           if (hash01(hb + 77) > rowP) continue; // 这条立面不是铺面排
           const B = this.band(I, eSt);
           if (!B) continue;
@@ -1158,12 +1178,14 @@ if (sTex) {
               }
             }
           }
-          // 门头底板：主次干道上把整排招牌（含该立面上的 POI 招牌）连成一条连续的门头带
-          if (main) {
+          // 门头底板：主次干道上把整排招牌（含该立面上的 POI 招牌）连成一条连续的门头带；
+          // 着色器画了门头色带的立面整条边都衬底板（盖住没挂上招牌的开间里的色带与空白灯箱块）
+          if (main || shaderBand) {
             const l = this.occ.get(b * 4096 + e * 4);
-            if (l && l.length >= 4) {
+            if ((l && l.length >= 4) || shaderBand) {
               let lo = Infinity, hi = -Infinity;
-              for (let i = 0; i < l.length; i += 2) { lo = Math.min(lo, l[i]); hi = Math.max(hi, l[i + 1]); }
+              if (l) for (let i = 0; i < l.length; i += 2) { lo = Math.min(lo, l[i]); hi = Math.max(hi, l[i + 1]); }
+              if (shaderBand) { lo = 0.2; hi = E.L - 0.2; }
               lo = Math.max(0.05, lo - 0.1);
               hi = Math.min(E.L - 0.05, hi + 0.1);
               if (hi - lo > 4) {
@@ -1337,10 +1359,12 @@ if (sTex) {
     this.shelters.count = ns;
     upd(this.shelters.instanceMatrix, ns, 16);
     this.canopies.count = nc;
+    this.canopyGlass.count = nc;
     upd(this.canopies.instanceMatrix, nc, 16);
     this.signs.visible = this.visible && n > 0;
     this.shelters.visible = this.visible && ns > 0;
     this.canopies.visible = this.visible && nc > 0;
+    this.canopyGlass.visible = this.canopies.visible;
   }
 
   setVisible(on) {
@@ -1380,6 +1404,8 @@ if (sTex) {
     this.signs.material.dispose();
     this.shelters.geometry.dispose();
     this.canopies.geometry.dispose();
+    this.canopyGlass.geometry.dispose();
+    this.canopyGlass.material.dispose();
     this.shelters.material.dispose();
     this.atlas.dispose();
   }
@@ -1477,20 +1503,45 @@ function shelterGeometry() {
 /** 地铁出入口雨棚（本地：x 横向 ±2.4，z 纵向 ±4.5，+z 为开口）。
  *  参考西安地铁 1/2 号线出入口：深灰金属框架 + 蓝灰玻璃侧墙 + 平顶，开口上方门头（招牌实例）。 */
 function canopyGeometry() {
-  const frame = '#4a5058', glass = '#5f7f8c', roof = '#5d636a', stone = '#8f8d88', voidc = '#1a1b1d';
-  const W = 2.4, L = 4.5;
+  // 西安地铁出入口：通透玻璃亭（玻璃另由 canopyGlassGeometry 半透明绘制）+ 0.45 m 挡水台基与三级踏步 + 四周出挑的顶盖；
+  // 亭内可见下行楼梯口、两道扶梯栏板与踏步（原先深色不透明玻璃盒子、无出挑、直接坐在铺装上，像占位箱，审查 g8 st_gaoxin_road）
+  const frame = '#4a5058', roof = '#5d636a', stone = '#8f8d88', voidc = '#141516', step = '#a19e97', rail = '#c9ccd0', balu = '#3a3f45';
+  const W = 2.4, L = 4.5, P = 0.45;
   const B = [];
-  B.push([-W - 0.2, 0, -L - 0.2, W + 0.2, 0.15, L + 0.2, stone]); // 台基
-  B.push([-W + 0.35, 0.15, -L + 0.8, W - 0.35, 0.17, L - 0.6, voidc]); // 下行楼梯口（暗）
-  for (const sx of [-1, 1]) {
-    B.push([sx * W - 0.06, 0.15, -L, sx * W + 0.06, 2.85, L, glass]); // 侧墙玻璃
-    B.push([sx * W - 0.1, 0.15, -L, sx * W + 0.1, 0.9, L, frame]); // 侧墙下部实墙
-    for (const z of [-L, -L / 3, L / 3, L]) B.push([sx * W - 0.12, 0.15, z - 0.12, sx * W + 0.12, 3.0, z + 0.12, frame]);
+  B.push([-W - 0.2, 0, -L - 0.2, W + 0.2, P, L + 0.2, stone]); // 挡水台基
+  for (let k = 0; k < 3; k++) B.push([-W + 0.1, 0, L + 0.2, W - 0.1, P - 0.15 * (k + 1) + 0.0001, L + 0.2 + 0.32 * (3 - k), step]); // 入口三级踏步
+  B.push([-W + 0.35, P, -L + 0.8, W - 0.35, P + 0.02, L - 0.6, voidc]); // 下行楼梯井（暗）
+  // 井口处的几级下行踏步（随坡度下沉，越往里越暗）+ 两道扶梯栏板（斜向下）与扶手
+  for (let k = 0; k < 5; k++) {
+    const z1 = L - 0.6 - k * 0.32, y = P - 0.02 - k * 0.17;
+    B.push([-W + 0.4, y - 0.17, z1 - 0.32, W - 0.4, y, z1, k < 2 ? step : '#6a6862']);
   }
-  B.push([-W, 0.15, -L - 0.1, W, 2.85, -L + 0.05, glass]); // 后墙
-  B.push([-W - 0.3, 2.95, -L - 0.3, W + 0.3, 3.25, L + 0.3, roof]); // 顶板
+  for (const sx of [-1, 1]) {
+    for (let k = 0; k < 6; k++) {
+      const z1 = L - 0.6 - k * 0.9, y1 = P + 1.0 - k * 0.5;
+      B.push([sx * (W - 0.55) - 0.06, y1 - 1.0, z1 - 0.9, sx * (W - 0.55) + 0.06, y1, z1, balu]);
+      B.push([sx * (W - 0.55) - 0.05, y1, z1 - 0.9, sx * (W - 0.55) + 0.05, y1 + 0.06, z1, rail]);
+    }
+  }
+  for (const sx of [-1, 1]) {
+    B.push([sx * W - 0.1, P, -L, sx * W + 0.1, P + 0.3, L, frame]); // 侧墙底框（玻璃落在上面）
+    for (const z of [-L, -L / 3, L / 3, L]) B.push([sx * W - 0.1, P, z - 0.1, sx * W + 0.1, 3.0, z + 0.1, frame]); // 竖框
+    B.push([sx * W - 0.08, 2.8, -L, sx * W + 0.08, 2.95, L, frame]); // 侧墙顶框
+  }
+  B.push([-W, P, -L - 0.12, W, P + 0.3, -L + 0.02, frame]); // 后墙底框
+  // 顶盖：两侧与后端出挑 0.7 m（门头背板随之外移，门头字挂在背板外侧，见 planMetro），开口端 0.3 m（正面门头）
+  B.push([-W - 0.7, 2.95, -L - 0.7, W + 0.7, 3.25, L + 0.3, roof]);
   B.push([-W - 0.3, 2.62, L + 0.1, W + 0.3, 3.62, L + 0.3, frame]); // 前门头背板
-  B.push([-W - 0.3, 2.62, -L - 0.3, W + 0.3, 3.62, -L - 0.1, frame]); // 后门头背板
-  B.push([-W - 0.36, 3.25, -L - 0.36, W + 0.36, 3.35, L + 0.36, '#6c7278']); // 檐口压顶
+  B.push([-W - 0.78, 2.62, -L - 0.78, W + 0.78, 3.62, -L - 0.62, frame]); // 后门头背板
+  for (const sx of [-1, 1]) B.push([sx * (W + 0.7) - 0.08, 2.62, -L - 0.78, sx * (W + 0.7) + 0.08, 3.62, L + 0.3, frame]); // 侧面门头背板
+  B.push([-W - 0.76, 3.25, -L - 0.76, W + 0.76, 3.35, L + 0.36, '#6c7278']); // 檐口压顶
+  return merged(B);
+}
+/** 地铁出入口的玻璃（两侧 + 后墙），单独一个半透明实例网格，与 canopyGeometry 共用实例矩阵 */
+function canopyGlassGeometry() {
+  const W = 2.4, L = 4.5, P = 0.45, c = '#c4d6de';
+  const B = [];
+  for (const sx of [-1, 1]) B.push([sx * W - 0.03, P + 0.3, -L, sx * W + 0.03, 2.8, L, c]);
+  B.push([-W, P + 0.3, -L - 0.06, W, 2.95, -L, c]);
   return merged(B);
 }

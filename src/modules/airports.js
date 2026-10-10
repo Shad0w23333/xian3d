@@ -31,9 +31,42 @@ const TERM_DISUSED = { '1号航站楼': 1 }; // T1 已停用：实墙 + 条窗�
 const HALLS = [
   { n: 'T5', c: [-15119, -21512], a: [0.7, 0.714], len: 540, wid: 235, eave: 30, rise: 9, roof: 'grey', sky: 1, over: 14, deck: 1, sign: 't5' },
   { n: 'T3', c: [-17148, -19637], a: [0.646, 0.761], len: 350, wid: 112, eave: 24, rise: 12, roof: 'white', ribs: 1, over: 8, deck: 1, sign: 'xiy' },
-  { n: 'T2', c: [-17180, -20093], a: [-0.753, 0.658], len: 242, wid: 64, eave: 22, rise: 7, roof: 'grey', ribs: 1, over: 10, walls: 0, curb: 1 },
+  // T2：出发层高架车道边（影像：楼前道路两端各有弧形引桥，OSM 该段为 bridge；原先只有地面落客，审查 g1 st_airport_front）+ 地面到达层
+  { n: 'T2', c: [-17180, -20093], a: [-0.753, 0.658], len: 242, wid: 64, eave: 22, rise: 7, roof: 'grey', ribs: 1, over: 10, walls: 0, deck: 1, ramps: 1, curb: 1 },
 ];
 
+// T3 陆侧综合交通中心（停车楼 + 换乘大厅）：aeroway.json 里这块轮廓只叫“航站楼”（h 36），未进 TERM_H，原先由通用建筑画成深灰平顶盒子 +
+// 底层卷帘门、红白色带与广告（像机库/车库，审查 g1 st_airport_front）。卫星：T3 主楼东北侧约 150×105 m，屋面中央采光天窗方阵、
+// 四周屋顶绿化，南侧螺旋坡道 → 首层换乘大厅（玻璃幕墙）+ 三层停车（铝合金横向格栅 + 竖向装饰肋），按卫星阴影取 17 m。
+const GTC = { near: [-17050, -19740], r: 120, h: 17 };
+/** 交通中心立面：UV = (沿墙米, 离地米)，一格 12 m × 17 m */
+function gtcWallMaterial(ctx) {
+  const draw = (night) => (g, W, H) => {
+    const py = (m) => H - (m / 17) * H, px = (m) => (m / 12) * W;
+    g.fillStyle = night ? '#000000' : '#d7d8d6'; g.fillRect(0, 0, W, H);
+    // 首层 0.3~6 m 换乘大厅玻璃（竖梃 1.5 m）
+    g.fillStyle = night ? '#ffe6c2' : '#5f7684'; g.fillRect(0, py(6), W, py(0.3) - py(6));
+    if (!night) { g.fillStyle = '#c9ccce'; for (let m = 0; m < 12; m += 1.5) g.fillRect(px(m), py(6), 2, py(0.3) - py(6)); }
+    // 停车层（6.9~9.9、10.8~13.8 m）：浅灰铝合金横向格栅，格栅间透出暗色车库
+    for (const [a, b] of [[6.9, 9.9], [10.8, 13.8]]) {
+      g.fillStyle = night ? '#2a2620' : '#3d4144'; g.fillRect(0, py(b), W, py(a) - py(b));
+      if (!night) { g.fillStyle = '#b9bcbe'; for (let m = a + 0.15; m < b; m += 0.42) g.fillRect(0, py(m + 0.2), W, Math.max(2, py(m) - py(m + 0.2))); }
+    }
+    // 竖向装饰肋（3 m）
+    if (!night) { g.fillStyle = '#eceded'; for (let m = 0; m < 12; m += 3) g.fillRect(px(m), 0, px(0.35), py(6)); }
+  };
+  const map = canvasTex(256, 384, draw(false), { repeat: [1 / 12, 1 / 17] });
+  const em = canvasTex(128, 192, draw(true), { repeat: [1 / 12, 1 / 17] });
+  const m = new THREE.MeshStandardMaterial({ map, roughness: 0.55, metalness: 0.25, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0 });
+  ctx.night.register(m, { day: 0, night: 0.55 });
+  return m;
+}
+
+function isGTC(t) {
+  if (!t || t.n !== '航站楼' || !t.outer || t.outer.length < 8) return false;
+  const c = polyCentroid(t.outer), x = c.x ?? c[0], z = c.z ?? c[1];
+  return Math.hypot(x - GTC.near[0], z - GTC.near[1]) < GTC.r && t.outer.length >= 12;
+}
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
@@ -348,6 +381,7 @@ export default {
     }
     for (const f of A.aprons || []) if (f.outer) ctx.exclusions.add({ points: f.outer }, { buildings: true, trees: true });
     for (const t of A.terminals || []) if (TERM_H[t.n]) ctx.exclusions.add({ points: t.outer, name: t.n }, { buildings: true, trees: true });
+    for (const t of A.terminals || []) if (isGTC(t)) ctx.exclusions.add({ points: t.outer, name: 'T3 交通中心' }, { buildings: true, trees: true });
     for (const H of HALLS) {
       const ax = H.a[0], az = H.a[1];
       ctx.exclusions.add({ rect: [H.c[0], H.c[1], H.wid + 80, H.len + 40, Math.atan2(ax, az)] }, { buildings: true, trees: true });
@@ -390,7 +424,8 @@ export default {
 
     // ===== 材质 =====
     const pav = pavementTex();
-    const matApron = new THREE.MeshStandardMaterial({ map: pav, color: 0xd6d3cc, roughness: 0.9 });
+    const matApron = new THREE.MeshStandardMaterial({ map: pav, color: 0xd6d3cc, roughness: 0.9, emissive: 0xffd9a8, emissiveMap: pav, emissiveIntensity: 0 });
+    ctx.night.register(matApron, { day: 0, night: 0.06 }); // 机坪整体在高杆灯下有一层暖白底亮（光池叠在上面）
     const matTaxi = new THREE.MeshStandardMaterial({ map: pav, color: 0xcbc8c1, roughness: 0.9 });
     const matRwy = new THREE.MeshStandardMaterial({ map: pav, color: 0xd0cdc6, roughness: 0.88, vertexColors: true });
     ctx.overlay(matApron, 0.00012); ctx.overlay(matTaxi, 0.0002); ctx.overlay(matRwy, 0.00026);
@@ -551,6 +586,35 @@ export default {
       const roof = flatPoly(outer, () => y0 + h + 1.8, 0);
       bld.add(roof, t.n === '5号航站楼' ? matRoofG : matRoofW);
     }
+    // ===== T3 交通中心（停车楼 + 换乘大厅） =====
+    {
+      const t = (A.terminals || []).find(isGTC);
+      if (t) {
+        const outer = t.outer, c = polyCentroid(outer);
+        const cx = c.x ?? c[0], cz = c.z ?? c[1];
+        let y0 = Infinity;
+        for (let i = 0; i < outer.length; i += 2) y0 = Math.min(y0, hf(outer[i], outer[i + 1]));
+        const H = GTC.h;
+        bld.add(polyWalls(outer, y0 - 1, y0 + H, y0), gtcWallMaterial(ctx));
+        bld.add(polyWalls(outer, y0 + H, y0 + H + 1.1), matStruct); // 女儿墙
+        bld.add(flatPoly(outer, () => y0 + H + 0.05, 0, longEdgeAngle(outer)), matRoofG);
+        // 屋面：中央采光天窗方阵（5 × 4 个 9 m 方锥玻璃天窗）+ 外圈屋顶绿化种植池
+        const ang = longEdgeAngle(outer), ca = Math.cos(ang), sa = Math.sin(ang);
+        const grass = ctx.mats.get('grass');
+        for (let i = -2; i <= 2; i++) for (let j = -1.5; j <= 1.5; j++) {
+          const u = i * 13, v = j * 13, x = cx + u * ca - v * sa, z = cz + u * sa + v * ca;
+          const g = new THREE.ConeGeometry(6.4, 2.6, 4, 1); g.rotateY(Math.PI / 4 - ang); g.translate(x, y0 + H + 1.35, z);
+          bld.add(g, matSky);
+        }
+        for (const [u, v, w, d] of [[-52, -36, 30, 8], [52, -36, 30, 8], [-52, 36, 30, 8], [52, 36, 30, 8]]) {
+          const x = cx + u * ca - v * sa, z = cz + u * sa + v * ca;
+          if (!pointInPoly(x, z, outer)) continue;
+          const e = orientedBox(w, 0.6, d, x, y0 + H + 0.35, z, -ang);
+          bld.add(e.g, matStruct, e.m);
+          if (grass) { const f = orientedBox(w - 0.6, 0.05, d - 0.6, x, y0 + H + 0.68, z, -ang); bld.add(f.g, grass, f.m, { worldUV: 1 }); }
+        }
+      }
+    }
     const facades = facadeIndex(termPolys);
     for (const H of HALLS) {
       const y0 = hf(H.c[0], H.c[1]);
@@ -685,7 +749,22 @@ export default {
           s2.rotation.y = Math.atan2(bx, bz);
           xiyGroup.add(s2);
         }
-      } else if (H.curb) {
+        // 引桥：平台两端顺长轴各一段 72 m 坡道落到地面（约 12.5%），桥墩每 18 m
+        if (H.ramps) for (const sd of [-1, 1]) {
+          const RL = 72, v0 = sd * dl / 2, vm = v0 + sd * RL / 2, [mx, mz] = P(off, vm);
+          const yA = dy, yB = hf(...P(off, v0 + sd * RL)) + 0.4, pitch = Math.atan2(yA - yB, RL) * sd;
+          const ramp = orientedBox(dw * 0.7, 1.2, Math.hypot(RL, yA - yB), mx, (yA + yB) / 2, mz, yaw, pitch);
+          bld.add(ramp.g, matConc, ramp.m, { worldUV: 1 });
+          for (let k = 1; k < 4; k++) {
+            const v = v0 + sd * k * 18, yy = yA + (yB - yA) * (k * 18) / RL, [px, pz] = P(off, v), gy = hf(px, pz);
+            if (yy - gy < 1.5) continue;
+            const col = new THREE.CylinderGeometry(0.8, 0.8, yy - gy, 10);
+            col.translate(px, gy + (yy - gy) / 2 - 0.5, pz);
+            bld.add(col, matConc);
+          }
+        }
+      }
+      if (H.curb) {
         // 地面层落客：挑檐下路面光斑（灯具本身就是上面的筒灯带）
         const u = H.wid / 2 + H.over * 0.55;
         for (let v = -H.len / 2 + 10; v <= H.len / 2 - 10; v += 20) {
@@ -972,7 +1051,8 @@ export default {
         const head = new THREE.CylinderGeometry(2.2, 2.2, 0.9, 10); head.translate(x, y + 30.2, z);
         C.detail.add(head, matLamp);
         L.add(x, y + 29.5, z, LC.mast, 2.6);
-        C.pools.push([x, y + 0.35, z, 110]);
+        // 光池：直径 150 m（半径 75 m，相邻高杆约 140 m 一盏，光池连成片；原 110 m 且很淡，机坪大片漆黑，审查 g3）
+        C.pools.push([x, y + 0.35, z, 150]);
       }
       for (const q of resampleArr(ring, 60)) {
         const fn = facades.nearest(q.x, q.z);
@@ -1206,7 +1286,7 @@ export default {
         staticPts.material.uniforms.uScale.value = sc;
         dynPts.material.uniforms.uScale.value = sc;
         const nt = ctx.uniforms.uNight.value;
-        matPool.opacity = nt * 0.32;
+        matPool.opacity = nt * 0.62;
         matDeckPool.opacity = nt * 0.3;
         if ((lodT -= d) <= 0) {
           lodT = 0.25;

@@ -17,9 +17,10 @@ import { ArchBuilder, hall, multiStoreyTower, pavilion, paifang } from '../arch/
 import { Batcher, ribbon } from '../core/util.js';
 import { floodlit } from '../arch/chinese-core.js';
 import { shadowReach } from '../arch/perf-lod.js';
+import { uplights, groundGlow } from '../arch/landmark-ground.js';
 import {
   personGeometry, crowdMesh, treeMeshes, lampMeshes, lanternInstances, lightPools, lightBeams,
-  figureGeometry, riderGeometry, camelGeometry, plinthGeometry, plinthRelief, reliefMaterial, farGlow,
+  figureGeometry, riderGeometry, camelGeometry, plinthGeometry, plinthRelief, reliefMaterial, farGlow, columnReliefMaterial,
 } from '../arch/datang-props.js';
 import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, MASK } from '../arch/people-geo.js';
 
@@ -434,7 +435,8 @@ export default {
         put(1478, 5512, E, () => hall(b, { style: 'tang', bays: 9, bayW: 7.0, centerW: 7.6, depthBays: 5, depthW: 6.6, colH: 8.2, eaves: 2, roof: 'wudian', roofColor: 'darkgray', front: 'tang', sides: 'zhiling', back: 'wall', platform: 'brick', platformH: 3.0, steps: 'front', stepW: 16, railing: true, plaque: '陕西大剧院', lanterns: true, lanternSize: 1.1, eaveLights: { columns: true, width: 0.1 } }));
         for (const z of [5474, 5550]) put(1523, z, E, () => multiStoreyTower(b, { style: 'tang', floors: 3, bays: 3, bayW: 4.0, depthBays: 3, depthW: 4.0, colH: 4.2, roof: 'wudian', roofColor: 'darkgray', platform: 'brick', platformH: 1.8, eaveLights: { columns: true } }));
         // 西安美术馆（西，面东）
-        put(1497, 5389, E, () => multiStoreyTower(b, { style: 'tang', storeys: [{ bays: 7, depthBays: 4, bayW: 5.4, depthW: 5.2, colH: 5.6, front: 'tang', back: 'wall', sides: 'zhiling' }, { colH: 4.4, front: 'zhiling', back: 'wall', sides: 'zhiling' }], roof: 'xieshan', roofColor: 'darkgray', platform: 'brick', platformH: 1.4, plaque: '西安美术馆', lanterns: true, eaveLights: { columns: true } }));
+        // （门扇、窗棂深褐木色，红色只留柱与额枋；原先门板与窗棂全是朱红，远看像一排红色卷帘门，审查 g8）
+        put(1497, 5389, E, () => multiStoreyTower(b, { style: 'tang', storeys: [{ bays: 7, depthBays: 4, bayW: 5.4, depthW: 5.2, colH: 5.6, front: 'tang', back: 'wall', sides: 'zhiling' }, { colH: 4.4, front: 'zhiling', back: 'wall', sides: 'zhiling' }], roof: 'xieshan', roofColor: 'darkgray', platform: 'brick', platformH: 1.4, plaque: '西安美术馆', lanterns: true, eaveLights: { columns: true }, pal: { door: 0x5a3a26, frame: 0x6b4430, lattice: 0x5a3a26 } }));
         // 西安音乐厅（东，面西）：重檐歇山
         put(1645, 5510, W, () => hall(b, { style: 'tang', bays: 7, bayW: 7.0, depthBays: 4, depthW: 6.8, colH: 7.6, eaves: 2, roof: 'xieshan', roofColor: 'darkgray', front: 'tang', sides: 'zhiling', back: 'wall', platform: 'brick', platformH: 2.4, steps: 'front', stepW: 12, railing: true, plaque: '西安音乐厅', lanterns: true, lanternSize: 1.0, eaveLights: { columns: true, width: 0.1 } }));
         for (const z of [5478, 5543]) put(1611, z, W, () => pavilion(b, { style: 'tang', sides: 4, size: 5.5, colH: 3.8, roofColor: 'darkgray', eaveLights: true }));
@@ -443,7 +445,7 @@ export default {
         // 开元广场南端牌楼
         put(AX, ZS - 6, Math.PI, () => paifang(b, { style: 'tang', bays: 5, width: 30, h: 7.5, text: '开元盛世', sideText: ['大唐', '气象'], roofColor: 'darkgray', eaveLights: true }));
 
-        lod.addLevel(b.build({ flood: { color: 0xffc47a, strength: 0.85, baseY: H(AX, 5450) - 0.5, height: 26, top: 0.4, upDim: 0.95 }, name: '贞观广场建筑d' + d }), dist);
+        lod.addLevel(b.build({ flood: { color: 0xffc47a, strength: 0.85, baseY: H(AX, 5450) - 0.5, height: 26, top: 0.4, upDim: 0.8 }, name: '贞观广场建筑d' + d }), dist);
       }
       lod.addLevel(new THREE.Object3D(), FAR_HIDE * 1.8); // 大体量建筑保留得更远
       root.add(lod);
@@ -452,8 +454,11 @@ export default {
 
     // ───── 4. 中央景观带：雕塑群、台座、花坛、水景 ─────
     // 青铜：棕铜本色 + 金属高光（原先 0x7c5a33、金属度 0.7 → 白天几乎纯黑）；夜间泛光 2.6 → 0.85（原先整座雕塑糊成奶油色）
-    const bronze = new THREE.MeshStandardMaterial({ color: 0xa27a4a, metalness: 0.5, roughness: 0.42, vertexColors: true });
-    floodlit(bronze, { ctx, color: 0xffc070, strength: 0.85, baseY: yMid - 1, height: 12, top: 0.45, upDim: 0.3 });
+    // 深青铜（不夜城群雕实物为暗棕铜带铜绿；原 0xa27a4a 读成发亮的黄铜，审查 g1）：低饱和、金属度中等、略粗糙；
+    // 夜间泛光从台座向上打（台顶约 1.3~1.8 m → 头部 5 m 处降到 0.22；原 height 12 整尊均匀发光，审查 g8）
+    const bronze = new THREE.MeshStandardMaterial({ color: 0x7b6447, metalness: 0.55, roughness: 0.5, vertexColors: true });
+    bronze.shadowSide = THREE.BackSide; // 曲面自阴影的网点状摩尔纹
+    floodlit(bronze, { ctx, color: 0xffc070, strength: 1.15, baseY: yMid + 1.2, height: 4.5, top: 0.22, upDim: 0.35 });
     const stoneMat = ctx.mats.clone('marble', { color: 0xd8d0c2 });
     floodlit(stoneMat, { ctx, color: 0xffc47a, strength: 0.5, baseY: yMid - 1, height: 3, top: 0.4 });
     const relief = floodlit(reliefMaterial(), { ctx, color: 0xffc47a, strength: 0.5, baseY: yMid - 1, height: 3, top: 0.5 });
@@ -534,15 +539,24 @@ export default {
     {
       const z = 5909, y = H(AX, z);
       plinthAt(AX, y, z, 6, 6, 2);
-      const col = new THREE.CylinderGeometry(1.15, 1.35, 22, 16);
+      // 柱身满布浮雕（人物 / 卷云分段，法线贴图 + 凹处压暗），柱头莲瓣、顶珠夜间自发光（原光面圆柱 + 夜里发黑的金珠，审查 g8）
+      const colMat = columnReliefMaterial();
+      floodlit(colMat, { ctx, color: 0xffc070, strength: 1.0, baseY: y + 2, height: 22, top: 0.35, upDim: 0.3 });
+      const col = new THREE.CylinderGeometry(1.15, 1.35, 22, 32, 1, true);
       col.translate(0, 11, 0);
-      put(col, bronze, AX, y + 2, z);
-      const cap = new THREE.CylinderGeometry(2.1, 1.4, 1.4, 16);
-      cap.translate(0, 0.7, 0);
-      put(cap, bronze, AX, y + 24, z);
-      const pearl = new THREE.SphereGeometry(1.1, 16, 12);
+      put(col, colMat, AX, y + 2, z);
+      for (const [yy, r] of [[2, 1.5], [24, 1.3]]) {
+        const band = new THREE.TorusGeometry(r, 0.16, 8, 40);
+        band.rotateX(Math.PI / 2);
+        put(band, bronze, AX, y + yy, z);
+      }
+      const cap = new THREE.LatheGeometry([[1.25, 0], [1.5, 0.25], [2.1, 0.75], [2.25, 1.05], [2.0, 1.25], [1.3, 1.4], [0.9, 1.45]].map(([r, h]) => new THREE.Vector2(r, h)), 32);
+      put(cap, colMat, AX, y + 24, z);
+      const pearl = new THREE.SphereGeometry(1.1, 24, 16);
       pearl.translate(0, 1.1, 0);
-      put(pearl, ctx.mats.get('gold'), AX, y + 25.4, z);
+      const pearlMat = new THREE.MeshStandardMaterial({ color: 0xd9a84a, metalness: 0.8, roughness: 0.28, emissive: 0xffb84a, emissiveIntensity: 0 });
+      ctx.night.register(pearlMat, { day: 0, night: 1.6 });
+      put(pearl, pearlMat, AX, y + 25.4, z);
       for (let k = 0; k < 6; k++) {
         const ring = new THREE.TorusGeometry(1.32 - k * 0.03, 0.06, 6, 32);
         ring.rotateX(Math.PI / 2);
@@ -653,6 +667,31 @@ export default {
     root.add(sculpt);
     const tg = titles.build({ name: '雕塑题名' });
     root.add(tg);
+    // 夜景地面：中央景观带两侧地埋灯（每 6 m）+ 贞观广场地埋灯阵（每 10 m），各带贴地暖光斑
+    // （原先景观带夜里整体暗灰、广场地面大片暗褐，中轴反而比两侧行道树暗，审查 g8 p4_night / st_datang_n）
+    const groundLights = new THREE.Group();
+    groundLights.name = '不夜城地埋灯';
+    {
+      const ups = [], glow = [];
+      for (let z = ZN + 12; z < KY[0] - 2; z += 6) {
+        if (z > CROSS[0] - 3 && z < CROSS[1] + 3) continue;
+        for (const sg of [-1, 1]) {
+          const x = AX + sg * 5.5;
+          ups.push([x, z]);
+          glow.push([x, z, 2.1, 0.85]);
+        }
+      }
+      for (let z = ZG[0] + 8; z < ZG[1] - 4; z += 10)
+        for (const dx of [-28, -20, -13, 13, 20, 28]) {
+          ups.push([AX + dx, z]);
+          glow.push([AX + dx, z, 3.0, 0.7]);
+        }
+      groundLights.add(uplights(ctx, ups, { size: 0.28 }), groundGlow(ctx, glow, { color: 0xffb860, intensity: 0.5 }));
+    }
+    root.add(groundLights);
+    // 水景池底灯：池面夜间透出暖光
+    waterMat.emissive = new THREE.Color(0xffb066);
+    ctx.night.register(waterMat, { day: 0, night: 0.22 });
     await tick();
 
     // ───── 5. 灯柱、行道树、红灯笼、光斑 ─────
@@ -704,7 +743,7 @@ export default {
     const lanternMat = new THREE.MeshStandardMaterial({ color: 0xb52a1a, emissive: 0xff4a1c, emissiveIntensity: 0, roughness: 0.55 });
     ctx.night.register(lanternMat, { day: 0.12, night: 1.7 });
     // 远处隐藏的对象集合（见 FAR_HIDE）；灯柱与灯笼不投射阴影（细小构件，阴影不可辨但三角形翻倍）
-    const farItems = [sculpt, tg, ground, backStreet].filter(Boolean);
+    const farItems = [sculpt, tg, ground, backStreet, groundLights].filter(Boolean);
     for (const m of lampMeshes(ctx, lamps, lampMats)) {
       m.castShadow = false;
       root.add(m);
@@ -823,9 +862,12 @@ export default {
     for (let z = ZN + 30, i = 0; z < ZS; z += 55, i++) {
       if (!inStreet(z)) continue;
       const s = i % 2 ? 1 : -1;
-      ctx.lights.add({ position: new THREE.Vector3(AX + s * 18, H(AX, z) + 7, z), color: 0xffb05a, intensity: 420, distance: 40, nightOnly: true, priority: 1.6 });
+      // 灯在景观带边灯柱的顶灯处（x ±10、离地 8 m）；原先 x ±18、离地 7 m 正好在内侧树排（±15.5）的树冠里，
+      // 树冠被照成一团黄绿色发光球（审查 g8）
+      ctx.lights.add({ position: new THREE.Vector3(AX + s * 10, H(AX, z) + 8, z), color: 0xffb05a, intensity: 300, distance: 34, nightOnly: true, priority: 1.6 });
     }
-    for (const [x, z, y, I] of [[AX, 5450, 12, 900], [AX, 6101, 14, 1100], [stage[0], stage[1], 6, 350], [1520, 5512, 16, 900], [1620, 5510, 14, 800], [AX, 5909, 10, 500]])
+    // 雕塑群上空的点光源降强度（原 900~1100 cd 自上而下把整组铜像打成均匀橙色，盖过台座向上的泛光，审查 g8）
+    for (const [x, z, y, I] of [[AX, 5450, 12, 340], [AX, 6101, 14, 420], [stage[0], stage[1], 6, 350], [1520, 5512, 16, 900], [1620, 5510, 14, 800], [AX, 5909, 10, 240]])
       ctx.lights.add({ position: new THREE.Vector3(x, H(x, z) + y, z), color: 0xffc27a, intensity: I, distance: 70, nightOnly: true, priority: 2.2 });
 
     // ───── 8. 标注 ─────
@@ -900,7 +942,10 @@ export default {
           const x = W[i * 4], y0 = W[i * 4 + 1], spd = W[i * 4 + 2], w = W[i * 4 + 3];
           if (Math.abs(x - cp.x) > NEAR_R) continue;
           const z = C.z0 + (((y0 + spd * t) % C.len) + C.len) % C.len;
-          if (Math.hypot(x - cp.x, z - cp.z) >= NEAR_R) continue;
+          const dd = Math.hypot(x - cp.x, z - cp.z);
+          if (dd >= NEAR_R) continue;
+          // 镜头前 2.6 m 内不放人（原先人流穿过相机位置，1~2 m 处出现半个人身/后脑勺挡住画面，审查 g8 st_datang_n）
+          if (dd < 2.6) continue;
           const hi = Math.min(46.999, Math.max(0, (z - C.hz0) / C.hdz)), i0 = Math.floor(hi);
           const y = C.heights[i0] + (C.heights[i0 + 1] - C.heights[i0]) * (hi - i0);
           const moving = Math.abs(spd) > 0.001;

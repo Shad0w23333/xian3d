@@ -185,7 +185,8 @@ const saige = {
   name: '赛格国际购物中心',
   fp: SAIGE_FP,
   parts: [
-    { name: 'mall', kind: 'podium', fp: SAIGE_FP, base: 0, top: 14, style: SAIGE_STY, roofMat: { color: '#5d7d4a', roughness: 0.9 } },
+    // 首层 6.2 m 商铺：通高橱窗 + 外挑雨篷 + 长边正中主入口（原先首层与上层同一立面，沿小寨东路像仓库外墙，审查 g4 st_xiaozhai）
+    { name: 'mall', kind: 'podium', fp: SAIGE_FP, base: 0, top: 14, style: SAIGE_STY, gf: { h: 6.2 }, roofMat: { color: '#5d7d4a', roughness: 0.9 } },
     // 南立面逐层退台（台地绿化屋面）：每层把轮廓在南侧切掉约 7 m；另三面各内缩 0.15 m/层，避免上下层立面共面
     ...[[14, 21, 1], [21, 28, 2], [28, 38, 3]].map(([b, t, k]) => ({
       name: 'terrace' + k, kind: 'podium', fp: SAIGE_FP, cut: { face: 'S', by: 7 * k }, grow: -0.15 * k, base: b, top: t,
@@ -400,13 +401,20 @@ const joycity = {
   name: '西安大悦城（曲江）',
   fp: '08923485-dd2a-45d6-841c-718430bb605e',
   parts: [{
+    // 白色 U 型玻璃：半透明乳白槽形玻璃竖向密排（细竖缝）+ 每层一道窄玻璃带；原先 verticalFins 反射玻璃读成整片灰色竖肋（审查 g3 p3_day）
     name: 'mall', kind: 'podium', fp: '08923485-dd2a-45d6-841c-718430bb605e', base: 0, top: 24,
-    style: { pattern: 'verticalFins', tint: '#dfe6ea', spd: '#e8ebec', floorH: 6, colW: 0.9, spandrel: 0.15, mullW: 0.12, lit: 0.7 },
+    style: { pattern: 'stoneWindows', tint: '#8fa3ae', spd: '#eceeec', floorH: 6, colW: 0.7, spandrel: 0.84, mullW: 0.06, lit: 0.7 },
     crown: [
-      { type: 'tangRoof', eave: 4, band: 11, h: 4.5, curve: 0.2, mat: TANG_ROOF, glow: '#ffd28a', double: { gap: 5.5, out: 3.5, h: 2 } },
+      // 挑檐用筒瓦贴图（roofTile，世界坐标 UV：瓦垄、瓦缝可见），原先纯色深灰平板读成一整条深灰带（审查 g3）
+      { type: 'tangRoof', eave: 4, band: 11, h: 4.5, curve: 0.2, mat: 'roofTile', glow: '#ffd28a', double: { gap: 5.5, out: 3.5, h: 2 } },
       { type: 'dome', at: [1387, 4740], r: [27, 19], h: 3, mat: SKYLIGHT, ring: false, y: 29.6 }, // 中央采光顶（卫星）
     ],
-  }],
+  },
+  // 北立面主入口（朝大雁塔南广场方向；轮廓北侧正中凸出的开间）：通高玻璃门厅 + 门楣（原先北立面一整片竖肋，没有入口与招牌）
+  { name: 'entry', shape: 'rect', size: [24, 6], at: [1392.1, 4675], base: 0, top: 13, style: { pattern: 'retail', tint: '#7e95a3', spd: '#d8d6d0', floorH: 13, colW: 2.4, spandrel: 0, mullW: 0.14, lit: 1.0 }, roof: { mech: false, parapet: 0.3 } },
+  { name: 'entryCap', kind: 'solid', mat: '#d6d4cf', shape: 'rect', size: [28, 9], at: [1392.1, 4675.5], base: 13, top: 14.2 },
+  ],
+  signs: [{ text: '大悦城', part: 'entryCap', face: 'N', y: 16.2, h: 3.2, color: '#e6312e' }],
   supersede: { names: ['西安曲江大悦城', '西安大悦城（曲江）', '曲江大悦城'] },
   meta: {
     dossier: 'core_south.json#西安大悦城（曲江）',
@@ -918,7 +926,9 @@ const haosheng = {
     },
     {
       name: 'rotunda', shape: 'circle', size: [26, 26], at: [-280, 1058], base: 0, top: 72,
-      style: { pattern: 'horizontalBands', tint: '#8e949a', spd: '#c8ccd0', floorH: 3.6, colW: 2.2, spandrel: 0.35, mullW: 0.3, lit: 0.5 },
+      // 银灰横带 + 深蓝灰带窗：带窗玻璃底色压深（原 #8e949a 浅灰玻璃在下午映出土黄地面，整栋读成金白相间的“蛋糕”，审查 g3 st_walltop）；
+      // 横带银灰取 spd（sky-facade 模式 3 现按规格色绘制，不再一律白色）；规格色略偏冷，抵消下午暖色日光（#b8bec5 在 15 点读成土黄横条）
+      style: { pattern: 'horizontalBands', tint: '#4f6172', spd: '#adb8c8', floorH: 3.6, colW: 2.2, spandrel: 0.42, mullW: 0.3, lit: 0.5 },
       roof: { mech: false },
       crown: [
         { type: 'frame', h: 6, inset: -1.5, step: 2.2, post: 0.35, mat: 'metal' }, // 放射状尖肋环（近似）

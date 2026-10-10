@@ -225,6 +225,14 @@ export function treeMeshes(ctx, pts, { seed = 3, lightsPerTree = 140 } = {}) {
   ctx.night.register(trunkMat, { day: 0, night: 0.12 }); // 树干缠灯：夜间微亮
   const crownMat = new THREE.MeshStandardMaterial({ color: 0x4d6e35, roughness: 0.85, vertexColors: true, emissive: 0xffa040, emissiveIntensity: 0 });
   ctx.night.register(crownMat, { day: 0, night: 0.035 }); // 串灯在叶面上的散射微光
+  // 树冠对点光源的漫反射压到 0.3：灯柱/路灯点光源离树冠只有几米，原先把整团树冠照成黄绿色发光球（审查 g8 p4_night）
+  crownMat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace(
+      '#include <lights_fragment_begin>',
+      THREE.ShaderChunk.lights_fragment_begin.replace('getPointLightInfo( pointLight, geometryPosition, directLight );', 'getPointLightInfo( pointLight, geometryPosition, directLight );\n\t\tdirectLight.color *= 0.3;')
+    );
+  };
+  crownMat.customProgramCacheKey = () => 'datangCrown';
   const trunk = new THREE.InstancedMesh(trunkGeo, trunkMat, n);
   const crownM = new THREE.InstancedMesh(crown, crownMat, n);
   const d = new THREE.Object3D();
@@ -352,14 +360,37 @@ export function farGlow(ctx, pts, { size = 6, minPx = 1.8, color = 0xffb24a, int
 }
 
 // ───────────── 金色纹饰灯柱（宫灯） ─────────────
+/** 莲瓣环：圆台按 n 瓣径向起伏（瓣尖外凸 amp），用于灯柱座、柱头的仰覆莲 */
+function petalRing(r0, r1, h, n, y, amp = 0.18, flip = false) {
+  const g = new THREE.CylinderGeometry(r1, r0, h, n * 4, 2);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), yy = p.getY(i), z = p.getZ(i);
+    const a = Math.atan2(z, x);
+    const t = (yy / h + 0.5); // 0 底 → 1 顶
+    const tip = flip ? 1 - t : t; // 瓣尖朝上（仰莲）或朝下（覆莲）
+    const k = 1 + amp * Math.pow(Math.max(0, Math.cos(n * a)), 2) * (0.35 + 0.65 * tip);
+    p.setXYZ(i, x * k, yy, z * k);
+  }
+  g.computeVertexNormals();
+  return prep(g, 0xffffff, 0, { y });
+}
 function lampParts() {
   const gold = [], glow = [], red = [];
   const G = (g) => gold.push(g);
-  G(B(0.72, 0.55, 0.72, 0xffffff, 0, { y: 0.275 }));
-  G(prep(new THREE.CylinderGeometry(0.46, 0.5, 0.35, 6), 0xffffff, 0, { y: 0.72 }));
-  G(prep(new THREE.CylinderGeometry(0.1, 0.14, 6.6, 6), 0xffffff, 0, { y: 4.1 }));
-  for (const y of [1.3, 2.6, 4.2, 5.7]) G(prep(new THREE.CylinderGeometry(0.2, 0.2, 0.14, 6), 0xffffff, 0, { y }));
-  G(prep(new THREE.SphereGeometry(0.22, 6, 4), 0xffffff, 0, { y: 3.4 }));
+  // 须弥座式灯座：圭脚 + 方台 + 覆莲 + 仰莲（原先一块方墩 + 六棱台）
+  G(B(0.92, 0.16, 0.92, 0xffffff, 0, { y: 0.08 }));
+  G(B(0.74, 0.42, 0.74, 0xffffff, 0, { y: 0.37 }));
+  G(petalRing(0.5, 0.3, 0.24, 8, 0.7, 0.22, true));
+  G(prep(new THREE.CylinderGeometry(0.2, 0.24, 0.12, 16), 0xffffff, 0, { y: 0.88 }));
+  G(petalRing(0.18, 0.3, 0.22, 8, 1.04, 0.2));
+  // 柱身：16 棱圆柱 + 联珠箍 + 两段卷草纹套筒（起伏的花瓣环）
+  G(prep(new THREE.CylinderGeometry(0.1, 0.14, 6.6, 16), 0xffffff, 0, { y: 4.1 }));
+  for (const y of [1.3, 3.05, 4.15, 5.7]) G(prep(new THREE.TorusGeometry(0.16, 0.045, 4, 14), 0xffffff, 0, { y, rx: Math.PI / 2 }));
+  for (const y of [2.65, 4.55]) G(petalRing(0.17, 0.17, 0.62, 6, y, 0.28));
+  G(prep(new THREE.SphereGeometry(0.22, 14, 10), 0xffffff, 0, { y: 3.4, sy: 1.25 }));
+  // 柱头仰莲托住横担
+  G(petalRing(0.13, 0.28, 0.3, 8, 6.1, 0.25));
   // 横担 + 云头卷
   G(B(2.7, 0.12, 0.12, 0xffffff, 0, { y: 6.35 }));
   for (const s of [-1, 1]) G(prep(new THREE.TorusGeometry(0.18, 0.04, 4, 8), 0xffffff, 0, { x: s * 1.42, y: 6.2 }));
@@ -518,17 +549,18 @@ export function lightBeams(ctx, pts, { h = 320, color = 0xffd9a0, alpha = 0.55 }
 
 // ───────────── 雕塑：人物 / 骑马 / 坐像（青铜，平滑法线） ─────────────
 const C = 0xffffff;
+const PAT = 0xd9ddcf; // 衣纹凹处：略带铜绿
 /** 头部 + 幞头（展脚可选）。原点：颈根 y0 */
 function headWithFutou(parts, y0, { z = 0, wings = true, beard = false } = {}) {
-  parts.push(tube(V(0, y0, z), V(0, y0 + 0.1, z + 0.01), 0.055, 0.05, 6, C));
+  parts.push(tube(V(0, y0, z), V(0, y0 + 0.1, z + 0.01), 0.055, 0.05, 12, C));
   const h = y0 + 0.06;
-  parts.push(lathe([[0, h], [0.07, h + 0.02], [0.1, h + 0.08], [0.105, h + 0.15], [0.09, h + 0.22], [0, h + 0.265]], 8, C, 0, { z: z + 0.005, sz: 1.08 }));
+  parts.push(lathe([[0, h], [0.07, h + 0.02], [0.1, h + 0.08], [0.105, h + 0.15], [0.09, h + 0.22], [0, h + 0.265]], 18, C, 0, { z: z + 0.005, sz: 1.08 }));
   parts.push(prep(new THREE.ConeGeometry(0.022, 0.05, 5), C, 0, { y: h + 0.13, z: z + 0.11, rx: Math.PI / 2 })); // 鼻
   // 幞头：圆顶软裹 + 后部高起的巾子 + 两侧展脚
-  parts.push(lathe([[0.113, h + 0.15], [0.116, h + 0.2], [0.1, h + 0.255], [0.06, h + 0.285], [0, h + 0.29]], 8, C, 0, { z: z - 0.005, sz: 1.08 }));
-  parts.push(ball(0.065, 6, 4, C, 0, { y: h + 0.3, z: z - 0.04, sy: 1.25 }));
+  parts.push(lathe([[0.113, h + 0.15], [0.116, h + 0.2], [0.1, h + 0.255], [0.06, h + 0.285], [0, h + 0.29]], 18, C, 0, { z: z - 0.005, sz: 1.08 }));
+  parts.push(ball(0.065, 12, 8, C, 0, { y: h + 0.3, z: z - 0.04, sy: 1.25 }));
   if (wings) for (const s of [-1, 1]) parts.push(B(0.3, 0.02, 0.035, C, 0, { x: s * 0.24, y: h + 0.24, z: z - 0.07, rz: s * 0.08 }));
-  if (beard) parts.push(prep(new THREE.ConeGeometry(0.05, 0.16, 6), C, 0, { y: h + 0.0, z: z + 0.07, rx: Math.PI }));
+  if (beard) parts.push(prep(new THREE.ConeGeometry(0.05, 0.16, 10), C, 0, { y: h + 0.0, z: z + 0.07, rx: Math.PI }));
 }
 /** 唐装立像（幞头、圆领袍、束带、宽袖、执笏），高约 1.85 m，面朝 +Z */
 export function figureGeometry(kind = 'stand') {
@@ -536,46 +568,61 @@ export function figureGeometry(kind = 'stand') {
   if (kind === 'seated') {
     // 坐像：方凳 + 下摆垂地的袍 + 前伸的膝 + 上身
     parts.push(B(0.7, 0.42, 0.55, C, 0, { y: 0.21, z: -0.05 }));
-    parts.push(lathe([[0.4, 0], [0.4, 0.2], [0.36, 0.45], [0.27, 0.58]], 9, C, 0, { sz: 0.8 }));
-    for (const s of [-1, 1]) parts.push(tube(V(s * 0.13, 0.52, 0.0), V(s * 0.14, 0.52, 0.42), 0.12, 0.11, 6, C, 0, true)); // 大腿
+    parts.push(lathe([[0.4, 0], [0.4, 0.2], [0.36, 0.45], [0.27, 0.58]], 20, C, 0, { sz: 0.8 }));
+    for (const s of [-1, 1]) parts.push(tube(V(s * 0.13, 0.52, 0.0), V(s * 0.14, 0.52, 0.42), 0.12, 0.11, 12, C, 0, true)); // 大腿
     parts.push(B(0.56, 0.42, 0.12, C, 0, { y: 0.26, z: 0.42 })); // 垂下的前襟
-    parts.push(lathe([[0.25, 0.55], [0.22, 0.7], [0.24, 0.9], [0.24, 1.0], [0.14, 1.07], [0.06, 1.1]], 12, C, 0, { sz: 0.78 }));
+    parts.push(lathe([[0.25, 0.55], [0.22, 0.7], [0.24, 0.9], [0.24, 1.0], [0.14, 1.07], [0.06, 1.1]], 22, C, 0, { sz: 0.78 }));
     for (const s of [-1, 1]) {
-      parts.push(tube(V(s * 0.22, 1.0, 0), V(s * 0.27, 0.74, 0.1), 0.07, 0.09, 6, C));
-      parts.push(tube(V(s * 0.27, 0.74, 0.1), V(s * 0.12, 0.66, 0.36), 0.09, 0.13, 6, C)); // 宽袖搭在膝上
+      parts.push(tube(V(s * 0.22, 1.0, 0), V(s * 0.27, 0.74, 0.1), 0.07, 0.09, 12, C));
+      parts.push(tube(V(s * 0.27, 0.74, 0.1), V(s * 0.12, 0.66, 0.36), 0.09, 0.13, 12, C)); // 宽袖搭在膝上
     }
     headWithFutou(parts, 1.06, { beard: true });
     return merge(parts);
   }
   const h = 1.5, rb = kind === 'wide' ? 0.42 : 0.33;
   // 圆领袍：下摆外撇、腰部束带、胸背饱满
-  parts.push(lathe([[rb, 0], [rb * 0.93, h * 0.12], [rb * 0.8, h * 0.35], [0.235, h * 0.56], [0.215, h * 0.63], [0.235, h * 0.72], [0.255, h * 0.85], [0.24, h * 0.93], [0.15, h * 0.975], [0.06, h], [0, h + 0.01]], 9, C, 0, { sz: 0.78 }));
-  parts.push(lathe([[0.226, h * 0.6], [0.236, h * 0.62], [0.226, h * 0.645]], 9, C, 0, { sz: 0.8 })); // 革带
+  parts.push(lathe([[rb, 0], [rb * 0.93, h * 0.12], [rb * 0.8, h * 0.35], [0.235, h * 0.56], [0.215, h * 0.63], [0.235, h * 0.72], [0.255, h * 0.85], [0.24, h * 0.93], [0.15, h * 0.975], [0.06, h], [0, h + 0.01]], 22, C, 0, { sz: 0.78 }));
+  parts.push(lathe([[0.226, h * 0.6], [0.236, h * 0.62], [0.226, h * 0.645]], 20, C, 0, { sz: 0.8 })); // 革带
   parts.push(B(0.2, 0.03, 0.05, C, 0, { y: h * 0.25, z: rb * 0.62 })); // 前襟褶
+  // 衣纹：袍身前后各三道竖向褶（细长圆台，贴在袍面上），圆领、革带带銙
+  for (const [x, zf] of [[-0.12, 1], [0, 1], [0.12, 1], [-0.1, -1], [0.1, -1]]) {
+    const r0 = rb * 0.78 * 0.98, r1 = 0.215 * 0.78;
+    parts.push(tube(V(x * 1.25, 0.04, zf * (r0 - 0.012)), V(x * 0.9, h * 0.58, zf * (r1 - 0.004)), 0.022, 0.012, 6, PAT));
+  }
+  parts.push(prep(new THREE.TorusGeometry(0.105, 0.026, 6, 18), C, 0, { y: h - 0.02, z: 0.0, rx: Math.PI / 2, sz: 0.85 })); // 圆领
+  for (const a of [-0.5, 0, 0.5]) parts.push(B(0.06, 0.05, 0.02, C, 0, { x: Math.sin(a) * 0.23, y: h * 0.62, z: Math.cos(a) * 0.185, ry: a })); // 带銙
   for (const s of [-1, 1]) parts.push(B(0.1, 0.07, 0.18, C, 0, { x: s * 0.1, y: 0.035, z: 0.24 })); // 靴尖
   const sh = h - 0.08;
+  for (const s of [-1, 1]) parts.push(ball(0.085, 10, 8, C, 0, { x: s * 0.225, y: sh, z: 0 })); // 肩（原先臂根与袍身之间一道缝）
   if (kind === 'raise') {
     // 左臂下垂执卷、右臂高举吟诗
-    parts.push(tube(V(-0.23, sh, 0), V(-0.3, 1.05, 0.06), 0.075, 0.1, 6, C));
-    parts.push(tube(V(-0.3, 1.05, 0.06), V(-0.28, 0.82, 0.12), 0.1, 0.13, 6, C)); // 垂袖
-    parts.push(tube(V(-0.27, 0.95, 0.18), V(-0.27, 1.2, 0.2), 0.04, 0.04, 6, C, 0, true)); // 书卷
-    parts.push(tube(V(0.23, sh, 0), V(0.38, sh + 0.14, 0.1), 0.075, 0.085, 6, C));
-    parts.push(tube(V(0.38, sh + 0.14, 0.1), V(0.46, sh + 0.42, 0.2), 0.085, 0.12, 6, C));
-    parts.push(ball(0.045, 6, 4, C, 0, { x: 0.47, y: sh + 0.48, z: 0.22 }));
+    parts.push(tube(V(-0.23, sh, 0), V(-0.3, 1.05, 0.06), 0.075, 0.1, 12, C));
+    parts.push(tube(V(-0.3, 1.05, 0.06), V(-0.28, 0.82, 0.12), 0.1, 0.13, 12, C)); // 垂袖
+    parts.push(ball(0.1, 10, 8, C, 0, { x: -0.3, y: 1.05, z: 0.06 })); // 肘
+    parts.push(ball(0.048, 10, 8, C, 0, { x: -0.275, y: 0.9, z: 0.15 })); // 手（握卷）
+    parts.push(tube(V(-0.27, 0.86, 0.17), V(-0.27, 1.16, 0.2), 0.04, 0.04, 12, C, 0, true)); // 书卷（下端入手，原先与手之间一道缝）
+    parts.push(tube(V(0.23, sh, 0), V(0.38, sh + 0.14, 0.1), 0.075, 0.085, 12, C));
+    parts.push(ball(0.085, 10, 8, C, 0, { x: 0.38, y: sh + 0.14, z: 0.1 })); // 肘
+    parts.push(tube(V(0.38, sh + 0.14, 0.1), V(0.46, sh + 0.42, 0.2), 0.085, 0.12, 12, C));
+    parts.push(ball(0.05, 10, 8, C, 0, { x: 0.47, y: sh + 0.48, z: 0.22 }));
   } else if (kind === 'wide') {
     // 武将：双手按带，袖摆外张
     for (const s of [-1, 1]) {
-      parts.push(tube(V(s * 0.25, sh, 0), V(s * 0.42, 1.12, 0.04), 0.085, 0.1, 6, C));
-      parts.push(tube(V(s * 0.42, 1.12, 0.04), V(s * 0.22, 0.95, 0.16), 0.1, 0.12, 6, C));
-      parts.push(tube(V(s * 0.4, 1.1, 0.0), V(s * 0.42, 0.8, -0.02), 0.1, 0.15, 6, C)); // 垂袖
+      parts.push(tube(V(s * 0.25, sh, 0), V(s * 0.42, 1.12, 0.04), 0.085, 0.1, 12, C));
+      parts.push(ball(0.1, 10, 8, C, 0, { x: s * 0.42, y: 1.12, z: 0.04 })); // 肘
+      parts.push(tube(V(s * 0.42, 1.12, 0.04), V(s * 0.22, 0.95, 0.16), 0.1, 0.12, 12, C));
+      parts.push(ball(0.05, 10, 8, C, 0, { x: s * 0.2, y: 0.94, z: 0.19 })); // 手按革带
+      parts.push(tube(V(s * 0.4, 1.1, 0.0), V(s * 0.42, 0.8, -0.02), 0.1, 0.15, 12, C)); // 垂袖
     }
-    parts.push(tube(V(0.3, 0.2, 0.25), V(0.3, 1.25, 0.25), 0.025, 0.025, 6, C)); // 仪刀（立于身侧）
+    parts.push(tube(V(0.3, 0.2, 0.25), V(0.3, 1.25, 0.25), 0.025, 0.025, 12, C)); // 仪刀（立于身侧）
   } else {
     // 文臣：双手于胸前执笏，宽袖下垂
     for (const s of [-1, 1]) {
-      parts.push(tube(V(s * 0.23, sh, 0), V(s * 0.27, 1.06, 0.07), 0.075, 0.09, 6, C));
-      parts.push(tube(V(s * 0.27, 1.06, 0.07), V(s * 0.07, 1.12, 0.25), 0.09, 0.13, 6, C));
-      parts.push(tube(V(s * 0.2, 1.1, 0.17), V(s * 0.18, 0.78, 0.15), 0.12, 0.07, 6, C)); // 垂袖
+      parts.push(tube(V(s * 0.23, sh, 0), V(s * 0.27, 1.06, 0.07), 0.075, 0.09, 12, C));
+      parts.push(ball(0.09, 10, 8, C, 0, { x: s * 0.27, y: 1.06, z: 0.07 })); // 肘
+      parts.push(tube(V(s * 0.27, 1.06, 0.07), V(s * 0.07, 1.12, 0.25), 0.09, 0.13, 12, C));
+      parts.push(ball(0.045, 10, 8, C, 0, { x: s * 0.05, y: 1.12, z: 0.27 })); // 手（执笏）
+      parts.push(tube(V(s * 0.2, 1.1, 0.17), V(s * 0.18, 0.78, 0.15), 0.12, 0.07, 12, C)); // 垂袖
     }
     parts.push(B(0.075, 0.38, 0.022, C, 0, { y: 1.3, z: 0.29, rx: -0.22 })); // 笏板
   }
@@ -584,43 +631,43 @@ export function figureGeometry(kind = 'stand') {
 }
 /** 马腿：上段（前臂/大腿）+ 下段（管骨）+ 蹄；a 根部，k 膝/飞节，f 球节 */
 function horseLeg(parts, a, k, f, r = 1) {
-  parts.push(tube(a, k, 0.13 * r, 0.075 * r, 6, C));
-  parts.push(ball(0.075 * r, 6, 4, C, 0, { x: k.x, y: k.y, z: k.z }));
-  parts.push(tube(k, f, 0.06 * r, 0.05 * r, 7, C));
+  parts.push(tube(a, k, 0.13 * r, 0.075 * r, 12, C));
+  parts.push(ball(0.078 * r, 10, 8, C, 0, { x: k.x, y: k.y, z: k.z }));
+  parts.push(tube(k, f, 0.06 * r, 0.05 * r, 12, C));
   const hoofDir = new THREE.Vector3().subVectors(f, k).normalize();
-  parts.push(tube(f, f.clone().addScaledVector(hoofDir, 0.12), 0.055 * r, 0.075 * r, 7, C, 0, true));
+  parts.push(tube(f, f.clone().addScaledVector(hoofDir, 0.12), 0.055 * r, 0.075 * r, 12, C, 0, true));
 }
 /** 骑马像（马身长约 2.6 m、肩高约 1.6 m），骑者着袍、左手执缰右手前指；前左腿抬起作行进状。面朝 +Z */
 export function riderGeometry() {
   const parts = [];
   // 马身：沿 z 的回转体（胸宽臀圆）
-  parts.push(lathe([[0, -1.05], [0.28, -0.96], [0.4, -0.7], [0.42, -0.25], [0.4, 0.2], [0.42, 0.55], [0.36, 0.85], [0.2, 1.0], [0, 1.04]], 14, C, 0, { rx: Math.PI / 2, y: 1.35, sx: 0.82 }));
+  parts.push(lathe([[0, -1.05], [0.28, -0.96], [0.4, -0.7], [0.42, -0.25], [0.4, 0.2], [0.42, 0.55], [0.36, 0.85], [0.2, 1.0], [0, 1.04]], 26, C, 0, { rx: Math.PI / 2, y: 1.35, sx: 0.82 }));
   // 颈、头、耳、鬃
-  parts.push(tube(V(0, 1.5, 0.78), V(0, 2.12, 1.22), 0.3, 0.16, 10, C));
-  parts.push(tube(V(0, 2.18, 1.2), V(0, 1.95, 1.72), 0.15, 0.085, 10, C, 0, true));
-  parts.push(ball(0.15, 8, 6, C, 0, { y: 2.16, z: 1.22, sz: 1.15 }));
-  for (const s of [-1, 1]) parts.push(prep(new THREE.ConeGeometry(0.035, 0.14, 5), C, 0, { x: s * 0.07, y: 2.33, z: 1.2, rx: -0.3 }));
+  parts.push(tube(V(0, 1.5, 0.78), V(0, 2.12, 1.22), 0.3, 0.16, 16, C));
+  parts.push(tube(V(0, 2.18, 1.2), V(0, 1.95, 1.72), 0.15, 0.085, 16, C, 0, true));
+  parts.push(ball(0.15, 14, 10, C, 0, { y: 2.16, z: 1.22, sz: 1.15 }));
+  for (const s of [-1, 1]) parts.push(prep(new THREE.ConeGeometry(0.035, 0.14, 8), C, 0, { x: s * 0.07, y: 2.33, z: 1.2, rx: -0.3 }));
   parts.push(B(0.06, 0.12, 0.62, C, 0, { y: 2.06, z: 1.0, rx: -0.95 }));
   // 腿：前右支撑、前左抬起；后腿飞节向后弯
   horseLeg(parts, V(0.2, 1.15, 0.72), V(0.21, 0.6, 0.76), V(0.21, 0.14, 0.74));
   horseLeg(parts, V(-0.2, 1.15, 0.72), V(-0.21, 0.82, 0.98), V(-0.21, 0.6, 0.88));
   for (const s of [-1, 1]) horseLeg(parts, V(s * 0.22, 1.25, -0.72), V(s * 0.23, 0.68, -0.92), V(s * 0.23, 0.14, -0.8), 1.08);
-  parts.push(tube(V(0, 1.55, -1.0), V(0, 0.85, -1.28), 0.09, 0.05, 7, C)); // 尾
+  parts.push(tube(V(0, 1.55, -1.0), V(0, 0.85, -1.28), 0.09, 0.05, 12, C)); // 尾
   // 鞍、障泥
   parts.push(B(0.86, 0.1, 0.62, C, 0, { y: 1.77, z: 0.02 }));
   for (const s of [-1, 1]) parts.push(B(0.03, 0.42, 0.58, C, 0, { x: s * 0.36, y: 1.5, z: 0.02 }));
   // 骑者
-  parts.push(lathe([[0.2, 1.78], [0.215, 1.9], [0.2, 2.08], [0.23, 2.28], [0.21, 2.4], [0.08, 2.47], [0, 2.48]], 12, C, 0, { sz: 0.78, z: 0.02 }));
+  parts.push(lathe([[0.2, 1.78], [0.215, 1.9], [0.2, 2.08], [0.23, 2.28], [0.21, 2.4], [0.08, 2.47], [0, 2.48]], 22, C, 0, { sz: 0.78, z: 0.02 }));
   for (const s of [-1, 1]) {
-    parts.push(tube(V(s * 0.16, 1.86, 0.02), V(s * 0.4, 1.62, 0.22), 0.12, 0.1, 6, C)); // 大腿（袍裹）
-    parts.push(tube(V(s * 0.4, 1.62, 0.22), V(s * 0.38, 1.12, 0.12), 0.08, 0.06, 6, C)); // 小腿
+    parts.push(tube(V(s * 0.16, 1.86, 0.02), V(s * 0.4, 1.62, 0.22), 0.12, 0.1, 12, C)); // 大腿（袍裹）
+    parts.push(tube(V(s * 0.4, 1.62, 0.22), V(s * 0.38, 1.12, 0.12), 0.08, 0.06, 12, C)); // 小腿
     parts.push(B(0.09, 0.1, 0.22, C, 0, { x: s * 0.38, y: 1.08, z: 0.18 })); // 靴
-    parts.push(tube(V(s * 0.2, 1.84, 0.0), V(s * 0.36, 1.5, -0.12), 0.14, 0.2, 6, C)); // 袍摆垂于马侧
+    parts.push(tube(V(s * 0.2, 1.84, 0.0), V(s * 0.36, 1.5, -0.12), 0.14, 0.2, 12, C)); // 袍摆垂于马侧
   }
-  parts.push(tube(V(-0.22, 2.36, 0.02), V(-0.3, 2.06, 0.22), 0.075, 0.08, 6, C));
-  parts.push(tube(V(-0.3, 2.06, 0.22), V(-0.1, 1.98, 0.48), 0.08, 0.1, 6, C)); // 执缰
-  parts.push(tube(V(0.22, 2.36, 0.02), V(0.38, 2.42, 0.3), 0.075, 0.085, 6, C));
-  parts.push(tube(V(0.38, 2.42, 0.3), V(0.46, 2.55, 0.66), 0.085, 0.1, 6, C)); // 前指
+  parts.push(tube(V(-0.22, 2.36, 0.02), V(-0.3, 2.06, 0.22), 0.075, 0.08, 12, C));
+  parts.push(tube(V(-0.3, 2.06, 0.22), V(-0.1, 1.98, 0.48), 0.08, 0.1, 12, C)); // 执缰
+  parts.push(tube(V(0.22, 2.36, 0.02), V(0.38, 2.42, 0.3), 0.075, 0.085, 12, C));
+  parts.push(tube(V(0.38, 2.42, 0.3), V(0.46, 2.55, 0.66), 0.085, 0.1, 12, C)); // 前指
   parts.push(tube(V(-0.1, 1.98, 0.48), V(0, 2.02, 1.5), 0.012, 0.012, 4, C)); // 缰绳
   headWithFutou(parts, 2.46, { z: 0.02, beard: true });
   return merge(parts);
@@ -628,12 +675,12 @@ export function riderGeometry() {
 /** 骆驼（万国来朝）：双峰、长颈前探、细长腿 */
 export function camelGeometry() {
   const parts = [];
-  parts.push(lathe([[0, -0.95], [0.3, -0.85], [0.44, -0.5], [0.46, 0.1], [0.42, 0.55], [0.26, 0.85], [0, 0.92]], 14, C, 0, { rx: Math.PI / 2, y: 1.6, sx: 0.8 }));
-  for (const z of [0.35, -0.38]) parts.push(lathe([[0.3, 0], [0.26, 0.2], [0.14, 0.38], [0, 0.44]], 10, C, 0, { y: 1.88, z, sx: 0.9, sz: 1.2 }));
+  parts.push(lathe([[0, -0.95], [0.3, -0.85], [0.44, -0.5], [0.46, 0.1], [0.42, 0.55], [0.26, 0.85], [0, 0.92]], 24, C, 0, { rx: Math.PI / 2, y: 1.6, sx: 0.8 }));
+  for (const z of [0.35, -0.38]) parts.push(lathe([[0.3, 0], [0.26, 0.2], [0.14, 0.38], [0, 0.44]], 16, C, 0, { y: 1.88, z, sx: 0.9, sz: 1.2 }));
   parts.push(tube(V(0, 1.65, 0.78), V(0, 1.75, 1.28), 0.24, 0.13, 9, C));
   parts.push(tube(V(0, 1.72, 1.26), V(0, 2.25, 1.42), 0.13, 0.11, 9, C));
   parts.push(tube(V(0, 2.32, 1.38), V(0, 2.2, 1.82), 0.13, 0.08, 9, C, 0, true));
-  parts.push(ball(0.13, 8, 6, C, 0, { y: 2.3, z: 1.4 }));
+  parts.push(ball(0.13, 12, 8, C, 0, { y: 2.3, z: 1.4 }));
   for (const [x, z, kz] of [[-0.22, 0.6, 0.66], [0.22, 0.62, 0.66], [-0.22, -0.65, -0.78], [0.22, -0.65, -0.78]]) horseLeg(parts, V(x, 1.35, z), V(x * 1.05, 0.72, kz), V(x * 1.05, 0.12, z), 0.95);
   parts.push(tube(V(0, 1.75, -0.92), V(0, 1.15, -1.05), 0.05, 0.03, 6, C));
   // 驼囊
@@ -769,5 +816,92 @@ export function reliefMaterial() {
   map.anisotropy = 8;
   const m = new THREE.MeshStandardMaterial({ map, normalMap: nm, normalScale: new THREE.Vector2(1.2, 1.2), roughness: 0.72 });
   m.name = 'datang.relief';
+  return m;
+}
+
+/**
+ * 大唐文化柱柱身浮雕（青铜）：每格一块带边框的浮雕面板（唐人立像 + 卷云），高度图 → 法线贴图，凹处压暗。
+ * CylinderGeometry 的 UV：u 绕一周、v 沿柱高；贴图绕柱 4 格、沿高 6 格。
+ */
+export function columnReliefMaterial() {
+  const W = 256, H = 384;
+  const hc = canvas(W, H), g = hc.getContext('2d');
+  g.fillStyle = '#7a7a7a';
+  g.fillRect(0, 0, W, H);
+  // 面板边框（凸）与面板底（凹）
+  g.fillStyle = '#c8c8c8';
+  g.fillRect(0, 0, W, 14);
+  g.fillRect(0, H - 14, W, 14);
+  g.fillRect(0, 0, 10, H);
+  g.fillRect(W - 10, 0, 10, H);
+  g.fillStyle = '#5a5a5a';
+  g.fillRect(16, 20, W - 32, H - 40);
+  // 卷云（上部）
+  g.strokeStyle = '#b8b8b8';
+  g.lineCap = 'round';
+  g.lineWidth = 9;
+  for (let i = 0; i < 3; i++) {
+    const cx = 50 + i * 78, cy = 70;
+    g.beginPath();
+    for (let t = 0; t <= 1; t += 0.02) {
+      const a = (i % 2 ? 1 : -1) * t * Math.PI * 3, rr = 24 * (1 - t * 0.75);
+      const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.8;
+      t ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.stroke();
+  }
+  // 两个唐人立像（头 + 幞头 + 宽袖袍，凸起，中心更高）
+  const fig = (cx, top, s) => {
+    const grd = (x0, y0, r) => {
+      const gr = g.createRadialGradient(x0, y0, 0, x0, y0, r);
+      gr.addColorStop(0, '#f4f4f4');
+      gr.addColorStop(1, '#a8a8a8');
+      return gr;
+    };
+    g.fillStyle = grd(cx, top + 18 * s, 16 * s);
+    g.beginPath(); g.ellipse(cx, top + 18 * s, 13 * s, 16 * s, 0, 0, 6.3); g.fill(); // 头
+    g.fillStyle = '#d8d8d8';
+    g.fillRect(cx - 22 * s, top + 4 * s, 44 * s, 6 * s); // 幞头展脚
+    g.fillStyle = grd(cx, top + 110 * s, 70 * s);
+    g.beginPath();
+    g.moveTo(cx - 18 * s, top + 36 * s);
+    g.lineTo(cx + 18 * s, top + 36 * s);
+    g.quadraticCurveTo(cx + 48 * s, top + 70 * s, cx + 44 * s, top + 120 * s); // 宽袖
+    g.lineTo(cx + 30 * s, top + 120 * s);
+    g.lineTo(cx + 34 * s, top + 190 * s); // 袍摆
+    g.lineTo(cx - 34 * s, top + 190 * s);
+    g.lineTo(cx - 30 * s, top + 120 * s);
+    g.lineTo(cx - 44 * s, top + 120 * s);
+    g.quadraticCurveTo(cx - 48 * s, top + 70 * s, cx - 18 * s, top + 36 * s);
+    g.fill();
+    g.strokeStyle = '#8a8a8a';
+    g.lineWidth = 2;
+    for (const dx of [-12, 0, 12]) { g.beginPath(); g.moveTo(cx + dx * s, top + 128 * s); g.lineTo(cx + dx * 1.4 * s, top + 186 * s); g.stroke(); } // 衣纹
+  };
+  fig(78, 108, 1.0);
+  fig(178, 118, 0.95);
+  const nm = new THREE.CanvasTexture(heightToNormal(hc, 3.6));
+  nm.wrapS = nm.wrapT = THREE.RepeatWrapping;
+  nm.colorSpace = THREE.NoColorSpace;
+  nm.repeat.set(4, 6);
+  const cc = canvas(W, H), cg = cc.getContext('2d');
+  const src = g.getImageData(0, 0, W, H).data;
+  const img = cg.createImageData(W, H);
+  for (let i = 0; i < src.length; i += 4) {
+    const k = 0.55 + 0.45 * (src[i] / 255);
+    const patina = src[i] < 110 ? 1 : 0; // 凹处略带铜绿
+    img.data[i] = (128 - patina * 22) * k;
+    img.data[i + 1] = (100 - patina * 2) * k;
+    img.data[i + 2] = (70 + patina * 4) * k;
+    img.data[i + 3] = 255;
+  }
+  cg.putImageData(img, 0, 0);
+  const map = new THREE.CanvasTexture(cc);
+  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.repeat.set(4, 6);
+  map.anisotropy = 8;
+  const m = new THREE.MeshStandardMaterial({ map, normalMap: nm, normalScale: new THREE.Vector2(1.4, 1.4), metalness: 0.55, roughness: 0.5 });
+  m.name = 'datang.columnRelief';
   return m;
 }
