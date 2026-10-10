@@ -1656,7 +1656,9 @@ function buildPart(env, R, P) {
     yTop = buildTower(env, spec).top;
   } else if (kind === 'podium') {
     const st = facadeStyle({ pattern: 'retail', ...(part.style || {}) }, part.seed);
-    buildPodium(env, { pts: P.pts, holes: P.holes.length ? P.holes : undefined, h: H, base, style: st, roofMat: part.roofMat ? solidMat(env, part.roofMat) : undefined });
+    // gf：首层商铺（通高橱窗 + 连续雨篷 + 长边正中主入口，见 sky-towers buildPodium）
+    const gf = part.gf ? { h: part.gf.h, style: part.gf.style ? facadeStyle(part.gf.style) : undefined } : undefined;
+    buildPodium(env, { pts: P.pts, holes: P.holes.length ? P.holes : undefined, h: H, base, style: st, gf, mech: part.roof?.mech, roofMat: part.roofMat ? solidMat(env, part.roofMat) : undefined });
     yTop = base + H; // 塔冠从屋面起算（女儿墙 1.2 m 另计）
   } else if (kind === 'solid') {
     const mat = solidMat(env, part.mat || 'stone');

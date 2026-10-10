@@ -276,13 +276,34 @@ export function roofKit(env, rpoly, roofTop, avoid = null, { skylights = false, 
       solid.add(G.box(x, roofTop + 0.6, z, along ? L : W, 1.2, along ? W : L), mats.glassRoof || mats.roof);
       sky.push([x, z, (along ? L : W) / 2 + 3, (along ? W : L) / 2 + 3]);
     }
+    // 屋顶花园：长轴两端各一块种植池（矮挡墙 + 草面），中间一条检修步道
+    const grass = env.ctx?.mats?.get?.('grass');
+    if (grass) for (const f of [0.17, 0.83]) {
+      const x = along ? rb.x0 + rw * f : cx, z = along ? cz : rb.z0 + rd * f;
+      const gw = Math.min(22, (along ? rd : rw) * 0.45), gd = Math.min(12, (along ? rw : rd) * 0.12);
+      if (!G.pointIn(x, z, inner)) continue;
+      const sx = along ? gd : gw, sz = along ? gw : gd;
+      detail.add(G.box(x, roofTop + 0.3, z, sx, 0.6, sz), mats.parapet);
+      detail.add(G.box(x, roofTop + 0.62, z, sx - 0.5, 0.06, sz - 0.5), grass, null, { worldUV: 1 });
+      sky.push([x, z, sx / 2 + 4, sz / 2 + 4]);
+    }
+    detail.add(G.box(cx, roofTop + 0.08, cz, along ? rw * 0.8 : 2.2, 0.16, along ? 2.2 : rd * 0.8), mats.white);
   }
-  const maxN = Math.min(14, Math.floor(area / 320));
-  for (let x = rb.x0 + 7; x < rb.x1 - 4 && k < maxN; x += 14)
-    for (let z = rb.z0 + 7; z < rb.z1 - 4 && k < maxN; z += 14) {
+  // 设备组数：一般屋面每 320 m² 一组、至多 14 组；超大屋面（商场/裙房）每 700 m² 一组、至多 40 组，
+  // 在整片屋面的网格上随机抽样（原先按网格顺序取满即止，大屋面的设备全挤在一侧）
+  const maxN = area > 8000 ? Math.min(40, Math.floor(area / 700)) : Math.min(14, Math.floor(area / 320));
+  const cells = [];
+  for (let x = rb.x0 + 7; x < rb.x1 - 4; x += 14)
+    for (let z = rb.z0 + 7; z < rb.z1 - 4; z += 14) {
       if (avoid && Math.abs(x - avoid[0]) < avoid[2] && Math.abs(z - avoid[1]) < avoid[3]) continue;
       if (sky.some((q) => Math.abs(x - q[0]) < q[2] && Math.abs(z - q[1]) < q[3])) continue;
-      if (!G.pointIn(x, z, inner) || holes.some((h) => G.pointIn(x, z, G.inset(h, -6))) || rnd() < 0.35) continue;
+      if (!G.pointIn(x, z, inner) || holes.some((h) => G.pointIn(x, z, G.inset(h, -6)))) continue;
+      cells.push([x, z]);
+    }
+  const pick = Math.min(0.65, maxN / Math.max(1, cells.length));
+  for (const [x, z] of cells) {
+    {
+      if (k >= maxN || rnd() > pick) continue;
       const t = rnd();
       if (t < 0.35) {
         // 冷却塔（两台并列：方形塔身 + 圆形风筒）
@@ -301,6 +322,7 @@ export function roofKit(env, rpoly, roofTop, avoid = null, { skylights = false, 
       }
       k++;
     }
+  }
 }
 
 /** 轮廓下最低地面高度 */
@@ -501,14 +523,14 @@ export function buildTower(env, spec) {
 }
 
 /** 带洞多边形顶盖（outer CCW，holes 任意方向），朝上，非索引 */
-function capWithHoles(outer, holes, y) {
+function capWithHoles(outer, holes, y, { down = false } = {}) {
   const V = (p) => { const o = []; for (let i = 0; i < p.length; i += 2) o.push(new THREE.Vector2(p[i], p[i + 1])); return o; };
   const contour = V(outer), hv = holes.map(V);
   const tris = THREE.ShapeUtils.triangulateShape(contour, hv);
   const all = contour.concat(...hv), pos = [];
   for (const t of tris) {
     const a = all[t[0]], b = all[t[1]], c = all[t[2]];
-    const up = (b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y) > 0;
+    const up = ((b.y - a.y) * (c.x - a.x) - (b.x - a.x) * (c.y - a.y) > 0) !== down;
     for (const k of up ? [t[0], t[1], t[2]] : [t[0], t[2], t[1]]) pos.push(all[k].x, y, all[k].y);
   }
   const g = new THREE.BufferGeometry();
@@ -523,7 +545,29 @@ export function buildPodium(env, p) {
   const pts = G.ccw(p.pts);
   const base = p.base ?? groundMin(ctx, pts);
   const st = mkStyle({ mode: 6, floorH: 5.5, colW: 3.0, spandrel: 0.3, mullW: 0.18, lit: 0.9, tint: '#3a4650', spd: '#b8b1a4', ...(p.style || {}) });
-  fb.prism(pts, base - 3, base + p.h, st, { vBase: base });
+  if (p.gf) {
+    // 首层商铺（p.gf = {h, style}）：通高橱窗（浅色透亮玻璃、细竖梃）+ 外挑 2.2 m 的连续雨篷，长边正中做主入口（更高的门厅玻璃 + 加厚雨篷）
+    // （原先首层与上层同一立面，小寨赛格临街一整排米色墙板 + 蓝玻璃，没有入口、橱窗与雨篷，人眼高度像仓库，审查 g4 st_xiaozhai）
+    const gh = p.gf.h ?? 6;
+    const gst = mkStyle({ mode: 6, floorH: gh, colW: 4.2, spandrel: 0.1, mullW: 0.2, lit: 1.0, tint: '#6d8290', spd: '#3b3e42', ...(p.gf.style || {}) });
+    fb.prism(pts, base - 3, base + gh, gst, { vBase: base });
+    fb.prism(pts, base + gh, base + p.h, st, { vBase: base + gh });
+    const out = G.inset(pts, -2.2), cw = [];
+    for (let i = pts.length - 2; i >= 0; i -= 2) cw.push(pts[i], pts[i + 1]);
+    solid.add(G.wallGeometry(out, out, base + gh - 0.15, base + gh + 0.4), mats.metal);
+    solid.add(capWithHoles(out, [cw], base + gh + 0.4), mats.metal);
+    solid.add(capWithHoles(out, [cw], base + gh - 0.15, { down: true }), mats.dark); // 雨篷底面只是外圈（不盖住楼内：否则相机推出把整栋楼当成有顶的通道）
+    // 主入口：每条 ≥ 35 m 的边正中 10 m 宽、高出雨篷 3 m 的门厅玻璃 + 门楣
+    const n = pts.length / 2;
+    for (let i = 0; i < n; i++) {
+      const e = edgeInfo(pts, i);
+      if (e.L < 35) continue;
+      const tx = -e.nz, tz = e.nx, w = 5;
+      const ax = e.mx + tx * w + e.nx * 0.35, az = e.mz + tz * w + e.nz * 0.35, bx = e.mx - tx * w + e.nx * 0.35, bz = e.mz - tz * w + e.nz * 0.35;
+      fb.panel(bx, bz, ax, az, base - 0.2, base + gh + 3, mkStyle({ mode: 6, floorH: gh + 3, colW: 2.5, spandrel: 0, mullW: 0.12, lit: 1.0, tint: '#8aa0ad', spd: '#2e3134' }), { vBase: base });
+      detail.add(G.box(e.mx + e.nx * 2.6, base + gh + 3.4, e.mz + e.nz * 2.6, 12, 0.8, 5, Math.atan2(tz, tx)), mats.metal);
+    }
+  } else fb.prism(pts, base - 3, base + p.h, st, { vBase: base });
   const par = 1.2;
   solid.add(G.wallGeometry(pts, pts, base + p.h, base + p.h + par), mats.parapet);
   const inn = G.inset(pts, 0.4);
