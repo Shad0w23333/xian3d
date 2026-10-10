@@ -517,6 +517,8 @@ varying vec3 vPCol;
 varying float vPRough;
 varying float vPEm;
 varying float vPH;
+varying vec3 vPBase; // 静止姿态坐标（基准身高，头部未放大）：片元里画五官、发丝、衣物阴影
+flat varying float vPCode; // 颜色槽 + 16 × 骨骼
 vec3 pRx(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x, v.y * c + v.z * s, -v.y * s + v.z * c); }
 vec3 pRz(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x * c - v.y * s, v.x * s + v.y * c, v.z); }
 vec3 pRy(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x * c + v.z * s, v.y, -v.x * s + v.z * c); }
@@ -549,9 +551,12 @@ void pplSetup() {
     qT = vec2(A * s, -A * s);
     float cl = max(c, 0.0), cr = max(-c, 0.0);
     qK = vec2(A * (0.3 + 2.3 * cl * cl), A * (0.3 + 2.3 * cr * cr)) + 0.04;
-    float Aa = 0.55 * A + 0.02 * mv;
+    // 长外套/裙：步幅略小（下摆兜着腿）
+    if ((msk & ${MASK.COAT}) != 0 || (msk & ${MASK.SKIRT}) != 0) { A *= 0.82; qT = vec2(A * s, -A * s); }
+    // 手臂随步态前后摆（约 ±20°），前摆时肘部多屈一些
+    float Aa = 0.78 * A + 0.03 * mv;
     qU = vec2(-Aa * s, Aa * s) + 0.04;
-    qE = vec2(0.2 + 0.4 * max(qU.x, 0.0), 0.2 + 0.4 * max(qU.y, 0.0)) + 0.12 * mv;
+    qE = vec2(0.18 + 0.75 * max(qU.x, 0.0), 0.18 + 0.75 * max(qU.y, 0.0)) + 0.14 * mv;
     qAbd = vec2(0.055 + 0.06 * (g - 1.0) + 0.03 * fem);
     qBob = (A / 0.4) * (0.022 * cos(2.0 * ph) - 0.012);
     qSway = 0.012 * s * mv;
@@ -637,6 +642,7 @@ void pplPose(inout vec3 p, inout vec3 n) {
   int pm = int(aPart.z + 0.5);
   int slot = int(aPart.y + 0.5);
   int bone = int(aPart.x + 0.5);
+  vPBase = p; vPCode = float(slot) + 16.0 * float(bone);
   if (pm != 0 && (pm & msk) == 0) { p = vec3(0.0); vPCol = vec3(0.0); vPRough = 1.0; vPEm = 0.0; vPH = 0.0; return; }
   float g = iBody.x, fem = iBody.y, old = max(iBody.z, 0.0);
   pplSetup();
@@ -665,14 +671,28 @@ void pplPose(inout vec3 p, inout vec3 n) {
   }
   vPH = y;
   // —— 骨骼：本骨骼与父骨骼按权重混合 ——
-  vec3 p1 = p, n1 = n;
-  pBone(bone, p1, n1);
-  if (aW < 0.999) {
-    vec3 p0 = p, n0 = n;
-    pBone(pParent(bone), p0, n0);
-    p1 = mix(p0, p1, aW); n1 = normalize(mix(n0, n1, aW));
+  if (pm == ${MASK.SKIRT} || pm == ${MASK.COAT}) {
+    // 裙/长外套下摆：左右两半跟各自大腿，正中（前后缘）跟更靠前/更靠后的那条腿——迈步时腿不从下摆前方穿出
+    vec3 pa = p, na = n, pb = p, nb = n, pc = p, nc = n;
+    pBone(3, pa, na); pBone(4, pb, nb); pBone(0, pc, nc);
+    float sideL = smoothstep(-0.07, 0.07, p.x);
+    vec3 t = mix(pb, pa, sideL);
+    vec3 tn = normalize(mix(nb, na, sideL));
+    float cen = 1.0 - smoothstep(0.02, 0.13, abs(p.x));
+    float zx = p.z >= 0.0 ? max(pa.z, pb.z) : min(pa.z, pb.z);
+    t.z = mix(t.z, zx, cen);
+    float w = (pm == ${MASK.COAT} ? 0.95 : 0.85) * smoothstep(0.97, 0.5, y);
+    p = mix(pc, t, w); n = normalize(mix(nc, tn, w));
+  } else {
+    vec3 p1 = p, n1 = n;
+    pBone(bone, p1, n1);
+    if (aW < 0.999) {
+      vec3 p0 = p, n0 = n;
+      pBone(pParent(bone), p0, n0);
+      p1 = mix(p0, p1, aW); n1 = normalize(mix(n0, n1, aW));
+    }
+    p = p1; n = n1;
   }
-  p = p1; n = n1;
   // —— 颜色 ——
   vec3 c;
   float rough = 0.85, em = 0.0;
@@ -698,6 +718,56 @@ void pplPose(inout vec3 p, inout vec3 n) {
 }
 `;
 
+// 片元细节（全部按静止姿态坐标 vPBase 画，远近两级模型通用）：
+//   脸：眼窝阴影、深色眼睛、眉、鼻底阴影、唇色、两颊红润、下颌阴影；头发：发丝明暗 + 发梢略深；
+//   衣物：腋下、领下、袖口内侧、裤裆的环境光遮蔽，躯干侧面略暗——近看不再是一块平涂的“人台”
+const FACE_GLSL = /* glsl */ `
+{
+  vec3 cc = vPCol;
+  float mxc = max(cc.r, max(cc.g, cc.b));
+  cc *= min(1.0, 0.62 / max(mxc, 1e-4));
+  int code = int(vPCode + 0.5);
+  int pslot = code - (code / 16) * 16, pbone = code / 16;
+  vec3 q = vPBase;
+  if (pbone == 2 && pslot == 0) {
+    float front = smoothstep(0.035, 0.07, q.z);
+    float ax = abs(q.x);
+    vec2 e = vec2(ax - 0.031, q.y - 1.597);
+    float sock = 1.0 - smoothstep(0.011, 0.026, length(e * vec2(0.8, 1.35)));
+    float eye = 1.0 - smoothstep(0.0055, 0.0085, length(e * vec2(0.62, 1.5)));
+    float brow = (1.0 - smoothstep(0.013, 0.017, abs(ax - 0.034))) * (1.0 - smoothstep(0.0025, 0.0045, abs(q.y - 1.618 + 0.1 * (ax - 0.034))));
+    float lip = (1.0 - smoothstep(0.014, 0.019, ax)) * (1.0 - smoothstep(0.0035, 0.006, abs(q.y - 1.524)));
+    float nose = (1.0 - smoothstep(0.008, 0.016, ax)) * (1.0 - smoothstep(0.002, 0.008, abs(q.y - 1.545)));
+    float cheek = 1.0 - smoothstep(0.0, 0.026, length(vec2(ax - 0.046, q.y - 1.566)));
+    float jaw = smoothstep(1.53, 1.495, q.y) * (0.4 + 0.6 * smoothstep(0.02, 0.06, ax));
+    cc *= 1.0 - 0.3 * sock * front;
+    cc = mix(cc, vec3(0.018, 0.014, 0.012), eye * front);
+    cc = mix(cc, cc * 0.32, brow * front);
+    cc = mix(cc, cc * vec3(0.9, 0.52, 0.5), lip * front);
+    cc *= 1.0 - 0.22 * nose * front;
+    cc = mix(cc, cc * vec3(1.06, 0.88, 0.86), cheek * front * 0.6);
+    cc *= 1.0 - 0.2 * jaw;
+  } else if (pslot == 1) {
+    float ang = atan(q.x, q.z + 0.02);
+    float strand = 0.5 + 0.5 * sin(ang * 46.0 + q.y * 9.0);
+    cc *= (0.8 + 0.28 * strand) * (0.85 + 0.15 * smoothstep(1.45, 1.66, q.y));
+  } else if (pslot == 2 || pslot == 3 || pslot == 4 || pslot == 8) {
+    float ao = 0.0;
+    float ax = abs(q.x);
+    // 腋下（躯干侧面挨着上臂处）与上臂内侧
+    if (pbone <= 1) ao += 0.3 * smoothstep(0.13, 0.17, ax) * smoothstep(1.02, 1.2, q.y) * (1.0 - smoothstep(1.3, 1.38, q.y));
+    if (pbone == 7 || pbone == 8) ao += 0.22 * smoothstep(0.205, 0.17, ax) * smoothstep(1.4, 1.25, q.y);
+    // 领下、腰带下沿、裆部
+    if (pbone <= 1) ao += 0.22 * smoothstep(1.39, 1.43, q.y) * (1.0 - smoothstep(0.06, 0.1, ax));
+    if (pbone <= 1) ao += 0.12 * (1.0 - smoothstep(0.86, 0.9, q.y)) * smoothstep(0.82, 0.86, q.y);
+    if (pbone >= 3 && pbone <= 6) ao += 0.25 * smoothstep(0.06, 0.035, ax) * smoothstep(0.7, 0.86, q.y);
+    // 袖口、裤脚内侧
+    if (pbone >= 9) ao += 0.15 * smoothstep(0.9, 0.85, q.y);
+    cc *= 1.0 - min(ao, 0.45);
+  }
+  diffuseColor.rgb = cc;
+}
+`;
 const uLitShared = { value: 0 };
 /**
  * 人形材质（MeshStandardMaterial + 顶点骨骼）。夜间“路灯/店面补光”强度 = setPeopleLit(v)（全局共享）。
@@ -713,9 +783,9 @@ export function peopleMaterial(ctx) {
       .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3(normal);\nvec3 pplP = vec3(position);\npplPose(pplP, objectNormal);')
       .replace('#include <begin_vertex>', 'vec3 transformed = pplP;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uLit;\nuniform float uNightP;\nvarying vec3 vPCol;\nvarying float vPRough;\nvarying float vPEm;\nvarying float vPH;')
-      // 衣物反照率上限 0.62（白衣在近处点光源下不过曝）
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = min(vPCol, vec3(0.62));')
+      .replace('#include <common>', '#include <common>\nuniform float uLit;\nuniform float uNightP;\nvarying vec3 vPCol;\nvarying float vPRough;\nvarying float vPEm;\nvarying float vPH;\nvarying vec3 vPBase;\nflat varying float vPCode;')
+      // 反照率上限 0.62（白衣在近处点光源下不过曝）：按最大分量等比缩放、保持色相（原先逐通道截断把肤色的红削掉，脸发灰发绿）
+      .replace('#include <color_fragment>', '#include <color_fragment>\n' + FACE_GLSL)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = vPRough;')
       .replace(
         '#include <emissivemap_fragment>',
@@ -724,7 +794,7 @@ export function peopleMaterial(ctx) {
         totalEmissiveRadiance += vPEm * vec3(0.55, 0.7, 1.0) * (0.15 + 1.6 * uNightP);`
       );
   };
-  mat.customProgramCacheKey = () => 'xianPeople|v1';
+  mat.customProgramCacheKey = () => 'xianPeople|v2';
   return mat;
 }
 /** 阴影深度材质（同样的姿态） */
