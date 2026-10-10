@@ -361,7 +361,7 @@ export default {
       for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 4, pos.getZ(i) / 4);
       lawnBatch.add(g, grassMat);
     }
-    for (const m of lawnBatch.build({ castShadow: false, receiveShadow: true, name: '草坪' }).group.children) {
+    for (const m of [...lawnBatch.build({ castShadow: false, receiveShadow: true, name: '草坪' }).group.children]) {
       m.name = '草坪';
       root.add(m);
     }
