@@ -126,6 +126,33 @@ export class GeoWriter {
       if (top) this.tri([cx, y0 + h, cz], q1, q0, col);
     }
   }
+  /** 竖直旋转体（树干：根部外扩 + 锥台），rings = [[y, r], ...] 自下而上，无顶无底，法线朝外 */
+  lathe(cx, cz, rings, col, seg = 6, a0 = 0) {
+    for (let k = 0; k + 1 < rings.length; k++) {
+      const [ya, ra] = rings[k], [yb, rb] = rings[k + 1];
+      for (let i = 0; i < seg; i++) {
+        const t0 = a0 + (i / seg) * Math.PI * 2, t1 = a0 + ((i + 1) / seg) * Math.PI * 2;
+        const c0 = Math.cos(t0), s0 = Math.sin(t0), c1 = Math.cos(t1), s1 = Math.sin(t1);
+        this.quad([cx + c1 * ra, ya, cz + s1 * ra], [cx + c0 * ra, ya, cz + s0 * ra], [cx + c0 * rb, yb, cz + s0 * rb], [cx + c1 * rb, yb, cz + s1 * rb], col);
+      }
+    }
+  }
+  /** 两点之间的锥管（局部坐标，半径 ra → rb，seg 边，无端面）：树枝 */
+  tube(a, b, ra, rb, col, seg = 5) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+    const L = Math.hypot(dx, dy, dz) || 1;
+    const t = [dx / L, dy / L, dz / L];
+    const ref = Math.abs(t[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    let u = [t[1] * ref[2] - t[2] * ref[1], t[2] * ref[0] - t[0] * ref[2], t[0] * ref[1] - t[1] * ref[0]];
+    const ul = Math.hypot(u[0], u[1], u[2]) || 1;
+    u = [u[0] / ul, u[1] / ul, u[2] / ul];
+    const v = [t[1] * u[2] - t[2] * u[1], t[2] * u[0] - t[0] * u[2], t[0] * u[1] - t[1] * u[0]];
+    const P = (p, r, k) => {
+      const an = (k / seg) * Math.PI * 2, c = Math.cos(an) * r, s = Math.sin(an) * r;
+      return [p[0] + u[0] * c + v[0] * s, p[1] + u[1] * c + v[1] * s, p[2] + u[2] * c + v[2] * s];
+    };
+    for (let k = 0; k < seg; k++) this.quad(P(a, ra, k), P(a, ra, k + 1), P(b, rb, k + 1), P(b, rb, k), col);
+  }
   /** 两点之间的方截面杆（宽 w），用于钢管/横梁（比圆管省面） */
   bar(a, b, w, col, h = w) {
     const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
@@ -710,33 +737,113 @@ export function clothesLine(S, L, seed = 0) {
 }
 
 /**
- * 树冠叶簇贴图（Canvas，256²，带透明）：几百片椭圆叶片，中心密、边缘疏，几种绿色深浅；alpha 测试裁边
+ * 树冠/灌木球叶簇贴图（512²）：七八个“叶团”拼成不规则外轮廓，每团先铺一块实心暗绿底（远处 mip 平均后 alphaTest 不至于
+ * 把树冠吃空），再密铺小叶片（长 7~14 px：3.5 m 宽的小乔木树冠上约 5~10 cm，6 m 宽的大树冠叶团上约 8~16 cm）；
+ * 叶团左上受光、右下背光，整体下半部压暗（自阴影），边缘留零星透光的叶隙。
+ * （原先 256² 上 1400 片 10~28 px 的大叶片，单片 20~40 cm，人眼高度看像一团贴纸，审查 st_res_street）
  */
 export function leafTexture() {
-  const S = 256;
+  const S = 512;
   const cv = document.createElement('canvas');
   cv.width = S;
   cv.height = S;
   const g = cv.getContext('2d');
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const cols = ['#2f4f22', '#3b5f2a', '#466d31', '#55793a', '#2a4520', '#647f40'];
-  for (let i = 0; i < 1400; i++) {
-    // 极坐标采样：半径按 sqrt 分布再收一点，边缘稀疏
-    const a = rnd() * Math.PI * 2, r = Math.pow(rnd(), 0.65) * S * 0.47;
-    const x = S / 2 + Math.cos(a) * r, y = S / 2 + Math.sin(a) * r * 0.92;
-    const sz = 5 + rnd() * 9;
-    g.fillStyle = cols[Math.floor(rnd() * cols.length)];
-    // 下半部偏暗（自阴影）
-    g.globalAlpha = 1;
+  const lit = ['#5f8240', '#6d8f48', '#7a9a50', '#577a3a'];
+  const mid = ['#3f6129', '#47692e', '#4f7233', '#3a5a26'];
+  const shade = ['#2a451d', '#2f4c20', '#243d19', '#33521f'];
+  // 叶团：中心一团 + 外圈 7 团（半径 0.30~0.36 S 的环上），团半径 0.17~0.23 S
+  const lobes = [[S / 2, S / 2 + 6, S * 0.24]];
+  for (let k = 0; k < 7; k++) {
+    const a = (k / 7) * Math.PI * 2 + rnd() * 0.5, rr = S * (0.25 + rnd() * 0.06);
+    lobes.push([S / 2 + Math.cos(a) * rr, S / 2 + Math.sin(a) * rr * 0.9, S * (0.15 + rnd() * 0.05)]);
+  }
+  // 实心底
+  for (const [x, y, r] of lobes) {
+    g.fillStyle = '#2c4820';
+    g.beginPath();
+    g.arc(x, y, r * 0.84, 0, Math.PI * 2);
+    g.fill();
+  }
+  // 叶片：逐团密铺，团内按相对受光方向（左上亮、右下暗）选色
+  for (const [x0, y0, r0] of lobes) {
+    const n = Math.round(r0 * r0 * 0.12);
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * Math.PI * 2, rr = Math.pow(rnd(), 0.6) * r0;
+      const x = x0 + Math.cos(a) * rr, y = y0 + Math.sin(a) * rr;
+      const lum = (-(x - x0) - (y - y0)) / (r0 * 1.414) + (y < S * 0.45 ? 0.25 : y > S * 0.62 ? -0.35 : 0) + (rnd() - 0.5) * 0.6;
+      const pal = lum > 0.3 ? lit : lum > -0.25 ? mid : shade;
+      g.fillStyle = pal[Math.floor(rnd() * pal.length)];
+      const sz = 3.5 + rnd() * 3.2;
+      g.save();
+      g.translate(x, y);
+      g.rotate(rnd() * Math.PI);
+      g.beginPath();
+      g.ellipse(0, 0, sz, sz * 0.48, 0, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+    }
+  }
+  // 叶隙：外缘随机抠掉少量小洞（透出天空）
+  g.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < 160; i++) {
+    const a = rnd() * Math.PI * 2, rr = S * (0.3 + rnd() * 0.16);
+    g.beginPath();
+    g.arc(S / 2 + Math.cos(a) * rr, S / 2 + Math.sin(a) * rr, 2 + rnd() * 4, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.globalCompositeOperation = 'source-over';
+  return cv;
+}
+
+/**
+ * 花丛贴图（256²）：一丛半球形的低矮花丛侧影——下部密实的深绿叶片，上半部点缀花朵。
+ * 花朵画成近白色（R、B 都高），着色器据此把花朵换成实例色（月季红/萱草黄/鼠尾草紫/白晶菊/矮牵牛粉），叶片保持绿色。
+ */
+export function flowerTexture() {
+  const S = 256;
+  const cv = document.createElement('canvas');
+  cv.width = S;
+  cv.height = S;
+  const g = cv.getContext('2d');
+  let seed = 31;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // 叶丛：底边平、上沿呈拱形（半椭圆）
+  const inMound = (x, y) => { const dx = (x - S / 2) / (S * 0.48), dy = (S * 0.96 - y) / (S * 0.62); return y <= S * 0.98 && dx * dx + dy * dy <= 1; };
+  g.fillStyle = '#25401b';
+  g.beginPath();
+  g.ellipse(S / 2, S * 0.96, S * 0.44, S * 0.56, 0, Math.PI, Math.PI * 2);
+  g.fill();
+  const leaf = ['#2f5222', '#3a6128', '#46702f', '#2a481e'];
+  for (let i = 0; i < 1500; i++) {
+    const x = rnd() * S, y = S * 0.3 + rnd() * S * 0.68;
+    if (!inMound(x, y)) continue;
+    g.fillStyle = leaf[Math.floor(rnd() * leaf.length)];
     g.save();
     g.translate(x, y);
-    g.rotate(rnd() * Math.PI);
+    g.rotate(-0.8 + rnd() * 1.6);
     g.beginPath();
-    g.ellipse(0, 0, sz, sz * 0.45, 0, 0, Math.PI * 2);
+    g.ellipse(0, 0, 2.5 + rnd() * 2.5, 1.2 + rnd(), 0, 0, Math.PI * 2);
     g.fill();
-    if (y > S * 0.55) { g.fillStyle = 'rgba(0,0,0,0.18)'; g.fill(); }
     g.restore();
+  }
+  // 花朵：集中在上半部，五瓣小花（近白，中心略暗）
+  for (let i = 0; i < 260; i++) {
+    const x = rnd() * S, y = S * 0.36 + Math.pow(rnd(), 1.6) * S * 0.5;
+    if (!inMound(x, y + 6)) continue;
+    const r = 3 + rnd() * 3.2;
+    g.fillStyle = rnd() < 0.5 ? '#f4f2f0' : '#e2e0de';
+    for (let p = 0; p < 5; p++) {
+      const a = (p / 5) * Math.PI * 2 + rnd();
+      g.beginPath();
+      g.arc(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.5, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.fillStyle = '#b8b6b4';
+    g.beginPath();
+    g.arc(x, y, r * 0.28, 0, Math.PI * 2);
+    g.fill();
   }
   return cv;
 }
@@ -758,49 +865,81 @@ export function carNear() {
   const prof = [[2.3, 0.28], [2.33, 0.72], [1.1, 0.92], [0.3, 1.42], [-1.0, 1.44], [-1.85, 0.98], [-2.3, 0.88], [-2.3, 0.28]];
   const body = [1, 1, 1];
   const n = prof.length;
-  // 两侧面（扇形三角化，凸多边形）
+  // 两侧面：剖面在引擎盖与前挡交界处是凹的，从车头角点扇形三角化会翻出一片反面三角形，
+  // 改为从剖面内部一点（z 0、y 0.8，剖面对它星形可见）扇形三角化
   for (const sx of [-1, 1]) {
-    const x = sx * hw;
-    for (let i = 1; i + 1 < n; i++) {
-      const a = [x, prof[0][1], prof[0][0]], b = [x, prof[i][1], prof[i][0]], c = [x, prof[i + 1][1], prof[i + 1][0]];
-      if (sx > 0) W.tri(a, c, b, body); else W.tri(a, b, c, body);
+    const x = sx * hw, c0 = [x, 0.8, 0];
+    for (let i = 0; i < n; i++) {
+      const b = [x, prof[i][1], prof[i][0]], c = [x, prof[(i + 1) % n][1], prof[(i + 1) % n][0]];
+      if (sx > 0) W.tri(c0, c, b, body); else W.tri(c0, b, c, body);
     }
   }
-  // 周边面（顶、前、后），车顶两侧略内收
+  // 周边面（顶、前、后），车顶两侧略内收。剖面按“车头下沿 → 车顶 → 车尾下沿”走，左 → 右的顶点顺序法线才朝外
+  // （原先右 → 左，顶/前/后全部朝内被背面剔除，40 m 俯看只剩侧板和车轮，审查 g4/g5 P0）
   const inset = (y) => (y > 1.0 ? 0.12 : 0);
   for (let i = 0; i < n; i++) {
     const p = prof[i], q = prof[(i + 1) % n];
     if (i === n - 1) continue; // 底面不画
     const ia = inset(p[1]), ib = inset(q[1]);
     const glass = i === 2 || i === 4; // 前挡 / 后窗
-    W.quad([hw - ia, p[1], p[0]], [-hw + ia, p[1], p[0]], [-hw + ib, q[1], q[0]], [hw - ib, q[1], q[0]], glass ? C('#151b1f') : body);
+    W.quad([-hw + ia, p[1], p[0]], [hw - ia, p[1], p[0]], [hw - ib, q[1], q[0]], [-hw + ib, q[1], q[0]], glass ? C('#151b1f') : body);
   }
-  // 侧窗（贴在侧面外 1 cm）
+  // 侧窗（贴在侧面外 1 cm，法线朝车外）
   for (const sx of [-1, 1]) {
     const x = sx * (hw + 0.01);
     const a = [x, 0.98, 1.0], b = [x, 0.98, -1.75], c = [x, 1.36, -0.95], d = [x, 1.36, 0.3];
-    if (sx > 0) W.quad(b, a, d, c, C('#151b1f')); else W.quad(a, b, c, d, C('#151b1f'));
+    if (sx > 0) W.quad(a, b, c, d, C('#151b1f')); else W.quad(b, a, d, c, C('#151b1f'));
   }
   // 车灯
   for (const sx of [-1, 1]) {
     W.quad([sx * 0.55 - 0.18, 0.62, 2.335], [sx * 0.55 + 0.18, 0.62, 2.335], [sx * 0.55 + 0.18, 0.72, 2.335], [sx * 0.55 - 0.18, 0.72, 2.335], C('#d8dde0', 0.9));
     W.quad([sx * 0.6 + 0.16, 0.7, -2.305], [sx * 0.6 - 0.16, 0.7, -2.305], [sx * 0.6 - 0.16, 0.82, -2.305], [sx * 0.6 + 0.16, 0.82, -2.305], C('#7a1010'));
   }
-  // 车轮（六棱柱，轴向 x）
+  // 车轮（六棱柱，轴向 x；胎面法线沿径向朝外；外侧一片扇形轮辋。每轮 18 个三角形——
+  // 小区里近景车成百上千辆，轮子是三角形大头）
   for (const z of [1.42, -1.38])
     for (const sx of [-1, 1]) {
       const r = 0.33, cy = 0.33, x0 = sx * (hw - 0.2), x1 = sx * (hw + 0.005);
-      for (let k = 0; k < 6; k++) {
-        const a0 = (k / 6) * Math.PI * 2, a1 = ((k + 1) / 6) * Math.PI * 2;
+      const SEG = 6, xo = x1 + sx * 0.003;
+      for (let k = 0; k < SEG; k++) {
+        const a0 = ((k + 0.5) / SEG) * Math.PI * 2, a1 = ((k + 1.5) / SEG) * Math.PI * 2;
         const p0 = [cy + Math.sin(a0) * r, z + Math.cos(a0) * r], p1 = [cy + Math.sin(a1) * r, z + Math.cos(a1) * r];
-        W.quad([x0, p0[0], p0[1]], [x0, p1[0], p1[1]], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#141414'));
-        if (sx > 0) W.tri([x1, cy, z], [x1, p0[0], p0[1]], [x1, p1[0], p1[1]], C('#2a2a2a'));
-        else W.tri([x1, cy, z], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#2a2a2a'));
+        if (sx > 0) {
+          W.quad([x1, p0[0], p0[1]], [x1, p1[0], p1[1]], [x0, p1[0], p1[1]], [x0, p0[0], p0[1]], C('#141414'));
+          W.tri([xo, cy, z], [xo, p1[0], p1[1]], [xo, p0[0], p0[1]], C('#3b3d3f'));
+        } else {
+          W.quad([x0, p0[0], p0[1]], [x0, p1[0], p1[1]], [x1, p1[0], p1[1]], [x1, p0[0], p0[1]], C('#141414'));
+          W.tri([xo, cy, z], [xo, p0[0], p0[1]], [xo, p1[0], p1[1]], C('#3b3d3f'));
+        }
       }
     }
-  // 接触阴影（底面略高于地面的暗色片）
-  W.quad([hw, 0.02, 2.3], [-hw, 0.02, 2.3], [-hw, 0.02, -2.3], [hw, 0.02, -2.3], C('#050505'));
+  // 接触阴影（略高于地面的朝上暗色片，比车身略小）
+  W.quad([-hw + 0.05, 0.02, 2.2], [hw - 0.05, 0.02, 2.2], [hw - 0.05, 0.02, -2.2], [-hw + 0.05, 0.02, -2.2], C('#050505'));
   return W.geometry();
+}
+
+/**
+ * 自检：每个三角形的法线与“面心 − 部件中心”同向（车身取车体中轴、车轮取轮心）；返回朝内的三角形数。
+ * 用于 node 单元检查（tools/check_compound_car.mjs），渲染时不调用。
+ */
+export function checkCarWinding(geo) {
+  const P = geo.attributes.position.array;
+  let bad = 0;
+  for (let i = 0; i < P.length; i += 9) {
+    const ax = P[i], ay = P[i + 1], az = P[i + 2], bx = P[i + 3], by = P[i + 4], bz = P[i + 5], cx = P[i + 6], cy = P[i + 7], cz = P[i + 8];
+    const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az;
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const mx = (ax + bx + cx) / 3, my = (ay + by + cy) / 3, mz = (az + bz + cz) / 3;
+    const L = Math.hypot(nx, ny, nz) || 1;
+    let ox, oy, oz;
+    if (Math.abs(nx) / L > 0.9) { ox = 0; oy = my; oz = mz; } // 侧板/侧窗/轮毂盖：朝车外（x 与面心同号）
+    else if (my < 0.7 && Math.abs(mx) > 0.68 && (Math.abs(mz - 1.42) < 0.4 || Math.abs(mz + 1.38) < 0.4)) {
+      ox = mx; oy = 0.33; oz = Math.abs(mz - 1.42) < 0.4 ? 1.42 : -1.38; // 胎面：沿径向朝外
+    } else if (my < 0.05) { ox = mx; oy = -1; oz = mz; } // 接触阴影片：朝上
+    else { ox = 0; oy = 0.6; oz = mz * 0.5; } // 车身：剖面对 (y 0.6, z 0.5·z) 星形
+    if (nx * (mx - ox) + ny * (my - oy) + nz * (mz - oz) <= 0) bad++;
+  }
+  return bad;
 }
 
 /** 远景停放车（约 18 面）：车身盒 + 座舱盒 */

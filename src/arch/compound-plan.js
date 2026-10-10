@@ -96,6 +96,24 @@ function segHitsBox(ax, az, bx, bz, x0, x1, z0, z1) {
 }
 
 /**
+ * 两个旋转矩形是否相交（分离轴）：中心 (x,y)、长轴单位向量 (dx,dy)、半长 h1（沿长轴）、半宽 h2（沿法向）
+ */
+export function obbObb(ax, ay, adx, ady, ah1, ah2, bx, by, bdx, bdy, bh1, bh2) {
+  const tx = bx - ax, ty = by - ay;
+  for (let k = 0; k < 4; k++) {
+    const nx = k === 0 ? adx : k === 1 ? -ady : k === 2 ? bdx : -bdy, ny = k === 0 ? ady : k === 1 ? adx : k === 2 ? bdy : bdx;
+    const ra = ah1 * Math.abs(adx * nx + ady * ny) + ah2 * Math.abs(-ady * nx + adx * ny);
+    const rb = bh1 * Math.abs(bdx * nx + bdy * ny) + bh2 * Math.abs(-bdy * nx + bdx * ny);
+    if (Math.abs(tx * nx + ty * ny) > ra + rb) return false;
+  }
+  return true;
+}
+/** 旋转矩形与轴对齐矩形 [u0,u1]×[v0,v1] 是否相交 */
+export function obbRect(cx, cy, dx, dy, h1, h2, u0, u1, v0, v1) {
+  return obbObb(cx, cy, dx, dy, h1, h2, (u0 + u1) / 2, (v0 + v1) / 2, 1, 0, (u1 - u0) / 2, (v1 - v0) / 2);
+}
+
+/**
  * 最小面积外接矩形（凸包 + 逐边旋转）：返回 {cx, cz, ang, L, B}，ang 为长边方向（弧度，世界 x 轴起、朝 +z 为正）
  */
 export function minRect(p) {
@@ -226,6 +244,7 @@ const NEW_VILLAGE = /新村$|[一二三四五六七八九十\d]村$/; // “XX�
 const SCHOOL_KG = /幼儿园|托儿所/;
 const SCHOOL = /小学|中学|学校|附中|附小|实验|职业|技工/;
 const INST = /医院|卫生|研究|设计院|疗养|门诊|保健/;
+const GENERIC = /^(社区|小区|家属|住宅|住宅区|居民区|居住区|家属院|宿舍|新村|生活区|村)$/;
 
 /**
  * 全城规划。
@@ -431,6 +450,32 @@ export function* planIter(input) {
   const photoGates = [];
   for (const e of input.estates?.estates || []) if (e.gate && e.gate.x != null) photoGates.push(e.gate);
 
+  // —— 4b. 高德住宅小区（public/data/local/compounds_amap.json，tools/build_compounds_amap.py 生成；可缺省）：
+  //        小区 POI 点落在哪个多边形里就归哪个（取最小的；落不进任何多边形时按出入口点、再按 25 m 内最近边界），
+  //        规划时大门放到出入口最近的围墙边、门头写高德小区名 ——
+  stats.amap = 0;
+  stats.amapGates = 0;
+  for (const it of input.amap?.items || []) {
+    if (!it || !it.n || !Number.isFinite(it.x) || !Number.isFinite(it.z)) continue;
+    const pickPoly = (x, z, tol) => {
+      let best = -1, bestA = Infinity;
+      polyGrid.each(x - tol, z - tol, x + tol, z + tol, (i) => {
+        const p = polys[i];
+        if (p.area >= bestA || x < p.bb[0] - tol || x > p.bb[2] + tol || z < p.bb[1] - tol || z > p.bb[3] + tol) return;
+        if (tol ? ringDist(x, z, p.ring) > tol && !pip(x, z, p.ring) : !pip(x, z, p.ring)) return;
+        best = i;
+        bestA = p.area;
+      });
+      return best;
+    };
+    let pi = pickPoly(it.x, it.z, 0);
+    if (pi < 0 && Number.isFinite(it.ex)) pi = pickPoly(it.ex, it.ez, 0);
+    if (pi < 0) pi = pickPoly(it.x, it.z, 25);
+    if (pi < 0) continue;
+    (polys[pi].amap || (polys[pi].amap = [])).push(it);
+    stats.amap++;
+  }
+
   // —— 5. 逐小区规划 ——
   const list = [];
   const ctx = { B, bbx, bgrid, owner, rsegs, rgrid, roads, flen, polys, polyGrid, photoGates, stats, excluded, sports, sgrid, luGrid, luBB, otherLU };
@@ -534,6 +579,18 @@ class RectIndex {
     }
     return false;
   }
+  /** 旋转矩形（中心、长轴单位向量、半长、半宽）是否与任何已登记矩形（按 clear[type] 外扩）相交 */
+  hitObb(cu, cv, dx, dy, h1, h2, clear) {
+    const eu = Math.abs(dx) * h1 + Math.abs(dy) * h2, ev = Math.abs(dy) * h1 + Math.abs(dx) * h2;
+    const n = this.gather(cu - eu, cu + eu, cv - ev, cv + ev, 3.5), r = this.r, cand = this.cand;
+    for (let k = 0; k < n; k++) {
+      const o = cand[k] * 5;
+      const c = clear[r[o + 4]];
+      if (!(c > -50)) continue;
+      if (obbRect(cu, cv, dx, dy, h1, h2, r[o] - c, r[o + 1] + c, r[o + 2] - c, r[o + 3] + c)) return true;
+    }
+    return false;
+  }
   /** 与矩形相交的指定类型（位掩码）矩形中最小的 v0（无则 Infinity） */
   minV(u0, u1, v0, v1, mask) {
     const n = this.gather(u0, u1, v0, v1, 0), r = this.r, cand = this.cand;
@@ -608,17 +665,20 @@ function planOne(G, P, pid) {
   let nEx = 0;
   for (const b of own) if (G.excluded(B.ax[b], B.az[b])) nEx++;
   if (nEx > own.length * 0.4 || G.excluded(cx, cz)) { G.stats.skipExcl++; return null; }
-  // 城中村：自建房占多数
-  let nVil = 0, nMain = 0, eraSum = 0, eraN = 0;
+  // 城中村：自建房（及低层）按占地面积占多数。原先按栋数计，老小区里大量两层的车库/锅炉房/门面房把比例拉过半，
+  // 整片 4~6 层板楼小区被当成城中村跳过（浐灞 109.025,34.298 一带，审查 g1）
+  let aVil = 0, aAll = 0, nMain = 0, eraSum = 0, eraN = 0;
   const hs = [];
   for (const b of own) {
     const st = B.style ? B.style[b] : 0;
-    if (st >> 4 === 4 || st >> 4 === 3) nVil++;
+    const fa = (bbx[b * 4 + 2] - bbx[b * 4]) * (bbx[b * 4 + 3] - bbx[b * 4 + 1]);
+    aAll += fa;
+    if (st >> 4 === 4 || st >> 4 === 3) aVil += fa;
     const h = B.hd[b] * 0.1;
     if (h >= 6) { nMain++; hs.push(h); }
     if ((st & 15) > 0 && h >= 6) { eraSum += st & 15; eraN++; }
   }
-  if (P.k === 'residential' && nVil > own.length * 0.5) { G.stats.skipVillage++; return null; }
+  if (P.k === 'residential' && aVil > aAll * 0.5) { G.stats.skipVillage++; return null; }
   if (!nMain) { G.stats.skipEmpty++; return null; }
   hs.sort((a, b) => a - b);
   const medH = hs[hs.length >> 1];
@@ -1149,8 +1209,57 @@ function planOne(G, P, pid) {
     gc.push({ u, v, du, dv, w: LW, score: 20, osm: false, photo: true, conn: null });
   }
   gc.sort((a, b) => b.score - a.score);
+  // 高德出入口（navi.entr_location）：大门放到出入口最近的边界点，门头写高德小区名；同一处 20 m 内只开一个门。
+  // 边界接近坐标轴（偏离 ≤ 37°）时吸附到轴向，沿轴向内找最近车行道接一段门前车道；斜边按边界法线开门、不接车道
+  const amapGates = [];
+  if (P.amap && P.k !== 'cluster') {
+    for (const it of P.amap) {
+      if (!Number.isFinite(it.ex) || it.k === 'dorm') continue;
+      const ue = toU(it.ex, it.ez), ve = toV(it.ex, it.ez);
+      let bd = Infinity, bu = 0, bv = 0, ei = -1;
+      for (let i = 0, k = nE - 1; i < nE; k = i++) {
+        const ua = rf[k * 2], va = rf[k * 2 + 1], du = rf[i * 2] - ua, dv = rf[i * 2 + 1] - va, l2 = du * du + dv * dv || 1e-9;
+        let t = ((ue - ua) * du + (ve - va) * dv) / l2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const pu = ua + du * t, pv = va + dv * t, d = Math.hypot(pu - ue, pv - ve);
+        if (d < bd) { bd = d; bu = pu; bv = pv; ei = i; }
+      }
+      if (bd > 45 || ei < 0) continue;
+      if (amapGates.some((g) => Math.hypot(g.u - bu, g.v - bv) < 20)) continue;
+      const k = (ei + nE - 1) % nE;
+      const L = Math.hypot(rf[ei * 2] - rf[k * 2], rf[ei * 2 + 1] - rf[k * 2 + 1]) || 1;
+      let nu = -(rf[ei * 2 + 1] - rf[k * 2 + 1]) / L, nv = (rf[ei * 2] - rf[k * 2]) / L;
+      if (!inside(bu + nu * 2.5, bv + nv * 2.5)) { nu = -nu; nv = -nv; }
+      let du = nu, dv = nv, conn = null;
+      if (Math.abs(nu) > 0.8 || Math.abs(nv) > 0.8) {
+        if (Math.abs(nu) > Math.abs(nv)) { du = Math.sign(nu); dv = 0; } else { du = 0; dv = Math.sign(nv); }
+        let reach = -1;
+        for (let d = 2; d <= 70; d += 2) {
+          const pa = d - 2, pb = d;
+          let u0, u1, v0, v1;
+          if (du) { const a = bu + du * pa, b = bu + du * pb; u0 = Math.min(a, b); u1 = Math.max(a, b); v0 = bv - LW / 2; v1 = bv + LW / 2; }
+          else { const a = bv + dv * pa, b = bv + dv * pb; v0 = Math.min(a, b); v1 = Math.max(a, b); u0 = bu - LW / 2; u1 = bu + LW / 2; }
+          if (idx.first(u0, u1, v0, v1, S_LANE) >= 0) { reach = d; break; }
+          if (idx.hit(u0, u1, v0, v1, CL_APP)) break;
+          if (d > 6 && !inside((u0 + u1) / 2, (v0 + v1) / 2)) break;
+        }
+        if (reach > 0) conn = du ? [Math.min(bu, bu + du * reach), Math.max(bu, bu + du * reach), bv - LW / 2, bv + LW / 2] : [bu - LW / 2, bu + LW / 2, Math.min(bv, bv + dv * reach), Math.max(bv, bv + dv * reach)];
+      }
+      amapGates.push({ u: bu, v: bv, du, dv, w: LW, conn, name: it.n });
+    }
+  }
+  for (const c of amapGates.slice(0, 4)) {
+    if (c.conn) {
+      const r = c.conn;
+      if (!idx.hit(r[0], r[1], r[2], r[3], CLK1) && r[1] - r[0] > 0.6 && r[3] - r[2] > 0.6) addLane(r[0], r[1], r[2], r[3], c.du !== 0 ? 0 : 1, 'gate');
+    }
+    gates.push({ u: c.u, v: c.v, du: c.du, dv: c.dv, w: c.w, osm: false, photo: false, amap: true, name: c.name, main: true });
+    G.stats.amapGates++;
+  }
+  const nAmap = gates.length;
   const maxGates = P.k === 'cluster' ? 0 : P.area > 120000 ? 3 : P.area > 40000 ? 2 : 1;
   for (const c of gc) {
+    if (nAmap && !(c.osm || c.photo)) continue; // 有高德出入口时不再按道路推测开门（只保留 OSM 小区路穿边界处与照片大门）
     if (gates.length >= maxGates && (!(c.osm || c.photo) || P.k === 'cluster')) break;
     if (gates.some((g) => Math.hypot(g.u - c.u, g.v - c.v) < (c.osm || c.photo ? 25 : 90))) continue;
     // 门前连接段登记为车行道
@@ -1162,6 +1271,12 @@ function planOne(G, P, pid) {
     gates.push({ u: c.u, v: c.v, du: c.du, dv: c.dv, w: c.w, osm: !!c.osm, photo: !!c.photo, main: gates.length === 0 });
   }
   G.stats.gates += gates.length;
+  // 小区名：OSM 无名（或泛称）时用高德小区名（优先住宅小区，宿舍楼名最后）
+  let cname = P.name || '';
+  if ((!cname || GENERIC.test(cname)) && P.amap && P.amap.length) {
+    const e = P.amap.find((it) => it.k === 'estate' || it.k === 'villa') || P.amap.find((it) => it.k !== 'dorm') || P.amap[0];
+    cname = e.n;
+  }
 
   // —— 4. 停车 ——
   const parks = []; // {u0,u1,v0,v1, dir (车位排列方向 0=沿u), type 'perp'|'para', side, lines, n}
@@ -1449,7 +1564,10 @@ function planOne(G, P, pid) {
   }
 
   // —— 7. 路灯（庭院灯）：沿车行道一侧每 ~22 m，园路每 ~18 m（低位草坪灯） ——
+  // 灯杆离楼至少 2.5 m、不立在入户铺装带上（原先贴楼一侧的灯杆离墙只有 1.3~2 m，正好立在单元门/底商玻璃门正前方，
+  // 审查 st_sajinqiao）；交替的那一侧放不下就换到车行道另一侧
   const lamps = [];
+  const CL_LAMP = CL({ [T.BLD]: 2.5, [T.BLDS]: 0.6, [T.PARK]: 0.1, [T.PAD]: 0.3, [T.HOLE]: 0.2, [T.APRON]: 0.4, [T.OSM]: 0.3 });
   for (const L of lanes) {
     if (L.kind === 'gate') continue;
     const along = L.dir === 0;
@@ -1457,12 +1575,15 @@ function planOne(G, P, pid) {
     const n = Math.floor(len / 28);
     for (let k = 0; k <= n; k++) {
       const t = (k + 0.5) * (len / (n + 1));
-      const side = k & 1 ? 1 : -1;
-      const u = along ? L.u0 + t : (side < 0 ? L.u0 - 0.6 : L.u1 + 0.6);
-      const v = along ? (side < 0 ? L.v0 - 0.6 : L.v1 + 0.6) : L.v0 + t;
-      if (idx.hit(u - 0.25, u + 0.25, v - 0.25, v + 0.25, CLK4)) continue;
-      if (!inPoly(u - 0.2, u + 0.2, v - 0.2, v + 0.2, 0.5)) continue;
-      lamps.push([u, v, 0]);
+      const pref = k & 1 ? 1 : -1;
+      for (const side of [pref, -pref]) {
+        const u = along ? L.u0 + t : (side < 0 ? L.u0 - 0.6 : L.u1 + 0.6);
+        const v = along ? (side < 0 ? L.v0 - 0.6 : L.v1 + 0.6) : L.v0 + t;
+        if (idx.hit(u - 0.25, u + 0.25, v - 0.25, v + 0.25, CL_LAMP)) continue;
+        if (!inPoly(u - 0.2, u + 0.2, v - 0.2, v + 0.2, 0.5)) continue;
+        lamps.push([u, v, 0]);
+        break;
+      }
     }
   }
   for (const p of paths) {
@@ -1476,12 +1597,88 @@ function planOne(G, P, pid) {
     }
   }
 
+  // —— 8. 小区内 OSM 道路旁平行车位：设施/铺装/园路都放完后逐个车位核验（斜向车位按旋转矩形与各矩形求交），
+  //        只保留不压楼、车行道、车位、设施、铺装带、园路的车位（原先只粗测中心点，车位压在车行道中间、设施上、坡道下） ——
+  const osmSlots = [];
+  {
+    const CL_SLOT = CL({ [T.BLD]: 0.6, [T.BLDS]: 0.2, [T.HOLE]: 0.3, [T.LANE]: 0.1, [T.PARK]: 0.1, [T.PAD]: 0.4, [T.APRON]: 0.05, [T.PATH]: 0.05 });
+    for (const o of osmParks) {
+      for (let k = 0; k < o.n; k++) {
+        const t = (k + 0.5) * PARA_L;
+        const cu = o.au + o.du * t, cv = o.av + o.dv * t;
+        if (idx.hitObb(cu, cv, o.du, o.dv, PARA_L / 2 - 0.15, PARA_D / 2, CL_SLOT)) continue;
+        if (!inside(cu, cv)) continue;
+        osmSlots.push([cu, cv, o.du, o.dv]);
+      }
+    }
+  }
+
+  // —— 9. 老小区宅间路行道树（法桐、国槐、杨树一类大乔木，树高 9~15 m）：车行道两侧每 8~11 m 一棵，
+  //        避开楼（3 m）、车位、设施、入户铺装、路灯；西安八九十年代单位家属院楼间多是成排大树，树冠连片 ——
+  const bigTrees = [];
+  // 间距检查用 6.5 m 网格（一个大小区几百上千棵，逐棵比较是平方级）
+  const btGrid = new Map();
+  const btNear = (u, v, r) => {
+    const gi = Math.floor(u / 6.5), gj = Math.floor(v / 6.5);
+    for (let a = -1; a <= 1; a++)
+      for (let b = -1; b <= 1; b++) {
+        const l = btGrid.get((gi + a) * 100003 + gj + b);
+        if (l) for (const q of l) if (Math.abs(q[0] - u) < r && Math.abs(q[1] - v) < r) return true;
+      }
+    return false;
+  };
+  const btAdd = (t) => {
+    bigTrees.push(t);
+    const k = Math.floor(t[0] / 6.5) * 100003 + Math.floor(t[1] / 6.5);
+    const l = btGrid.get(k);
+    if (l) l.push(t); else btGrid.set(k, [t]);
+  };
+  if (mode === 'old') {
+    const CL_TREE = CL({ [T.BLD]: 3.0, [T.BLDS]: 0.8, [T.HOLE]: 1.0, [T.LANE]: 0.3, [T.OSM]: 0.8, [T.PARK]: 0.15, [T.PAD]: 1.0, [T.APRON]: 0.2, [T.PATH]: 0.3 });
+    for (const L of lanes) {
+      if (L.kind === 'gate') continue;
+      const along = L.dir === 0;
+      const len = along ? L.u1 - L.u0 : L.v1 - L.v0;
+      if (len < 14) continue;
+      for (const side of [-1, 1]) {
+        let t = 3 + rnd() * 4;
+        while (t < len - 3) {
+          for (const off of [1.1, 1.1 + PARA_D + 0.4, 1.1 + PERP_D + 0.4]) {
+            const e = side < 0 ? (along ? L.v0 : L.u0) - off : (along ? L.v1 : L.u1) + off;
+            const u = along ? L.u0 + t : e, v = along ? e : L.v0 + t;
+            if (!inside(u, v)) break;
+            if (idx.hit(u - 0.35, u + 0.35, v - 0.35, v + 0.35, CL_TREE) || roadHit(u - 0.35, u + 0.35, v - 0.35, v + 0.35, 1.0, true)) continue;
+            if (lamps.some((l) => Math.abs(l[0] - u) < 1.8 && Math.abs(l[1] - v) < 1.8)) continue;
+            if (btNear(u, v, 6)) continue;
+            btAdd([u, v, 9 + rnd() * 6, rnd()]);
+            break;
+          }
+          t += 8 + rnd() * 3;
+        }
+      }
+    }
+    // 宅间空地（楼南侧、楼与楼之间、绿地里）：整个小区按约 10 × 9.5 m 的格子一棵，格内抖动、约一成五空缺；
+    // 离楼 3.5 m、不压园路/设施/车位/车行道/路灯（原先只种在规划的“宅间绿地”矩形里，楼间窄院一棵没有，审查 fe_土门老小区）
+    const CL_TREE2 = CL({ [T.BLD]: 3.5, [T.BLDS]: 1.0, [T.HOLE]: 1.0, [T.LANE]: 0.8, [T.OSM]: 1.0, [T.PARK]: 0.5, [T.PAD]: 1.2, [T.APRON]: 0.6, [T.PATH]: 0.6 });
+    const GU = 10, GV = 9.5;
+    for (let gu = Math.floor(U0 / GU) * GU; gu < U1; gu += GU)
+      for (let gv = Math.floor(V0 / GV) * GV; gv < V1; gv += GV) {
+        const skip = rnd() < 0.15;
+        const u = gu + GU / 2 + (rnd() - 0.5) * 4, v = gv + GV / 2 + (rnd() - 0.5) * 3.6;
+        if (skip || !inside(u, v)) continue;
+        if (idx.hit(u - 0.4, u + 0.4, v - 0.4, v + 0.4, CL_TREE2) || roadHit(u - 0.4, u + 0.4, v - 0.4, v + 0.4, 1.5, true)) continue;
+        if (lamps.some((l) => Math.abs(l[0] - u) < 2 && Math.abs(l[1] - v) < 2)) continue;
+        if (btNear(u, v, 6.4)) continue;
+        btAdd([u, v, 10 + rnd() * 6, rnd()]);
+      }
+  }
+
   // 围墙样式：新小区铁艺栏杆（石材/砖砌矮墙基座），老小区砖墙或花格墙，校园铁艺
   const fence = P.k === 'cluster' ? 'none' : uni ? 'iron' : old ? (hash(pid, 3) < 0.6 ? 'brick' : 'lattice') : 'iron';
   return {
-    pid, name: P.name, kind: P.k, mode, old, uni, kg, school, area: P.area, era, medH,
+    pid, name: cname, kind: P.k, mode, old, uni, kg, school, area: P.area, era, medH,
     ring, holes: P.k === 'cluster' ? holeRings : P.holes, bb: P.bb, th, cs, sn, ox, oz, U0, U1, V0, V1, rf,
-    LW, AP, lanes, parks, osmParks, aprons, paths, pads, gates, lamps, fence,
+    LW, AP, lanes, parks, osmParks, osmSlots, bigTrees, aprons, paths, pads, gates, lamps, fence,
     bldIds: blds.map((b) => b.b),
     fields, gardens,
   };
@@ -1542,11 +1739,9 @@ export function exclusionRings(c) {
   for (const q of aprons) if (!q.used) rects.push(q.r);
   for (const p of c.paths) rects.push([p.u0 - 0.4, p.u1 + 0.4, p.v0 - 0.4, p.v1 + 0.4]);
   for (const p of c.pads) { const m = p.type === 'pav' ? 0.5 : 1.0; rects.push([p.u0 - m, p.u1 + m, p.v0 - m, p.v1 + m]); }
-  // 小区内 OSM 道路旁的平行车位
-  for (const o of c.osmParks) {
-    const L = o.n * PARA_L;
-    const cu = o.au + (o.du * L) / 2, cv = o.av + (o.dv * L) / 2;
-    const hu = Math.abs(o.du) * L / 2 + Math.abs(o.nu) * 1.6, hv = Math.abs(o.dv) * L / 2 + Math.abs(o.nv) * 1.6;
+  // 小区内 OSM 道路旁的平行车位（逐个车位的外接框）
+  for (const [cu, cv, du, dv] of c.osmSlots || []) {
+    const hu = Math.abs(du) * PARA_L / 2 + Math.abs(dv) * 1.4, hv = Math.abs(dv) * PARA_L / 2 + Math.abs(du) * 1.4;
     rects.push([cu - hu, cu + hu, cv - hv, cv + hv]);
   }
   if (!rects.length) return [];
