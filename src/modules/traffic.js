@@ -325,10 +325,12 @@ void main() {
     float pixR = uPixel * d * (head ? 1.5 : 1.45) * sqrt(ks);
     float r = max(worldR, pixR);
     float e = clamp(worldR * worldR / (r * r), 0.0, 1.0);
-    e = mix(0.6, 1.0, e);
+    // 远处（灯小于像素）：能量随距离递减、峰值压到泛光阈值以下——500 m 外不再是一串比路灯还亮的大白/红圆点
+    float far = smoothstep(250.0, 1400.0, d);
+    e = mix(mix(0.6, 0.3, far), 1.0, e);
     float brake = trBit(fl, 1.0);
     vec3 col = (head ? vec3(1.0, 0.9, 0.74) * (big ? 7.0 : 3.4) : vec3(1.0, 0.07, 0.03) * (brake > 0.5 ? 5.0 : 2.6)) * mix(0.6, 1.0, ks);
-    vCol = col * vis * e * uNight;
+    vCol = col * vis * e * uNight * mix(1.0, 0.5, far);
     vec3 camR = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
     vec3 camU = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
     wp = c + V * min(0.6, d * 0.02) + (camR * aL.z + camU * aL.w) * r * 2.6;
@@ -608,6 +610,7 @@ export default {
         default: pBox = 0.012; break;
       }
       if (inWall(x, z)) { pSemi = 0; pDump = 0; pBox *= 0.5; }
+      if (!city) pBus *= 0.35; // 郊区公交线路少、发车间隔长
       const pTaxi = (inWall(x, z) ? 0.24 : city ? 0.16 : 0.06) * (night ? 1.5 : 1) * (cls === 0 || cls === 8 ? 0.35 : 1);
       // 铰接公交：主干道上约占公交的 12%
       if ((r -= pBus) < 0) return (cls === 2 || cls === 1) && r + pBus < pBus * 0.12 ? VK.BUS_A : VK.BUS;
@@ -811,6 +814,17 @@ export default {
     let bubble = { x: 1e9, z: 1e9, R: 0 };
     let hoursNow = ctx.sky?.hours ?? 14;
     const densityBase = () => (Q.trafficDensity ?? 1) * hourDensity(hoursNow);
+    // 区位系数：钟楼 5 km 内（二环以内）1；往外到 9 km 降到 0.6、15 km 降到 0.3（郊区、渭河两岸）；
+    // 城外的桥（跨河、跨铁路的长桥）再 × 0.6——下午的渭河大桥不再首尾相接。快速路/高速保底 0.4
+    function areaK(e) {
+      if (e.areaK !== undefined) return e.areaK;
+      const r = Math.hypot((e.x0 + e.x1) / 2, (e.z0 + e.z1) / 2);
+      let k = r < 5000 ? 1 : r < 9000 ? 1 - 0.4 * (r - 5000) / 4000 : r < 15000 ? 0.6 - 0.3 * (r - 9000) / 6000 : 0.3;
+      if (r > 6000 && feats[e.f] && feats[e.f].b) k *= 0.6;
+      if (e.cls === 0 || e.cls === 8) k = Math.max(k, 0.4);
+      e.areaK = k;
+      return k;
+    }
     const qList = [];
     function refreshActive() {
       const cp = camera.position;
@@ -835,7 +849,7 @@ export default {
         if (d > reach) continue;
         activeStamp[id] = stamp;
         const fall = 1 - 0.45 * Math.min(1, Math.max(0, (d - 0.3 * R) / (0.7 * R)));
-        eTarget[id] = (e.L * e.lanes * e.density * dens * fall) / 1000;
+        eTarget[id] = (e.L * e.lanes * e.density * dens * fall * areaK(e)) / 1000;
         sum += eTarget[id];
         newList.push(id);
         if (!active[id]) { active[id] = 1; toFill.push(id); }
