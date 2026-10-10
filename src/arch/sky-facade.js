@@ -53,6 +53,9 @@ const MAP_F = /* glsl */ `
   float seed = vFac.w;
   vec2 q = vec2(vFuv.x / cW, vFuv.y / fH);
   vec2 fwq = max(fwidth(q), vec2(1e-4));
+  // 单元格小于约 2~8 像素时，逐格随机（色差、卷帘、粗糙度、亮灯）淡出为平均值：
+  // 原先 2 km 外每像素跨几个格子，哈希值逐像素跳变 → 整栋楼密布白色雪花噪点、转动时闪烁（审查 g6 p7_day / px5_day）
+  float skCf = 1.0 - smoothstep(0.12, 0.45, max(fwq.x, fwq.y));
   vec2 cell = floor(q);
   vec2 fq = fract(q);
   float fl = cell.y, col = cell.x;
@@ -70,11 +73,17 @@ const MAP_F = /* glsl */ `
   }
   float frame = clamp(max(mull, max(slab, tr2)), 0.0, 1.0);
   float vision = (1.0 - frame) * (1.0 - spd);
-  float ph = skH21(cell + seed * 17.13);
-  float ph2 = skH21(cell.yx * 1.37 + seed * 5.1);
+  float ph = mix(0.5, skH21(cell + seed * 17.13), skCf);
+  float ph2r = skH21(cell.yx * 1.37 + seed * 5.1);
+  float ph2 = mix(0.5, ph2r, skCf);
   vec3 glassC = vTint * (0.94 + 0.12 * ph);
-  // 部分窗后有浅色卷帘/室内（白天可见的内部层次）
-  float blind = step(0.9, ph2) * (skMode == 6.0 ? 0.0 : 1.0);
+  // 反射玻璃提亮：深色底色混入一点天光灰蓝（原先高新 CBD、万象城塔楼远看是近黑的方柱，几乎不映天空）
+  bool skStoneLike = skMode > 6.5 && !(skMode > 9.5 && skMode < 10.5); // 7/8/9 石材类（10 办公玻璃幕墙仍按玻璃）
+  glassC = mix(glassC, vec3(0.36, 0.42, 0.50), skStoneLike || skMode == 6.0 ? 0.0 : 0.34);
+  // 远处（窗格已小于几个像素）：反射玻璃整体映天，再往浅蓝灰提一档（2 km 外高新 CBD 仍读成深藏青色方柱，审查 g6 p7_day）
+  glassC = mix(glassC, vec3(0.44, 0.52, 0.62), (skStoneLike || skMode == 6.0 || skMode == 5.0) ? 0.0 : 0.3 * (1.0 - skCf) * (1.0 - uNight));
+  // 部分窗后有浅色卷帘/室内（白天可见的内部层次）；远处取其平均覆盖率
+  float blind = mix(0.1, step(0.9, ph2r), skCf) * (skMode == 6.0 ? 0.0 : 1.0);
   glassC = mix(glassC, vec3(0.26, 0.26, 0.25), blind * 0.35);
   vec3 spdC = vSpd;
   // 10：办公楼玻璃幕墙（白天同 0；夜间按整层成片的办公亮窗 + 玻璃反射城市天光的底亮，见 EMIS_F）
@@ -85,8 +94,10 @@ const MAP_F = /* glsl */ `
   float lv = band * (1.0 - frame);
   vec3 skBase = glassC * vision + spdC * spd * (1.0 - frame) + mullC * frame;
   skBase = mix(skBase, louv, lv);
-  if (skMode == 3.0) { // 横向百叶：窗槛墙区即白色水平遮阳
-    skBase = mix(skBase, vec3(0.78, 0.79, 0.80), spd * (1.0 - mull));
+  if (skMode == 3.0) { // 横向百叶：窗槛墙区即水平遮阳 / 横带（颜色取 spd：白色百叶、银灰横带各按规格；原先一律 0.78 白）
+    // 夜里百叶只受城市天光，压暗到约 1/4（原先白天的白色横带在夜里仍是成片灰白横条，盖过窗灯，审查 g2 p7_night）
+    vec3 louvC = min(vSpd * 1.08, vec3(0.8)) * (1.0 - 0.72 * uNight);
+    skBase = mix(skBase, louvC, spd * (1.0 - mull));
   }
   if (skMode == 5.0) skBase = vec3(0.035, 0.04, 0.045) + mullC * mull * 0.3;
   diffuseColor.rgb = skBase;
@@ -97,11 +108,14 @@ const ROUGH_F = /* glsl */ `
   roughnessFactor = mix(stone ? 0.82 : 0.38, 0.05 + 0.08 * ph + blind * 0.25, skGlass);
   roughnessFactor = mix(roughnessFactor, 0.55, lv);
   if (skMode == 5.0) roughnessFactor = 0.3;
+  if (skMode == 3.0) roughnessFactor = mix(roughnessFactor, 0.55, spd * (1.0 - mull)); // 横带/百叶：哑光金属板
 `;
 const METAL_F = /* glsl */ `
-  metalnessFactor = mix(stone ? 0.0 : (spd > 0.5 ? 0.45 : 0.85), 0.72 - blind * 0.4, skGlass);
+  metalnessFactor = mix(stone ? 0.0 : (spd > 0.5 ? 0.45 : 0.85), 0.56 - blind * 0.36, skGlass);
   metalnessFactor = mix(metalnessFactor, 0.5, lv);
   if (skMode == 6.0) metalnessFactor *= 0.55;
+  // 横带/百叶：低金属度，按规格色（银灰/白）显示，不再镜面映出暖色地面（金花豪生圆柱塔读成金白相间横条，审查 g3）
+  if (skMode == 3.0) metalnessFactor = mix(metalnessFactor, 0.15, spd * (1.0 - mull));
 `;
 const NORMAL_F = /* glsl */ `
   {
@@ -132,11 +146,18 @@ const EMIS_F = /* glsl */ `
       float floorOn = step(skH21(vec2(fl * 0.913, seed * 1.7)), vSty.y);
       float bay = skH21(vec2(floor(col / 2.0), fl) + seed * 3.9);
       lit = (floorOn > 0.5 ? step(0.12, bay) : step(0.93, bay)) * (1.0 - band);
+      lit = mix(vSty.y * 0.82 + 0.06, lit, max(skCf, 1.0 - smoothstep(0.3, 1.2, fwq.y))); // 远处按整层平均（楼层仍可分辨时保留整层亮灯）
       lc = mix(vec3(0.88, 0.94, 1.0), vec3(1.0, 0.86, 0.66), step(0.8, skH21(vec2(fl * 0.29, seed + 2.5))));
       k = 0.85 + 0.25 * skH21(vec2(col * 0.37, fl * 1.9));
       em += lc * lit * vision * (0.6 + 0.4 * inner) * k * 0.24;
       em += vTint * (0.05 + 0.04 * ph) * vision * (1.0 - lit);
-    } else if (skCrown < 0.5) em += lc * lit * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    } else if (skCrown < 0.5) {
+      // 远处窗格小于几个像素时：先退到“整层 12 开间一组”的亮灯块（块仍有十几像素宽，不闪烁），楼层也分辨不出时才取平均并压暗；
+      // 原先直接取平均亮度，所有窗都均匀发一层冷白光，夜里整栋楼成了灰白横条块（审查 g2 p7_night）
+      float litB = step(skH21(vec2(floor(col / 12.0), fl) + seed * 2.7), litR) * (1.0 - band);
+      float litFar = mix(litB, litR * 0.6, smoothstep(0.35, 0.9, fwq.y));
+      em += lc * mix(litFar, lit, skCf) * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    }
     if (skMode == 1.0) { // 绿地中心：竖梃/横梁 LED 线条动画
       float t = uTime;
       float wave = 0.5 + 0.5 * sin(vFuv.y * 0.05 - t * 1.1 + sin(vFuv.x * 0.045 + t * 0.35) * 1.6);
@@ -144,11 +165,15 @@ const EMIS_F = /* glsl */ `
       vec3 c1 = skHsv(vec3(fract(0.55 + 0.1 * sin(t * 0.07) + vFuv.y * 0.0012), 0.7, 1.0));
       vec3 ledc = mix(vec3(1.0, 0.72, 0.32), c1, wave);
       float lines = max(mull, slab);
-      em += ledc * lines * (0.6 + 1.3 * wave + 3.0 * sweep);
+      // 亮度系数：lit < 0.2 时按 lit×5 压暗（单独挂在办公楼立面上的媒体带，不抢窗灯；绿地中心等 lit ≥ 0.3 不变）
+      float mk = vSty.y < 0.2 ? max(vSty.y, 0.02) * 5.0 : 1.0;
+      em += ledc * lines * (0.6 + 1.3 * wave + 3.0 * sweep) * mk;
     }
     if (skMode == 2.0 || skMode == 3.0) {
-      em += vec3(0.85, 0.93, 1.0) * max(slab, skMode == 3.0 ? tr2 : 0.0) * (skMode == 3.0 ? 0.35 : 0.8) * (1.0 + 0.2 * sin(uTime * 0.6 + vFuv.y * 0.03));
+      em += vec3(0.85, 0.93, 1.0) * max(slab, skMode == 3.0 ? tr2 : 0.0) * (skMode == 3.0 ? 0.22 : 0.8) * (1.0 + 0.2 * sin(uTime * 0.6 + vFuv.y * 0.03));
     }
+    // 横带楼：带窗内的亮灯偏暖、略提亮（夜景主要靠窗灯而不是白色横带）
+    if (skMode == 3.0) em *= 1.0 + 0.35 * vision;
     if (skMode == 4.0) { // 塔冠：自下而上的泛光 + 竖梃亮线
       float ch = clamp(vFuv.y / max(vFac.x, 1.0), 0.0, 1.0);
       vec3 cc = vSpd;
@@ -220,7 +245,7 @@ export function createFacadeMaterial(ctx) {
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + NORMAL_F)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + EMIS_F);
   };
-  m.customProgramCacheKey = () => 'skyFacade-v2';
+  m.customProgramCacheKey = () => 'skyFacade-v7';
   return m;
 }
 

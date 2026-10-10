@@ -1339,12 +1339,62 @@ const EXT_CROWNS = {
       }
       return g;
     };
-    const panel = solidMat(env, { color: cr.color || '#b9bec3', metalness: 0.28, roughness: 0.58 });
+    /**
+     * flow：丝带沿第一轴（长轴）方向流动——局部 (t, w)：a = t·rx、b = w'·rz·√(1−t²)，w' = w + 波动（随 t 起伏，向两端收拢），
+     * 分缝是从一端流向另一端的曲线，而不是从壳顶放射的辐条（审查 g6：放射状肋线 + 鼓起读成“枕头/贝壳”）
+     */
+    const flowPt = (t, w, lift = 0) => {
+      const W = Math.sqrt(Math.max(0, 1 - t * t));
+      const wv = Math.max(-1, Math.min(1, w + (cr.wave ?? 0.07) * Math.sin(Math.PI * 1.4 * t + w * 2.1) * (1 - w * w)));
+      const a = t * rx, b = wv * W * rz;
+      const sN = Math.min(1, Math.hypot(t, wv * W));
+      return [c.x + a * ca - b * sa, yb + f(sN) + lift, c.z - a * sa - b * ca];
+    };
+    const flowStrip = (k, v0, v1, nv, lift = 0) => {
+      const pos = [], nor = [], idx = [], NT = 40;
+      const P = (i, j) => flowPt(-1 + (2 * i) / NT, -1 + (2 * (k + v0 + ((v1 - v0) * j) / nv)) / n, lift);
+      for (let i = 0; i <= NT; i++)
+        for (let j = 0; j <= nv; j++) {
+          const p = P(i, j);
+          pos.push(...p);
+          // 法线：有限差分
+          const e = 1e-3, t = -1 + (2 * i) / NT, w = -1 + (2 * (k + v0 + ((v1 - v0) * j) / nv)) / n;
+          const tt = Math.max(-1 + e, Math.min(1 - e, t));
+          const p0 = flowPt(tt, w), pt1 = flowPt(tt + e, w), pw = flowPt(tt, Math.min(1, w + e));
+          const ux = pt1[0] - p0[0], uy = pt1[1] - p0[1], uz = pt1[2] - p0[2], vx = pw[0] - p0[0], vy = pw[1] - p0[1], vz = pw[2] - p0[2];
+          let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+          if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+          const L = Math.hypot(nx, ny, nz) || 1;
+          nor.push(nx / L, ny / L, nz / L);
+        }
+      for (let i = 0; i < NT; i++)
+        for (let j = 0; j < nv; j++) {
+          const a = i * (nv + 1) + j, b = a + nv + 1;
+          idx.push(a, a + 1, b + 1, a, b + 1, b);
+        }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      g.setIndex(idx);
+      const p = g.attributes.position.array, ia = g.index.array;
+      for (let t = 0; t < ia.length; t += 3) {
+        const A = ia[t] * 3, B = ia[t + 1] * 3, C = ia[t + 2] * 3;
+        const cy = (p[B + 2] - p[A + 2]) * (p[C] - p[A]) - (p[B] - p[A]) * (p[C + 2] - p[A + 2]);
+        if (cy < 0) { const tmp = ia[t + 1]; ia[t + 1] = ia[t + 2]; ia[t + 2] = tmp; }
+      }
+      return g;
+    };
+    const panel = solidMat(env, { color: cr.color || '#b9bec3', metalness: cr.metalness ?? 0.28, roughness: cr.roughness ?? 0.58 });
     const seamM = cr.glow === false ? solidMat(env, { color: cr.seamColor || '#6f777e', metalness: 0.3, roughness: 0.6 })
       : glowMat(env, cr.glow || '#d6ecff', { base: cr.seamColor || '#6f777e', night: cr.strength ?? 0.7 });
     for (let k = 0; k < n; k++) {
-      env.solid.add(strip(k, 0, 1 - seam, NVp), panel);
-      env.detail.add(strip(k, 1 - seam, 1, NVs, 0.06), seamM);
+      if (cr.flow) {
+        env.solid.add(flowStrip(k, 0, 1 - seam, 3), panel);
+        env.detail.add(flowStrip(k, 1 - seam, 1, 1, 0.06), seamM);
+      } else {
+        env.solid.add(strip(k, 0, 1 - seam, NVp), panel);
+        env.detail.add(strip(k, 1 - seam, 1, NVs, 0.06), seamM);
+      }
     }
     // 檐口金属带：壳边一圈竖向窄带（接石材基座）
     const rimH = cr.rim ?? 0.9, ring = [];
@@ -1606,7 +1656,9 @@ function buildPart(env, R, P) {
     yTop = buildTower(env, spec).top;
   } else if (kind === 'podium') {
     const st = facadeStyle({ pattern: 'retail', ...(part.style || {}) }, part.seed);
-    buildPodium(env, { pts: P.pts, holes: P.holes.length ? P.holes : undefined, h: H, base, style: st, roofMat: part.roofMat ? solidMat(env, part.roofMat) : undefined });
+    // gf：首层商铺（通高橱窗 + 连续雨篷 + 长边正中主入口，见 sky-towers buildPodium）
+    const gf = part.gf ? { h: part.gf.h, style: part.gf.style ? facadeStyle(part.gf.style) : undefined } : undefined;
+    buildPodium(env, { pts: P.pts, holes: P.holes.length ? P.holes : undefined, h: H, base, style: st, gf, mech: part.roof?.mech, roofMat: part.roofMat ? solidMat(env, part.roofMat) : undefined });
     yTop = base + H; // 塔冠从屋面起算（女儿墙 1.2 m 另计）
   } else if (kind === 'solid') {
     const mat = solidMat(env, part.mat || 'stone');

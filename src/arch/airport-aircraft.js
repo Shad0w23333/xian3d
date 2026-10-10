@@ -375,7 +375,9 @@ export function aircraftMaterial(ctx, T, palette) {
       .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
         if (pi == 5 || pi == 8) metalnessFactor = 0.55; if (pi == 4) metalnessFactor = 0.25;`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(1.0, 0.78, 0.5) * wmask * uNight * 2.2;`);
+        totalEmissiveRadiance += vec3(1.0, 0.78, 0.5) * wmask * uNight * 2.2;
+        // 停机位高杆灯照明：机身朝上的面受光（点光源池只有十来盏，几十架飞机靠这一项在夜里可辨，审查 g3）
+        totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.92, 0.8) * uNight * 0.2;`);
   };
   m.customProgramCacheKey = () => 'xiy-aircraft-' + T.name;
   return m;

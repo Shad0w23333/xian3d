@@ -115,6 +115,23 @@ export default {
       clusters.get(k).push(fp);
     }
     let nBuild = 0;
+    // 临水殿宇正面朝最近的湖岸（岸线 45 m 内）；其余仍朝园区中心（原先一律朝 FACE，芙蓉湖西北岸大殿朝湖一面是白墙，审查 g2）
+    const shoreDir = (x, z) => {
+      let best = null, bd = 45;
+      for (const p of [furong, qjc]) {
+        const o = p?.outer;
+        if (!o) continue;
+        for (let i = 0; i < o.length; i += 2) {
+          const j = (i + 2) % o.length;
+          const ax = o[i], az = o[i + 1], ex = o[j] - ax, ez = o[j + 1] - az;
+          const L2 = ex * ex + ez * ez || 1;
+          const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2));
+          const qx = ax + ex * t, qz = az + ez * t, d = Math.hypot(qx - x, qz - z);
+          if (d < bd) { bd = d; best = [qx - x, qz - z]; }
+        }
+      }
+      return best;
+    };
     const parts = []; // {x, y, z, park, near(Group), group(远景临时 Group，只供合并与倒影)}
     for (const [, list] of clusters) {
       const cx = list.reduce((a, f) => a + f.x, 0) / list.length, cz = list.reduce((a, f) => a + f.z, 0) / list.length;
@@ -124,7 +141,9 @@ export default {
         // 远景级烘焙（instancing=false）：输出只有普通网格，便于跨簇合并；近景级保留实例化（重复构件多）
         const b = new ArchBuilder(ctx, { detail, style: 'tang', instancing: detail === 1, minInstances: 24, name: '唐风建筑' });
         for (const fp of list) {
-          tangFromFootprint(b, fp, origin, ground, FACE[fp.park] ? [FACE[fp.park][0] - fp.x, FACE[fp.park][1] - fp.z] : [0, 1], { lanterns: detail >= 1 });
+          const shore = shoreDir(fp.x, fp.z);
+          const face = shore || (FACE[fp.park] ? [FACE[fp.park][0] - fp.x, FACE[fp.park][1] - fp.z] : [0, 1]);
+          tangFromFootprint(b, fp, origin, ground, face, { lanterns: detail >= 1, lakeside: !!shore });
           if (detail === 1) nBuild++;
         }
         const g = b.build({ name: '唐风建筑-' + detail });
@@ -162,7 +181,7 @@ export default {
     // 寒窑遗址公园入口牌坊
     const hy = state.parks.find((p) => p.n === '曲江寒窑遗址公园');
     if (hy) put(3800, 6738, -Math.PI / 2, (b) => paifang(b, { style: 'tang', bays: 3, width: 12, h: 5.5, text: '寒窑', roofColor: 'darkgray', eaveLights: { color: 0xffc56a, width: 0.08 } }));
-    const miscG = misc.build({ name: '园门·岛亭·遗址' });
+    const miscG = misc.build({ name: '园门·岛亭·遗址', materials: { rammed: rammedMaterial(), qgrass: ctx.mats.get('grass') } });
     miscG.position.set(O.x, O.y, O.z);
     root.add(miscG);
 
@@ -479,8 +498,12 @@ function islandTops(ctx, lakes, ground) {
 }
 
 // ───────────── 唐城墙遗址：夯土残段 ─────────────
+/**
+ * 夯土残段：沿遗址带中线分段，每段为截面梯形的挤出体，逐站（约 2.4 m）随机侵蚀——顶面高低起伏、两侧鼓凹、
+ * 两端坍塌成斜坡；立面用夯层贴图（8~12 cm 水平夯层 + 竖向冲沟），顶面覆草。
+ * 原先是棱角分明的土黄色截锥 + 顶上一排小方块（像积木/沙袋），审查 g1/g5。
+ */
 function rammedWall(b, outer, O, ground) {
-  // 取最长轴
   const pts = [];
   for (let i = 0; i < outer.length; i += 2) pts.push([outer[i], outer[i + 1]]);
   let far = 0, A = pts[0], Bp = pts[0];
@@ -491,24 +514,97 @@ function rammedWall(b, outer, O, ground) {
   if (far < 60) return;
   const ux = (Bp[0] - A[0]) / far, uz = (Bp[1] - A[1]) / far;
   const yaw = -Math.atan2(uz, ux);
-  // 中线：两端点连线向多边形内侧偏移到质心线
   const c = polyCentroid(outer);
   const cx = c.x ?? c[0], cz = c.z ?? c[1];
   const off = (cx - A[0]) * -uz + (cz - A[1]) * ux;
   let s = 18, seed = Math.abs(Math.round(A[0] * 7 + A[1] * 3)) % 997;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const COL = 0xffffff;
   while (s < far - 20) {
     const L = 22 + rnd() * 40;
     const e = Math.min(far - 16, s + L);
-    const m = (s + e) / 2;
+    const m = (s + e) / 2, len = e - s;
     const x = A[0] + ux * m - uz * off, z = A[1] + uz * m + ux * off;
-    const h = 4 + rnd() * 2.5;
+    const H0 = 3.6 + rnd() * 2.4;
     const y = ground(x, z);
     b.push(x - O.x, y - O.y, z - O.z, yaw);
-    b.frustum('plaster', 0, 0, -0.5, e - s, 8.5, h, e - s - 3, 4.8, 0xae9168);
-    // 残缺的顶面起伏
-    for (let k = -(e - s) / 2 + 3; k < (e - s) / 2 - 4; k += 6 + rnd() * 5) b.box('plaster', k, h - 0.2, -2.2, k + 2 + rnd() * 3, h + 0.4 + rnd() * 0.8, 2.2, 0xa88a60);
+    // 站点：沿局部 X（-len/2 → len/2），每站截面 6 点（底外沿 → 腰 → 顶肩 → 顶 → 对侧）
+    const n = Math.max(4, Math.round(len / 2.4));
+    const st = [];
+    for (let k = 0; k <= n; k++) {
+      const t = k / n, xx = -len / 2 + len * t;
+      const endF = Math.min(1, Math.min(t, 1 - t) * len / 7); // 两端 7 m 内坍塌
+      const h = Math.max(0.6, H0 * (0.82 + 0.18 * rnd()) * (0.25 + 0.75 * Math.sqrt(endF)));
+      const wb = 4.4 + rnd() * 0.5, wt = 2.0 + rnd() * 0.8;
+      const bul = () => (rnd() - 0.5) * 0.7;
+      st.push([
+        [xx, -0.5, -wb], [xx, h * 0.45, -(wb + wt) / 2 - 0.5 + bul()], [xx, h * 0.92, -wt - 0.3 + bul() * 0.5], [xx, h, -wt * 0.4], [xx, h * (0.96 + rnd() * 0.06), wt * 0.45],
+        [xx, h * 0.9, wt + 0.3 + bul() * 0.5], [xx, h * 0.45, (wb + wt) / 2 + 0.5 + bul()], [xx, -0.5, wb],
+      ]);
+    }
+    for (let k = 0; k < n; k++) {
+      const P = st[k], Q = st[k + 1];
+      for (let j = 0; j < P.length - 1; j++) {
+        const top = j === 2 || j === 3 || j === 4;
+        // 外表面：从 -Z 侧经顶面到 +Z 侧；绕序使法线朝外
+        // UV 以米计：u 沿墙（局部 X）、v 为高度（夯层水平）；顶面草地 u/v 取水平坐标
+        const uv = [P[j], P[j + 1], Q[j + 1], Q[j]].map((q) => (top ? [q[0], q[2]] : [q[0], q[1]]));
+        b.quad(top ? 'qgrass' : 'rammed', P[j], P[j + 1], Q[j + 1], Q[j], COL, uv);
+      }
+    }
+    // 两端封面（扇形）
+    for (const [S, flip] of [[st[0], true], [st[n], false]]) {
+      for (let j = 1; j < S.length - 1; j++) {
+        if (flip) b.triangle('rammed', S[0], S[j + 1], S[j], COL);
+        else b.triangle('rammed', S[0], S[j], S[j + 1], COL);
+      }
+    }
     b.pop();
     s = e + 10 + rnd() * 22;
   }
+}
+
+/** 夯土立面贴图：8~12 cm 水平夯层（深浅交替 + 层缝）+ 竖向冲沟 + 风化斑；UV 以米计（u 沿墙、v 竖直） */
+function rammedMaterial() {
+  const W = 256, H = 256;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  let sd = 77;
+  const r = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  g.fillStyle = '#a58b67';
+  g.fillRect(0, 0, W, H);
+  // 夯层：贴图竖向 2.4 m → 每层约 10 px
+  for (let y = 0; y < H; ) {
+    const hh = 9 + r() * 4;
+    const v = (r() - 0.5) * 22;
+    g.fillStyle = `rgb(${165 + v | 0},${139 + v | 0},${103 + v | 0})`;
+    g.fillRect(0, y, W, hh);
+    g.fillStyle = 'rgba(70,56,38,0.35)';
+    g.fillRect(0, y + hh - 1.2, W, 1.2);
+    y += hh;
+  }
+  // 竖向冲沟
+  for (let k = 0; k < 7; k++) {
+    const x = r() * W, w = 3 + r() * 6, y0 = r() * H * 0.3, len = H * (0.4 + r() * 0.6);
+    const gr = g.createLinearGradient(0, y0, 0, y0 + len);
+    gr.addColorStop(0, 'rgba(60,46,30,0.45)');
+    gr.addColorStop(1, 'rgba(60,46,30,0)');
+    g.fillStyle = gr;
+    g.fillRect(x, y0, w, len);
+  }
+  for (let k = 0; k < 3000; k++) {
+    const v = r() < 0.5 ? 90 + r() * 40 : 190 + r() * 40;
+    g.fillStyle = `rgba(${v},${v - 20},${v - 45},0.25)`;
+    g.fillRect(r() * W, r() * H, 1.5, 1.5);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1 / 3.2, 1 / 2.4);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.96 });
+  m.name = 'qujiang.rammed';
+  return m;
 }

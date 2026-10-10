@@ -147,7 +147,9 @@ export function tangRect(b, w, d, h, o = {}) {
   const eaves = h >= 11.5 && bays >= 3 && depthBays >= 3 ? 2 : 1;
   return hall(b, {
     style: 'tang', bays, bayW, depthBays, depthW, colH, eaves, roof: area > 650 ? 'wudian' : 'xieshan', roofColor: 'darkgray',
-    platformH: 0.75, front: bays >= 5 ? 'tangshop' : 'tang', back: 'wall', sides: 'wall', steps: 'front', lanterns: o.lanterns && bays >= 3, eaveLights: lights, plaque: o.plaque,
+    // 背面、山面也开直棂窗（槛墙 + 直棂窗；原先一律白墙，从湖面/园路看背立面像未完成的白模）
+    // 临水殿宇（o.lakeside）四面开窗，山面也是槛墙 + 直棂窗（从湖面看不再是整面白墙夹红柱）
+    platformH: 0.75, front: bays >= 5 ? 'tangshop' : 'tang', back: 'zhiling', sides: depthBays >= 2 || o.lakeside ? 'zhiling' : 'wall', steps: 'front', lanterns: o.lanterns && bays >= 3, eaveLights: lights, plaque: o.plaque,
   });
 }
 

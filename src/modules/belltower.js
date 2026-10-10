@@ -17,6 +17,7 @@ import * as THREE from 'three';
 import { buildLOD, multiStoreyTower, cityPlatform, eaveLights, lantern, stats } from '../arch/chinese.js';
 import { crossPlatform, bronzeBell, bellFrame, drum, wallStair, plazaLamp } from '../arch/belltower-parts.js';
 import { overlay } from '../core/util.js';
+import { outlineLines } from '../arch/citywall-kit.js';
 
 const BELL_C = [0, 0];
 const DRUM_C = [-322.5, -83];
@@ -172,10 +173,12 @@ function plaza(b, hPlaza, hBell) {
   b.pop();
   // —— 钟楼绿岛（圆形，花带 + 花岗岩环路 + 铁艺矮栏） ——
   b.push(0, hBell, 0, 0);
-  b.box('stone', -21.5, -0.3, -21.5, 21.5, 0.12, 21.5, 0x9e988c, { skip: 'bottom' });
   const seg = b.detail >= 2 ? 72 : 36;
-  // 花带同心环（红/黄/紫/绿篱）
-  const rings = [[21.8, 24.5, 0x3f6a2c, 0.35], [24.5, 27.5, 0xb3261c, 0.22], [27.5, 30, 0xe0b62a, 0.2], [30, 33, 0x6a3f8a, 0.2], [33, 36, 0xb3261c, 0.2], [36, 38.2, 0x3f6a2c, 0.45]];
+  // 城台四周圆形花岗岩台周（半径 26.5 m，盖住城台四角；原先 43 m 见方的石台四角从圆形花带里露出，远看是四块灰色“花瓣”）
+  ringLathe(b, 'stone', [[0.5, 0.12], [26.3, 0.12], [26.5, 0.02], [26.5, -0.3]], seg * 2, 0xa7a196);
+  // 绿篱（内外两圈）+ 一圈窄红花带；其余为草坪（草坪面由外部草地材质贴地绘制，见 build）。
+  // 原先红/黄/紫/红四道同心花带，远看混成暗紫褐色（审查 g2：像紫色地砖）
+  const rings = [[26.5, 27.6, 0x35592a, 0.55], [31.2, 32.4, 0xb3261c, 0.22], [36.6, 38.2, 0x35592a, 0.6]];
   for (const [r0, r1, c, h] of rings) {
     const prof = [[r0, 0], [r0 + 0.15, h], [r1 - 0.15, h], [r1, 0]];
     ringLathe(b, 'plaster', prof, seg, c);
@@ -285,7 +288,9 @@ export default {
     const bellFlood = {
       color: 0xffc47a, strength: 1.45, baseY: hBell + 0.5, height: 36, top: 0.7,
       shade: [tunnelShade(BELL_C[0], BELL_C[1], hBell, false, 17.55), tunnelShade(BELL_C[0], BELL_C[1], hBell, true, 17.55)],
-      byKey: { brick: { color: 0xffab4a, strength: 1.05, top: 0.85 }, stone: { color: 0xffb860, strength: 0.95 } },
+      // 城台砖面：灯槽在地面，9 m 内由 1 → 0.38 渐暗（原 height 36 / top 0.85 → 8.6 m 高的城台上下同一亮度，近看像发光方盒，
+      // 砖缝也被压平；审查 g8）；强度略降，让砖纹与券洞阴影显出来
+      byKey: { brick: { color: 0xffab4a, strength: 1.2, baseY: hBell - 0.3, height: 9.5, top: 0.38 }, stone: { color: 0xffb860, strength: 0.9, baseY: hBell - 0.3, height: 9.5, top: 0.5 } },
     };
     // 钟楼
     const bell = buildLOD(ctx, bellTower, { style: 'ming', levels, name: '西安钟楼', flood: bellFlood });
@@ -297,12 +302,35 @@ export default {
     const drumFlood = {
       color: 0xffc27a, strength: 1.4, baseY: hDrum + 0.5, height: 34, top: 0.7,
       shade: [tunnelShade(DRUM_C[0], DRUM_C[1], hDrum, false, 17.6)],
-      byKey: { brick: { color: 0xffab4a, strength: 1.0, top: 0.85 }, stone: { color: 0xffb860, strength: 0.95 } },
+      byKey: { brick: { color: 0xffab4a, strength: 1.15, baseY: hDrum - 0.3, height: 8.5, top: 0.38 }, stone: { color: 0xffb860, strength: 0.9, baseY: hDrum - 0.3, height: 8.5, top: 0.5 } },
     };
     const drumT = buildLOD(ctx, drumTower, { style: 'ming', levels, name: '西安鼓楼', flood: drumFlood });
     drumT.position.set(DRUM_C[0], hDrum, DRUM_C[1]);
     root.add(drumT);
     const dInfo = drumT.userData.info;
+
+    // 远景轮廓灯线（屏幕恒宽，近处 300 m 内淡出让位于实体灯带）：几公里外俯视时，实体灯带与泛光都不到 1 像素，
+    // 钟楼在老城中心与普通路口一样暗（原先四座城门有轮廓灯线、钟楼没有；审查 g7 p1_night）
+    {
+      const lines = [];
+      const add = (info, cx, cy, cz, plat) => {
+        for (const r of info.roofs || []) for (const line of [...(r.eaveLines || []), ...(r.ridgeLines || [])]) if (line.length > 1) lines.push(line.map((p) => [p[0] + cx, p[1] + cy, p[2] + cz]));
+        if (plat) {
+          const [hw, hd, y] = plat;
+          lines.push([[-hw, y, -hd], [hw, y, -hd], [hw, y, hd], [-hw, y, hd], [-hw, y, -hd]].map((p) => [p[0] + cx, p[1] + cy, p[2] + cz]));
+        }
+      };
+      add(bInfo, BELL_C[0], hBell, BELL_C[1], [17.75, 17.75, bInfo.platTop]);
+      add(dInfo, DRUM_C[0], hDrum, DRUM_C[1], null);
+      // 线宽/亮度与城门楼轮廓线同一量级（原 3.4 / 0.0016：三重檐的檐线叠加后在 1 km 外糊成两团过曝光球，永宁门夜景北望可见）
+      const far = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.3, pix: 0.00085, fadeNear: 300, fadeFar: 900 });
+      far.name = '钟鼓楼轮廓灯线';
+      root.add(far);
+      // 全城俯瞰（几公里外）再叠一层更宽更亮的轮廓线，让钟鼓楼成为老城中心最亮的金色光团；2.5 km 内淡出（近处不糊成光球）
+      const farther = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.6, pix: 0.0012, fadeNear: 2500, fadeFar: 5000 });
+      farther.name = '钟鼓楼轮廓灯线（远）';
+      root.add(farther);
+    }
 
     // 广场 + 绿岛（不泛光）
     let pInfo = null;
@@ -320,6 +348,9 @@ export default {
     // 在远处把 0.2~0.45 m 高的红/黄/紫花带整片盖住，钟楼四周只剩一块均匀的暗绿色圆盘
     const ring = new THREE.RingGeometry(38.1, ISLAND_R - 0.55, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0);
     shapes.push(ring);
+    // 绿篱与红花带之间的两圈草坪（避开凸起的花带/绿篱，见上）
+    shapes.push(new THREE.RingGeometry(27.7, 31.1, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0));
+    shapes.push(new THREE.RingGeometry(32.5, 36.5, 72).rotateX(-Math.PI / 2).translate(0, hBell + 0.1, 0));
     for (const g of shapes) {
       const uv = g.attributes.uv, pos = g.attributes.position;
       for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 4, pos.getZ(i) / 4);

@@ -30,15 +30,16 @@ export const DAYANTA = {
 };
 
 // 顶点色（sRGB），与构件库砖纹理相乘后呈黄灰砖色
+// 色相往灰褐收（原先一水土黄，审查 g3）：明代外包砖风化后的黄灰色
 const C = {
-  wall: 0xdcc295,
-  pilaster: 0xd6bc8f,
-  lane: 0xd0b68a, // 阑额
-  dou: 0xc9ae82, // 砖雕栌斗
-  eave: 0xd4ba8e,
-  tooth: 0xb89f76, // 菱角牙子
-  back: 0xc8b089, // 反叠涩
-  arch: 0xccb286, // 券脸
+  wall: 0xcab593,
+  pilaster: 0xc3ae8c,
+  lane: 0xbda887, // 阑额
+  dou: 0xb6a07e, // 砖雕栌斗
+  eave: 0xc1ab89,
+  tooth: 0xa6916f, // 菱角牙子
+  back: 0xb5a07f, // 反叠涩
+  arch: 0xb9a482, // 券脸
   base: 0xb4aa98, // 台基砖
   cap: 0xc9c2b4, // 台基压面石
   deck: 0x9a9285, // 台面方砖海墁
@@ -255,4 +256,47 @@ export function dayantaLights(b, info, color = 0xffd08a) {
     const h = r.half + 0.04, y = r.y - 0.06;
     b.led([[-h, y, -h], [h, y, -h], [h, y, h], [-h, y, h]], { color, width: 0.08, closed: true });
   }
+}
+
+/**
+ * 塔身砖面风化（叠加在泛光材质上，需先 floodlit 以获得 vFloodW）：低频修补色差 + 檐下竖向雨水痕 + 底部返碱偏深 +
+ * 下层偏冷灰、上层偏暖。原先七层同一土黄色、近看像整块涂色模型（审查 g3）。
+ */
+export function weatherBrick(mat, baseY) {
+  const prev = mat.onBeforeCompile;
+  const prevKey = mat.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : () => '';
+  const uBase = { value: baseY };
+  mat.onBeforeCompile = function (sh, r) {
+    if (prev) prev.call(this, sh, r);
+    sh.uniforms.uWBase = uBase;
+    sh.fragmentShader = sh.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+        uniform float uWBase;
+        float wHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float wNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), f.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), f.x), f.y); }`
+      )
+      .replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+        {
+          vec3 wp = vFloodW;
+          float hy = wp.y - uWBase;
+          float u = wp.x + wp.z;
+          float n1 = wNoise(vec2(u, wp.y) * 0.3);
+          float n2 = wNoise(vec2(wp.x - wp.z, wp.y) * 1.7);
+          float streak = smoothstep(0.55, 0.92, wNoise(vec2(u * 1.9, wp.y * 0.07))) * (0.6 + 0.4 * wNoise(vec2(u * 0.4, 7.0)));
+          float k = 1.0 - 0.12 * n1 - 0.06 * n2 - 0.14 * streak;
+          k *= mix(0.82, 1.0, smoothstep(0.0, 12.0, hy));
+          diffuseColor.rgb *= k;
+          float grey = dot(diffuseColor.rgb, vec3(0.333));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(grey), 0.08 + 0.14 * (1.0 - smoothstep(4.0, 45.0, hy)));
+        }`
+      );
+  };
+  mat.customProgramCacheKey = () => prevKey() + '|weather';
+  mat.needsUpdate = true;
+  return mat;
 }

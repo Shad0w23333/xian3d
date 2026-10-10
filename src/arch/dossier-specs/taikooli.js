@@ -14,6 +14,8 @@
 //   最东侧两栋按“仍在封顶施工”做裸露结构 + 塔吊。层高 5 m（商业）。坡屋顶以唐风意象的缓坡四坡顶（出檐、轻举折起翘）为主，两栋玻璃小楼为现代低坡顶。
 //   整个地块铺贴地形的浅灰石材铺装（kind:'pave'），盖住旧影像里的平房。地上建筑面积合计约 14 万 m²（资料：地上约 12.6 万 m²；示意体块含中庭/挑空，略偏大）。
 const TK_ROOF = { color: '#655f57', roughness: 0.86, metalness: 0.05 }; // 深灰瓦/金属屋面（略偏暖：中性灰在天光半球光下发蓝）
+// 屋面按栋轮换：筒瓦贴图 / 暖灰金属 / 浅灰金属（原先 26 栋同一深灰平涂，俯视成一片同尺寸的深色盝顶方盒，像仓库，审查 g5 px4_day）
+const TK_ROOFS = ['roofTile', TK_ROOF, { color: '#7d7870', roughness: 0.8, metalness: 0.12 }, 'roofTile', { color: '#5a5650', roughness: 0.88, metalness: 0.05 }];
 const FAC = {
   brick: { pattern: 'stoneWindows', tint: '#33404a', spd: '#75716a', floorH: 5, colW: 4.6, spandrel: 0.3, mullW: 1.1, lit: 0.5 }, // 灰砖 + 大窗
   glass: { pattern: 'grid', tint: '#3b4954', spd: '#57524c', floorH: 5, colW: 3.0, spandrel: 0.16, mullW: 0.22, lit: 0.55 }, // 大面积玻璃 + 深色框
@@ -43,9 +45,10 @@ function tk(id, x0, z0, x1, z1, floors, o = {}) {
   const H = floors * 5, seed = (SEED += 3);
   const parts = [];
   // 屋顶：唐风意象的缓坡四坡顶（tangRoof：出檐 1.8 m、轻微举折与起翘，资料“顶部隐约可见唐代飞檐与斗拱意象”）；o.modern 为现代低坡四坡/双坡（pubHip）
+  const rmat = TK_ROOFS[(seed / 3) % TK_ROOFS.length | 0];
   const roof = (w, d) => (o.modern
     ? [{ type: 'pubHip', h: Math.max(2.2, Math.min(w, d) * 0.15), eave: 1.4, ridge: o.ridge, mat: TK_ROOF, eaveMat: '#3a3d41', eaveH: 0.45 }]
-    : [{ type: 'tangRoof', eave: 1.8, h: Math.max(2.4, Math.min(w, d) * 0.16), ridge: o.ridge != null ? 0.85 : undefined, curve: 0.3, lift: 0.5, base: 0.6, mat: TK_ROOF, ridgeMat: '#3b3936' }]);
+    : [{ type: 'tangRoof', eave: 1.8, h: Math.max(2.4, Math.min(w, d) * 0.16), ridge: o.ridge != null ? 0.85 : undefined, curve: 0.3, lift: 0.5, base: 0.6, mat: rmat, ridgeMat: '#3b3936' }]);
   if (o.uc) {
     // 在建：裸露楼板与柱（夜间不亮），顶上塔吊
     parts.push({
@@ -106,11 +109,38 @@ const BUILDINGS = [
 ];
 
 // 整个地块的铺装 + 标注（铺装落地轮廓同时作为排除区：旧影像对应的通用建筑、树木让位）
+// 施工围挡：项目 2027 年起才分阶段开业，现状整片仍是工地（西侧在做幕墙装修、中部封顶、东端在封顶施工）——
+// 沿地块外沿 2.5 m 高的彩钢围挡（每边在主街、巷口处留工地大门），与东端的裸露结构 + 塔吊同为“在建”状态，不再像已开业街区
+const TK_HOARD = (() => {
+  const ring = [[-296, 2080], [-45, 2080], [-45, 2397], [-290, 2397], [-296, 2391]];
+  const gates = [2244, -180, -100]; // 主街（z）与两条南北巷（x）的大门位置
+  const out = [];
+  for (let i = 0; i < ring.length; i++) {
+    const [ax, az] = ring[i], [bx, bz] = ring[(i + 1) % ring.length];
+    const L = Math.hypot(bx - ax, bz - az), tx = (bx - ax) / L, tz = (bz - az) / L;
+    const cuts = [];
+    for (const g of gates) {
+      const t = Math.abs(tx) > 0.7 ? (g - ax) / tx : Math.abs(tz) > 0.7 ? (g - az) / tz : -1;
+      if (t > 6 && t < L - 6 && (Math.abs(tx) > 0.7 ? g < 0 : g > 0)) cuts.push(t);
+    }
+    cuts.sort((p, q) => p - q);
+    let a = 0;
+    for (const c of [...cuts, L + 5]) {
+      const b = Math.min(L, c - 5);
+      if (b - a > 2) {
+        const P = (t, o) => [+(ax + tx * t - tz * o).toFixed(2), +(az + tz * t + tx * o).toFixed(2)];
+        out.push({ name: 'hoard' + i + '_' + out.length, kind: 'solid', mat: '#4a6f8f', pts: [...P(a, -0.1), ...P(b, -0.1), ...P(b, 0.1), ...P(a, 0.1)], base: 0, top: 2.5, footprint: false });
+      }
+      a = c + 5;
+    }
+  }
+  return out;
+})();
 const SITE = {
   id: 'taikoo-site',
   name: '西安太古里',
   center: [-170, 2240],
-  parts: [{ name: 'pave', kind: 'pave', pts: [-297, 2079, -44, 2079, -44, 2398, -290, 2398, -297, 2391], base: 0, top: 0.2, step: 6, lift: 0.12, mat: 'granite' }],
+  parts: [{ name: 'pave', kind: 'pave', pts: [-297, 2079, -44, 2079, -44, 2398, -290, 2398, -297, 2391], base: 0, top: 0.2, step: 6, lift: 0.12, mat: 'granite' }, ...TK_HOARD],
   label: { text: '西安太古里', y: 26, priority: 1.6 },
   supersede: { names: ['西安太古里', '太古里'] },
   meta: { ...META, notes: '铺装网格 6 m、贴地形 +0.12 m。南区未建（范围不明）。' },
