@@ -326,6 +326,10 @@ export default {
       const far = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.3, pix: 0.00085, fadeNear: 300, fadeFar: 900 });
       far.name = '钟鼓楼轮廓灯线';
       root.add(far);
+      // 全城俯瞰（几公里外）再叠一层更宽更亮的轮廓线，让钟鼓楼成为老城中心最亮的金色光团；2.5 km 内淡出（近处不糊成光球）
+      const farther = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.6, pix: 0.0012, fadeNear: 2500, fadeFar: 5000 });
+      farther.name = '钟鼓楼轮廓灯线（远）';
+      root.add(farther);
     }
 
     // 广场 + 绿岛（不泛光）
