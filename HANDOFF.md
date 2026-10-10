@@ -311,3 +311,27 @@ data-src/              原始数据缓存（**未入库**，约 800 MB，需用�
 - `tools/amap_fetch.py` 从仓库根 `.env` 读 `AMAP_KEY`：**等用户提供高德 Web 服务 Key** 后跑 `poi` / `roads` / `merge`（多日配额续传），用真实店名替换 OSM 店铺、补路名与缺失路段。
 
 **模块顺序要点**（`src/modules/index.js`）：weiyang（改路网）最先；streetscape → parking → streetfurniture → buildings → compounds → vegetation → parks → signage。
+
+## 15. 2026-10-08~10 第二轮找茬修复（七路）+ 第三轮准备
+
+对 89 张巡检截图做第二轮审查（`shots/audit2/all.json`，293 条：P0 12、P1 111、P2 170），按模块分七路修复（共同约定 `docs/FIX_ROUND2.md`，各路任务 `docs/fix2_tasks/*.md`）。
+会话中断与额度用尽三次，靠“每修一条就提交 + 接手者读前任操作记录（`~/.claude/bin/agent_log_dump.py`）”接力完成，最后一轮收尾后全部合并（`098c9d2`）。
+
+**已修 177 条**（地标 57、交通 29、植被 21、渲染核心 20、通用建筑 20、道路 15、小区 15），重点：
+- 永宁门近水机位整片纯黑：WebGL 上下文丢失恢复后没重画环境贴图（`sky.js` 监听 `webglcontextrestored`）。
+- 永宁门夜景悬空光球：城门投光灯离地太近，改为城台整面洗墙泛光。
+- 浐灞满地雪斑：影像高光压白；近景地面语义图（建筑轮廓与路边缓冲进地面，楼间铺装与空地/工地分开画），影像烘焙楼影提亮。
+- 小区停车空壳（四边形绕向反了）、大雁塔北广场误判园桥、鼓楼门前与回民街停车（禁车区）、分隔带绿篱翻面、桥面发黑（反向深度阴影偏移方向）。
+- 行道树树池与坡道避让、草丛、公园夜景；招牌伪汉字与广告版式、卷帘按营业时段；行人与车辆细模；钟楼/西安站/陕历博/不夜城/曲江细化。
+
+**未修 104 条**（`shots/round3/backlog_fix2.json`，含已查清的根因线索），其中 P0 3 条全在通用建筑数据层：含光路东侧整片轮廓偏移 12.5 m、汉城湖岸凭空塔楼、南大街人行道黑色薄板。
+半成品补丁：`shots/fix2_unfinished/buildings.patch`（长楼单元凹槽、窄山墙开窗）。
+
+**合并后回归**：89 机位 0 模块错误、0 页面错误、0 GL_INVALID。性能变慢：视角 4 帧时间 15.0→17.5 ms、视角 5 16.0→19.3 ms（p95 32→48 ms），
+每帧绘制调用 +46~106，主要来自地标组（逐栋档案楼单项约 300 次/帧）和地面停车场；新工具 `tools/drawcalls_by_module.mjs` 按模块记账。
+
+**第三轮准备**
+- 全城网格巡检：`tools/make_grid_tour.mjs` → `tools/tour_grid.json`（444 格、960 机位：内城 1 km、外圈 2 km；每格低空 + 人行道人眼，每 6 格一张夜景）。
+- `tools/tour.mjs` 加 `--shard k/n` 分片并行、`--resume` 断点续拍，每拍一张写一次清单。
+- 审查员说明 `docs/AUDIT3_GRID.md`，修复约定 `docs/FIX_ROUND3.md`。
+- 高德小区出入口数据入库 `public/data/local/compounds_amap.json`（`tools/build_compounds_amap.py` 生成，随第三遍抓取扩充）。
