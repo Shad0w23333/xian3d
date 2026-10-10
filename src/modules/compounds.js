@@ -24,7 +24,7 @@ import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
 import { parseBld, planIter, exclusionRings, chunkIndex, prepSports, rectWorld, CHUNK } from '../arch/compound-plan.js';
 import { genChunk, K } from '../arch/compound-gen.js';
-import { carNear, carFar, leafTexture } from '../arch/compound-props.js';
+import { carNear, carFar, leafTexture, flowerTexture } from '../arch/compound-props.js';
 
 // 按画质档位（0 低 … 3 超高）
 const RADIUS = [700, 1000, 1500, 1800]; // 生成半径（米）
@@ -33,6 +33,7 @@ const COARSE_R = [450, 700, 1050, 1350]; // 远看实体（围墙、门头、岗
 const ALPHA_R = [350, 550, 850, 1100]; // 透明栏杆
 const CAR_NEAR_R = [90, 160, 260, 340];
 const CAR_FAR_R = [350, 550, 850, 1100];
+const FLOWER_R = [50, 80, 120, 160]; // 花坛花丛实例（更远处由面层花坛底色代替）
 const MAX_AGL = 1100; // 相机离地高于此值不生成/不显示
 const SIGN_SLOTS = 8;
 
@@ -130,13 +131,12 @@ const GROUND_APPLY = /* glsl */ `
     float fade = clamp(fw * 4.0, 0.0, 1.0);
     c = mix(mix(conc, grass, g), mix(conc, grass, 0.4), fade) * (0.92 + cmpN(p * 0.7) * 0.16);
   } else if (k == ${K.FLOWER}) {
-    // 花坛：绿底上按 0.33 m 格撒红/黄/紫三色花团，远处平均成带色调的绿
-    vec2 q = floor(p * 3.0);
-    float r = cmpH(q);
-    vec3 fl = r < 0.34 ? vec3(0.62, 0.05, 0.06) : r < 0.67 ? vec3(0.78, 0.5, 0.03) : vec3(0.36, 0.1, 0.42);
-    float d = length(fract(p * 3.0) - 0.5);
-    float on = (1.0 - smoothstep(0.22, 0.42, d)) * step(0.3, cmpH(q + 7.0));
-    c = mix(c * 0.85, fl, on * near + 0.38 * (1.0 - near));
+    // 花坛底：深褐覆盖物（树皮屑/土）夹少量叶色；近处由花丛实例盖满，远处（花丛实例之外）按顶点色出一片低饱和的花色
+    // （原先按 0.33 m 格撒红黄紫圆点，人眼高度看像波点布、40 m 看是彩色马赛克，审查 st_chanba_road / fe_经开小区）
+    float n = cmpN(p * 3.1);
+    vec3 mulch = vec3(0.075, 0.06, 0.045) * (0.8 + 0.4 * n);
+    mulch = mix(mulch, vec3(0.055, 0.085, 0.035), smoothstep(0.55, 0.8, cmpN(p * 1.7 + 4.0)) * 0.6);
+    c = mix(c * (0.9 + 0.2 * n), mulch, near * 0.85);
   } else if (k == ${K.SOIL}) {
     c *= 0.82 + cmpN(p * 1.1) * 0.3;
     c = mix(c, vec3(0.16, 0.2, 0.08), smoothstep(0.5, 0.8, cmpN(p * 0.9 + 3.0)) * 0.6);
@@ -160,7 +160,7 @@ function groundMaterial(ctx) {
         { int kk = int(vK + 0.5); if (kk == ${K.PAINT}) roughnessFactor = 0.62; else if (kk == ${K.RUBBER} || kk == ${K.COURT}) roughnessFactor = 0.8; else if (kk == ${K.ASPHALT}) roughnessFactor = 0.88; }`,
       );
   };
-  m.customProgramCacheKey = () => 'compounds-ground-v1';
+  m.customProgramCacheKey = () => 'compounds-ground-v2';
   ctx.overlay(m, 0.00025);
   return m;
 }
@@ -242,11 +242,16 @@ export default {
     const t0 = performance.now();
     const bld = parseBld(ctx.data.buildings instanceof ArrayBuffer ? ctx.data.buildings : ctx.data.buildings?.buffer);
     if (!bld) return;
-    const [estates, sportsRaw] = await Promise.all([loadJSON('estates_style.json', { optional: true }), loadJSON('sports.json', { optional: true })]);
+    // 高德住宅小区（真实名称 + 出入口坐标，tools/build_compounds_amap.py 生成，私有本地数据，可缺省）
+    const [estates, sportsRaw, amap] = await Promise.all([
+      loadJSON('estates_style.json', { optional: true }),
+      loadJSON('sports.json', { optional: true }),
+      loadJSON('local/compounds_amap.json', { optional: true }),
+    ]);
     const sports = prepSports(sportsRaw);
     const E = ctx.exclusions;
     const excluded = (x, z) => !!(E && E.items.length && E.test(x, z, 'buildings'));
-    const it = planIter({ landuse: ctx.data.landuse, roads: ctx.data.roads, bld, estates, excluded, sports });
+    const it = planIter({ landuse: ctx.data.landuse, roads: ctx.data.roads, bld, estates, excluded, sports, amap });
     let r, ts = performance.now();
     while (!(r = it.next()).done) {
       if (performance.now() - ts > 40) {
@@ -278,6 +283,8 @@ export default {
     const lu = ctx.data.landuse;
     if (lu && Array.isArray(lu.polys)) {
       for (const c of plan.list) {
+        // 老小区宅间由本模块按 9~10 m 种大树（compound-plan.js 第 9 步），不再交给植被模块按公园密度另种
+        if (c.mode === 'old') continue;
         for (const g of c.gardens || []) {
           if ((g.u1 - g.u0) * (g.v1 - g.v0) < 60) continue;
           const outer = rectWorld(c, g.u0, g.u1, g.v0, g.v1).map((v) => Math.round(v * 10) / 10);
@@ -289,9 +296,11 @@ export default {
     this.plan = plan;
     this.chunkMap = chunkIndex(plan.list);
     const st = plan.stats;
+    let nBig = 0;
+    for (const c of plan.list) nBig += (c.bigTrees || []).length;
     console.log(
       `[compounds] 规划 ${st.planned}/${st.cand} 个小区/校园（跳过城中村 ${st.skipVillage}、无楼 ${st.skipEmpty}、精建区 ${st.skipExcl}）：` +
-        `车行道 ${st.lanes}、连接道 ${st.conns}、大门 ${st.gates}、车位 ${st.stalls}、设施 ${st.pads}、园路 ${st.paths}、运动场地 ${sports.length}；排除区 ${nEx} 片、宅间绿地 ${nGarden} 块；${(performance.now() - t0).toFixed(0)} ms`,
+        `车行道 ${st.lanes}、连接道 ${st.conns}、大门 ${st.gates}、车位 ${st.stalls}、设施 ${st.pads}、园路 ${st.paths}、运动场地 ${sports.length}；排除区 ${nEx} 片、宅间绿地 ${nGarden} 块、老小区宅间大树 ${nBig} 棵；高德小区 ${st.amap}/${amap?.items?.length ?? 0} 条挂到用地、按出入口开门 ${st.amapGates}；${(performance.now() - t0).toFixed(0)} ms`,
     );
   },
 
@@ -318,6 +327,9 @@ export default {
     const leafTex = new THREE.CanvasTexture(leafTexture());
     leafTex.colorSpace = THREE.SRGBColorSpace;
     leafTex.anisotropy = 4;
+    const flowerTex = new THREE.CanvasTexture(flowerTexture());
+    flowerTex.colorSpace = THREE.SRGBColorSpace;
+    flowerTex.anisotropy = 4;
     // 小乔木树冠：球面广告牌（始终正对相机/光源，任何角度都没有“插片”的边线；阴影通道里正对光源，投下圆形树影）
     const BILL = (sh) => {
       sh.vertexShader = sh.vertexShader.replace(
@@ -334,7 +346,19 @@ export default {
       // 统一朝上的法线（广告牌各处受光一致，像一团树冠）
       sh.vertexShader = sh.vertexShader.replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\ntransformedNormal = normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0));');
     };
-    matLeaf.customProgramCacheKey = () => 'compounds-crown-v1';
+    matLeaf.customProgramCacheKey = () => 'compounds-crown-v2';
+    // 花坛花丛：同一套球面广告牌；贴图里近白的花朵换成实例色（各花坛一种花色），叶片保持绿色
+    const matFlower = new THREE.MeshStandardMaterial({ map: flowerTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 });
+    matFlower.onBeforeCompile = (sh) => {
+      BILL(sh);
+      sh.vertexShader = sh.vertexShader.replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\ntransformedNormal = normalize(mat3(viewMatrix) * vec3(0.0, 1.0, 0.0));');
+      sh.fragmentShader = sh.fragmentShader.replace(
+        '#include <color_fragment>',
+        `{ float bl = smoothstep(0.22, 0.45, min(sampledDiffuseColor.r, sampledDiffuseColor.b));
+           diffuseColor.rgb = mix(diffuseColor.rgb, vColor.rgb * (0.55 + 0.6 * dot(sampledDiffuseColor.rgb, vec3(0.333))), bl); }`,
+      );
+    };
+    matFlower.customProgramCacheKey = () => 'compounds-flower-v1';
     const matLeafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: leafTex, alphaTest: 0.5, side: THREE.DoubleSide });
     matLeafDepth.onBeforeCompile = BILL;
     matLeafDepth.customProgramCacheKey = () => 'compounds-crown-depth-v1';
@@ -384,7 +408,7 @@ export default {
       root.add(m);
     }
     carN.castShadow = true;
-    const CAP_CROWN = 24000;
+    const CAP_CROWN = 64000;
     const crown = new THREE.InstancedMesh(new THREE.PlaneGeometry(2, 2), matLeaf, CAP_CROWN);
     crown.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     crown.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CAP_CROWN * 3), 3);
@@ -394,8 +418,17 @@ export default {
     crown.castShadow = true;
     crown.receiveShadow = false;
     crown.customDepthMaterial = matLeafDepth;
-    crown.name = '小区·小乔木树冠';
+    crown.name = '小区·树冠';
     root.add(crown);
+    const CAP_FLOWER = 16000;
+    const flower = new THREE.InstancedMesh(new THREE.PlaneGeometry(2, 2), matFlower, CAP_FLOWER);
+    flower.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    flower.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CAP_FLOWER * 3), 3);
+    flower.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    flower.count = 0;
+    flower.frustumCulled = false;
+    flower.name = '小区·花坛花丛';
+    root.add(flower);
     carN.name = '小区·停放车辆（近）';
     carF.name = '小区·停放车辆（远）';
 
@@ -466,7 +499,7 @@ export default {
       return Math.hypot(dx, dz);
     };
     const finish = (key, ci, cj, W) => {
-      const rec = { ci, cj, cars: new Float32Array(W.cars), crowns: new Float32Array(W.crowns), signs: W.signs, gates: W.gates, h: {} };
+      const rec = { ci, cj, cars: new Float32Array(W.cars), crowns: new Float32Array(W.crowns), bigCrowns: new Float32Array(W.bigCrowns), flowers: new Float32Array(W.flowers), signs: W.signs, gates: W.gates, h: {} };
       const geo = (w) => (w.count ? w.geometry(true) : null);
       const add = (b, w) => { const g = geo(w); const h = g ? b.add(g) : null; if (g) g.dispose(); return h; };
       rec.h.ground = add(bGround, W.ground);
@@ -555,27 +588,53 @@ export default {
         }
       }
       carN.count = nN; carF.count = nF;
-      // 树冠广告牌：近看半径 × 1.3 内
+      // 树冠广告牌（[x, y, z, 半径, r, g, b, 扁度]，扁度 = 竖向缩放）：小乔木/灌木球近看半径 × 1.3 内；
+      // 宅间大树与树干同在远看实体半径内（远处大树不能只剩光秃树干）。块按距离由近到远，实例数到上限时先舍远处
       let nc = 0;
-      const crR = fineR * 1.3, cr2 = crR * crR, mC = crown.instanceMatrix.array, cC = crown.instanceColor.array;
-      for (const rec of chunks.values()) {
-        if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > crR) continue;
-        const a = rec.crowns;
-        for (let i = 0; i < a.length && nc < CAP_CROWN; i += 7) {
-          const dx = a[i] - camP.x, dz = a[i + 2] - camP.z;
-          if (dx * dx + dz * dz > cr2) continue;
-          const r = a[i + 3], o = nc * 16;
-          mC[o] = r; mC[o + 1] = 0; mC[o + 2] = 0; mC[o + 3] = 0;
-          mC[o + 4] = 0; mC[o + 5] = r * 0.92; mC[o + 6] = 0; mC[o + 7] = 0;
-          mC[o + 8] = 0; mC[o + 9] = 0; mC[o + 10] = r; mC[o + 11] = 0;
-          mC[o + 12] = a[i]; mC[o + 13] = a[i + 1]; mC[o + 14] = a[i + 2]; mC[o + 15] = 1;
-          cC[nc * 3] = a[i + 4]; cC[nc * 3 + 1] = a[i + 5]; cC[nc * 3 + 2] = a[i + 6];
-          nc++;
+      const mC = crown.instanceMatrix.array, cC = crown.instanceColor.array;
+      const byD = [...chunks.values()].map((rec) => [chunkDist(rec.ci, rec.cj, camP.x, camP.z), rec]).sort((p, q) => p[0] - q[0]);
+      for (const [key, R] of [['crowns', fineR * 1.3], ['bigCrowns', coarseR]]) {
+        const r2c = R * R;
+        for (const [d, rec] of byD) {
+          if (d > R) break;
+          const a = rec[key];
+          for (let i = 0; i < a.length && nc < CAP_CROWN; i += 8) {
+            const dx = a[i] - camP.x, dz = a[i + 2] - camP.z;
+            if (dx * dx + dz * dz > r2c) continue;
+            const r = a[i + 3], o = nc * 16;
+            mC[o] = r; mC[o + 1] = 0; mC[o + 2] = 0; mC[o + 3] = 0;
+            mC[o + 4] = 0; mC[o + 5] = r * a[i + 7]; mC[o + 6] = 0; mC[o + 7] = 0;
+            mC[o + 8] = 0; mC[o + 9] = 0; mC[o + 10] = r; mC[o + 11] = 0;
+            mC[o + 12] = a[i]; mC[o + 13] = a[i + 1]; mC[o + 14] = a[i + 2]; mC[o + 15] = 1;
+            cC[nc * 3] = a[i + 4]; cC[nc * 3 + 1] = a[i + 5]; cC[nc * 3 + 2] = a[i + 6];
+            nc++;
+          }
         }
       }
       crown.count = nc;
       crown.instanceMatrix.needsUpdate = true;
       crown.instanceColor.needsUpdate = true;
+      // 花坛花丛：FLOWER_R 内
+      let nf = 0;
+      const flR = FLOWER_R[level], fl2 = flR * flR, mF2 = flower.instanceMatrix.array, cF2 = flower.instanceColor.array;
+      for (const rec of chunks.values()) {
+        if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > flR) continue;
+        const a = rec.flowers;
+        for (let i = 0; i < a.length && nf < CAP_FLOWER; i += 7) {
+          const dx = a[i] - camP.x, dz = a[i + 2] - camP.z, dy = a[i + 1] - camP.y;
+          if (dx * dx + dz * dz + dy * dy > fl2) continue;
+          const r = a[i + 3], o = nf * 16;
+          mF2[o] = r; mF2[o + 1] = 0; mF2[o + 2] = 0; mF2[o + 3] = 0;
+          mF2[o + 4] = 0; mF2[o + 5] = r * 0.62; mF2[o + 6] = 0; mF2[o + 7] = 0;
+          mF2[o + 8] = 0; mF2[o + 9] = 0; mF2[o + 10] = r; mF2[o + 11] = 0;
+          mF2[o + 12] = a[i]; mF2[o + 13] = a[i + 1]; mF2[o + 14] = a[i + 2]; mF2[o + 15] = 1;
+          cF2[nf * 3] = a[i + 4]; cF2[nf * 3 + 1] = a[i + 5]; cF2[nf * 3 + 2] = a[i + 6];
+          nf++;
+        }
+      }
+      flower.count = nf;
+      flower.instanceMatrix.needsUpdate = true;
+      flower.instanceColor.needsUpdate = true;
       carN.instanceMatrix.needsUpdate = true; carN.instanceColor.needsUpdate = true;
       carF.instanceMatrix.needsUpdate = true; carF.instanceColor.needsUpdate = true;
       // 名称牌：220 m 内最近的 8 个
@@ -674,7 +733,7 @@ export default {
         if (name === 'buildings' || name === 'compounds') visible = on;
       },
       stats() {
-        return { chunks: chunks.size, queue: queue.length, busy: !!job, ground: bGround.live, solid: bSolid.live, alpha: bAlpha.live, glow: bGlow.live, crowns: crown.count, cars: carN.count + carF.count };
+        return { chunks: chunks.size, queue: queue.length, busy: !!job, ground: bGround.live, solid: bSolid.live, alpha: bAlpha.live, glow: bGlow.live, crowns: crown.count, flowers: flower.count, cars: carN.count + carF.count };
       },
       dispose() {
         for (const k of [...chunks.keys()]) unload(k);
