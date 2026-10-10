@@ -322,7 +322,8 @@ export default {
       };
       add(bInfo, BELL_C[0], hBell, BELL_C[1], [17.75, 17.75, bInfo.platTop]);
       add(dInfo, DRUM_C[0], hDrum, DRUM_C[1], null);
-      const far = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 3.4, pix: 0.0016, fadeNear: 300, fadeFar: 900 });
+      // 线宽/亮度与城门楼轮廓线同一量级（原 3.4 / 0.0016：三重檐的檐线叠加后在 1 km 外糊成两团过曝光球，永宁门夜景北望可见）
+      const far = outlineLines(ctx, lines, { color: 0xffc66a, intensity: 2.3, pix: 0.00085, fadeNear: 300, fadeFar: 900 });
       far.name = '钟鼓楼轮廓灯线';
       root.add(far);
     }
