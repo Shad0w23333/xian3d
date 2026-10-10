@@ -95,7 +95,7 @@ function subHeading(p, cum, s0, s1, atEnd) {
  * 端点若不与任何顶点重合，则 ①投影吸附到 6 m 内的其它路段 ②或与 22 m 内方向连续的端点相连（补数据缺口）。
  * edges[i] = { f, s0, s1, dir, L, lanes, lw, twoWay, cls, from, to, h0, h1, next:[{e,a}], x0..z1, junction, group }
  */
-export function buildRoadGraph(roads) {
+export function buildRoadGraph(roads, skip = null) {
   const feats = roads?.features || [];
   const inc = [];
   const cums = new Array(feats.length);
@@ -103,6 +103,7 @@ export function buildRoadGraph(roads) {
   for (let fi = 0; fi < feats.length; fi++) {
     const f = feats[fi];
     if (!ROAD_CLASSES.has(f.c) || f.t || f._ped || !f.p || f.p.length < 4) continue;
+    if (skip && skip(f)) continue; // 禁车道路（景区门前断头路、绕地标环路等）
     const c = cumLen(f.p);
     const L = c[c.length - 1];
     if (L < 1.5) continue;
@@ -467,7 +468,7 @@ function finishGraph(feats, featLen, nodes, edges) {
 
 /**
  * 封闭不通车的边（步行街、下沉广场坑口、楼体内部等“道路模块不画路面”的地方）：
- * 沿边每 step 米取样（两端各让出 5 m，路口本身常在排除区边缘），落在 blocked(x,z) 内的样点
+ * 沿边每 step 米取样（两端各让出 5 m，路口本身常在排除区边缘），落在 blocked(x, z, 道路等级) 内的样点
  * 占 30% 以上或累计 ≥ 24 m 即封闭；封闭边从所有出边表里删除（车辆不会选路驶入），活动区也不再激活它。
  * 返回封闭边数。
  */
@@ -485,7 +486,7 @@ export function blockEdges(G, blocked, step = 6) {
     let hit = 0;
     for (let k = 0; k <= n; k++) {
       pointAtS(p, c, a + ((b - a) * k) / n, pt);
-      if (blocked(pt[0], pt[1])) hit++;
+      if (blocked(pt[0], pt[1], feats[e.f].c)) hit++;
     }
     if (hit && (hit / (n + 1) >= 0.3 || hit * ((b - a) / n) >= 24)) { e.blocked = true; nb++; }
   }

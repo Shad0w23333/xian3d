@@ -30,7 +30,7 @@ import { bikeGeometries, BIKE, OPT, SEAT, BIKE_LEN, SCOOTER_COLORS, SHARED_BIKES
 import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, randomLook, SEAT_H, MODE } from '../arch/people-geo.js';
 import * as roadsNet from '../arch/roads_net.js';
 import { BRIDGE_UNIT, LIFT } from '../core/roadheight.js';
-import { parkingPlan, parkHash, featureWidth } from '../arch/vehicle-parking.js';
+import { parkingPlan, parkHash, featureWidth, carFreeZones } from '../arch/vehicle-parking.js';
 
 // ======================================================================
 // 参数
@@ -325,10 +325,12 @@ void main() {
     float pixR = uPixel * d * (head ? 1.5 : 1.45) * sqrt(ks);
     float r = max(worldR, pixR);
     float e = clamp(worldR * worldR / (r * r), 0.0, 1.0);
-    e = mix(0.6, 1.0, e);
+    // 远处（灯小于像素）：能量随距离递减、峰值压到泛光阈值以下——500 m 外不再是一串比路灯还亮的大白/红圆点
+    float far = smoothstep(250.0, 1400.0, d);
+    e = mix(mix(0.6, 0.3, far), 1.0, e);
     float brake = trBit(fl, 1.0);
     vec3 col = (head ? vec3(1.0, 0.9, 0.74) * (big ? 7.0 : 3.4) : vec3(1.0, 0.07, 0.03) * (brake > 0.5 ? 5.0 : 2.6)) * mix(0.6, 1.0, ks);
-    vCol = col * vis * e * uNight;
+    vCol = col * vis * e * uNight * mix(1.0, 0.5, far);
     vec3 camR = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
     vec3 camU = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
     wp = c + V * min(0.6, d * 0.02) + (camR * aL.z + camU * aL.w) * r * 2.6;
@@ -521,11 +523,13 @@ export default {
     // —— 路网 ——
     // 景区/公园里的无名支路（大慈恩寺绕三藏院的环路等）按步行道处理，不进车行路网（与 roads 同一规则）
     if (typeof roadsNet.markParkWalkways === 'function') roadsNet.markParkWalkways(ctx.data.roads, ctx.data.landuse);
-    const G = buildRoadGraph(ctx.data.roads);
-    // 步行街与“道路模块不画路面”的地方（大唐不夜城步行街、下沉广场坑口、楼体内部路段等，排除区 roads=true）不跑车
-    const EX = ctx.exclusions;
-    const nBlocked = EX && EX.items && EX.items.length ? blockEdges(G, (x, z) => EX.test(x, z, 'roads')) : 0;
-    if (nBlocked) console.warn(`[traffic] 封闭不通车的边 ${nBlocked} 条（步行街/排除区）`);
+    // 禁车区（vehicle-parking.js carFreeZones）：地标/景区门前与环路整条禁车；步行街与“道路模块不画路面”的地方
+    // （大唐不夜城步行街、下沉广场坑口、楼体内部路段等，排除区 roads=true）不跑车；地标、寺院、回民街街区等
+    // （排除区 buildings=true、寺院景区公园）里的支路不跑车
+    const CF = carFreeZones(ctx);
+    const G = buildRoadGraph(ctx.data.roads, (f) => CF.featureCarFree(f));
+    const nBlocked = blockEdges(G, (x, z, c) => CF.noDrive(x, z, c));
+    if (nBlocked) console.info(`[traffic] 封闭不通车的边 ${nBlocked} 条，整条禁车道路 ${CF.stats.carFreeFeatures} 条（步行街/景区/排除区）`);
     const edges = G.edges;
     const NE = edges.length;
     const feats = G.feats;
@@ -547,7 +551,7 @@ export default {
       const f = feats[fi];
       if (!f || !f.p) continue;
       const pl = parkingPlan(f, fi);
-      if (pl) { parkPlans[fi] = pl; nParkFeat++; }
+      if (pl && !CF.featureCarFree(f)) { parkPlans[fi] = pl; nParkFeat++; }
     }
     for (const e of edges) {
       e.parkShift = 0;
@@ -583,10 +587,14 @@ export default {
     let capNow = CAP_BY_LEVEL[level];
 
     const colTmp = new THREE.Color();
-    function setColor(i, hex) {
+    function setColor(i, hex, jit = 0) {
       colTmp.setHex(hex);
-      vCol[i * 3] = colTmp.r; vCol[i * 3 + 1] = colTmp.g; vCol[i * 3 + 2] = colTmp.b;
+      // 车漆明度轻微抖动（同为白车也有珍珠白/象牙白/冷白之分，不再一模一样）
+      const k = jit ? 1 + (rnd() - 0.5) * jit : 1;
+      vCol[i * 3] = colTmp.r * k; vCol[i * 3 + 1] = colTmp.g * k; vCol[i * 3 + 2] = colTmp.b * Math.min(1.08, k * (jit ? 0.985 + rnd() * 0.03 : 1));
     }
+    // 上一辆生成的私家车（车色、车形）：相邻生成的多在同一车道前后，同色同形就重抽一次
+    let lastHex = -1, lastShape = -1;
     function pickType(r, cls, x, z) {
       const h = ((ctx.sky?.hours ?? 14) % 24 + 24) % 24;
       const night = h < 6 || h >= 22;
@@ -602,6 +610,7 @@ export default {
         default: pBox = 0.012; break;
       }
       if (inWall(x, z)) { pSemi = 0; pDump = 0; pBox *= 0.5; }
+      if (!city) pBus *= 0.35; // 郊区公交线路少、发车间隔长
       const pTaxi = (inWall(x, z) ? 0.24 : city ? 0.16 : 0.06) * (night ? 1.5 : 1) * (cls === 0 || cls === 8 ? 0.35 : 1);
       // 铰接公交：主干道上约占公交的 12%
       if ((r -= pBus) < 0) return (cls === 2 || cls === 1) && r + pBus < pBus * 0.12 ? VK.BUS_A : VK.BUS;
@@ -620,9 +629,12 @@ export default {
       const r = rnd();
       switch (type) {
         case VK.CAR: {
-          setColor(i, pickCarColor(rnd()));
           // 轿车约一半、SUV 约四成、MPV 约一成
-          vSuv[i] = r < 0.5 ? 0 : r < 0.88 ? 1 : 2;
+          let hex = pickCarColor(rnd()), shp = r < 0.5 ? 0 : r < 0.88 ? 1 : 2;
+          if (hex === lastHex && shp === lastShape) { hex = pickCarColor(rnd()); const r2 = rnd(); shp = r2 < 0.5 ? 0 : r2 < 0.88 ? 1 : 2; }
+          lastHex = hex; lastShape = shp;
+          setColor(i, hex, 0.07);
+          vSuv[i] = shp;
           second = rnd() < 0.08 ? 7 : -1;
           plate = rnd() < 0.32 ? 1 : 0; // 新能源绿牌约三成
           break;
@@ -631,7 +643,7 @@ export default {
           // 西安纯电动出租车（比亚迪 e5）：荷叶绿车身 + 黑色车顶、绿牌；其余为甲醇车（车身色按推测取琉璃黄）
           const green = r < 0.74;
           setColor(i, green ? TAXI_GREEN : TAXI_YELLOW);
-          vSuv[i] = green && rnd() < 0.12 ? 1 : 0;
+          vSuv[i] = 0; // 西安出租车都是轿车（比亚迪 e5/秦、吉利帝豪）
           second = green ? 7 : -1;
           plate = green ? 1 : 0;
           break;
@@ -648,7 +660,7 @@ export default {
         case VK.SEMI: setColor(i, TRUCK_CAB_COLORS[(r * TRUCK_CAB_COLORS.length) | 0]); second = [2, 3, 4, 5, 6, 1, 0][(rnd() * 7) | 0]; plate = 2; break;
       }
       if (second < 0) second = 8; // 8 = 车顶与车身同色
-      vPack[i] = second + plate * 16 + ((rnd() * 12) | 0) * 64;
+      vPack[i] = second + plate * 16 + ((rnd() * 4096) | 0) * 64; // 号牌种子 0~4095（着色器逐位拼序号）
       if (type <= 1) vLen[i] = CAR_LEN[vSuv[i]];
       vVf[i] = 0.86 + rnd() * 0.28;
     }
@@ -802,6 +814,17 @@ export default {
     let bubble = { x: 1e9, z: 1e9, R: 0 };
     let hoursNow = ctx.sky?.hours ?? 14;
     const densityBase = () => (Q.trafficDensity ?? 1) * hourDensity(hoursNow);
+    // 区位系数：钟楼 5 km 内（二环以内）1；往外到 9 km 降到 0.6、15 km 降到 0.3（郊区、渭河两岸）；
+    // 城外的桥（跨河、跨铁路的长桥）再 × 0.6——下午的渭河大桥不再首尾相接。快速路/高速保底 0.4
+    function areaK(e) {
+      if (e.areaK !== undefined) return e.areaK;
+      const r = Math.hypot((e.x0 + e.x1) / 2, (e.z0 + e.z1) / 2);
+      let k = r < 5000 ? 1 : r < 9000 ? 1 - 0.4 * (r - 5000) / 4000 : r < 15000 ? 0.6 - 0.3 * (r - 9000) / 6000 : 0.3;
+      if (r > 6000 && feats[e.f] && feats[e.f].b) k *= 0.6;
+      if (e.cls === 0 || e.cls === 8) k = Math.max(k, 0.4);
+      e.areaK = k;
+      return k;
+    }
     const qList = [];
     function refreshActive() {
       const cp = camera.position;
@@ -826,7 +849,7 @@ export default {
         if (d > reach) continue;
         activeStamp[id] = stamp;
         const fall = 1 - 0.45 * Math.min(1, Math.max(0, (d - 0.3 * R) / (0.7 * R)));
-        eTarget[id] = (e.L * e.lanes * e.density * dens * fall) / 1000;
+        eTarget[id] = (e.L * e.lanes * e.density * dens * fall * areaK(e)) / 1000;
         sum += eTarget[id];
         newList.push(id);
         if (!active[id]) { active[id] = 1; toFill.push(id); }
@@ -1393,7 +1416,7 @@ export default {
     }
 
     // ==================================================================
-    // 路边停车（支路/小区路/三级路，静态，按 200 m 网格懒生成；离路口 11 m 内、桥隧、排除区不停）
+    // 路边停车（支路/小区路/三级路，静态，按 200 m 网格懒生成；离路口 11 m 内、桥隧、禁车区不停）
     // ==================================================================
     const PARK_CELL = 200;
     const PARK_R = [350, 500, 650, 800];
@@ -1460,7 +1483,7 @@ export default {
               const x = ax + hx * (t + jit) - hz * lat, z = az + hz * (t + jit) + hx * lat;
               if (Math.floor(x / PARK_CELL) !== cx || Math.floor(z / PARK_CELL) !== cz) continue;
               if (nearJunction(x, z, 11)) continue;
-              if (EX && (EX.test(x, z, 'roads') || EX.test(x + hx * 2.3, z + hz * 2.3, 'roads') || EX.test(x - hx * 2.3, z - hz * 2.3, 'roads'))) continue;
+              if (CF.noPark(x, z) || CF.noPark(x + hx * 2.3, z + hz * 2.3) || CF.noPark(x - hx * 2.3, z - hz * 2.3)) continue;
               if (terrain.inHole?.(x, z)) continue;
               const rev = parkHash(key + 3) < 0.08;
               const dir = (sd === 0) !== rev ? 1 : -1;
@@ -1471,8 +1494,9 @@ export default {
               const h2 = parkHash(key + 11);
               const shape = h2 < 0.52 ? 0 : h2 < 0.88 ? 1 : 2;
               colTmp.setHex(pickCarColor(parkHash(key + 13)));
+              colTmp.multiplyScalar(1 + (parkHash(key + 23) - 0.5) * 0.07);
               const plate = parkHash(key + 17) < 0.3 ? 1 : 0;
-              const pack = 8 + plate * 16 + ((parkHash(key + 19) * 12) | 0) * 64;
+              const pack = 8 + plate * 16 + ((parkHash(key + 19) * 4096) | 0) * 64;
               out.push(x, y0, z, fxx, fy, fzz, colTmp.r, colTmp.g, colTmp.b, shape, pack, CAR_LEN[shape]);
             }
           }
@@ -1923,7 +1947,7 @@ export default {
     let statsShown = false;
     let perfMs = 0;
     const prof = { refresh: 0, sim: 0, balance: 0, drawV: 0, drawT: 0 };
-    let refreshT = 0, balT = 0, first = true;
+    let refreshT = 0, balT = 0, first = true, frozen = false;
     const inst = {
       update(dt) {
         if (!enabled) return;
@@ -1941,12 +1965,14 @@ export default {
             first = false;
           }
           mark('refresh');
-          // 大步长时分两次积分
-          if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
-          bikeSim(dt, simTime);
+          // 大步长时分两次积分（调试冻结时停仿真，便于对准某辆车拍特写）
+          if (!frozen) {
+            if (dt > 0.05) { simulate(dt * 0.5); simulate(dt * 0.5); } else simulate(dt);
+            bikeSim(dt, simTime);
+          }
           mark('sim');
           balT -= dt;
-          if (balT <= 0) { balance(); bikeBalance(); balT = 0.25; }
+          if (balT <= 0 && !frozen) { balance(); bikeBalance(); balT = 0.25; }
           mark('balance');
         }
         camera.updateMatrixWorld();
@@ -2006,9 +2032,42 @@ export default {
       /** 调试：已生成的路边停车（前 n 辆，世界坐标） */
       debugParked(n = 20) {
         const out = [];
-        for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1)]);
+        for (const c of parkCells.values()) for (let q = 0; q < c.a.length && out.length < n; q += PSTRIDE) out.push([+c.a[q].toFixed(1), +c.a[q + 1].toFixed(1), +c.a[q + 2].toFixed(1), +c.a[q + 3].toFixed(3), +c.a[q + 5].toFixed(3), c.a[q + 9]]);
         return out;
       },
+      /** 调试：冻结/恢复车流仿真 */
+      debugFreeze(on = true) { frozen = !!on; return frozen; },
+      /** 调试：(x,z) 半径 r 内的行驶车辆（车型、位置、朝向） */
+      debugVehicles(x, z, r = 200) {
+        const out = [];
+        for (let k = 0; k < nAlive; k++) {
+          const i = alive[k];
+          vehiclePose(i);
+          const o = i * 6;
+          const d = Math.hypot(vPose[o] - x, vPose[o + 2] - z);
+          if (d > r) continue;
+          const fl = Math.hypot(vPose[o + 3], vPose[o + 5]) || 1;
+          out.push({ type: vType[i], shape: vSuv[i], x: +vPose[o].toFixed(1), y: +vPose[o + 1].toFixed(2), z: +vPose[o + 2].toFixed(1), fx: +(vPose[o + 3] / fl).toFixed(3), fz: +(vPose[o + 5] / fl).toFixed(3), d: +d.toFixed(1), v: +vV[i].toFixed(1) });
+        }
+        return out.sort((a, b) => a.d - b.d);
+      },
+      /** 调试：禁车区（封闭的边按道路名汇总、整条禁车的道路） */
+      debugCarFree() {
+        const byName = new Map();
+        for (const e of edges) {
+          if (!e.blocked) continue;
+          const f = feats[e.f];
+          const k = `${f.n || '(无名)'}|${f.c}`;
+          const o = byName.get(k) || { n: f.n || '', c: f.c, edges: 0, len: 0, x: Math.round(f.p[0]), z: Math.round(f.p[1]) };
+          o.edges++; o.len += Math.round(e.L);
+          byName.set(k, o);
+        }
+        const whole = [];
+        for (const f of ctx.data.roads.features) if (CF.featureCarFree(f)) whole.push({ n: f.n || '', c: f.c, x: Math.round(f.p[0]), z: Math.round(f.p[1]) });
+        return { blocked: [...byName.values()].sort((a, b) => b.len - a.len), whole, stats: CF.stats };
+      },
+      /** 调试：某点是否禁停/禁行 */
+      debugCarFreeAt(x, z, c = 5) { return { noPark: CF.noPark(x, z), noDrive: CF.noDrive(x, z, c) }; },
       /** 调试：两轮车（位置、朝向、速度、车型） */
       debugBikes() {
         const out = [];
