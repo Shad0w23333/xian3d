@@ -10,6 +10,25 @@ import * as THREE from 'three';
 
 let _noise = null;
 
+/**
+ * 阴影偏移修正（本模块受光材质专用，patchShadowBias 供路面/桥梁/桥墩材质替换 shadowmap_pars_fragment）：
+ * three r186 的 PCF 阴影不分反向深度，一律 shadowCoord.z += shadowBias。本工程用反向深度、阴影相机 near 1 / far 12000、
+ * bias -0.0004 —— 等于把受光点沿光线往背光方向推了约 4.8 m，高架桥面被自己 1.9 m 深的箱梁底板（阴影贴图里画的是背面）
+ * “挡住”，整段桥面发蓝黑（审查 P1：正阳大道渭河高架像一条黑带）。这里改为方向正确的极小偏移（约 6 cm），
+ * 防自阴影主要靠灯光本身的 normalBias（0.6 m）。阴影相机与 bias 归渲染核心（sky.js），不在这里改。
+ */
+export const ROAD_SHADOW_CHUNK = THREE.ShaderChunk.shadowmap_pars_fragment.split('shadowCoord.z += shadowBias;').join(`
+#ifdef USE_REVERSED_DEPTH_BUFFER
+shadowCoord.z += 5e-6;
+#else
+shadowCoord.z -= 5e-6;
+#endif
+`);
+/** 给任意受光材质套上上面的阴影偏移修正（在 onBeforeCompile 里调用） */
+export function patchShadowBias(shader) {
+  shader.fragmentShader = shader.fragmentShader.replace('#include <shadowmap_pars_fragment>', ROAD_SHADOW_CHUNK);
+}
+
 /** 可平铺多频噪声（RGBA）：R 细颗粒、G 中频斑驳、B 低频老化、A 细胞补丁 */
 export function roadNoiseTexture() {
   if (_noise) return _noise;
@@ -199,6 +218,7 @@ const GLSL_SURFACE = /* glsl */ `
   vec3 col = vec3(0.07);
   rBumpH = 0.0;
   rBumpOn = 0.0;
+  rRoadCity = 0.0;
   float rough = 0.9;
   float metal = 0.0;
   float lampL = 1e4; // 到最近路灯光斑中心线的横向距离
@@ -490,9 +510,9 @@ const GLSL_SURFACE = /* glsl */ `
     float joint = max(dashC(u + 0.008, TY, 0.016, fwU), dashC(s + 0.008, TX, 0.016, fwS));
     col *= 1.0 - 0.35 * joint * (1.0 - smoothstep(0.03, 0.08, pix));
     col *= 1.0 - 0.18 * lineC(u - zoneB, 0.04, fwU) * step(0.1, zoneB); // 带间收边条
-    // 行进盲道（黄色条纹砖 0.4 m 宽）：设施带（及非机动车道）外 0.45~0.65 m；窄人行道靠外缘
-    float ub = bikeL ? bk1 + 0.65 : Wl >= 3.6 ? min(Wl - 0.65, zoneB + 0.45) : Wl - 0.5;
-    float blind = lineC(u - ub, 0.2, fwU) * step(u, Wl - 0.2);
+    // 行进盲道（0.5 m 宽：两列 0.25 m 条纹砖，每块 4 道沿行进方向的凸条）：设施带（及非机动车道）外 0.5~0.7 m；窄人行道靠外缘
+    float ub = bikeL ? bk1 + 0.7 : Wl >= 3.6 ? min(Wl - 0.75, zoneB + 0.5) : Wl - 0.55;
+    float blind = lineC(u - ub, 0.25, fwU) * step(u, Wl - 0.25);
     float ramp = vDet.x / 255.0;
     int rtype = int(vDet.z + 0.5);
     float RW = min(1.5, Wl * 0.45);
@@ -526,9 +546,15 @@ const GLSL_SURFACE = /* glsl */ `
       float wpaint = max(lines * inBk, icon);
       col = mix(col, PAINT_W * (0.85 + 0.15 * n1), wpaint * (0.75 + 0.25 * smoothstep(0.2, 0.7, n1)));
     }
-    vec3 yel = vec3(0.36, 0.25, 0.04) * (0.9 + 0.2 * n1);
-    float bars = mix(0.5, dashC(u - ub + 0.2, 0.1, 0.035, fwU), smoothstep(0.03, 0.012, pix));
-    col = mix(col, yel * (0.85 + 0.25 * bars), blind * (1.0 - step(0.5, ramp) * step(2.5, float(rtype))));
+    // 盲道砖：浅土黄（降饱和：原 0.36/0.25/0.04 像一条亮黄油漆线，夜里比铺装还亮），0.25 m 一块、块间色差，
+    // 每块 4 道沿行进方向的凸条（导数凹凸 4 mm，近处才有）
+    float nearT = smoothstep(0.03, 0.012, pix);
+    vec3 yel = vec3(0.3, 0.228, 0.075) * (0.9 + 0.2 * n1) * (0.93 + 0.14 * hash12(floor(vec2(s / 0.25, (u - ub) / 0.25 + 0.5)) + 11.0));
+    float barW = dashC(u - ub + 0.25 + 0.016, 0.0625, 0.03, fwU);
+    float bjoint = max(dashC(s + 0.006, 0.25, 0.012, fwS), lineC(u - ub, 0.006, fwU));
+    float blindK = blind * (1.0 - step(0.5, ramp) * step(2.5, float(rtype)));
+    col = mix(col, yel * mix(0.95, 0.86 + 0.22 * barW, nearT) * (1.0 - 0.3 * bjoint * nearT), blindK);
+    float bumpB = blindK * barW * 0.004 * nearT;
     // 缘石坡道：降坡面浅色混凝土（拉毛纹）
     float rampSurf = rtype == 3 ? step(0.05, ramp) : step(0.05, ramp) * smoothstep(RW + 0.05, RW - 0.05, u);
     vec3 conc = vec3(0.23, 0.225, 0.215) * (0.88 + 0.24 * n1) * (1.0 - 0.15 * dashC(s, 0.05, 0.015, fwS) * (1.0 - smoothstep(0.01, 0.03, pix)));
@@ -539,9 +565,11 @@ const GLSL_SURFACE = /* glsl */ `
     else if (rtype == 3) warn = step(0.45, ramp) * step(0.2, u);
     if (warn > 0.0) {
       vec2 g = fract(vec2(s, u) / 0.075) - 0.5;
-      float dot_ = smoothstep(0.32, 0.22, length(g));
-      dot_ = mix(0.45, dot_, smoothstep(0.03, 0.012, pix));
-      col = mix(col, yel * (0.8 + 0.35 * dot_), warn);
+      float dot0 = smoothstep(0.32, 0.22, length(g));
+      float dot_ = mix(0.45, dot0, nearT);
+      float wj = max(dashC(s + 0.006, 0.3, 0.012, fwS), dashC(u + 0.006, 0.3, 0.012, fwU)) * nearT;
+      col = mix(col, yel * (0.8 + 0.3 * dot_) * (1.0 - 0.3 * wj), warn);
+      bumpB = max(bumpB, warn * dot0 * 0.004 * nearT);
     }
     // 路缘石顶面（禁停：黄色实线 / 禁止长时停车：黄色虚线 1 m / 1 m）
     float curbTop = 1.0 - smoothstep(0.17, 0.19, u);
@@ -550,9 +578,15 @@ const GLSL_SURFACE = /* glsl */ `
     paint *= step(ramp, 0.3) * (0.75 + 0.25 * smoothstep(0.3, 0.6, n2));
     ctop = mix(ctop, PAINT_Y * 0.95, paint);
     col = mix(col, ctop, curbTop);
+    // 外缘收边石（0.12 m 花岗岩，1 m 一块）：与外侧地面铺装/绿地交界处有一道收边，不再是两种铺装硬接
+    float outer = smoothstep(Wl - 0.12 - fwU, Wl - 0.12 + fwU, u);
+    vec3 ecol = vec3(0.235, 0.23, 0.22) * (0.9 + 0.2 * n1) * (1.0 - 0.3 * dashC(s + 0.01, 1.0, 0.012, fwS) * nearT);
+    col = mix(col, ecol, outer);
     col *= 0.94 + 0.12 * n1;
     rough = 0.86;
     lampL = u + 1.8;
+    rBumpH = bumpB;
+    rBumpOn = 1.0;
   } else if (kind == 2) {
     // ===== 路缘石立面（花岗岩，1m 一块）；禁停路段刷黄 =====
     col = vec3(0.26, 0.255, 0.245) * (0.88 + 0.24 * n1);
@@ -571,36 +605,55 @@ const GLSL_SURFACE = /* glsl */ `
     col = mix(col, vec3(0.06, 0.05, 0.04) * (0.8 + 0.4 * n2), smoothstep(0.24, 0.27, u));
     rough = 0.8;
     lampL = u + 1.0;
+    rRoadCity = 0.6;
   } else if (kind == 11) {
-    // ===== 宽中央分隔带草坪：低频深浅 + 细碎草叶噪声，远处回到平均色 =====
-    vec2 gc = vec2(s, vUV.x);
-    float g1 = texture2D(uRNoise, gc / 7.0 + 0.13).r, g2 = texture2D(uRNoise, gc / 1.3 + 0.57).g;
-    col = mix(vec3(0.045, 0.075, 0.025), vec3(0.085, 0.11, 0.04), g1) * (0.82 + 0.36 * mix(g2, 0.5, smoothstep(0.03, 0.15, pix)));
-    col = mix(col, vec3(0.11, 0.1, 0.06), smoothstep(0.7, 0.9, g1) * 0.35);
+    // ===== 宽中央分隔带草坪：世界坐标取样（不随路段拉伸）；草叶级细碎明暗 + 很弱的低频起伏（原 7 m 周期的大块深浅
+    //       与枯黄斑近看像脏地毯，审查 P2），近处加草叶凹凸，远处回到平均色 =====
+    vec2 gw = mod(vWP.xz, 384.0);
+    float b1 = texture2D(uRNoise, gw / 1.5).r;            // 草叶（~1.2 cm）
+    float b2 = texture2D(uRNoise, gw / 3.0 + 0.41).g;     // 草丛（~19 cm）
+    float lo = texture2D(uRNoise, gw / 24.0 + 0.13).b;    // 低频（~6 m），只做 ±7%
+    float nearG = 1.0 - smoothstep(0.02, 0.1, pix);
+    col = vec3(0.062, 0.095, 0.032) * (0.93 + 0.14 * lo);
+    col *= mix(1.0, (0.78 + 0.44 * b1) * (0.86 + 0.28 * b2), nearG);
+    col = mix(col, col * vec3(1.12, 1.06, 0.82), smoothstep(0.62, 0.8, b2) * 0.35 * nearG); // 草尖偏黄
+    rBumpH = 0.008 * b1 * nearG + 0.01 * b2 * nearG;
+    rBumpOn = 1.0;
     rough = 0.95;
     lampL = 1.2;
+    rRoadCity = 1.0;
   } else if (kind == 8) {
-    // ===== 绿篱（箱形修剪灌木，黄杨/冬青）：叶片(~4 cm) + 叶簇(~25 cm) + 修剪起伏(~1 m) 三级明暗，
-    //       叶簇间缝隙压暗（模拟自遮蔽），侧面下部偏暗，顶面受光偏黄绿；每 6~9 m 一段换个色相 =====
-    float h = vUV.x;
-    bool topF = h > 0.8; // 顶面 u = 绿篱高 + 横向距离（>0.9）；侧面 u = 离路缘顶的高度
-    vec2 lc = vec2(s, vWP.y + h);
-    float leaf = texture2D(uRNoise, lc / 2.6).r;
-    float clump = texture2D(uRNoise, lc / 4.2 + 0.37).g;
-    float wave = texture2D(uRNoise, lc / 9.0 + 0.71).b;
-    float gapD = smoothstep(0.30, 0.62, clump * 0.7 + leaf * 0.3); // 叶簇凸起处亮、缝隙暗
+    // ===== 绿篱（修剪灌木，黄杨/冬青/红叶石楠）：叶片(~4 cm) + 叶簇(~25 cm) + 修剪起伏(~1 m) 三级明暗，
+    //       叶簇间缝隙压暗（模拟自遮蔽），底部 12 cm 露枝干与覆土，顶面受光偏黄绿、个别段新梢泛红；每 6~9 m 一段换个色相。
+    //       按世界坐标三平面取样（原按里程/高度二维取样：端面、侧面被竖向拉成条纹，审查 P1/P2）=====
+    float h = vUV.x; // 离路缘顶的高度（米）
+    vec3 wn = normalize((vec4(normalize(vNormal), 0.0) * viewMatrix).xyz);
+    vec3 tw = pow(abs(wn), vec3(4.0));
+    tw /= tw.x + tw.y + tw.z + 1e-4;
+    vec3 P = mod(vWP, 192.0);
+    vec2 uA = P.zy, uB = P.xz, uC = P.xy;
+    float leaf = texture2D(uRNoise, uA / 3.0).r * tw.x + texture2D(uRNoise, uB / 3.0).r * tw.y + texture2D(uRNoise, uC / 3.0).r * tw.z;
+    float clump = texture2D(uRNoise, uA / 4.0 + 0.37).g * tw.x + texture2D(uRNoise, uB / 4.0 + 0.37).g * tw.y + texture2D(uRNoise, uC / 4.0 + 0.37).g * tw.z;
+    float wave = texture2D(uRNoise, uA / 12.0 + 0.71).b * tw.x + texture2D(uRNoise, uB / 12.0 + 0.71).b * tw.y + texture2D(uRNoise, uC / 12.0 + 0.71).b * tw.z;
+    float gapD = smoothstep(0.28, 0.66, clump * 0.72 + leaf * 0.28); // 叶簇凸起处亮、缝隙暗
     float seg = hash12(vec2(floor(s / 7.5), 3.0));
-    vec3 g0 = mix(vec3(0.022, 0.05, 0.016), vec3(0.04, 0.058, 0.018), seg); // 段间色相差（深绿 ↔ 橄榄绿）
-    col = g0 * (0.5 + 1.0 * gapD) * (0.75 + 0.5 * leaf) * (0.8 + 0.4 * wave);
-    // 叶簇凹凸（屏幕空间导数凹凸，见 normal_fragment_maps 注入）：阳光下一簇簇有明暗，不再像平铺的草皮
-    rBumpH = (0.045 * clump + 0.015 * leaf) * (1.0 - smoothstep(0.02, 0.12, pix));
+    vec3 g0 = mix(vec3(0.026, 0.055, 0.018), vec3(0.045, 0.064, 0.02), seg); // 段间色相差（深绿 ↔ 橄榄绿）
+    col = g0 * (0.45 + 1.05 * gapD) * (0.78 + 0.44 * leaf) * (0.85 + 0.3 * wave);
+    float topW = smoothstep(0.55, 0.85, wn.y);
+    vec3 tip = seg > 0.82 ? vec3(0.11, 0.045, 0.03) : vec3(0.085, 0.1, 0.03); // 顶面新梢：多数黄绿，少数红叶石楠泛红
+    col = mix(col, tip * (0.5 + 1.0 * gapD), 0.32 * leaf * topW);
+    // 底部：枝干与覆土（略暗、偏褐）
+    float base = 1.0 - smoothstep(0.03, 0.14, h);
+    col = mix(col, vec3(0.03, 0.026, 0.02) * (0.7 + 0.6 * leaf), base * (1.0 - topW));
+    col *= mix(0.55, 1.0, smoothstep(0.0, 0.45, h) * (1.0 - topW) + topW);
+    // 叶簇凹凸（屏幕空间导数凹凸，见 normal_fragment_maps 注入）：阳光下一簇簇有明暗
+    rBumpH = (0.05 * clump + 0.016 * leaf) * (1.0 - smoothstep(0.03, 0.15, pix));
     rBumpOn = 1.0;
-    if (topF) col = mix(col, vec3(0.085, 0.1, 0.03) * (0.5 + 1.0 * gapD), 0.3 * leaf);
-    else col *= mix(0.35, 1.0, smoothstep(0.0, 0.5, h));
     // 远处叶片级细节已不可辨：按像素足迹回到平均色，避免闪烁
     col = mix(col, g0 * 0.95, smoothstep(0.08, 0.5, pix));
     rough = 0.95;
     lampL = 1.4;
+    rRoadCity = 1.25;
   } else if (kind == 9) {
     // ===== 中线金属隔离护栏：立柱（2.5 m）+ 上下横杆 + 竖栏杆（0.15 m），按像素足迹盒式滤波后丢弃空隙 =====
     float h = vUV.x;
@@ -667,7 +720,22 @@ const GLSL_SURFACE = /* glsl */ `
       col = vec3(0.17, 0.162, 0.15) * (0.85 + 0.25 * tone) * (0.9 + 0.2 * n2);
       col *= 1.0 - 0.3 * max(dashC(u + 0.01, 0.6, 0.02, fwU), dashC(s + 0.01, 0.6, 0.02, fwS));
       rough = 0.82;
+      if ((fl & 32768) != 0) {
+        // 宽中央分隔带里的过街步道：两侧（沿斑马线方向的两条边）0.12 m 深灰花岗岩收边石，与草坪分开
+        float eS = min(vJunc.x, vJunc.y);
+        float edgeK = 1.0 - smoothstep(0.12 - fwS, 0.12 + fwS, eS);
+        col = mix(col, vec3(0.12, 0.118, 0.112) * (0.9 + 0.2 * n1), edgeK);
+      }
     }
+  }
+  // 夜间：与地形近景地面同一套压暗（月光下去饱和、反照率减半；否则人行道方砖整片被照成暖亮色，与旁边的地面铺装
+  // 一刀切开，审查 P2）。灯下光斑与城市漫射光按白天反照率算（灯下亮度不变，灯与灯之间变暗，有明暗节奏）
+  rRoadAlb = col;
+  if (uNight > 0.001) {
+    float lnA = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(col, vec3(lnA), 0.4 * uNight);
+    col = min(col, vec3(mix(1.0, 0.16, uNight)));
+    col *= 1.0 - 0.5 * uNight;
   }
   diffuseColor.rgb = col;
   rRoadRough = rough;
@@ -682,16 +750,29 @@ const GLSL_SURFACE = /* glsl */ `
     along = mix(along, avg, smoothstep(0.08 * lampS, 0.45 * lampS, fwS));
     float lat = exp(-lampL * lampL / (2.0 * 6.0 * 6.0));
     rRoadPool = along * lat * (0.3 + 0.24 * lampLvl);
-    if (kind == 8) rRoadPool *= 0.4; // 绿篱叶面吸光，光斑弱一些（否则夜里中分带像一条发亮的草坪）
+    if (kind == 8) rRoadPool *= 0.7; // 绿篱叶面吸光，光斑略弱
   }
   if (jLit > 0.0 && uNight > 0.02) rRoadPool = mix(rRoadPool, 0.3, jLit);
-  // —— 远景路网光带：像素足迹 > ~1.5 m 后（几百米外），整条车行道按等级发暖橙光，代替看不清的单个光斑 ——
+  // —— 远景路网光带：像素足迹 > ~1.5 m 后（几百米外），车行道按等级发暖橙光，代替看不清的单个光斑 ——
   // （路面窄于一个像素时由 MSAA 覆盖率自然压暗，相当于按像素大小限亮，不会叠出光团）
   rRoadFar = 0.0;
   if (kind == 0 && (lampOK || jLit > 0.5) && uNight > 0.02) {
-    // 亮度按等级，再按路段（~300 m 一档）与低频噪声起伏 ±30%：远看是有明有暗的光网，不是一张均匀描边的地图
-    float rv = 0.75 + 0.5 * hash12(vec2(floor(s / 300.0), floor(W))) ;
-    rRoadFar = smoothstep(1.2, 7.0, pix) * (0.3 + 0.32 * lampLvl) * rv * (0.7 + 0.6 * n3);
+    // 等级：快速路/主干道 1，次干道 0.5，支路 0.25（原 0.62/0.94/1.26，主次差不到一倍，全城像一张均匀发光的网）
+    float gL = lampLvl >= 2.5 ? 1.0 : lampLvl >= 1.5 ? 0.5 : 0.25;
+    // 沿灯位的周期光斑（与灯头同相位，平均值为 1）：几百米处能分辨出一盏盏灯下的光斑，更远逐渐平均成连续光带；
+    // 横向集中在灯杆一侧，车道中间偏暗（原整条车行道均匀发光，像霓虹灯管，审查 P2）
+    float fAl = 1.0;
+    if (lampS > 1.0 && jLit < 0.5) {
+      float ph = (fract(s / lampS) - 0.5) * lampS, sg = 0.2 * lampS;
+      float av = sg * 2.5066 / lampS;
+      fAl = mix(exp(-ph * ph / (2.0 * sg * sg)), av, smoothstep(0.1 * lampS, 0.5 * lampS, fwS)) / av;
+    }
+    float fLat = mix(0.35 + 1.15 * exp(-lampL * lampL / (2.0 * 4.0 * 4.0)), 1.0, smoothstep(3.0, 9.0, pix));
+    // 中距离（几百米~1.5 km 俯视）整体降一档，全城远景保持原亮度
+    float midK = mix(0.72, 1.0, smoothstep(5.0, 16.0, pix));
+    float rv = 0.75 + 0.5 * hash12(vec2(floor(s / 300.0), floor(W)));
+    rRoadFar = smoothstep(1.2, 7.0, pix) * 1.26 * gL * rv * (0.7 + 0.6 * n3) * fAl * fLat * midK;
+    rRoadFar = min(rRoadFar, 1.6);
   }
 }
 `;
@@ -737,7 +818,8 @@ vUV = aUV; vRoad = aRoad; vJunc = aJunc * 0.1; vDet = aDet; vDetF = aDet;
 vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;`
       );
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\n${GLSL_COMMON}\nuniform float uFarGain;\nfloat rRoadRough; float rRoadMetal; float rRoadPool; float rRoadFar; float rBumpH; float rBumpOn;`)
+      .replace('#include <common>', `#include <common>\n${GLSL_COMMON}\nuniform float uFarGain;\nfloat rRoadRough; float rRoadMetal; float rRoadPool; float rRoadFar; float rBumpH; float rBumpOn; float rRoadCity; vec3 rRoadAlb;`)
+      .replace('#include <shadowmap_pars_fragment>', ROAD_SHADOW_CHUNK)
       .replace('#include <map_fragment>', GLSL_SURFACE)
       // 兜底钳位：粗糙度/金属度越界（NaN 或 >1）会产生超亮高光像素
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = clamp(rRoadRough, 0.05, 1.0);')
@@ -760,11 +842,13 @@ if (rBumpOn > 0.5) {
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
 // 暖黄路灯光斑：照度 × 反照率（标线更亮），再加少量散射底光避免黑洞
-totalEmissiveRadiance += (min(diffuseColor.rgb, vec3(0.28)) + vec3(0.01)) * vec3(1.0, 0.6, 0.27) * rRoadPool * uNight * uLampGain;
+totalEmissiveRadiance += (min(rRoadAlb, vec3(0.28)) + vec3(0.01)) * vec3(1.0, 0.6, 0.27) * rRoadPool * uNight * uLampGain;
+// 城市漫射光（绿篱、草坪、分隔带顶：与地形草坪的夜间城市光同一量级，原绿篱夜里是纯黑实心块）
+totalEmissiveRadiance += min(rRoadAlb, vec3(0.3)) * vec3(1.0, 0.66, 0.38) * rRoadCity * 0.75 * uNight;
 totalEmissiveRadiance += vec3(1.0, 0.46, 0.13) * rRoadFar * uNight * uFarGain;`
       );
   };
-  mat.customProgramCacheKey = () => name + '|v7';
+  mat.customProgramCacheKey = () => name + '|v8';
   return mat;
 }
 
@@ -778,12 +862,13 @@ export function createStructMaterial(ctx, concreteMap) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCol = aCol;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uNight;\nvarying vec4 vCol;')
+      .replace('#include <shadowmap_pars_fragment>', ROAD_SHADOW_CHUNK)
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= vCol.rgb * 1.05;')
       .replace(
         '#include <emissivemap_fragment>',
         '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(0.75, 0.85, 1.0) * vCol.a * 4.0 * uNight;'
       );
   };
-  mat.customProgramCacheKey = () => 'roadStruct|v1';
+  mat.customProgramCacheKey = () => 'roadStruct|v2';
   return mat;
 }
