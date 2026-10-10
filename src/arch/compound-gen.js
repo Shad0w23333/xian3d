@@ -65,10 +65,12 @@ export function* genChunk(S, ci, cj) {
   const W = writers();
   const x0 = ci * CHUNK, z0 = cj * CHUNK, x1 = x0 + CHUNK, z1 = z0 + CHUNK;
   const ids = S.chunkMap.get(ci + ',' + cj) || [];
+  // 草坪纯计算整块交给 Worker 池（S.lawnPool，见 compound-pool.js；可能已被预取），主线程先做其他步骤，轮到时回放
+  const lawnJobs = S.lawnPool && !S.lawnPool.broken ? S.lawnPool.take(ci, cj, x0, z0, x1, z1) : null;
   for (const id of ids) {
     const c = S.list[id];
     try {
-      yield* genCompound(S, W, c, x0, z0, x1, z1);
+      yield* genCompound(S, W, c, x0, z0, x1, z1, lawnJobs);
     } catch (e) {
       console.warn('[compounds] 生成失败', c.name, e);
     }
@@ -100,7 +102,7 @@ export function* genChunk(S, ci, cj) {
 
 // ————————————————————————————————————————————————————————————————————————————————
 
-function* genCompound(S, W, c, x0, z0, x1, z1) {
+function* genCompound(S, W, c, x0, z0, x1, z1, lawnJobs = null) {
   const T = S.terrain;
   const inChunk = (x, z) => x >= x0 && x < x1 && z >= z0 && z < z1;
   const { cs, sn, ox, oz } = c;
@@ -361,11 +363,19 @@ function* genCompound(S, W, c, x0, z0, x1, z1) {
   yield 'pads';
   // —— 6. 草坪（栅格 → 合并矩形）、路缘、绿篱、灌木 ——
   // 按 125 m 小方块逐块栅格化（每块 ≤ 3 万格），每块之后让出一次，单步耗时有上限
+  // 有 Worker 句柄时等它算完回放出图指令（等待时让出 'wait'，主线程本帧不再空转）；Worker 出错时退回主线程计算
   const SUB = 125;
+  const hs = lawnJobs ? lawnJobs.get(c) : null;
+  let hq = 0;
   for (let sx = x0; sx < x1; sx += SUB)
     for (let sz = z0; sz < z1; sz += SUB) {
       if (sx + SUB < c.bb[0] || sx > c.bb[2] || sz + SUB < c.bb[1] || sz > c.bb[3]) continue;
-      yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB);
+      const h = hs ? hs[hq++] : null;
+      if (h && h.x0 === sx && h.z0 === sz) {
+        while (!h.done) yield 'wait';
+        if (h.err) yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB);
+        else if (h.ops) replayLawns(S, W, c, h.ops);
+      } else yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB);
       yield 'lawns';
     }
   tally('lawns');

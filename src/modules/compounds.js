@@ -25,6 +25,7 @@ import { loadJSON } from '../core/data.js';
 import { pointInPoly } from '../core/util.js';
 import { parseBld, planIter, exclusionRings, chunkIndex, prepSports, rectWorld, CHUNK } from '../arch/compound-plan.js';
 import { genChunk, K } from '../arch/compound-gen.js';
+import { LawnPool } from '../arch/compound-pool.js';
 import { carNear, carFar, leafTexture, flowerTexture } from '../arch/compound-props.js';
 
 // 按画质档位（0 低 … 3 超高）
@@ -344,6 +345,8 @@ export default {
         };
       },
     };
+    // 草坪纯计算（每块生成耗时的约八成）放进 2 个 Worker；不支持 Worker 时为 null，照旧在主线程算（结果相同）
+    S.lawnPool = LawnPool.create(S, ctx.exclusions, 2);
     let level = Math.max(0, Math.min(3, ctx.quality.level ?? 2));
 
     // —— 材质 ——
@@ -565,20 +568,27 @@ export default {
         if (!chunks.has(key) && (!job || job.key !== key)) queue.push({ key, ci, cj, d });
       }
       for (const [key, rec] of chunks) if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > R + 300) unload(key);
+      // 草坪 Worker：只保留排在最前的两个块的预取，其余撤销
+      if (S.lawnPool) S.lawnPool.retain(new Set(queue.slice(0, PREFETCH).map((q) => q.key)));
     };
+    // 草坪纯计算交给 Worker 池：开始生成一个块时先提交它，再预取排在后面的 PREFETCH 个块（主线程回放出图时 Worker 已在算下一块）
+    const PREFETCH = 2;
+    const lawnSubmit = (q) => S.lawnPool && !S.lawnPool.broken && S.lawnPool.forChunk(q.ci, q.cj, q.ci * CHUNK, q.cj * CHUNK, (q.ci + 1) * CHUNK, (q.cj + 1) * CHUNK);
     const work = (budget) => {
       const t0 = performance.now();
       while (performance.now() - t0 < budget) {
         if (!job) {
           const q = queue.shift();
           if (!q) return;
+          lawnSubmit(q);
+          for (let i = 0; i < Math.min(PREFETCH, queue.length); i++) lawnSubmit(queue[i]);
           job = { ...q, it: genChunk(S, q.ci, q.cj) };
         }
         const r = job.it.next();
         if (r.done) {
           finish(job.key, job.ci, job.cj, r.value);
           job = null;
-        }
+        } else if (r.value === 'wait') return; // 草坪 Worker 还在算：本帧不再空转
       }
     };
 
@@ -774,6 +784,7 @@ export default {
         return { chunks: chunks.size, queue: queue.length, busy: !!job, ground: bGround.live, solid: bSolid.live, alpha: bAlpha.live, glow: bGlow.live, crowns: crown.count, flowers: flower.count, cars: carN.count + carF.count };
       },
       dispose() {
+        if (S.lawnPool) S.lawnPool.dispose();
         for (const k of [...chunks.keys()]) unload(k);
         for (const s of gateLights) s.enabled = false;
       },
