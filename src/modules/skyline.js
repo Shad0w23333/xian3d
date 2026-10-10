@@ -3,7 +3,6 @@
 // 西安奥体中心、西安北站、丝路国际会议/展览中心、赛格、开元商城、陕西信息大厦，以及 skyline.json 中其余 OSM 实测高层。
 // 立面：共享程序化幕墙着色器（src/arch/sky-facade.js）——竖梃/横梁/窗槛墙/设备层按米生成，夜间亮窗、LED 媒体幕墙、塔冠泛光。
 import * as THREE from 'three';
-import { Batcher } from '../core/util.js';
 import * as G from '../arch/sky-geom.js';
 import { createFacadeMaterial } from '../arch/sky-facade.js';
 import { SignAtlas, Beacons, solidMats, buildTower, buildPodium, groundMin } from '../arch/sky-towers.js';
@@ -12,6 +11,7 @@ import { loadJSON } from '../core/data.js';
 import { DISTRICTS, towerSpecs as towerSpecs1, mallSpecs as mallSpecs1, SPECIAL } from '../arch/sky-data.js';
 import { SUPERSEDED, towerSpecs2, mallSpecs2, SPECIAL2, special2Footprints } from '../arch/sky-data2.js';
 import * as SP2 from '../arch/sky-special2.js';
+import { SkyBatch } from '../arch/sky-batch.js';
 
 // 2026-09 地标更新（sky-data2.js）取代失真的旧定义（熙地港、大融城、未央国际）
 // landmarks2026：全城地标批量精建（tools/build_landmarks2026.py 由联网调研清单生成）；prepare 时加载并去掉已精建/已被其他模块占用的
@@ -128,14 +128,6 @@ function filterLandmarks(ctx, raw) {
   for (const s of towers) s.lm = true;
   console.warn(`[skyline] landmarks2026：塔楼 ${towers.length}/${(raw.towers || []).length}，商场·场馆 ${malls.length}/${(raw.malls || []).length}`);
   return { towers, malls, labels: raw.labels || [] };
-}
-
-/** 有贴图的材质自动套“米制”UV（贴图自带 UV 的除外） */
-class SBatcher extends Batcher {
-  add(g, m, mtx = null, o = {}) {
-    if (m.map && !m.userData.ownUV && !o.worldUV) o = { ...o, worldUV: 1 };
-    return super.add(g, m, mtx, o);
-  }
 }
 
 const districtOf = (x, z) => {
@@ -265,11 +257,10 @@ export default {
     mats.heli.userData.ownUV = true;
     const signs = new SignAtlas(ctx);
     const beacons = new Beacons(ctx);
-    const envs = new Map();
-    const env = (id) => {
-      if (!envs.has(id)) envs.set(id, { ctx, id, fb: new G.FacadeBuilder(), solid: new SBatcher(), detail: new SBatcher(), mats, signs, beacons });
-      return envs.get(id);
-    };
+    // 合批（第三轮性能修复，见 src/arch/sky-batch.js）：材质参数表 + 逐栋 BatchedMesh，同材质全模块一次绘制、仍逐栋视锥裁剪；
+    // 细部距离 LOD 仍按片区（DISTRICTS）判定。原先每片区每材质一个网格。run(片区, fn) 里 fn 拿到的 E 与原 env 字段相同。
+    const B = new SkyBatch(ctx, { name: 'skyline', fmat, mats, signs, beacons });
+    const run = (id, fn) => B.run(id, fn);
     const { curated } = allFootprints(ctx);
     const errors = [];
     const safe = (name, fn) => {
@@ -279,7 +270,9 @@ export default {
     // —— 塔楼 ——
     for (const s of towerSpecs(ctx)) safe(s.name, () => {
       const c = G.centroid(s.pts);
-      const E = env(s.d || districtOf(c.x, c.z));
+      run(s.d || districtOf(c.x, c.z), (E) => towerWithExtras(E, s));
+    });
+    function towerWithExtras(E, s) {
       const r = buildTower(E, s);
       if (s.pyramid) {
         // 陕西信息大厦：玻璃四棱锥塔冠 + 塔尖
@@ -301,10 +294,9 @@ export default {
         E.detail.add(G.cyl(r.c.x, apex[1] - 2, r.c.z, 1.0, 0.2, s.pyramid.spire + 2, 8), mats.metal);
         beacons.add(r.c.x, apex[1] + s.pyramid.spire, r.c.z, 0, 5);
       }
-    });
+    }
     // —— 商场/裙房 ——
-    for (const m of mallSpecs(ctx)) safe(m.key, () => {
-      const E = env(m.d);
+    for (const m of mallSpecs(ctx)) safe(m.key, () => run(m.d, (E) => {
       const base = buildPodium(E, m);
       if (m.domes) SP.domes(E, m.domes, base + m.h + 0.2);
       if (m.led) {
@@ -323,52 +315,37 @@ export default {
           E.fb.panel(ax, az, bx, bz, base + 14, base + m.h - 8, { floorH: 1, colW: 0.9, spandrel: 0, seed: 1, mullW: 0.04, lit: 0, mode: 5, band: 0, tint: [0.02, 0.02, 0.02], spd: [0.2, 0.2, 0.2] });
         }
       }
-    });
+    }));
     // —— 特殊地标（逐栋档案 supersede.keys 含其键名时跳过：tv/igc1/changan/aoti/north/conf/expo/gov/w/hyatt/rainbow/butterfly/houhai） ——
     const sp = (key, name, fn) => (isSuperseded(ctx, { key }) ? null : safe(name, fn));
-    sp('tv', '电视塔', () => SP.buildTVTower(env('south'), SPECIAL.tv));
-    sp('igc1', '环球贸易中心1号楼', () => SP.buildUnderConstruction(env('weiyang'), SPECIAL.igc1));
-    sp('changan', '长安塔', () => SP.buildChanganTower(env('chanba'), SPECIAL.changan));
-    sp('aoti', '奥体中心', () => SP.buildAoti(env('chanba'), SPECIAL.aoti));
-    sp('north', '西安北站', () => SP.buildNorthStation(env('north'), SPECIAL.north));
-    for (const c of SPECIAL.conf) sp('conf', '会议中心', () => SP.buildConference(env('chanba'), c));
-    SPECIAL.expo.forEach((p, i) => sp('expo', '展馆', () => SP.buildHall(env('chanba'), p, { h: 18, rise: 7 })));
+    sp('tv', '电视塔', () => run('south', (E) => SP.buildTVTower(E, SPECIAL.tv)));
+    sp('igc1', '环球贸易中心1号楼', () => run('weiyang', (E) => SP.buildUnderConstruction(E, SPECIAL.igc1)));
+    sp('changan', '长安塔', () => run('chanba', (E) => SP.buildChanganTower(E, SPECIAL.changan)));
+    sp('aoti', '奥体中心', () => run('chanba', (E) => SP.buildAoti(E, SPECIAL.aoti)));
+    sp('north', '西安北站', () => run('north', (E) => SP.buildNorthStation(E, SPECIAL.north)));
+    for (const c of SPECIAL.conf) sp('conf', '会议中心', () => run('chanba', (E) => SP.buildConference(E, c)));
+    SPECIAL.expo.forEach((p, i) => sp('expo', '展馆', () => run('chanba', (E) => SP.buildHall(E, p, { h: 18, rise: 7 }))));
     for (const p of SPECIAL.gov) sp('gov', '行政中心', () => {
       const o = G.obb(G.ccw(p));
       const main = Math.abs(G.area(p)) > 3500 && o.w / o.d > 2.4;
-      SP.buildGovBlock(env('weiyang'), p, { h: main ? 42 : o.w * o.d > 2000 ? 22 : 16 });
+      run('weiyang', (E) => SP.buildGovBlock(E, p, { h: main ? 42 : o.w * o.d > 2000 ? 22 : 16 }));
     });
     // —— 2026-09 新增：曲江 W 酒店·万众国际、浐灞凯悦 / 彩虹桥 / 蝴蝶桥 / 后海夜市 ——
-    sp('w', '万众国际·W酒店', () => SP2.buildW(env('south'), SPECIAL2.w));
-    sp('hyatt', '浐灞凯悦', () => SP2.buildHyatt(env('chanba'), SPECIAL2.hyatt));
-    sp('rainbow', '彩虹桥', () => root.add(SP2.buildRainbowBridge(env('chanba'), SPECIAL2.rainbow)));
-    sp('butterfly', '蝴蝶桥', () => root.add(SP2.buildButterflyBridge(env('chanba'), SPECIAL2.butterfly)));
-    sp('houhai', '后海夜市', () => root.add(SP2.buildHouhai(env('chanba'), SPECIAL2.houhai)));
+    sp('w', '万众国际·W酒店', () => run('south', (E) => SP2.buildW(E, SPECIAL2.w)));
+    sp('hyatt', '浐灞凯悦', () => run('chanba', (E) => SP2.buildHyatt(E, SPECIAL2.hyatt)));
+    sp('rainbow', '彩虹桥', () => root.add(run('chanba', (E) => SP2.buildRainbowBridge(E, SPECIAL2.rainbow))));
+    sp('butterfly', '蝴蝶桥', () => root.add(run('chanba', (E) => SP2.buildButterflyBridge(E, SPECIAL2.butterfly))));
+    sp('houhai', '后海夜市', () => root.add(run('chanba', (E) => SP2.buildHouhai(E, SPECIAL2.houhai))));
     // —— 其余 OSM 实测高层 ——
     const gen = genericFeatures(ctx, curated);
-    gen.forEach((f, i) => safe('generic', () => buildTower(env(districtOf(f.x, f.z)), genericSpec(f, i))));
+    gen.forEach((f, i) => safe('generic', () => run(districtOf(f.x, f.z), (E) => buildTower(E, genericSpec(f, i)))));
 
     // —— 输出网格 ——
-    const lod = [];
-    for (const E of envs.values()) {
-      const grp = new THREE.Group();
-      grp.name = 'skyline-' + E.id;
-      if (E.fb.count) {
-        const m = new THREE.Mesh(E.fb.geometry(), fmat);
-        m.castShadow = true; m.receiveShadow = true; m.name = '幕墙';
-        grp.add(m);
-      }
-      grp.add(E.solid.build({ castShadow: true, receiveShadow: true, name: '实体' }));
-      const det = E.detail.build({ castShadow: false, receiveShadow: false, name: '细部' });
-      grp.add(det);
-      const bs = new THREE.Box3().setFromObject(det);
-      if (!bs.isEmpty()) lod.push({ obj: det, box: bs, range: 3200 });
-      root.add(grp);
-    }
+    const { lod } = B.build(root);
     const sm = signs.build();
     if (sm) {
       root.add(sm);
-      lod.push({ obj: sm, box: new THREE.Box3().setFromObject(sm), range: 9000 });
+      lod.push({ box: new THREE.Box3().setFromObject(sm), range: 9000, on: true, set: (v) => (sm.visible = v) });
     }
     root.add(beacons.build());
 
@@ -421,7 +398,7 @@ export default {
       update() {
         const cam = ctx.camera;
         beacons.update(ctx.renderer, cam);
-        for (const l of lod) l.obj.visible = l.box.distanceToPoint(cam.position) < l.range;
+        B.update(); // 材质参数表、夜间专用网格、细部与招牌的距离 LOD
       },
       setLayer(layer, v) {
         if (layer === 'buildings') root.visible = v;
@@ -430,7 +407,7 @@ export default {
         for (const l of lod) l.range = q.level === 0 ? (l.range > 5000 ? 6000 : 1800) : l.range > 5000 ? 9000 : 3200;
       },
       dispose() {
-        root.traverse((o) => o.geometry && o.geometry.dispose());
+        root.traverse((o) => (o.isBatchedMesh ? o.dispose() : o.geometry && o.geometry.dispose()));
         ctx.scene.remove(root);
       },
     };

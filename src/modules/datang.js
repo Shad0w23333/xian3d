@@ -670,6 +670,7 @@ export default {
     // 夜景地面：中央景观带两侧地埋灯（每 6 m）+ 贞观广场地埋灯阵（每 10 m），各带贴地暖光斑
     // （原先景观带夜里整体暗灰、广场地面大片暗褐，中轴反而比两侧行道树暗，审查 g8 p4_night / st_datang_n）
     const groundLights = new THREE.Group();
+    let groundGlowMesh = null;
     groundLights.name = '不夜城地埋灯';
     {
       const ups = [], glow = [];
@@ -686,7 +687,8 @@ export default {
           ups.push([AX + dx, z]);
           glow.push([AX + dx, z, 3.0, 0.7]);
         }
-      groundLights.add(uplights(ctx, ups, { size: 0.28 }), groundGlow(ctx, glow, { color: 0xffb860, intensity: 0.5 }));
+      groundGlowMesh = groundGlow(ctx, glow, { color: 0xffb860, intensity: 0.5 });
+      groundLights.add(uplights(ctx, ups, { size: 0.28 }), groundGlowMesh);
     }
     root.add(groundLights);
     // 水景池底灯：池面夜间透出暖光
@@ -984,6 +986,8 @@ export default {
           }
         }
         const k = ctx.sky ? ctx.sky.night ?? 0 : 0;
+        // 贴地光斑：加色混合、亮度 × uNight，白天（uNight = 0）全是 0，直接收起省一次绘制
+        if (groundGlowMesh) groundGlowMesh.visible = ctx.uniforms.uNight.value > 0;
         treeLights.visible = near && k > 0.15 && d < 2500;
         if (farLights) farLights.visible = k > 0.15 && d > 1200;
         if (!near) return;
