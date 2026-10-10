@@ -13,7 +13,7 @@ import { peopleGeometry, peopleMaterial, peopleDepthMaterial, createPeopleMesh, 
 import { LIFT, roadY } from '../core/roadheight.js';
 import { pointInPoly } from '../core/util.js';
 import { markParkWalkways } from '../arch/roads_net.js';
-import { featureWidth } from '../arch/vehicle-parking.js';
+import { featureWidth, carFreeZones } from '../arch/vehicle-parking.js';
 
 // 各画质档：最大人数 / 活动半径上限 / 绘制距离 / 生效的最大离地高度
 const CAP = [500, 1000, 1800, 2800];
@@ -25,15 +25,22 @@ const BASE_DENSITY = 0.028; // 人 / 米路径（热点 ×，时段 ×，密度�
 
 // 热点：[lon, lat, 半径 m, 倍率]
 const HOTSPOTS = [
-  [108.9423, 34.2610, 320, 4], // 钟楼
+  [108.9423, 34.2610, 420, 6], // 钟楼（钟鼓楼广场、开元、世纪金花）
+  [108.9475, 34.2610, 520, 4], // 东大街（骡马市、民生）
+  [108.9423, 34.2660, 450, 3], // 北大街
+  [108.9423, 34.2550, 450, 3.5], // 南大街（粉巷、南门）
   [108.9395, 34.2632, 420, 5], // 鼓楼 · 回民街
   [108.9595, 34.2120, 700, 3.5], // 大唐不夜城
   [108.9642, 34.2196, 420, 3], // 大雁塔
-  [108.9480, 34.2230, 500, 3], // 小寨
+  [108.9458, 34.2238, 650, 8], // 小寨（长安路 × 小寨东/西路十字，赛格、百汇、金莎）
   [108.9423, 34.2515, 260, 2], // 永宁门
   [108.9440, 34.2620, 1800, 1.6], // 明城墙内
   [108.9780, 34.2050, 800, 1.6], // 曲江池
   [108.8850, 34.2250, 1800, 1.2], // 高新区
+  [108.9588, 34.2783, 380, 5], // 西安站（南广场、解放路北口）
+  [108.9020, 34.2255, 400, 3], // 西安国际金融中心·高新路商圈
+  [108.9470, 34.2330, 380, 3], // 南稍门·长安路
+  [108.9895, 34.2400, 450, 2.5], // 曲江新区·金地广场一带
 ];
 // 小吃街/步行街热点（世界坐标 x, z, 半径, 倍率；按 roads.json 街道中心线量取）：
 // 下午到夜里都是人挤人的地方，倍率高于一般热点
@@ -47,6 +54,19 @@ const HOT_STREETS = [
   [230, 800, 260, 5], // 书院门 · 三学街（南门内东侧）
   [2100, -560, 200, 5], // 永兴坊（中山门内）
 ];
+// 广场（行人在广场内随机穿行、驻足）：landuse 的 square（≥ 3000 m²，喷泉水面除外）+ 下列精建地标广场。
+// 地面高度取精建模块的遮挡体高度场（ctx.occluders.topAt，台地/铺装面），高出地面 0.9 m 以上的格子（天窗、雕塑、
+// 花坛、建筑）当障碍物：走到跟前掉头。w = 密度权重（相对人行道）
+const LANDMARK_PLAZAS = [
+  { n: '钟鼓楼广场', w: 3.5, p: [-290, -92, -72, -92, -72, -20, -290, -20] },
+  { n: '鼓楼南广场', w: 2.5, p: [-350, -58, -297, -58, -297, -20, -350, -20] },
+  // 两侧台地一直铺到叠水池池沿（池宽 56 m、池沿 0.7 m，中线 x 1571）：池边、灯柱间都有游客
+  { n: '大雁塔北广场西侧', w: 4, p: [1490, 4104, 1541, 4104, 1541, 4448, 1490, 4448] },
+  { n: '大雁塔北广场东侧', w: 4, p: [1601, 4104, 1654, 4104, 1654, 4448, 1601, 4448] },
+  { n: '大雁塔北广场北端', w: 3, p: [1490, 4104, 1654, 4104, 1654, 4140, 1490, 4140] },
+  { n: '大雁塔南广场', w: 3, p: [1508, 4792, 1637, 4792, 1637, 4940, 1508, 4940] },
+];
+const PLAZA_SKIP = /喷泉|水池|水面/;
 // 时段人流（相对傍晚高峰）
 const HOUR_KEYS = [[0, 0.3], [2, 0.1], [5, 0.06], [7, 0.45], [9, 0.7], [12, 0.85], [15, 0.8], [18, 1], [20.5, 1], [22.5, 0.65], [24, 0.3]];
 function hourFactor(h) {
@@ -99,15 +119,58 @@ export default {
       }
       return k;
     };
+    // 店铺密度（100 m 格，3×3 邻域求和）：商圈人行道加密（小寨、钟楼、东大街等核心商圈约 ×3~4）
+    const POI_CELL = 100, poiGrid = new Map();
+    const SHOPPY = /^(shop|restaurant|fast_food|cafe|marketplace|supermarket|mall|bakery|ice_cream|pharmacy|bank|karaoke_box|cinema|hotel|clinic)$/;
+    for (const q of ctx.data.pois?.pois || []) {
+      if (!q || !SHOPPY.test(q.k || '')) continue;
+      const k = Math.floor(q.x / POI_CELL) * 100003 + Math.floor(q.z / POI_CELL);
+      poiGrid.set(k, (poiGrid.get(k) || 0) + 1);
+    }
+    const poiAt = (x, z) => {
+      const gx = Math.floor(x / POI_CELL), gz = Math.floor(z / POI_CELL);
+      let n = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) n += poiGrid.get((gx + dx) * 100003 + gz + dz) || 0;
+      return 1 + Math.min(3, Math.max(0, n - 20) / 30);
+    };
+    // 地铁出入口附近（60 m）再加密
+    const metroPts = (ctx.data.pois?.pois || []).filter((q) => q && q.k === 'subway_entrance');
+    const MCELL = 120, metroGrid = new Map();
+    for (const q of metroPts) {
+      const k = Math.floor(q.x / MCELL) * 100003 + Math.floor(q.z / MCELL);
+      let a = metroGrid.get(k);
+      if (!a) metroGrid.set(k, (a = []));
+      a.push(q.x, q.z);
+    }
+    const metroAt = (x, z) => {
+      const gx = Math.floor(x / MCELL), gz = Math.floor(z / MCELL);
+      let k = 1;
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        const a = metroGrid.get((gx + dx) * 100003 + gz + dz);
+        if (a) for (let i = 0; i < a.length; i += 2) { const d = Math.hypot(a[i] - x, a[i + 1] - z); if (d < 60) k = Math.max(k, 1 + 1.5 * (1 - d / 60)); }
+      }
+      return k;
+    };
+    const segWeights = (pts, n) => {
+      const sw = new Float32Array(Math.max(1, n - 1));
+      for (let i = 0; i < n - 1; i++) {
+        const mx = (pts[i * 2] + pts[i * 2 + 2]) * 0.5, mz = (pts[i * 2 + 1] + pts[i * 2 + 3]) * 0.5;
+        sw[i] = Math.max(hotAt(mx, mz), poiAt(mx, mz)) * metroAt(mx, mz);
+      }
+      return sw;
+    };
     const feats = ctx.data.roads?.features || [];
     markParkWalkways(ctx.data.roads, ctx.data.landuse); // 景区/公园里的无名支路按步行道（c=12）放人
+    // 禁车的支路（回民街街区、地标门前、寺院景区，见 vehicle-parking.js carFreeZones）按步行街放人：走满路面
+    const CF = carFreeZones(ctx);
     for (const f of feats) {
-      const c = f._ped ? 12 : f.c;
+      const c = f._ped || CF.walkable(f) ? 12 : f.c;
       if (f.t || f.b || !f.p || f.p.length < 4) continue;
       let sides = null;
       const W = Math.min(42, Math.max(Number(f.w) || MIN_W[c] || 5, MIN_W[c] || 5, c >= 1 && c <= 4 ? Math.max(1, f.l | 0 || 1) * (c <= 2 ? 3.4 : 3.1) : 0));
       if (c === 12) sides = [[0, W * 0.8, 1.6]];
-      else if (c === 13) sides = [[0, Math.min(W, 3) * 0.6, 1.1]];
+      // 人行步道：OSM 多沿人行道中线画，横向散开 ±0.9 m 左右（不再排成一条线走在盲道边）
+      else if (c === 13) sides = [[0, Math.min(Math.max(W, 2.2), 3) * 0.8, 1.1]];
       else if (c >= 1 && c <= 4) {
         const sw = SIDEWALK[c];
         const a = TREE_D[c] + 0.7, b = Math.max(a + 0.2, sw - 0.3);
@@ -126,12 +189,108 @@ export default {
       const len = cum[n - 1];
       if (len < 8) continue;
       const pts = Float32Array.from(src);
-      const mid = Math.floor(n / 2) * 2;
-      const hk = hotAt(src[mid], src[mid + 1]);
-      for (const [off, jit, w] of sides) paths.push({ f, pts, cum, n, len, off, jit, w: w * hk, lift: c >= 1 && c <= 4 ? 0.14 : 0.04 });
+      const sw = segWeights(pts, n);
+      for (const [off, jit, w] of sides) paths.push({ f, pts, cum, n, len, off, jit, w, sw, lift: c >= 1 && c <= 4 ? 0.14 : 0.04, cls: c });
+    }
+    // 不放人的地方：地形挖洞、“道路模块不画路面”的排除区里的坑口与楼体内部（roads 且非 buildings，或面积 < 5000 m² 的
+    // 地标实体如鼓楼城台）。同时标 buildings 与 roads 的大片步行区（不夜城步行街、大雁塔北广场与寺院）照常放人
+    const HCELL = 200, hideGrid = new Map();
+    for (const it of ctx.exclusions?.items || []) {
+      const fl = it.flags, b = it.bb;
+      if (!fl.roads) continue;
+      if (fl.buildings && (b.x1 - b.x0) * (b.z1 - b.z0) >= 5000) continue;
+      for (let cx = Math.floor(b.x0 / HCELL); cx <= Math.floor(b.x1 / HCELL); cx++)
+        for (let cz = Math.floor(b.z0 / HCELL); cz <= Math.floor(b.z1 / HCELL); cz++) {
+          const k = cx * 100003 + cz;
+          let a = hideGrid.get(k);
+          if (!a) hideGrid.set(k, (a = []));
+          a.push(it);
+        }
+    }
+    const hideEx = (x, z) => {
+      const a = hideGrid.get(Math.floor(x / HCELL) * 100003 + Math.floor(z / HCELL));
+      if (!a) return false;
+      for (const it of a) {
+        const b = it.bb;
+        if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+        if (pointInPoly(x, z, it.p)) return true;
+      }
+      return false;
+    };
+    // 车行道（主次干道、支路、匝道；不含桥隧、步行化支路）：行人不走进别的道路的车行道——路口处人行道折线的端点
+    // 落在横向道路中线上、步道穿越车行道处等，走到路缘就掉头（不在车流里横穿）
+    const CW_CELL = 40, cwGrid = new Map();
+    for (const f of feats) {
+      if (f.c < 1 || f.c > 11 || f.c === 6 || f.b || f.t || f._ped || !f.p || f.p.length < 4 || CF.walkable(f)) continue;
+      const hw = featureWidth(f) / 2 - 0.3;
+      if (hw < 1.5) continue;
+      const p = f.p;
+      for (let i = 2; i < p.length; i += 2) {
+        const ax = p[i - 2], az = p[i - 1], bx = p[i], bz = p[i + 1];
+        const x0 = Math.min(ax, bx) - hw, x1 = Math.max(ax, bx) + hw, z0 = Math.min(az, bz) - hw, z1 = Math.max(az, bz) + hw;
+        if (x1 - x0 > 3000 || z1 - z0 > 3000) continue;
+        for (let cx = Math.floor(x0 / CW_CELL); cx <= Math.floor(x1 / CW_CELL); cx++)
+          for (let cz = Math.floor(z0 / CW_CELL); cz <= Math.floor(z1 / CW_CELL); cz++) {
+            const k = cx * 100003 + cz;
+            let a = cwGrid.get(k);
+            if (!a) cwGrid.set(k, (a = []));
+            a.push(ax, az, bx, bz, hw);
+          }
+      }
+    }
+    const inCarriage = (x, z) => {
+      const a = cwGrid.get(Math.floor(x / CW_CELL) * 100003 + Math.floor(z / CW_CELL));
+      if (!a) return false;
+      for (let i = 0; i < a.length; i += 5) {
+        const ax = a[i], az = a[i + 1], dx = a[i + 2] - ax, dz = a[i + 3] - az;
+        const l2 = dx * dx + dz * dz || 1e-9;
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+        const qx = ax + dx * t - x, qz = az + dz * t - z;
+        if (qx * qx + qz * qz < a[i + 4] * a[i + 4]) return true;
+      }
+      return false;
+    };
+    // 广场路径：随机弦（两端都在广场内、沿线不出界），行人在广场内来回走、驻足
+    let pseed = 4242;
+    const prnd = () => { pseed = (pseed * 16807) % 2147483647; return pseed / 2147483647; };
+    const plazaList = LANDMARK_PLAZAS.map((q) => ({ ...q }));
+    for (const L of ctx.data.landuse?.polys || []) {
+      if (L.k !== 'square' || !L.outer || L.outer.length < 6 || PLAZA_SKIP.test(L.n || '')) continue;
+      plazaList.push({ n: L.n || '广场', w: L.n ? 2.5 : 1.6, p: L.outer, holes: L.holes || [] });
+    }
+    let nPlazaPaths = 0;
+    for (const P of plazaList) {
+      const p = P.p;
+      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, A = 0;
+      for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
+        x0 = Math.min(x0, p[i]); x1 = Math.max(x1, p[i]); z0 = Math.min(z0, p[i + 1]); z1 = Math.max(z1, p[i + 1]);
+        A += p[j] * p[i + 1] - p[i] * p[j + 1];
+      }
+      A = Math.abs(A) / 2;
+      if (A < 3000) continue;
+      const inside = (x, z) => pointInPoly(x, z, p) && !(P.holes || []).some((h) => h && h.length >= 6 && pointInPoly(x, z, h)) && !hideEx(x, z) && !inCarriage(x, z);
+      const nChord = Math.max(3, Math.min(90, Math.round(A / 500)));
+      const Lmax = Math.min(90, Math.max(20, Math.sqrt(A) * 0.8));
+      for (let k = 0; k < nChord; k++) {
+        for (let tries = 0; tries < 10; tries++) {
+          const ax = x0 + prnd() * (x1 - x0), az = z0 + prnd() * (z1 - z0);
+          if (!inside(ax, az)) continue;
+          const an = prnd() * Math.PI * 2, L = 12 + prnd() * (Lmax - 12);
+          const bx = ax + Math.cos(an) * L, bz = az + Math.sin(an) * L;
+          let ok = true;
+          for (let q = 1; q <= 6 && ok; q++) ok = inside(ax + ((bx - ax) * q) / 6, az + ((bz - az) * q) / 6);
+          if (!ok) continue;
+          const pts = Float32Array.from([ax, az, bx, bz]);
+          const cum = Float32Array.from([0, L]);
+          const mw = Math.max(hotAt((ax + bx) / 2, (az + bz) / 2), 1);
+          paths.push({ f: null, pts, cum, n: 2, len: L, off: 0, jit: 2.4, w: P.w, sw: Float32Array.from([mw]), lift: 0.03 - LIFT, plaza: true, cls: -1 });
+          nPlazaPaths++;
+          break;
+        }
+      }
     }
     // 空间网格：cell → [pathIndex, segIndex, ...]；道路模块不画的路段（排除区 roads）与地形挖洞处不放人
-    const hidden = (x, z) => !!(terrain.inHole?.(x, z) || ctx.exclusions?.test(x, z, 'roads'));
+    const hidden = (x, z) => !!(terrain.inHole?.(x, z) || hideEx(x, z));
     // 实体占地：片区模块自建房屋的逐户轮廓（回民街/曲江等登记为“只让树”的排除区，单个面积 < 5000 m²）。
     // OSM 街道中心线与房屋轮廓常有几米到十几米的偏差（北院门南段中心线斜进西侧铺面），行人落进房子里就看不见了：
     // 生成与行走时遇到房屋就横向挪到街上
@@ -236,11 +395,34 @@ export default {
       return false;
     };
     // 高度跟随道路纵断面（引桥路堤、被抬高的地面路上行人不再低于路面）；无纵断面时退回地形
+    const occ = ctx.occluders;
     const groundY = (i) => {
       const p = paths[wPath[i]];
       const g = terrain.heightAt(wX[i], wZ[i]) + LIFT;
-      const r = p.f._rp ? roadY(terrain, p.f, wX[i], wZ[i], wS[i], p.len) : null;
+      if (p.plaza) {
+        // 精建广场的铺装/台地面（遮挡体高度场）；没有登记实体的地方贴地形
+        const top = occ ? occ.topAt(wX[i], wZ[i]) : -Infinity;
+        const t0 = g - LIFT;
+        wY[i] = top > t0 - 0.6 && top < t0 + 0.9 ? top + 0.02 : g + p.lift;
+        return;
+      }
+      const r = p.f && p.f._rp ? roadY(terrain, p.f, wX[i], wZ[i], wS[i], p.len) : null;
       wY[i] = Math.max(g, r ?? g) + p.lift;
+    };
+    // 广场里高出地面 0.9 m 以上的实体（天窗、雕塑、花坛、亭子）或低于地面 0.6 m 的坑（水池）当障碍
+    const plazaBlocked = (i) => {
+      if (!occ) return false;
+      const top = occ.topAt(wX[i], wZ[i]);
+      if (top === -Infinity) return false;
+      const t0 = terrain.heightAt(wX[i], wZ[i]);
+      return top > t0 + 0.9 || top < t0 - 0.6;
+    };
+    // 行人是否该掉头：隐藏区、别的道路的车行道（广场路径另查障碍）
+    const offLimits = (i) => {
+      if (hidden(wX[i], wZ[i])) return true;
+      const p = paths[wPath[i]];
+      if (p.plaza) return plazaBlocked(i);
+      return inCarriage(wX[i], wZ[i]);
     };
 
     const spawn = (i, anywhere) => {
@@ -263,7 +445,7 @@ export default {
         wTimer[i] = stand ? 5 + rnd() * 25 : 20 + rnd() * 60;
         locate(i);
         // 中点不在隐藏区的路段也可能部分穿进坑口/楼体排除区：落点在区内就重抽，5 次都不行就不补这个人
-        if (hidden(wX[i], wZ[i]) || !unstick(i)) { if (tries < 4) continue; return false; }
+        if (offLimits(i) || !unstick(i)) { if (tries < 4) continue; return false; }
         if (anywhere || tries === 4) break;
         // 非初始补人：尽量补在视野外或较远处，避免“凭空出现”
         const d = Math.hypot(wX[i] - cp.x, wZ[i] - cp.z);
@@ -319,7 +501,7 @@ export default {
               const grow = (A, T) => { const b = new T(A.length * 2); b.set(A); return b; };
               candP = grow(candP, Int32Array); candI = grow(candI, Int32Array); candCum = grow(candCum, Float64Array);
             }
-            acc += (p.cum[g + 1] - p.cum[g]) * p.w;
+            acc += (p.cum[g + 1] - p.cum[g]) * p.w * p.sw[g];
             candP[nCand] = a[k]; candI[nCand] = g; candCum[nCand] = acc; nCand++;
           }
         }
@@ -385,7 +567,7 @@ export default {
               // 从外面走进被隐藏的路段（下沉广场坑口、楼体内部等排除区）就掉头；
               // 连续两次检查都在区内（掉头也没走出来）说明卡住了，移除，由补人逻辑重新生成
               // 走进房屋：先横向挪回街上，挪不开再按隐藏区处理
-              const h = hidden(wX[i], wZ[i]) || !unstick(i) ? 1 : 0;
+              const h = offLimits(i) || !unstick(i) ? 1 : 0;
               if (h && wHid[i]) { kill(i); i--; continue; }
               if (h) wDir[i] = -wDir[i];
               wHid[i] = h;
@@ -394,6 +576,8 @@ export default {
           const dx = wX[i] - cp.x, dy = wY[i] - cp.y, dz = wZ[i] - cp.z;
           const d2 = dx * dx + dy * dy + dz * dz;
           if (d2 > drawD2) continue;
+          // 相机 2.2 m 内不画（人眼高度机位前不再有人贴脸）
+          if (dx * dx + dz * dz < 4.84 && Math.abs(dy) < 2.5) continue;
           sphere.center.set(wX[i], wY[i] + 0.9, wZ[i]);
           sphere.radius = 1.2;
           if (!frustum.intersectsSphere(sphere)) continue;
@@ -425,8 +609,35 @@ export default {
         for (let i = 0; i < N; i++) out.push({ x: wX[i], y: wY[i], z: wZ[i], yaw: wYaw[i], v: wSpd[i] });
         return out;
       },
+      /** 调试：(x,z) 半径 r 内的行人（位置、所在路径的道路名/等级/偏移） */
+      debugNear(x, z, r = 80) {
+        const out = [];
+        for (let i = 0; i < N; i++) {
+          const d = Math.hypot(wX[i] - x, wZ[i] - z);
+          if (d > r) continue;
+          const p = paths[wPath[i]];
+          out.push({ x: +wX[i].toFixed(1), z: +wZ[i].toFixed(1), d: +d.toFixed(1), n: p.f ? p.f.n || '' : p.plaza ? 'plaza' : '', c: p.cls, off: +wOff[i].toFixed(1), v: +wSpd[i].toFixed(2) });
+        }
+        return out.sort((a, b) => a.d - b.d);
+      },
+      /** 调试：某点附近的路径（道路名、等级、偏移、权重） */
+      debugPaths(x, z, r = 60) {
+        const out = [];
+        paths.forEach((p, pi) => {
+          for (let g = 0; g < p.n - 1; g++) {
+            const ax = p.pts[g * 2], az = p.pts[g * 2 + 1], bx = p.pts[g * 2 + 2], bz = p.pts[g * 2 + 3];
+            const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1;
+            const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+            const d = Math.hypot(ax + dx * t - x, az + dz * t - z);
+            if (d < r) { out.push({ pi, g, n: p.f ? p.f.n || '' : 'plaza', c: p.cls, fc: p.f ? p.f.c : -1, o: p.f ? p.f.o : 0, off: p.off, w: p.w, sw: +p.sw[g].toFixed(2), d: +d.toFixed(1), len: Math.round(p.len) }); break; }
+          }
+        });
+        return out.sort((a, b) => a.d - b.d).slice(0, 40);
+      },
+      /** 调试：某点的密度倍率（热点、店铺、地铁口） */
+      debugDensity(x, z) { return { hot: +hotAt(x, z).toFixed(2), poi: +poiAt(x, z).toFixed(2), metro: +metroAt(x, z).toFixed(2) }; },
       stats() {
-        return { walkers: N, drawn: WN.mesh.count + WF.mesh.count, near: WN.mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, cand: nCand };
+        return { walkers: N, drawn: WN.mesh.count + WF.mesh.count, near: WN.mesh.count, target, bubbleR: Math.round(bub.R), paths: paths.length, plazaPaths: nPlazaPaths, cand: nCand };
       },
       dispose() {
         for (const w of [WN, WF]) { w.mesh.geometry.dispose(); ctx.scene.remove(w.mesh); }

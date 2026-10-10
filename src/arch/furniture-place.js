@@ -2,10 +2,13 @@
 //
 // 道路与人行道：与 roads 模块同一套路网分析（roads_net.buildRoadNet：拆边、路口半径 R、人行道起止 sw0/sw1、
 //   左右人行道有无 swR/swL、人行横道标志 CW0/CW1），人行道宽 CFG.sw、面高 = 纵断面路面高 roadY + 0.15。
-// 人行道横向分区（u = 距路缘石外沿的米数）：
-//   0.2~0.75 路缘设施带：垃圾桶、消火栓、标志杆、人行灯杆、路名牌杆、阻车石球；路灯在 u = 0.9（按 roads 的统一灯位相位避让 ±1.1 m）；
-//   1.1~1.4 盲道（不放东西）；1.3~2.7 行道树/绿篱带（vegetation 模块：距路缘 1.8~2.0 m ± 0.25，宽主干道树池间连续绿篱）——不放东西；
-//   ≥ 2.85 到人行道外沿：共享单车/电动车、配电箱、报刊亭、候车亭（后半可伸到人行道外的空地上）。
+// 人行道横向分区（u = 距路缘石外沿的米数；与 roads 着色器 roads_shader.js 的人行道分带一致，见 zones()）：
+//   0~2.45 路缘设施带（人行道宽 ≥ 3.6 m 时）：垃圾桶、消火栓、标志杆、人行灯杆、路名牌杆、阻车石球在 0.2~0.75；
+//     路灯在 u = 0.9（按 roads 的统一灯位相位避让 ±1.1 m）；行道树/绿篱在 1.8~2.0（vegetation 模块）；
+//     公交候车亭也在这条带里贴路缘（前沿 0.4 m、背板 2.35 m，开口朝车行道），其范围在 prepare 阶段登记为“让树”排除区；
+//   人非共板道路：设施带外 2.55~4.55 是绿色非机动车道——不放任何东西；
+//   行进盲道 0.4 m 宽：设施带（及非机动车道）外 0.45 m 起（一般 2.7~3.1 m；窄人行道在外缘内 0.5 m）——不放东西，两侧各留 0.6 m；
+//   盲道外 0.6 m 起到人行道外沿：共享单车/电动车（放不下就斜放或停到人行道外的空地上）、配电箱、报刊亭。
 // 避让：精建片区（streetscape DISTRICTS 的 bbox）、排除区（buildings / roads 标志）、通用建筑轮廓、所有车行道（含支路）、
 //   地铁出入口雨棚（signage）、signage 的“示意”候车亭候选位、同块内已放物件。
 // 路口：主干/次干道路口（≥3 个进口、横向道路为次干道及以上）放悬臂信号灯（远端右侧立杆、臂跨出口车道、灯面朝来车）、
@@ -189,6 +192,18 @@ export class Planner {
     let fr = (s / S - 0.5) % 1;
     if (fr < 0) fr += 1;
     return Math.min(fr, 1 - fr) * S;
+  }
+  /**
+   * 要素 fi 的人行道横向分区（与 roads_shader.js 人行道分带同一公式，按整宽算；遇并行辅路的局部收窄由 roadHit 兜底）：
+   * sw 实际宽（人非共板道路含 2.4 m 非机动车道）、zoneB 设施带外缘、bike [起, 止] 非机动车道或 null、blind [起, 止] 行进盲道。
+   */
+  zones(fi) {
+    const I = this.net.info[fi];
+    const sw = I.sw || I.cfg.sw;
+    const zoneB = sw >= 3.6 ? 2.45 : 0;
+    const bike = I.bike && sw >= 6 ? [zoneB + 0.1, zoneB + 2.1] : null;
+    const ub = bike ? bike[1] + 0.65 : sw >= 3.6 ? Math.min(sw - 0.65, zoneB + 0.45) : sw - 0.5;
+    return { sw, zoneB, bike, blind: [ub - 0.2, ub + 0.2] };
   }
   inDistrict(x, z, m = 25) {
     for (const b of this.districts) if (x > b[0] - m && x < b[2] + m && z > b[1] - m && z < b[3] + m) return true;
@@ -452,9 +467,16 @@ export class Planner {
     }
     return best;
   }
+  /** 路缘候车亭范围登记为“只让树”排除区（vegetation 在自己的 prepare 里开始种树，须在其之前调用） */
+  registerExclusions(EX) {
+    if (!EX) return 0;
+    for (const p of this.shelterFoot) EX.add({ points: p, name: 'busShelter' }, { buildings: false, trees: true, roads: false, pois: false });
+    return this.shelterFoot.length;
+  }
   snapBusStops() {
     const { feats } = this.net;
     const placed = [];
+    this.shelterFoot = [];
     let n = 0;
     for (let i = 0; i < BUS.length; i += 5) {
       const x = BUS[i] / 10, z = BUS[i + 1] / 10;
@@ -481,7 +503,28 @@ export class Planner {
       // signage 的示意候车亭在同侧 35 m 内：不再重复
       const ox = cx - tz * side * (E.W / 2 + 3), oz = cz + tx * side * (E.W / 2 + 3);
       if (this.near(this.sgBus, ox, oz, 35)) continue;
-      const st = { k: hit.k, fi: E.fi, side, s, name, routes: BUS_ROUTES[BUS[i + 3]] || '', tag: BUS[i + 4], x: cx, z: cz };
+      const st = { k: hit.k, fi: E.fi, side, s, name, routes: BUS_ROUTES[BUS[i + 3]] || '', tag: BUS[i + 4], x: cx, z: cz, curb: false };
+      // 候车亭：设施带够宽（≥ 2.45 m）就贴路缘建在设施带里（开口朝车行道、背板朝建筑），整亭避开路灯杆（灯位 u = 0.9）；
+      // 范围登记成“让树”排除区（registerExclusions，须在 vegetation 种树之前）
+      if (BUS[i + 4] !== 2 && f.c <= 4 && this.zones(E.fi).zoneB >= 2.45) {
+        const L = (f.c <= 2 ? 3 : 2) * 2.4;
+        let best = null;
+        for (let d = 0; d <= 9 && best === null; d += 0.5)
+          for (const sg of d ? [1, -1] : [1]) {
+            const ss = s + sg * d;
+            if (ss < sA || ss > sB) continue;
+            if (this.lampGap(E.fi, ss) > L / 2 + 0.55) { best = ss; break; }
+          }
+        if (best !== null) {
+          st.s = best;
+          st.curb = true;
+          const [qx, qz, qtx, qtz] = this.pointAt(f, this.net.chain[E.fi], best);
+          const nx = -qtz * side, nz = qtx * side, hw = this.net.info[E.fi].W / 2;
+          const a = L / 2 + 1.2;
+          const P = (along, u) => [qx + qtx * along + nx * (hw + u), qz + qtz * along + nz * (hw + u)];
+          this.shelterFoot.push([...P(-a, 0.1), ...P(a, 0.1), ...P(a, 2.7), ...P(-a, 2.7)]);
+        }
+      }
       placed.push(st);
       const key = ckey(Math.floor(cx / CHUNK), Math.floor(cz / CHUNK));
       let l = this.stops.get(key);
@@ -755,24 +798,27 @@ export class Planner {
     const occ = out.occ;
     const tdir = sigma; // 本侧车流方向（相对要素方向）
     const ax = Fm.tx * sigma, az = Fm.tz * sigma; // 候车亭本地 +X（沿路，本地 +Z = 外法线）
-    const sw = cfg.sw;
+    const Z = this.zones(st.fi);
+    const sw = Z.sw;
     const shelter = st.tag !== 2 && f.c <= 4 && sw >= 3;
     const nb = f.c <= 2 ? 3 : 2;
     const L = nb * 2.4;
     let placedShelter = false;
     if (shelter) {
-      const uBack = Math.max(sw - 0.15, 4.9);
+      // 路缘候车亭（设施带里，前沿离路缘 0.4 m、背板 2.35 m，盲道在背板后）；设施带不够宽的窄人行道：退到人行道外沿
+      const uBack = st.curb ? 2.35 : Math.max(sw - 0.15, Z.blind[1] + 2.0, 4.9);
       const [bx, bz] = Fm.at(uBack);
-      // 占地抽样：背板线与前缘线各 5 点
+      // 占地抽样：背板线与前缘线各 5 点（路缘候车亭的前缘离车行道只有 0.4 m，朝路一侧半径收小）
       let ok = true;
       for (let k = -2; k <= 2 && ok; k++) for (const du of [0, -1.9]) {
         const px = bx + ax * (k * L / 4) + Fm.nx * du, pz = bz + az * (k * L / 4) + Fm.nz * du;
-        if (this.blocked(px, pz, 0.35, { occ })) ok = false;
+        const w = this.blocked(px, pz, 0.35, { occ, rr: st.curb ? 0.15 : 0.35 });
+        if (w) { ok = false; st.why = w; }
       }
-      const gy = this.terrain.heightAt(bx, bz);
+      const gy = st.curb ? Fm.y : this.terrain.heightAt(bx, bz);
       if (ok && gy < Fm.y + 1.2 && gy > Fm.y - 0.6) { // 背后地面高出太多或低于站台垫层底都不建
         const yaw = yawOf(ax, az);
-        out.push(nb === 3 ? 'shelter3' : 'shelter2', bx, Fm.y, bz, yaw, 1, 1, 1);
+        out.push((nb === 3 ? 'shelter3' : 'shelter2') + (st.curb ? 'c' : ''), bx, Fm.y, bz, yaw, 1, 1, 1);
         for (let b = 1; b < nb; b++) {
           const lx = -L / 2 + (b + 0.5) * 2.4;
           out.push('pane', bx + ax * lx + Fm.nx * 0.05, Fm.y + 1.34, bz + az * lx + Fm.nz * 0.05, yaw, 2.28, 2.0, 1);
@@ -792,6 +838,7 @@ export class Planner {
         }
         for (let k = -2; k <= 2; k++) occ.push(bx + ax * (k * L / 4) - Fm.nx * 0.95, bz + az * (k * L / 4) - Fm.nz * 0.95, 1.3);
         placedShelter = true;
+        st.why = 0;
       }
     }
     // 站牌杆：路缘设施带，候车亭下游端外 1.5 m（车流方向）
@@ -810,21 +857,11 @@ export class Planner {
       occ.push(x, z, 0.35);
       break;
     }
-    // 主干道公交专用标志（上游 5 m 路缘）
-    if (f.c <= 2 && h01(st.fi, Math.round(st.s), 3) < 0.55) {
-      const s = st.s - tdir * (L / 2 + 5);
-      if (this.frame(Fm, st.fi, s, sigma) && this.lampGap(st.fi, s) > 1.0) {
-        const [x, z] = Fm.at(0.45);
-        if (!this.blocked(x, z, 0.3, { occ })) {
-          this.trafficSign(out, x, Fm.y, z, -Fm.tx * tdir, -Fm.tz * tdir, 6, 8, 0.75, 2.5);
-          occ.push(x, z, 0.35);
-        }
-      }
-    }
+    // （“公交专用”车道标志不再立在每个站旁：只在画了公交专用道的路段起点立，见 planEdge）
     // 站台旁的共享单车与垃圾桶
     if (h01(st.fi, Math.round(st.s), 5) < 0.55) this.bikeCluster(out, st.fi, sigma, st.s + tdir * (L / 2 + 5 + 4 * h01(st.fi, 9)), 3 + (h01(st.fi, Math.round(st.s), 6) * 6 | 0), false, h01(st.fi, Math.round(st.s), 7));
     if (placedShelter && this.frame(Fm, st.fi, st.s - tdir * (L / 2 + 0.9), sigma)) {
-      const [x, z] = Fm.at(Math.max(sw - 0.6, 3.2));
+      const [x, z] = Fm.at(st.curb ? 0.42 : Math.max(sw - 0.6, Z.blind[1] + 0.6));
       if (!this.blocked(x, z, 0.5, { occ, rr: 0.25 })) { out.push('bin', x, Fm.y, z, yawOf(-Fm.nx, -Fm.nz), 1, 1, 1); occ.push(x, z, 0.55); }
     }
   }
@@ -832,22 +869,23 @@ export class Planner {
 
   /** 共享单车簇：σ 侧、中心里程 s、n 辆；电动车 ebike = true；hb 品牌散列 */
   bikeCluster(out, fi, sigma, s, n, ebike, hb) {
-    const { info } = this.net;
-    const cfg = info[fi].cfg;
-    const sw = cfg.sw;
+    const Z = this.zones(fi);
+    const sw = Z.sw;
     const Fm = new Frame();
-    const len = ebike ? 1.9 : 1.75, wid = ebike ? 0.7 : 0.58;
-    // 停放角度：后排设施带够深就垂直于路缘，否则斜放；都不行就停到人行道外的空地（无建筑处）
-    const zone0 = 2.85, D = sw - 0.15 - zone0;
+    const len = ebike ? 1.9 : 1.75, wid = ebike ? 0.7 : 0.6;
+    // 停放带：行进盲道外 0.6 m 起到人行道外沿（非机动车道、盲道都在它里侧）。够深就垂直于路缘，否则斜放；
+    // 都不行就停到人行道外的空地（无建筑处）
+    const zone0 = Z.blind[1] + 0.6, D = sw - 0.15 - zone0;
     let ang = 0, u0 = 0;
-    for (const a of [90, 60, 42, 28]) {
+    for (const a of [90, 60, 42, 28, 18]) {
       const r = (a * Math.PI) / 180;
       const dep = len * Math.sin(r) + wid * Math.cos(r);
       if (dep <= D) { ang = r; u0 = zone0 + dep / 2; break; }
     }
     let frontage = false;
     if (!ang) { ang = Math.PI / 2; u0 = sw + 0.35 + len / 2; frontage = true; }
-    const spacing = (ebike ? 0.78 : 0.6) / Math.max(0.5, Math.sin(ang));
+    // 车间净距 ≥ 0.12 m（把宽 0.6 / 0.7 m）：垂直于车身方向的间距 0.72 / 0.85 m，斜放时沿路拉开
+    const spacing = (ebike ? 0.85 : 0.72) / Math.max(0.3, Math.sin(ang));
     const flip = h01(fi, Math.round(s), 21) < 0.5 ? 1 : -1;
     let bi = 0;
     const mixed = h01(fi, Math.round(s), 22) < 0.18;
@@ -857,8 +895,8 @@ export class Planner {
       const ss = s + (k - (n - 1) / 2) * spacing * sigma;
       if (!this.frame(Fm, fi, ss, sigma)) continue;
       const jit = (h01(fi, Math.round(ss * 10), 23) - 0.5);
-      const a = ang + jit * 0.16;
-      const [x, z] = Fm.at(u0 + jit * 0.12);
+      const a = ang + jit * 0.07;
+      const [x, z] = Fm.at(u0 + (jit + 0.5) * 0.08);
       if (this.blocked(x, z, wid * 0.52, { occ: out.occ })) continue;
       // 车身朝向：沿路方向与外法线的组合；车头、车尾两点也不能压到已放物件（配电箱、报刊亭等）
       const dx = (Fm.tx * sigma * Math.cos(a) + Fm.nx * Math.sin(a)) * flip, dz = (Fm.tz * sigma * Math.cos(a) + Fm.nz * Math.sin(a)) * flip;
@@ -921,7 +959,9 @@ export class Planner {
     const f = feats[E.fi], cfg = info[E.fi].cfg, fi = E.fi;
     const sA = E.s0 + E.sw0 + 1.5, sB = E.s1 - E.sw1 - 1.5;
     if (sB - sA < 6) return;
-    const sw = cfg.sw;
+    const Z = this.zones(fi);
+    const sw = Z.sw;
+    const outer0 = Z.blind[1] + 0.6; // 盲道外侧可放物件的起点
     const Fm = new Frame();
     const occ = out.occ;
     for (const sigma of [1, -1]) {
@@ -964,14 +1004,14 @@ export class Planner {
       stations(40, 1, 10, (s) => place('bin', s, 0.42, 0.5, 1, null, 0.2));
       // 消火栓：约 130 m
       stations(130, 2, 20, (s) => place('hydrant', s, 0.38, 0.3, -1, null, 0.2));
-      // 配电箱 / 通信交接箱：约 180 m，六成
+      // 配电箱 / 通信交接箱：约 180 m，六成；盲道外放得下（进深 0.62 m）就靠人行道外沿，否则放到人行道外
       stations(180, 3, 40, (s, n) => {
         if (h01(fi, n, 33 + sd) > 0.6) return;
-        const u = sw >= 3.6 ? sw - 0.32 : sw + 0.45;
+        const u = sw - 0.32 - 0.31 >= outer0 ? sw - 0.32 : sw + 0.45;
         place('cabinet', s, u, 0.6, -1, CAB[(h01(fi, n, 34) * 3) | 0]);
       });
-      // 报刊亭：主次干道约 700 m 三成，人行道 ≥ 4.5 m
-      if (f.c <= 3 && sw >= 4.5) stations(700, 4, 120, (s, n) => {
+      // 报刊亭：主次干道约 700 m 三成；亭身连雨棚进深约 1.8 m，盲道外放得下才放
+      if (f.c <= 3 && sw - 0.82 - 0.97 >= outer0) stations(700, 4, 120, (s, n) => {
         if (h01(fi, n, 44 + sd) > 0.32) return;
         const u = sw - 0.82;
         if (place('kiosk', s, u, 1.25, -1)) {
@@ -1010,6 +1050,8 @@ export class Planner {
           const s = sigma > 0 ? sA + 30 : sB - 30;
           sign(s, f.c === 1 ? 0 : f.c === 2 ? 1 : f.c === 3 ? 2 : 3, 7);
         }
+        // 公交专用道（roads 画了最外侧公交专用车道的路段）：车流驶入路段后 12 m 处立“公交专用”标志
+        if ((E.mark & 1) && len > 60) sign(sigma > 0 ? sA + 12 : sB - 12, 6, 8);
         // 禁止停车：路段中部
         if (len > 110 && h01(fi, sd, 78) < 0.3) sign((sA + sB) / 2 + (h01(fi, sd, 79) - 0.5) * 30, 4, 7);
       }

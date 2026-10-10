@@ -26,11 +26,17 @@ const POOLS = [
   ['pane', 'glass', 'far', false, false],
   ['shelter2', 'metal', 'far', true, false],
   ['shelter3', 'metal', 'far', true, false],
+  ['shelter2c', 'metal', 'far', true, false], // 贴路缘的候车亭（设施带里，站台垫层不伸出）
+  ['shelter3c', 'metal', 'far', true, false],
   ['kiosk', 'paint', 'far', true, false],
   ['fence', 'paint', 'mid', true, false],
   ['bin', 'paint', 'near', true, false],
   ['bike', 'paint', 'near', true, true],
   ['ebike', 'paint', 'near', true, true],
+  // 距离分级：细模（bin/bike/ebike）只画相机 LOD_D 内的实例，其余进对应的简模池（实例数据同源，见 rebuildLod）
+  ['binLo', 'paint', 'near', true, false],
+  ['bikeLo', 'paint', 'near', true, true],
+  ['ebikeLo', 'paint', 'near', true, true],
   ['dbox', 'paint', 'near', true, true],
   ['hydrant', 'paint', 'near', false, false],
   ['cabinet', 'paint', 'near', true, true],
@@ -45,11 +51,26 @@ const RADII = {
   text: [300, 450, 650, 800], // 路名牌/站牌文字（图集 105 格）只在此半径内的分块生成
 };
 const HIDE_AGL = 600; // 相机离地高于此值：全部隐藏、不再生成
+// 细模/简模分界（米，画质 低/中/高/超高）；细模池名 → 简模池名
+const LOD_D = [25, 35, 45, 60];
+const LOD_PAIRS = { bin: 'binLo', bike: 'bikeLo', ebike: 'ebikeLo' };
 const NEAR_AGL = 70; // 小件只在相机离地低于此值时显示
 
 export default {
   id: 'streetfurniture',
   name: '全城街道设施',
+
+  // 布置器（路网分析、公交站吸附）提前到 prepare：路缘候车亭的范围要登记成“让树”排除区，
+  // 而 vegetation 在自己的 prepare 里就开始后台种树
+  prepare(ctx) {
+    try {
+      this._planner = new Planner(ctx);
+      this._nShelterEx = this._planner.registerExclusions(ctx.exclusions);
+    } catch (e) {
+      console.error('[streetfurniture] prepare 失败', e);
+      this._planner = null;
+    }
+  },
 
   async build(ctx) {
     const t0 = performance.now();
@@ -59,11 +80,13 @@ export default {
     const atlas = new TextAtlas();
     const M = makeMaterials(ctx, atlas);
     const G = makeGeometries();
-    const planner = new Planner(ctx);
+    const planner = this._planner || new Planner(ctx);
+    this._planner = null;
     planner.posters = M.posterCell;
 
     // —— 实例池 ——
     const pools = POOLS.map(([name, mat, range, shadow, color, attrs]) => ({ name, mat: M[mat], geo: G[name], range, shadow, color, attrs: attrs || {}, cap: 0, mesh: null }));
+    for (const P of pools) if (LOD_PAIRS[P.name]) { const Lo = pools.find((q) => q.name === LOD_PAIRS[P.name]); P.lodTo = Lo; Lo.lodOf = P; }
     const grow = (P, n) => {
       if (P.mesh && n <= P.cap) return;
       const cap = Math.max(64, Math.ceil(n * 1.5));
@@ -161,6 +184,7 @@ export default {
       dirty = false;
       let total = 0;
       for (const P of pools) {
+        if (P.lodOf || P.lodTo) continue; // 分级池由 rebuildLod 拼
         let n = 0;
         const list = [];
         for (const ch of chunks.values()) {
@@ -195,6 +219,46 @@ export default {
       stats.inst = total;
       stats.chunks = chunks.size;
       atlas.flush();
+      rebuildLod();
+    };
+    // —— 距离分级：细模池只放相机 LOD_D 内的实例，其余放简模池（相机每移动 6 m 或分块变化时重分）——
+    const lodPos = new THREE.Vector3(1e9, 0, 1e9);
+    const writePool = (P, m16, c3, n) => {
+      if (!n) { if (P.mesh) { P.mesh.count = 0; P.mesh.visible = false; } return; }
+      grow(P, n);
+      const m = P.mesh;
+      m.instanceMatrix.array.set(m16.subarray(0, n * 16));
+      if (P.color) m.instanceColor.array.set(c3.subarray(0, n * 3));
+      m.count = n;
+      m.instanceMatrix.clearUpdateRanges();
+      m.instanceMatrix.addUpdateRange(0, n * 16);
+      m.instanceMatrix.needsUpdate = true;
+      if (P.color) { m.instanceColor.clearUpdateRanges(); m.instanceColor.addUpdateRange(0, n * 3); m.instanceColor.needsUpdate = true; }
+      m.visible = true;
+    };
+    const rebuildLod = () => {
+      lodPos.copy(cam.position);
+      const d2 = LOD_D[level] ** 2, cx = cam.position.x, cz = cam.position.z;
+      for (const F of pools) {
+        if (!F.lodTo) continue;
+        const Lo = F.lodTo;
+        let n = 0;
+        for (const ch of chunks.values()) { if (ch.act[F.range]) { const d = ch.data[F.name]; if (d) n += d.n; } }
+        const mF = new Float32Array(n * 16), mL = new Float32Array(n * 16), cF = new Float32Array(n * 3), cL = new Float32Array(n * 3);
+        let nF = 0, nL = 0;
+        for (const ch of chunks.values()) {
+          if (!ch.act[F.range]) continue;
+          const d = ch.data[F.name];
+          if (!d || !d.n) continue;
+          for (let i = 0; i < d.n; i++) {
+            const dx = d.m[i * 16 + 12] - cx, dz = d.m[i * 16 + 14] - cz;
+            if (dx * dx + dz * dz < d2) { mF.set(d.m.subarray(i * 16, i * 16 + 16), nF * 16); cF.set(d.c.subarray(i * 3, i * 3 + 3), nF * 3); nF++; }
+            else { mL.set(d.m.subarray(i * 16, i * 16 + 16), nL * 16); cL.set(d.c.subarray(i * 3, i * 3 + 3), nL * 3); nL++; }
+          }
+        }
+        writePool(F, mF, cF, nF);
+        writePool(Lo, mL, cL, nL);
+      }
     };
     const applyVis = (agl) => {
       root.visible = visible && layerOn;
@@ -216,6 +280,7 @@ export default {
         }
         if (queue.length) generate(frame < 5 ? 40 : 6);
         if (dirty && (!queue.length || frame % 4 === 0)) rebuild();
+        else if (cam.position.distanceToSquared(lodPos) > 36) rebuildLod();
         applyVis(agl);
       },
       setQuality(q) {
@@ -226,6 +291,15 @@ export default {
       },
       setLayer(name, on) {
         if (name === 'streetfurniture') layerOn = on;
+      },
+      /** 调试：(x,z) 半径 r 内的公交站（是否贴路缘、候车亭放置结果 why：0 已放 / 原因码，undefined = 所在块未生成） */
+      debugStops(x, z, r = 150) {
+        const out = [];
+        for (const l of planner.stops.values()) for (const st of l) {
+          const d = Math.hypot(st.x - x, st.z - z);
+          if (d < r) out.push({ name: st.name, fi: st.fi, side: st.side, s: +st.s.toFixed(1), curb: st.curb, why: st.why, tag: st.tag, x: Math.round(st.x), z: Math.round(st.z), d: Math.round(d), zones: planner.zones(st.fi) });
+        }
+        return out.sort((a, b) => a.d - b.d);
       },
       stats() {
         const per = {};
