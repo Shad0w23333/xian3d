@@ -521,6 +521,7 @@ export default {
     const camP = ctx.camera.position;
     const lastP = new THREE.Vector3(1e9, 0, 0);
     let frame = 0, visible = true, dirtyCars = true;
+    let chunkVer = 0, instKey = ''; // 块集合版本（生成/卸载时加一）；上次写实例时的相机位置 + 档位 + 块版本
     const chunkDist = (ci, cj, x, z) => {
       const dx = Math.max(ci * CHUNK - x, 0, x - (ci + 1) * CHUNK), dz = Math.max(cj * CHUNK - z, 0, z - (cj + 1) * CHUNK);
       return Math.hypot(dx, dz);
@@ -538,6 +539,7 @@ export default {
       rec.h.pool = add(bPool, W.pool);
       chunks.set(key, rec);
       dirtyCars = true;
+      chunkVer++;
       return rec;
     };
     const unload = (key) => {
@@ -547,6 +549,7 @@ export default {
       bAlpha.remove(rec.h.alpha); bGlow.remove(rec.h.glow); bPool.remove(rec.h.pool);
       chunks.delete(key);
       dirtyCars = true;
+      chunkVer++;
     };
     const refresh = () => {
       const R = RADIUS[level];
@@ -592,78 +595,86 @@ export default {
         bAlpha.vis(rec.h.alpha, d < alphaR);
         bPool.vis(rec.h.pool, d < alphaR);
       }
-      // 车辆：近景 / 远景两套实例
-      let nN = 0, nF = 0;
-      const mN = carN.instanceMatrix.array, mF = carF.instanceMatrix.array, cN = carN.instanceColor.array, cF = carF.instanceColor.array;
-      const nr2 = nearR * nearR, fr2 = farR * farR;
-      for (const rec of chunks.values()) {
-        if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > farR) continue;
-        const a = rec.cars;
-        for (let i = 0; i < a.length; i += 9) {
-          const dx = a[i] - camP.x, dz = a[i + 2] - camP.z, dy = a[i + 1] - camP.y;
-          const d2 = dx * dx + dz * dz + dy * dy;
-          if (d2 > fr2) continue;
-          const near = d2 < nr2;
-          if (near ? nN >= CAP_NEAR : nF >= CAP_FAR) continue;
-          const yw = a[i + 3], c = Math.cos(yw), s = Math.sin(yw), sy = a[i + 7], sz = a[i + 8];
-          _m[0] = c; _m[1] = 0; _m[2] = -s; _m[3] = 0;
-          _m[4] = 0; _m[5] = sy; _m[6] = 0; _m[7] = 0;
-          _m[8] = s * sz; _m[9] = 0; _m[10] = c * sz; _m[11] = 0;
-          _m[12] = a[i]; _m[13] = a[i + 1]; _m[14] = a[i + 2]; _m[15] = 1;
-          if (near) { mN.set(_m, nN * 16); cN[nN * 3] = a[i + 4]; cN[nN * 3 + 1] = a[i + 5]; cN[nN * 3 + 2] = a[i + 6]; nN++; }
-          else { mF.set(_m, nF * 16); cF[nF * 3] = a[i + 4]; cF[nF * 3 + 1] = a[i + 5]; cF[nF * 3 + 2] = a[i + 6]; nF++; }
-        }
-      }
-      carN.count = nN; carF.count = nF;
-      // 树冠广告牌（[x, y, z, 半径, r, g, b, 扁度]，扁度 = 竖向缩放）：小乔木/灌木球近看半径 × 1.3 内；
-      // 宅间大树与树干同在远看实体半径内（远处大树不能只剩光秃树干）。块按距离由近到远，实例数到上限时先舍远处
-      let nc = 0;
-      const mC = crown.instanceMatrix.array, cC = crown.instanceColor.array;
-      const byD = [...chunks.values()].map((rec) => [chunkDist(rec.ci, rec.cj, camP.x, camP.z), rec]).sort((p, q) => p[0] - q[0]);
-      for (const [key, R] of [['crowns', fineR * 1.3], ['bigCrowns', coarseR]]) {
-        const r2c = R * R;
-        for (const [d, rec] of byD) {
-          if (d > R) break;
-          const a = rec[key];
-          for (let i = 0; i < a.length && nc < CAP_CROWN; i += 8) {
-            const dx = a[i] - camP.x, dz = a[i + 2] - camP.z;
-            if (dx * dx + dz * dz > r2c) continue;
-            const r = a[i + 3], o = nc * 16;
-            mC[o] = r; mC[o + 1] = 0; mC[o + 2] = 0; mC[o + 3] = 0;
-            mC[o + 4] = 0; mC[o + 5] = r * a[i + 7]; mC[o + 6] = 0; mC[o + 7] = 0;
-            mC[o + 8] = 0; mC[o + 9] = 0; mC[o + 10] = r; mC[o + 11] = 0;
-            mC[o + 12] = a[i]; mC[o + 13] = a[i + 1]; mC[o + 14] = a[i + 2]; mC[o + 15] = 1;
-            cC[nc * 3] = a[i + 4]; cC[nc * 3 + 1] = a[i + 5]; cC[nc * 3 + 2] = a[i + 6];
-            nc++;
+      // 车辆、树冠、花丛实例只取决于相机位置、画质档位与已生成的块：三者都没变时（相机静止时每 30 帧的例行刷新）内容与上次相同，
+      // 不再重写、不再上传（原来每次整缓冲上传：树冠 6.4 万 + 花丛 1.6 万 + 车 1.5 万个实例，约 7 MB）
+      const ik = camP.x + ',' + camP.y + ',' + camP.z + ',' + level + ',' + chunkVer;
+      if (ik !== instKey) {
+        instKey = ik;
+        // 车辆：近景 / 远景两套实例
+        let nN = 0, nF = 0;
+        const mN = carN.instanceMatrix.array, mF = carF.instanceMatrix.array, cN = carN.instanceColor.array, cF = carF.instanceColor.array;
+        const nr2 = nearR * nearR, fr2 = farR * farR;
+        for (const rec of chunks.values()) {
+          if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > farR) continue;
+          const a = rec.cars;
+          for (let i = 0; i < a.length; i += 9) {
+            const dx = a[i] - camP.x, dz = a[i + 2] - camP.z, dy = a[i + 1] - camP.y;
+            const d2 = dx * dx + dz * dz + dy * dy;
+            if (d2 > fr2) continue;
+            const near = d2 < nr2;
+            if (near ? nN >= CAP_NEAR : nF >= CAP_FAR) continue;
+            const yw = a[i + 3], c = Math.cos(yw), s = Math.sin(yw), sy = a[i + 7], sz = a[i + 8];
+            _m[0] = c; _m[1] = 0; _m[2] = -s; _m[3] = 0;
+            _m[4] = 0; _m[5] = sy; _m[6] = 0; _m[7] = 0;
+            _m[8] = s * sz; _m[9] = 0; _m[10] = c * sz; _m[11] = 0;
+            _m[12] = a[i]; _m[13] = a[i + 1]; _m[14] = a[i + 2]; _m[15] = 1;
+            if (near) { mN.set(_m, nN * 16); cN[nN * 3] = a[i + 4]; cN[nN * 3 + 1] = a[i + 5]; cN[nN * 3 + 2] = a[i + 6]; nN++; }
+            else { mF.set(_m, nF * 16); cF[nF * 3] = a[i + 4]; cF[nF * 3 + 1] = a[i + 5]; cF[nF * 3 + 2] = a[i + 6]; nF++; }
           }
         }
-      }
-      crown.count = nc;
-      crown.instanceMatrix.needsUpdate = true;
-      crown.instanceColor.needsUpdate = true;
-      // 花坛花丛：FLOWER_R 内
-      let nf = 0;
-      const flR = FLOWER_R[level], fl2 = flR * flR, mF2 = flower.instanceMatrix.array, cF2 = flower.instanceColor.array;
-      for (const rec of chunks.values()) {
-        if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > flR) continue;
-        const a = rec.flowers;
-        for (let i = 0; i < a.length && nf < CAP_FLOWER; i += 7) {
-          const dx = a[i] - camP.x, dz = a[i + 2] - camP.z, dy = a[i + 1] - camP.y;
-          if (dx * dx + dz * dz + dy * dy > fl2) continue;
-          const r = a[i + 3], o = nf * 16;
-          mF2[o] = r; mF2[o + 1] = 0; mF2[o + 2] = 0; mF2[o + 3] = 0;
-          mF2[o + 4] = 0; mF2[o + 5] = r * 0.62; mF2[o + 6] = 0; mF2[o + 7] = 0;
-          mF2[o + 8] = 0; mF2[o + 9] = 0; mF2[o + 10] = r; mF2[o + 11] = 0;
-          mF2[o + 12] = a[i]; mF2[o + 13] = a[i + 1]; mF2[o + 14] = a[i + 2]; mF2[o + 15] = 1;
-          cF2[nf * 3] = a[i + 4]; cF2[nf * 3 + 1] = a[i + 5]; cF2[nf * 3 + 2] = a[i + 6];
-          nf++;
+        carN.count = nN; carF.count = nF;
+        // 树冠广告牌（[x, y, z, 半径, r, g, b, 扁度]，扁度 = 竖向缩放）：小乔木/灌木球近看半径 × 1.3 内；
+        // 宅间大树与树干同在远看实体半径内（远处大树不能只剩光秃树干）。块按距离由近到远，实例数到上限时先舍远处
+        let nc = 0;
+        const mC = crown.instanceMatrix.array, cC = crown.instanceColor.array;
+        const byD = [...chunks.values()].map((rec) => [chunkDist(rec.ci, rec.cj, camP.x, camP.z), rec]).sort((p, q) => p[0] - q[0]);
+        for (const [key, R] of [['crowns', fineR * 1.3], ['bigCrowns', coarseR]]) {
+          const r2c = R * R;
+          for (const [d, rec] of byD) {
+            if (d > R) break;
+            const a = rec[key];
+            for (let i = 0; i < a.length && nc < CAP_CROWN; i += 8) {
+              const dx = a[i] - camP.x, dz = a[i + 2] - camP.z;
+              if (dx * dx + dz * dz > r2c) continue;
+              const r = a[i + 3], o = nc * 16;
+              mC[o] = r; mC[o + 1] = 0; mC[o + 2] = 0; mC[o + 3] = 0;
+              mC[o + 4] = 0; mC[o + 5] = r * a[i + 7]; mC[o + 6] = 0; mC[o + 7] = 0;
+              mC[o + 8] = 0; mC[o + 9] = 0; mC[o + 10] = r; mC[o + 11] = 0;
+              mC[o + 12] = a[i]; mC[o + 13] = a[i + 1]; mC[o + 14] = a[i + 2]; mC[o + 15] = 1;
+              cC[nc * 3] = a[i + 4]; cC[nc * 3 + 1] = a[i + 5]; cC[nc * 3 + 2] = a[i + 6];
+              nc++;
+            }
+          }
         }
+        crown.count = nc;
+        // 只上传用到的前 n 个实例（绘制只读前 count 个）
+        const upd = (attr, n) => { attr.clearUpdateRanges(); attr.addUpdateRange(0, Math.max(1, n) * attr.itemSize); attr.needsUpdate = true; };
+        upd(crown.instanceMatrix, nc);
+        upd(crown.instanceColor, nc);
+        // 花坛花丛：FLOWER_R 内
+        let nf = 0;
+        const flR = FLOWER_R[level], fl2 = flR * flR, mF2 = flower.instanceMatrix.array, cF2 = flower.instanceColor.array;
+        for (const rec of chunks.values()) {
+          if (chunkDist(rec.ci, rec.cj, camP.x, camP.z) > flR) continue;
+          const a = rec.flowers;
+          for (let i = 0; i < a.length && nf < CAP_FLOWER; i += 7) {
+            const dx = a[i] - camP.x, dz = a[i + 2] - camP.z, dy = a[i + 1] - camP.y;
+            if (dx * dx + dz * dz + dy * dy > fl2) continue;
+            const r = a[i + 3], o = nf * 16;
+            mF2[o] = r; mF2[o + 1] = 0; mF2[o + 2] = 0; mF2[o + 3] = 0;
+            mF2[o + 4] = 0; mF2[o + 5] = r * 0.62; mF2[o + 6] = 0; mF2[o + 7] = 0;
+            mF2[o + 8] = 0; mF2[o + 9] = 0; mF2[o + 10] = r; mF2[o + 11] = 0;
+            mF2[o + 12] = a[i]; mF2[o + 13] = a[i + 1]; mF2[o + 14] = a[i + 2]; mF2[o + 15] = 1;
+            cF2[nf * 3] = a[i + 4]; cF2[nf * 3 + 1] = a[i + 5]; cF2[nf * 3 + 2] = a[i + 6];
+            nf++;
+          }
+        }
+        flower.count = nf;
+        upd(flower.instanceMatrix, nf);
+        upd(flower.instanceColor, nf);
+        upd(carN.instanceMatrix, carN.count); upd(carN.instanceColor, carN.count);
+        upd(carF.instanceMatrix, carF.count); upd(carF.instanceColor, carF.count);
       }
-      flower.count = nf;
-      flower.instanceMatrix.needsUpdate = true;
-      flower.instanceColor.needsUpdate = true;
-      carN.instanceMatrix.needsUpdate = true; carN.instanceColor.needsUpdate = true;
-      carF.instanceMatrix.needsUpdate = true; carF.instanceColor.needsUpdate = true;
       // 名称牌：220 m 内最近的 8 个
       const cand = [];
       for (const rec of chunks.values()) {
