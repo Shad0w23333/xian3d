@@ -251,6 +251,58 @@ export function solidMats(ctx) {
   return m;
 }
 
+/**
+ * 平屋面设备：冷却塔组、空调机组箱 + 检修平台、排风机，沿 14 m 网格落在屋面内（离女儿墙 4 m），avoid=[cx, cz, 半宽, 半深] 为机房让位区；
+ * 超大屋面（> 8000 m²，商场/裙房）另加两条采光天窗带。数量按面积（约每 320 m² 一组，至多 14 组）。
+ */
+export function roofKit(env, rpoly, roofTop, avoid = null, { skylights = false, holes = [] } = {}) {
+  const { detail, solid, mats } = env;
+  const rb = G.bbox(rpoly);
+  const rw = rb.x1 - rb.x0, rd = rb.z1 - rb.z0;
+  const area = Math.abs(G.area ? G.area(rpoly) : rw * rd);
+  if (area < 1500) return;
+  const inner = G.inset(rpoly, 4);
+  const cx = (rb.x0 + rb.x1) / 2, cz = (rb.z0 + rb.z1) / 2;
+  let k = 0, hs = Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1e6;
+  const rnd = () => ((hs = (hs * 16807 + 11) % 2147483647) / 2147483647);
+  // 采光天窗带（沿长轴，屋面中线两侧）
+  const sky = [];
+  if (skylights && area > 8000) {
+    const along = rw >= rd;
+    for (const f of [0.36, 0.64]) {
+      const L = (along ? rw : rd) * 0.55, W = 6;
+      const x = along ? cx : rb.x0 + rw * f, z = along ? rb.z0 + rd * f : cz;
+      if (!G.pointIn(x, z, inner)) continue;
+      solid.add(G.box(x, roofTop + 0.6, z, along ? L : W, 1.2, along ? W : L), mats.glassRoof || mats.roof);
+      sky.push([x, z, (along ? L : W) / 2 + 3, (along ? W : L) / 2 + 3]);
+    }
+  }
+  const maxN = Math.min(14, Math.floor(area / 320));
+  for (let x = rb.x0 + 7; x < rb.x1 - 4 && k < maxN; x += 14)
+    for (let z = rb.z0 + 7; z < rb.z1 - 4 && k < maxN; z += 14) {
+      if (avoid && Math.abs(x - avoid[0]) < avoid[2] && Math.abs(z - avoid[1]) < avoid[3]) continue;
+      if (sky.some((q) => Math.abs(x - q[0]) < q[2] && Math.abs(z - q[1]) < q[3])) continue;
+      if (!G.pointIn(x, z, inner) || holes.some((h) => G.pointIn(x, z, G.inset(h, -6))) || rnd() < 0.35) continue;
+      const t = rnd();
+      if (t < 0.35) {
+        // 冷却塔（两台并列：方形塔身 + 圆形风筒）
+        for (const dx of [-2.2, 2.2]) {
+          detail.add(G.box(x + dx, roofTop + 1.6, z, 4, 3.2, 4), mats.white);
+          detail.add(G.cyl(x + dx, roofTop + 3.2, z, 1.5, 1.5, 0.9, 12), mats.metal);
+        }
+      } else if (t < 0.75) {
+        // 空调机组箱 + 检修平台
+        const L = 6 + rnd() * 5;
+        detail.add(G.box(x, roofTop + 1.3, z, L, 2.4, 2.6, rnd() < 0.5 ? 0 : Math.PI / 2), mats.metal);
+        detail.add(G.box(x, roofTop + 0.15, z, L + 1.2, 0.3, 3.6, 0), mats.roof, null, { worldUV: 1 });
+      } else {
+        // 排风机（三台小圆柱）
+        for (let q = 0; q < 3; q++) detail.add(G.cyl(x - 2.5 + q * 2.5, roofTop, z, 0.8, 0.6, 1.4, 8), mats.metal);
+      }
+      k++;
+    }
+}
+
 /** 轮廓下最低地面高度 */
 export function groundMin(ctx, pts) {
   let m = Infinity;
@@ -383,10 +435,13 @@ export function buildTower(env, spec) {
   const rb = G.bbox(rpoly);
   const rw = rb.x1 - rb.x0, rd = rb.z1 - rb.z0;
   if (spec.roof?.mech !== false && !spec.slope) {
-    const mw = Math.min(rw, rd) * 0.42;
+    // 电梯机房 / 楼梯间：尺寸按屋面短边封顶（大屋面不再是一块 25 m 的大盒子）
+    const mw = Math.min(Math.min(rw, rd) * 0.42, 16);
     detail.add(G.box(c.x, roofTop + 2.6, c.z, mw, 5.2, mw * 0.8), mats.roof, null, { worldUV: 1 });
     detail.add(G.box(c.x + mw * 0.2, roofTop + 5.8, c.z - mw * 0.1, mw * 0.4, 1.2, mw * 0.3), mats.metal);
     for (let k = 0; k < 3; k++) detail.add(G.cyl(c.x - mw * 0.35 + k * mw * 0.3, roofTop + 5.2, c.z + mw * 0.55, 1.4, 1.4, 1.6, 10), mats.metal);
+    // 大屋面（> 1500 m²）按面积布设备（审查 g1 st_gaoxin_air：166×60 m 的屋面只有中间一个机房盒子）
+    roofKit(env, rpoly, roofTop, [c.x, c.z, mw * 0.7 + 4, mw * 0.55 + 4]);
   }
   if (spec.roof?.helipad) {
     const hr = Math.min(rw, rd) * 0.36;
@@ -489,6 +544,8 @@ export function buildPodium(env, p) {
   } else {
     solid.add(G.capGeometry(inn, base + p.h + 0.05), p.roofMat || mats.roof);
   }
+  // 裙房屋面：设备 + 采光天窗带（原先一整块平板，审查 g4 鹏瑞利 170×260 m 裙房）；p.mech === false 时不做
+  if (p.mech !== false) roofKit(env, inn, base + p.h + 0.05, null, { skylights: !p.holes?.length, holes: (p.holes || []).map((h) => G.ccw(h)) });
   for (const sg of p.signs || []) {
     const faces = Array.isArray(sg.faces) ? sg.faces : longestEdges(pts, sg.faces || 1);
     for (const i of faces) {

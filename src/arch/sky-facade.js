@@ -53,6 +53,9 @@ const MAP_F = /* glsl */ `
   float seed = vFac.w;
   vec2 q = vec2(vFuv.x / cW, vFuv.y / fH);
   vec2 fwq = max(fwidth(q), vec2(1e-4));
+  // 单元格小于约 2~8 像素时，逐格随机（色差、卷帘、粗糙度、亮灯）淡出为平均值：
+  // 原先 2 km 外每像素跨几个格子，哈希值逐像素跳变 → 整栋楼密布白色雪花噪点、转动时闪烁（审查 g6 p7_day / px5_day）
+  float skCf = 1.0 - smoothstep(0.12, 0.45, max(fwq.x, fwq.y));
   vec2 cell = floor(q);
   vec2 fq = fract(q);
   float fl = cell.y, col = cell.x;
@@ -70,11 +73,14 @@ const MAP_F = /* glsl */ `
   }
   float frame = clamp(max(mull, max(slab, tr2)), 0.0, 1.0);
   float vision = (1.0 - frame) * (1.0 - spd);
-  float ph = skH21(cell + seed * 17.13);
-  float ph2 = skH21(cell.yx * 1.37 + seed * 5.1);
+  float ph = mix(0.5, skH21(cell + seed * 17.13), skCf);
+  float ph2r = skH21(cell.yx * 1.37 + seed * 5.1);
+  float ph2 = mix(0.5, ph2r, skCf);
   vec3 glassC = vTint * (0.94 + 0.12 * ph);
-  // 部分窗后有浅色卷帘/室内（白天可见的内部层次）
-  float blind = step(0.9, ph2) * (skMode == 6.0 ? 0.0 : 1.0);
+  // 反射玻璃提亮：深色底色混入一点天光灰蓝（原先高新 CBD、万象城塔楼远看是近黑的方柱，几乎不映天空）
+  glassC = mix(glassC, vec3(0.36, 0.42, 0.50), skMode > 6.5 || skMode == 6.0 ? 0.0 : 0.34);
+  // 部分窗后有浅色卷帘/室内（白天可见的内部层次）；远处取其平均覆盖率
+  float blind = mix(0.1, step(0.9, ph2r), skCf) * (skMode == 6.0 ? 0.0 : 1.0);
   glassC = mix(glassC, vec3(0.26, 0.26, 0.25), blind * 0.35);
   vec3 spdC = vSpd;
   // 10：办公楼玻璃幕墙（白天同 0；夜间按整层成片的办公亮窗 + 玻璃反射城市天光的底亮，见 EMIS_F）
@@ -99,7 +105,7 @@ const ROUGH_F = /* glsl */ `
   if (skMode == 5.0) roughnessFactor = 0.3;
 `;
 const METAL_F = /* glsl */ `
-  metalnessFactor = mix(stone ? 0.0 : (spd > 0.5 ? 0.45 : 0.85), 0.72 - blind * 0.4, skGlass);
+  metalnessFactor = mix(stone ? 0.0 : (spd > 0.5 ? 0.45 : 0.85), 0.56 - blind * 0.36, skGlass);
   metalnessFactor = mix(metalnessFactor, 0.5, lv);
   if (skMode == 6.0) metalnessFactor *= 0.55;
 `;
@@ -132,11 +138,12 @@ const EMIS_F = /* glsl */ `
       float floorOn = step(skH21(vec2(fl * 0.913, seed * 1.7)), vSty.y);
       float bay = skH21(vec2(floor(col / 2.0), fl) + seed * 3.9);
       lit = (floorOn > 0.5 ? step(0.12, bay) : step(0.93, bay)) * (1.0 - band);
+      lit = mix(vSty.y * 0.82 + 0.06, lit, max(skCf, 1.0 - smoothstep(0.3, 1.2, fwq.y))); // 远处按整层平均（楼层仍可分辨时保留整层亮灯）
       lc = mix(vec3(0.88, 0.94, 1.0), vec3(1.0, 0.86, 0.66), step(0.8, skH21(vec2(fl * 0.29, seed + 2.5))));
       k = 0.85 + 0.25 * skH21(vec2(col * 0.37, fl * 1.9));
       em += lc * lit * vision * (0.6 + 0.4 * inner) * k * 0.24;
       em += vTint * (0.05 + 0.04 * ph) * vision * (1.0 - lit);
-    } else if (skCrown < 0.5) em += lc * lit * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    } else if (skCrown < 0.5) em += lc * mix(litR * 0.95, lit, skCf) * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
     if (skMode == 1.0) { // 绿地中心：竖梃/横梁 LED 线条动画
       float t = uTime;
       float wave = 0.5 + 0.5 * sin(vFuv.y * 0.05 - t * 1.1 + sin(vFuv.x * 0.045 + t * 0.35) * 1.6);
@@ -144,7 +151,9 @@ const EMIS_F = /* glsl */ `
       vec3 c1 = skHsv(vec3(fract(0.55 + 0.1 * sin(t * 0.07) + vFuv.y * 0.0012), 0.7, 1.0));
       vec3 ledc = mix(vec3(1.0, 0.72, 0.32), c1, wave);
       float lines = max(mull, slab);
-      em += ledc * lines * (0.6 + 1.3 * wave + 3.0 * sweep);
+      // 亮度系数：lit < 0.2 时按 lit×5 压暗（单独挂在办公楼立面上的媒体带，不抢窗灯；绿地中心等 lit ≥ 0.3 不变）
+      float mk = vSty.y < 0.2 ? max(vSty.y, 0.02) * 5.0 : 1.0;
+      em += ledc * lines * (0.6 + 1.3 * wave + 3.0 * sweep) * mk;
     }
     if (skMode == 2.0 || skMode == 3.0) {
       em += vec3(0.85, 0.93, 1.0) * max(slab, skMode == 3.0 ? tr2 : 0.0) * (skMode == 3.0 ? 0.35 : 0.8) * (1.0 + 0.2 * sin(uTime * 0.6 + vFuv.y * 0.03));
@@ -220,7 +229,7 @@ export function createFacadeMaterial(ctx) {
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + NORMAL_F)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + EMIS_F);
   };
-  m.customProgramCacheKey = () => 'skyFacade-v2';
+  m.customProgramCacheKey = () => 'skyFacade-v3';
   return m;
 }
 
