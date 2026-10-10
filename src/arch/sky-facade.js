@@ -78,7 +78,10 @@ const MAP_F = /* glsl */ `
   float ph2 = mix(0.5, ph2r, skCf);
   vec3 glassC = vTint * (0.94 + 0.12 * ph);
   // 反射玻璃提亮：深色底色混入一点天光灰蓝（原先高新 CBD、万象城塔楼远看是近黑的方柱，几乎不映天空）
-  glassC = mix(glassC, vec3(0.36, 0.42, 0.50), skMode > 6.5 || skMode == 6.0 ? 0.0 : 0.34);
+  bool skStoneLike = skMode > 6.5 && !(skMode > 9.5 && skMode < 10.5); // 7/8/9 石材类（10 办公玻璃幕墙仍按玻璃）
+  glassC = mix(glassC, vec3(0.36, 0.42, 0.50), skStoneLike || skMode == 6.0 ? 0.0 : 0.34);
+  // 远处（窗格已小于几个像素）：反射玻璃整体映天，再往浅蓝灰提一档（2 km 外高新 CBD 仍读成深藏青色方柱，审查 g6 p7_day）
+  glassC = mix(glassC, vec3(0.44, 0.52, 0.62), (skStoneLike || skMode == 6.0 || skMode == 5.0) ? 0.0 : 0.3 * (1.0 - skCf) * (1.0 - uNight));
   // 部分窗后有浅色卷帘/室内（白天可见的内部层次）；远处取其平均覆盖率
   float blind = mix(0.1, step(0.9, ph2r), skCf) * (skMode == 6.0 ? 0.0 : 1.0);
   glassC = mix(glassC, vec3(0.26, 0.26, 0.25), blind * 0.35);
@@ -91,8 +94,10 @@ const MAP_F = /* glsl */ `
   float lv = band * (1.0 - frame);
   vec3 skBase = glassC * vision + spdC * spd * (1.0 - frame) + mullC * frame;
   skBase = mix(skBase, louv, lv);
-  if (skMode == 3.0) { // 横向百叶：窗槛墙区即白色水平遮阳
-    skBase = mix(skBase, vec3(0.78, 0.79, 0.80), spd * (1.0 - mull));
+  if (skMode == 3.0) { // 横向百叶：窗槛墙区即水平遮阳 / 横带（颜色取 spd：白色百叶、银灰横带各按规格；原先一律 0.78 白）
+    // 夜里百叶只受城市天光，压暗到约 1/4（原先白天的白色横带在夜里仍是成片灰白横条，盖过窗灯，审查 g2 p7_night）
+    vec3 louvC = min(vSpd * 1.08, vec3(0.8)) * (1.0 - 0.72 * uNight);
+    skBase = mix(skBase, louvC, spd * (1.0 - mull));
   }
   if (skMode == 5.0) skBase = vec3(0.035, 0.04, 0.045) + mullC * mull * 0.3;
   diffuseColor.rgb = skBase;
@@ -103,11 +108,14 @@ const ROUGH_F = /* glsl */ `
   roughnessFactor = mix(stone ? 0.82 : 0.38, 0.05 + 0.08 * ph + blind * 0.25, skGlass);
   roughnessFactor = mix(roughnessFactor, 0.55, lv);
   if (skMode == 5.0) roughnessFactor = 0.3;
+  if (skMode == 3.0) roughnessFactor = mix(roughnessFactor, 0.55, spd * (1.0 - mull)); // 横带/百叶：哑光金属板
 `;
 const METAL_F = /* glsl */ `
   metalnessFactor = mix(stone ? 0.0 : (spd > 0.5 ? 0.45 : 0.85), 0.56 - blind * 0.36, skGlass);
   metalnessFactor = mix(metalnessFactor, 0.5, lv);
   if (skMode == 6.0) metalnessFactor *= 0.55;
+  // 横带/百叶：低金属度，按规格色（银灰/白）显示，不再镜面映出暖色地面（金花豪生圆柱塔读成金白相间横条，审查 g3）
+  if (skMode == 3.0) metalnessFactor = mix(metalnessFactor, 0.15, spd * (1.0 - mull));
 `;
 const NORMAL_F = /* glsl */ `
   {
@@ -143,7 +151,13 @@ const EMIS_F = /* glsl */ `
       k = 0.85 + 0.25 * skH21(vec2(col * 0.37, fl * 1.9));
       em += lc * lit * vision * (0.6 + 0.4 * inner) * k * 0.24;
       em += vTint * (0.05 + 0.04 * ph) * vision * (1.0 - lit);
-    } else if (skCrown < 0.5) em += lc * mix(litR * 0.95, lit, skCf) * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    } else if (skCrown < 0.5) {
+      // 远处窗格小于几个像素时：先退到“整层 12 开间一组”的亮灯块（块仍有十几像素宽，不闪烁），楼层也分辨不出时才取平均并压暗；
+      // 原先直接取平均亮度，所有窗都均匀发一层冷白光，夜里整栋楼成了灰白横条块（审查 g2 p7_night）
+      float litB = step(skH21(vec2(floor(col / 12.0), fl) + seed * 2.7), litR) * (1.0 - band);
+      float litFar = mix(litB, litR * 0.6, smoothstep(0.35, 0.9, fwq.y));
+      em += lc * mix(litFar, lit, skCf) * vision * grad * k * (skMode == 6.0 ? 0.8 : 0.38);
+    }
     if (skMode == 1.0) { // 绿地中心：竖梃/横梁 LED 线条动画
       float t = uTime;
       float wave = 0.5 + 0.5 * sin(vFuv.y * 0.05 - t * 1.1 + sin(vFuv.x * 0.045 + t * 0.35) * 1.6);
@@ -156,8 +170,10 @@ const EMIS_F = /* glsl */ `
       em += ledc * lines * (0.6 + 1.3 * wave + 3.0 * sweep) * mk;
     }
     if (skMode == 2.0 || skMode == 3.0) {
-      em += vec3(0.85, 0.93, 1.0) * max(slab, skMode == 3.0 ? tr2 : 0.0) * (skMode == 3.0 ? 0.35 : 0.8) * (1.0 + 0.2 * sin(uTime * 0.6 + vFuv.y * 0.03));
+      em += vec3(0.85, 0.93, 1.0) * max(slab, skMode == 3.0 ? tr2 : 0.0) * (skMode == 3.0 ? 0.22 : 0.8) * (1.0 + 0.2 * sin(uTime * 0.6 + vFuv.y * 0.03));
     }
+    // 横带楼：带窗内的亮灯偏暖、略提亮（夜景主要靠窗灯而不是白色横带）
+    if (skMode == 3.0) em *= 1.0 + 0.35 * vision;
     if (skMode == 4.0) { // 塔冠：自下而上的泛光 + 竖梃亮线
       float ch = clamp(vFuv.y / max(vFac.x, 1.0), 0.0, 1.0);
       vec3 cc = vSpd;
@@ -229,7 +245,7 @@ export function createFacadeMaterial(ctx) {
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n' + NORMAL_F)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + EMIS_F);
   };
-  m.customProgramCacheKey = () => 'skyFacade-v3';
+  m.customProgramCacheKey = () => 'skyFacade-v7';
   return m;
 }
 
