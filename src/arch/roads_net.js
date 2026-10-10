@@ -49,8 +49,112 @@ const KNOT_NAMES = /^(东大街|西大街|南大街|北大街|长安北路|长�
 const PALACE_NAMES = /(雁塔|芙蓉|曲江|慈恩|大唐|雁南|雁展|大雁塔|玄奘|唐延)/;
 const LANTERN_NAMES = /二环/;
 
-// 灯型
-export const LAMP = { SINGLE: 0, DOUBLE: 1, KNOT: 2, PALACE: 3, LANTERN: 4 };
+// 灯型（KNOT2 = 中国结装饰灯的不挂结款，与 KNOT 隔杆交替）
+export const LAMP = { SINGLE: 0, DOUBLE: 1, KNOT: 2, PALACE: 3, LANTERN: 4, KNOT2: 5 };
+
+/**
+ * 景区步行化区：OSM 把广场里的门洞通道、绕楼环路、广场边的单车道标成 residential/service/unclassified，
+ * 画成沥青车行道、跑车（审查 P1：鼓楼前石材广场被三条沥青路切开）。
+ *   p：区内（≥60% 取样点）的支路一律按步行道（f._ped，石板铺装、不布灯、不跑车、放行人），不论有没有路名；
+ *   cut：只有一段穿过广场的支路（西大街北侧单车道）在这些多边形里不画、不通车（roads 模块 prepare 登记 roads 排除区）。
+ */
+export const PED_ZONES = [
+  {
+    name: '钟鼓楼广场',
+    p: [-395, -165, -60, -165, -60, 12, -395, 12],
+    // 西大街北侧单车道（OSM 无名 unclassified 3.5 m）在鼓楼—钟鼓楼广场南缘这一段：中线两侧各 2.3 m
+    cut: [[-100, -5.4, -226, -0.3, -269, -1.3, -325, -0.3, -356, -0.1, -356, 4.5, -325, 4.3, -269, 3.3, -226, 4.3, -100, -0.6]],
+  },
+];
+const inPoly = (x, z, p) => {
+  let c = false;
+  for (let i = 0, n = p.length / 2, j = n - 1; i < n; j = i++) {
+    const xi = p[i * 2], zi = p[i * 2 + 1], xj = p[j * 2], zj = p[j * 2 + 1];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+  }
+  return c;
+};
+
+/**
+ * 建成区密度：buildings.bin（原始缓冲）建筑占地面积按 250 m 格累加，返回 dens(x, z) = 该处 3×3 邻域（750 m 见方）
+ * 的建筑覆盖率（0~1）。按占地面积而不是栋数：浐灞、空港新城这类新区楼少而大，按栋数会被当成郊野。
+ * 缓冲缺失或格式不符时返回 null（调用方按“处处建成区”处理）。
+ */
+export function urbanDensity(buffer) {
+  if (!buffer || buffer.byteLength < 16) return null;
+  const dv = new DataView(buffer);
+  if (dv.getUint8(0) !== 88 || dv.getUint8(1) !== 66 || dv.getUint8(2) !== 76 || dv.getUint8(3) !== 68) return null;
+  const version = dv.getUint32(4, true), count = dv.getUint32(8, true), totalVerts = dv.getUint32(12, true);
+  let o = 16;
+  const ax = new Float32Array(buffer, o, count); o += count * 4;
+  const az = new Float32Array(buffer, o, count); o += count * 4;
+  const vs = new Uint32Array(buffer, o, count); o += count * 4;
+  const vc = new Uint16Array(buffer, o, count); o += count * 2;
+  o += count * 2 * 2 + count * 2 + (version >= 2 ? count : 0); // 高度、底高、kind、flags、style
+  o = (o + 3) & ~3;
+  if (o + totalVerts * 4 > buffer.byteLength) return null;
+  const offs = new Int16Array(buffer, o, totalVerts * 2);
+  const C = 250, OFF = 72000, NG = 576; // 覆盖 ±72 km
+  const grid = new Float32Array(NG * NG);
+  const cell = (v) => Math.max(0, Math.min(NG - 1, Math.floor((v + OFF) / C)));
+  for (let i = 0; i < count; i++) {
+    const s = vs[i] * 2, n = vc[i];
+    let A = 0;
+    for (let j = 0, k = n - 1; j < n; k = j++) A += offs[s + k * 2] * offs[s + j * 2 + 1] - offs[s + j * 2] * offs[s + k * 2 + 1];
+    grid[cell(ax[i]) * NG + cell(az[i])] += Math.abs(A) * 0.005; // 分米² → 米²（含 1/2）
+  }
+  const memo = new Map(), AREA = 9 * C * C;
+  return (x, z) => {
+    const cx = cell(x), cz = cell(z), k = cx * NG + cz;
+    let v = memo.get(k);
+    if (v === undefined) {
+      v = 0;
+      for (let i = Math.max(0, cx - 1); i <= Math.min(NG - 1, cx + 1); i++)
+        for (let j = Math.max(0, cz - 1); j <= Math.min(NG - 1, cz + 1); j++) v += grid[i * NG + j];
+      v /= AREA;
+      memo.set(k, v);
+    }
+    return v;
+  };
+}
+/** 城市建设用地（OSM landuse：居住/商业/工业/高校/在建）点查询，500 m 格网索引 */
+export function urbanLanduse(landuse) {
+  const KINDS = new Set(['residential', 'commercial', 'industrial', 'university', 'construction']);
+  const polys = (landuse?.polys || []).filter((q) => KINDS.has(q.k) && q.outer && q.outer.length >= 6);
+  const CELL = 500, grid = new Map();
+  for (const q of polys) {
+    const o = q.outer;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < o.length; i += 2) { x0 = Math.min(x0, o[i]); x1 = Math.max(x1, o[i]); z0 = Math.min(z0, o[i + 1]); z1 = Math.max(z1, o[i + 1]); }
+    if (x1 - x0 > 20000 || z1 - z0 > 20000) continue;
+    const it = { o, bb: [x0, z0, x1, z1] };
+    for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++)
+      for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) {
+        const k = cx * 100003 + cz;
+        let a = grid.get(k);
+        if (!a) grid.set(k, (a = []));
+        a.push(it);
+      }
+  }
+  return (x, z) => {
+    const a = grid.get(Math.floor(x / CELL) * 100003 + Math.floor(z / CELL));
+    if (a) for (const it of a) { const b = it.bb; if (x >= b[0] && x <= b[2] && z >= b[1] && z <= b[3] && inPoly(x, z, it.o)) return true; }
+    return false;
+  };
+}
+// 建成区阈值（750 m 见方内建筑覆盖率）：低于 URBAN_MIN 且不在城市建设用地内为田野/郊野（乡道、田间路不布灯）；
+// 核心区外达到 FAR_URBAN（或在远郊新城名单里）的补画次干道与三级路
+export const URBAN_MIN = 0.02;
+export const FAR_URBAN = 0.07;
+// 核心区外的新城/城区（经纬度框）：空港新城、长安区（韦曲/郭杜/大学城）、沣东/沣西、秦汉/泾河、港务区、临潼
+export const FAR_DISTRICTS = [
+  ['空港新城', 108.72, 34.38, 108.87, 34.47],
+  ['长安区', 108.82, 34.07, 109.02, 34.17],
+  ['沣东沣西', 108.66, 34.19, 108.84, 34.33],
+  ['秦汉泾河', 108.74, 34.35, 109.0, 34.5],
+  ['港务区', 109.06, 34.28, 109.14, 34.42],
+  ['临潼', 109.18, 34.34, 109.26, 34.4],
+];
 
 export const BIKE_W = 2.4; // 人非共板：非机动车道 2.0 m + 两侧收边
 const inStreetscape = (x, z) => DISTRICTS.some((D) => D.bbox && x > D.bbox[0] - 100 && x < D.bbox[2] + 100 && z > D.bbox[1] - 100 && z < D.bbox[3] + 100);
@@ -103,15 +207,23 @@ export function markParkWalkways(roads, landuse) {
     return false;
   };
   let n = 0;
-  for (const f of roads.features) {
-    if ((f.c !== 5 && f.c !== 6 && f.c !== 7) || f.b || f.t || f.n || !f.p || f.p.length < 4) continue;
-    const p = f.p;
+  const frac = (p, test) => {
     let hit = 0, tot = 0;
     for (let i = 0; i < p.length; i += 2) {
-      tot++; if (inPark(p[i], p[i + 1])) hit++;
-      if (i + 3 < p.length) { tot++; if (inPark((p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2)) hit++; }
+      tot++; if (test(p[i], p[i + 1])) hit++;
+      if (i + 3 < p.length) { tot++; if (test((p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2)) hit++; }
     }
-    if (hit / tot >= 0.6) { Object.defineProperty(f, '_ped', { value: 1, writable: true, configurable: true, enumerable: false }); n++; }
+    return hit / tot;
+  };
+  const mark = (f, k, v) => Object.defineProperty(f, k, { value: v, writable: true, configurable: true, enumerable: false });
+  for (const f of roads.features) {
+    if ((f.c !== 5 && f.c !== 6 && f.c !== 7) || f.b || f.t || !f.p || f.p.length < 4) continue;
+    const p = f.p;
+    // 景区步行化区（不论路名）
+    const z = PED_ZONES.find((Z) => frac(p, (x, zz) => inPoly(x, zz, Z.p)) >= 0.6);
+    if (z) { mark(f, '_ped', 1); mark(f, '_pedZone', z.name); n++; continue; }
+    if (f.n) continue;
+    if (frac(p, inPark) >= 0.6) { mark(f, '_ped', 1); n++; }
   }
   Object.defineProperty(roads, '_parkWalk', { value: n, writable: true, configurable: true, enumerable: false });
   return n;
@@ -130,7 +242,7 @@ function featureInfo(f) {
 /**
  * 构建道路网络：拆边 + 路口分析 + 配对。
  * 返回 {edges, feats}，edges 为数组：
- *  {fi, i0, i1, s0, s1, len, W, lanes, flags, cls, R0, R1, trim0, trim1, sw0, sw1, swR, swL, gap, pairF}
+ *  {fi, i0, i1, s0, s1, len, W, lanes, flags, cls, R0, R1, trim0, trim1, sw0, sw1, lx0, lx1, swR, swL, gap, pairF}
  */
 export function buildRoadNet(roads, { inDetail }) {
   const feats = roads?.features || [];
@@ -270,9 +382,11 @@ export function buildRoadNet(roads, { inDetail }) {
     const node = atStart ? E.n0 : E.n1;
     const vi = atStart ? E.i0 : E.i1;
     const me = info[fi];
-    const res = { R: 0, trim: 0, sw: 0, nX: 0, nXcw: 0, cw: false, turn: 0 };
+    const res = { R: 0, trim: 0, sw: 0, nX: 0, nXcw: 0, cw: false, turn: 0, lx: 0 };
     if (degAll[node] < 3 && !(me.cfg.link && degAll[node] >= 2)) return res;
     dirAt(fi, vi, atStart ? 1 : -1, dA);
+    // 本端行进方向（起点端 = dA，终点端 = -dA）的左侧 = 双幅路中央分隔带一侧
+    const lx = atStart ? dA[1] : -dA[1], lz = atStart ? -dA[0] : dA[0];
     // 驶向本端的车辆可用的转向（单行道只在终点端有来车）
     if (me.cfg.major && (!feats[fi].o || !atStart)) res.turn = turnMaskAt(node, -dA[0], -dA[1], 1);
     for (let e = head[node]; e >= 0; e = next[e]) {
@@ -295,6 +409,8 @@ export function buildRoadNet(roads, { inDetail }) {
           continue;
         }
         const k = 1 / Math.max(sin, 0.45);
+        // 从分隔带一侧接进来的横街（要穿过中央分隔带）：分隔带在此断开；只在外侧接入的丁字口分隔带连续通过
+        if (fj !== fi && !oth.cfg.paving && dB[0] * lx + dB[1] * lz > 0.25) res.lx++;
         if (me.cfg.major) {
           if (oth.cfg.major) {
             res.R = Math.max(res.R, hw * k + 0.6);
@@ -349,6 +465,7 @@ export function buildRoadNet(roads, { inDetail }) {
     E.R0 = a.R; E.R1 = b.R;
     E.trim0 = a.trim; E.trim1 = b.trim;
     E.sw0 = a.sw; E.sw1 = b.sw;
+    E.lx0 = a.lx; E.lx1 = b.lx; // 本端左侧（分隔带一侧）接入的横街数
     let flags = 0;
     if (E.oneway) flags |= F.ONEWAY;
     if (cfg.dashLong) flags |= F.DASHLONG;
@@ -388,9 +505,10 @@ export function buildRoadNet(roads, { inDetail }) {
   const CELL = 60;
   const segGrid = new Map();
   const gkey = (cx, cz) => cx * 100003 + cz;
+  // 单行主路是配对候选；双向主路也入网格，只作“挡板”（见 probe）
   for (let fi = 0; fi < nF; fi++) {
     const f = feats[fi];
-    if (!chain[fi] || !f.o || !info[fi].cfg.major || info[fi].cfg.link) continue;
+    if (!chain[fi] || !info[fi].cfg.major || info[fi].cfg.link) continue;
     const p = f.p;
     for (let i = 0; i + 3 < p.length; i += 2) {
       // 长线段按 CELL/2 步长栅格化到经过的所有格子（数据里有 2 km 的直线段）
@@ -411,7 +529,9 @@ export function buildRoadNet(roads, { inDetail }) {
     }
   }
   const probe = (E, t) => {
-    // 在边上 t 比例处向左发射射线，找反向的单行主路
+    // 在边上 t 比例处向左发射射线，找反向的单行主路。射线先碰到与本路平行的同向单行主路或双向主路（挡板）时不配对：
+    // 本路是辅路，左侧隔着同向主路才是对向车道（友谊西路西行辅路配到了隔一条西行主路的东行主路上，
+    // 按 10 m“中分带”铺的路缘草坪压在主路车道上，车在草坪上跑，审查 P2）
     const f = feats[E.fi], p = f.p, ch = chain[E.fi];
     const s = E.s0 + (E.s1 - E.s0) * t;
     let i = E.i0;
@@ -422,7 +542,7 @@ export function buildRoadNet(roads, { inDetail }) {
     const u = (s - ch[i]) / L;
     const ox = ax + (bx - ax) * u, oz = az + (bz - az) * u;
     const lx = dz, lz = -dx; // 左法线 = -右法线（右法线 = (-dz, dx)）
-    let best = Infinity, bestF = -1;
+    let best = Infinity, bestF = -1, block = Infinity, blockF = -1;
     const maxT = E.W / 2 + 68;
     const c0x = Math.floor(Math.min(ox, ox + lx * maxT) / CELL), c1x = Math.floor(Math.max(ox, ox + lx * maxT) / CELL);
     const c0z = Math.floor(Math.min(oz, oz + lz * maxT) / CELL), c1z = Math.floor(Math.max(oz, oz + lz * maxT) / CELL);
@@ -436,7 +556,10 @@ export function buildRoadNet(roads, { inDetail }) {
           const q = feats[fj].p, j = arr[k + 1];
           const qx = q[j], qz = q[j + 1], rx = q[j + 2] - qx, rz = q[j + 3] - qz;
           const rl = Math.hypot(rx, rz) || 1;
-          if ((rx * dx + rz * dz) / rl > -0.85) continue; // 需反向
+          const cs = (rx * dx + rz * dz) / rl;
+          const opp = cs <= -0.85 && feats[fj].o;
+          // 只看平行的：反向单行 = 候选，同向单行 / 双向 = 挡板（挡板只认同层：地面路不被高架挡，高架不被地面路挡）
+          if (!opp && (Math.abs(cs) < 0.85 || !feats[fj].b !== !f.b)) continue;
           // 射线 o + l*t 与线段 q + r*w 求交
           const den = lx * rz - lz * rx;
           if (Math.abs(den) < 1e-6) continue;
@@ -444,19 +567,23 @@ export function buildRoadNet(roads, { inDetail }) {
           const tt = (wx * rz - wz * rx) / den;
           const w = (wx * lz - wz * lx) / den;
           if (w < -0.02 || w > 1.02 || tt <= E.W * 0.3 || tt > maxT) continue;
-          if (tt < best) { best = tt; bestF = fj; }
+          if (opp) { if (tt < best) { best = tt; bestF = fj; } }
+          else if (tt < block) { block = tt; blockF = fj; }
         }
       }
-    return bestF >= 0 ? { t: best, f: bestF } : null;
+    if (bestF >= 0 && best >= block) probe.blockF = blockF;
+    return bestF >= 0 && best < block ? { t: best, f: bestF } : null;
   };
   for (const E of edges) {
     const cfg = info[E.fi].cfg;
     if (!E.oneway || !cfg.major || cfg.link || E.len < 20) continue;
     const hits = [];
+    probe.blockF = -1;
     for (const t of E.len > 60 ? [0.25, 0.5, 0.75] : [0.5]) {
       const h = probe(E, t);
       if (h) hits.push(h);
     }
+    E.blockF = probe.blockF; // 诊断：被挡板挡掉配对时记下挡板要素
     if (!hits.length || (E.len > 60 && hits.length < 2)) continue;
     hits.sort((a, b) => a.t - b.t);
     const h = hits[hits.length >> 1];
@@ -475,6 +602,31 @@ export function buildRoadNet(roads, { inDetail }) {
     return out;
   };
   const net = { edges, feats, info, chain, total, inDetail, attachedTo };
+  // 辅路（配对被同向主路/双向主路挡住）：左侧不是人行道而是与相邻主路之间的机非分隔带（roads 模块从辅路左缘画到主路路缘，
+  // 主路这一侧的人行道在分隔带范围内不画）。sideF = 相邻主路要素，sideGap = 三点探测的分隔带宽中位数
+  for (const E of edges) {
+    E.sideF = -1;
+    if ((E.flags & F.PAIRED) || !(E.blockF >= 0) || E.b) continue;
+    const p = feats[E.fi].p, ch = chain[E.fi];
+    const gs = [];
+    let i = E.i0;
+    for (const t of [0.25, 0.5, 0.75]) {
+      const s = E.s0 + E.len * t;
+      while (i < E.i1 - 1 && ch[i + 1] < s) i++;
+      const L = ch[i + 1] - ch[i] || 1;
+      const dx = (p[i * 2 + 2] - p[i * 2]) / L, dz = (p[i * 2 + 3] - p[i * 2 + 1]) / L;
+      const u = s - ch[i];
+      const g = pairGapAt(net, E, p[i * 2] + dx * u, p[i * 2 + 1] + dz * u, -dz, dx, E.blockF);
+      if (g !== null) gs.push(g);
+    }
+    if (gs.length < 2) continue;
+    gs.sort((a, b) => a - b);
+    const g = gs[gs.length >> 1];
+    if (g < 0.3 || g > 12) continue;
+    E.sideF = E.blockF;
+    E.sideGap = g;
+    E.swL = false;
+  }
   // 中分带宽沿路变化很大（东大街一条边 1.4 km，两端 0.2 m、中段 3.7 m）：E.gap 只是三点探测的中位数，
   // 这里再沿边每 ~40 m 取局部宽度，记中位数 gapMed（路灯/光斑判定用）；建模与布灯逐断面用 pairGapAt
   for (const E of edges) {
@@ -530,7 +682,7 @@ export function buildRoadNet(roads, { inDetail }) {
  * 地面车行道索引（不含高速、步道/步行街/园路、桥、隧道）：inside(x, z, skip) 判断点是否落在某条车行道路面内
  * （中心线距离 < 半宽 + 0.25 m），skip 为要忽略的要素集合；命中信息写在 hit（要素、该要素里程）。
  */
-export function carriageIndex(net, inRegion) {
+export function carriageIndex(net, inRegion, cutAt = null) {
   const { feats, info, chain } = net;
   const CELL = 40, grid = new Map();
   const gk = (a, b) => a * 1000003 + b;
@@ -544,6 +696,8 @@ export function carriageIndex(net, inRegion) {
       const z0 = Math.min(p[k + 1], p[k + 3]) - hw, z1 = Math.max(p[k + 1], p[k + 3]) + hw;
       if (x1 - x0 > 6000 || z1 - z0 > 6000) continue;
       if (!inRegion(p[k], p[k + 1]) && !inRegion(p[k + 2], p[k + 3])) continue;
+      // 不画的路段（步行化裁切区等）不算车行道：旁边的人行道不必为它收窄
+      if (cutAt && cutAt((p[k] + p[k + 2]) / 2, (p[k + 1] + p[k + 3]) / 2)) continue;
       for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++)
         for (let cz = Math.floor(z0 / CELL); cz <= Math.floor(z1 / CELL); cz++) {
           let a = grid.get(gk(cx, cz));
@@ -654,10 +808,11 @@ export function pavingCuts(net, inRegion, ci = null) {
 /**
  * 双幅路局部中分带宽（米）：从路中心点 (x,z) 沿左法线（右法线 (rx,rz) 取反）射向配对要素折线，
  * 交点距离减去两幅半宽。没有交点（配对要素在此处已结束等）返回 null。
+ * fj：射向的要素（默认配对要素；辅路的机非分隔带传相邻主路 E.sideF）
  */
-export function pairGapAt(net, E, x, z, rx, rz) {
-  if (E.pairF < 0) return null;
-  const q = net.feats[E.pairF].p;
+export function pairGapAt(net, E, x, z, rx, rz, fj = E.pairF) {
+  if (fj < 0) return null;
+  const q = net.feats[fj].p;
   const rl = Math.hypot(rx, rz) || 1;
   const lx = -rx / rl, lz = -rz / rl;
   const maxT = E.W / 2 + 75;
@@ -673,15 +828,18 @@ export function pairGapAt(net, E, x, z, rx, rz) {
     if (t < best) best = t;
   }
   if (best === Infinity) return null;
-  return best - E.W / 2 - net.info[E.pairF].W / 2;
+  return best - E.W / 2 - net.info[fj].W / 2;
 }
 
-/** 路灯灯型：按道路名 */
+/**
+ * 路灯灯型：按道路名。唐风宫灯只用于曲江片区的地面次干道、支路与步行街；高架/桥梁、快速路、主干道、匝道
+ * 一律普通 LED 灯（审查 P2：曲江路高架与立交各层桥面上立着古铜宫灯杆）。
+ */
 export function lampStyleFor(f) {
   const n = f.n || '';
   if (KNOT_NAMES.test(n)) return LAMP.KNOT;
   if (LANTERN_NAMES.test(n)) return LAMP.LANTERN;
-  if (PALACE_NAMES.test(n)) return LAMP.PALACE;
+  if (PALACE_NAMES.test(n) && !f.b && !(f.y > 0) && f.c >= 3 && f.c <= 7) return LAMP.PALACE;
   return LAMP.SINGLE;
 }
 
@@ -689,7 +847,16 @@ export function lampStyleFor(f) {
  * 布置路灯（记录，不建几何）。返回 {x,y,z,yaw,type,n}（类型化数组）
  * yaw：灯臂指向（弧度，atan2(dx,dz) 约定：局部 +Z 指向路面）
  */
-export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = null, minorOk = null }) {
+/**
+ * 该路段是否布灯（与着色器光斑一致的判定，roads.js lampBits 共用）：乡道/田间路（三级路、支路、小区路）
+ * 不在建成区就不布灯；urban 为 (x, z) => 是否建成区（null = 处处建成区）。
+ */
+export function lampUrbanOk(f, urban, x, z) {
+  if (!urban || f.c <= 3 || (f.c >= 8 && f.c <= 11)) return true;
+  return urban(x, z);
+}
+
+export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = null, minorOk = null, urban = null }) {
   const { edges, feats, info, chain, total } = net;
   const out = { x: [], y: [], z: [], yaw: [], type: [], lvl: [] };
   let curLvl = 3;
@@ -699,7 +866,7 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
   for (const E of edges) {
     const f = feats[E.fi];
     const cfg = info[E.fi].cfg;
-    if (!cfg.lamp || f.t) continue;
+    if (!cfg.lamp || f.t || f._ped) continue;
     if (edgeFilter && !edgeFilter(E)) continue;
     curLvl = f.c <= 2 || cfg.link ? 3 : f.c === 3 ? 2 : 1;
     const p = f.p, ch = chain[E.fi];
@@ -722,6 +889,9 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
       const cx = ax + (bx - ax) * u, cz = az + (bz - az) * u;
       if (!region(cx, cz)) continue;
       if (f.c === 0 && !region(cx, cz, true)) continue;
+      if (!lampUrbanOk(f, urban, cx, cz)) continue;
+      // 中国结隔杆挂：偶数号灯杆挂结，奇数号同款不挂（原每根都挂，夜里一串红点像警示灯）
+      const knotT = k % 2 === 0 ? LAMP.KNOT : LAMP.KNOT2;
       const rx = -dz, rz = dx; // 右法线
       const hw = E.W / 2;
       const onBridge = !!E.b;
@@ -733,7 +903,7 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
       const off = onBridge ? 0.3 : 0.9;
       const yawR = Math.atan2(-rx, -rz); // 右侧灯：灯臂指向 -右法线（路中）
       const yawL = Math.atan2(rx, rz);
-      const sideType = style === LAMP.PALACE ? LAMP.PALACE : style === LAMP.KNOT ? LAMP.KNOT : style === LAMP.LANTERN ? LAMP.LANTERN : LAMP.SINGLE;
+      const sideType = style === LAMP.PALACE ? LAMP.PALACE : style === LAMP.KNOT ? knotT : style === LAMP.LANTERN ? LAMP.LANTERN : LAMP.SINGLE;
       // 中分带灯按灯位处的局部中分带宽布置（立在中分带正中；宽度沿路变化，整边一个 gap 会把灯杆插进车道）
       const gLoc = (E.flags & F.PAIRED) && E.pairF > E.fi ? pairGapAt(net, E, cx, cz, rx, rz) ?? -1 : -1;
       if (f.c === 0) {
@@ -768,9 +938,10 @@ export function placeLamps(net, terrain, roadY, { region, LIFT, edgeFilter = nul
         if (E.pairF > E.fi && gLoc > 1.2 && gLoc < 40 && !onBridge) {
           const m = hw + gLoc / 2;
           const x = cx - rx * m, z = cz - rz * m;
-          push(x, gY(x, z) + 0.2, z, yawL, sideType === LAMP.PALACE ? LAMP.PALACE : sideType === LAMP.KNOT ? LAMP.KNOT : LAMP.DOUBLE);
+          push(x, gY(x, z) + 0.2, z, yawL, style === LAMP.PALACE ? LAMP.PALACE : style === LAMP.KNOT ? knotT : LAMP.DOUBLE);
         }
-      } else {
+      } else if (!(E.sideF >= 0)) {
+        // 辅路左侧是机非分隔带时不另立一排（相邻主路右侧的灯就立在分隔带里）
         const x = cx - rx * (hw + off), z = cz - rz * (hw + off);
         push(x, baseY(x, z), z, yawL, sideType);
         // 宽的双向路：中间再加一排双臂灯
