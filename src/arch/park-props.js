@@ -201,17 +201,18 @@ export function hedgeGeometry() {
 // —— 草丛：7 片草叶（两段），uv.y = 高度系数（风摆）——
 export function grassTuftGeometry() {
   const P = [], N = [], C = [], U = [];
-  // 颜色接近近景地面草色（地形着色器 0.05~0.1 线性），叶尖略黄
-  const base = [0.07, 0.1, 0.035], tip = [0.19, 0.23, 0.08];
-  const NB = 11;
+  // 修剪草坪的一小撮细草（4~9 cm、叶宽 1.6 cm），颜色贴近近景地面草色（地形着色器 0.05~0.1 线性），叶尖只略亮、不发黄。
+  // 此前 11 片 7~15 cm 宽叶、叶尖明显黄绿，0.42 m 格点上一丛丛像撒了一地塑料草（审查 g3 曲江池、g5 小雁塔）
+  const base = [0.06, 0.088, 0.032], tip = [0.1, 0.135, 0.046];
+  const NB = 12;
   for (let b = 0; b < NB; b++) {
     const a = (b / NB) * Math.PI * 2 + b * 0.9;
-    const r = 0.02 + ((b * 7) % 5) * 0.014;
-    const h = 0.07 + ((b * 37) % 11) * 0.008;
-    const lean = 0.03 + ((b * 13) % 5) * 0.012;
+    const r = 0.015 + ((b * 7) % 6) * 0.016;
+    const h = 0.04 + ((b * 37) % 11) * 0.005;
+    const lean = 0.012 + ((b * 13) % 5) * 0.008;
     const bx = Math.cos(a) * r, bz = Math.sin(a) * r;
     const dx = Math.cos(a), dz = Math.sin(a), px = -dz, pz = dx;
-    const w = 0.016;
+    const w = 0.008;
     const pts = [
       [bx - px * w, 0, bz - pz * w, 0], [bx + px * w, 0, bz + pz * w, 0],
       [bx + dx * lean * 0.5 - px * w * 0.6, h * 0.55, bz + dz * lean * 0.5 - pz * w * 0.6, 0.55], [bx + dx * lean * 0.5 + px * w * 0.6, h * 0.55, bz + dz * lean * 0.5 + pz * w * 0.6, 0.55],
@@ -220,7 +221,8 @@ export function grassTuftGeometry() {
     const tri = (i, j, k) => {
       for (const q of [pts[i], pts[j], pts[k]]) {
         P.push(q[0], q[1], q[2]);
-        N.push(dx * 0.25, 0.95, dz * 0.25);
+        // 法线近乎朝上：与地面同样受光，草丛融进草坪而不是一簇簇反光
+        N.push(dx * 0.12, 0.99, dz * 0.12);
         const t = q[3];
         C.push(base[0] + (tip[0] - base[0]) * t, base[1] + (tip[1] - base[1]) * t, base[2] + (tip[2] - base[2]) * t);
         U.push(0, t);

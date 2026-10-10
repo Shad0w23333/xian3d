@@ -1,6 +1,8 @@
 // 用地与公园：不再绘制纯色用地色块（卫星影像已有真实地面），用地数据只供植被模块决定种树位置/密度。
 // 本模块只做两件事：
-//  1. 大型公园/绿地极淡的色调增强（草地略提绿、降一点灰度），贴地网格按地形逐点贴合，只在城区近处可见；
+//  1. 大型公园/绿地极淡的色调增强（草地略提绿、降一点灰度），贴地网格按地形逐点贴合，只在城区中远景可见——
+//     离相机 300 m 内的低空视角由地形着色器的近景程序化地面（草地/铺装分类）接管，色调层在那里淡出：
+//     乘法色调不分草地铺装，近处会把园内方砖、园路、广场染成青绿色（审查 g7 小雁塔·西安博物院）；
 //  2. 少量公园地名标注（≤ 6 个）。
 import * as THREE from 'three';
 import { toShape, polyCentroid } from '../core/util.js';
@@ -24,6 +26,7 @@ export default {
     const P = [], I = [];
     let nv = 0;
     const th = ctx.terrain;
+    const uAgl = { value: 0 };
     const EX = ctx.exclusions && ctx.exclusions.items && ctx.exclusions.items.length ? ctx.exclusions : null;
     for (const f of polys) {
       if (!TINT_KINDS.has(f.k) || !f.outer || f.outer.length < 6) continue;
@@ -104,6 +107,25 @@ export default {
         side: THREE.DoubleSide,
         fog: false,
       });
+      // 近处淡出（见文件头）：片元离相机 220~380 m 内、且相机离地 < 60~140 m 时色调趋于 1（乘法不变色）
+      mat.onBeforeCompile = (sh) => {
+        sh.uniforms.uTintCam = ctx.uniforms.uCameraPos;
+        sh.uniforms.uTintAgl = uAgl;
+        sh.vertexShader = sh.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vTintW;')
+          .replace('#include <project_vertex>', 'vTintW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;\n#include <project_vertex>');
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vTintW;\nuniform vec3 uTintCam;\nuniform float uTintAgl;')
+          .replace(
+            '#include <color_fragment>',
+            `#include <color_fragment>
+            {
+              float tk = max( smoothstep( 220.0, 380.0, distance( vTintW, uTintCam ) ), smoothstep( 60.0, 140.0, uTintAgl ) );
+              diffuseColor.rgb = mix( vec3( 1.0 ), diffuseColor.rgb, tk );
+            }`,
+          );
+      };
+      mat.customProgramCacheKey = () => 'landuse-tint-near-fade';
       ctx.overlay(mat, 0.0012);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.name = '公园草地色调';
@@ -126,6 +148,10 @@ export default {
     }
 
     return {
+      update() {
+        const c = ctx.camera.position;
+        uAgl.value = c.y - th.heightAt(c.x, c.z);
+      },
       setLayer(layer, on) {
         if (layer === 'landuse') root.visible = on;
       },

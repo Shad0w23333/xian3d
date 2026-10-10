@@ -475,3 +475,42 @@ totalEmissiveRadiance += diffuseColor.rgb * vec3( 1.0, 0.68, 0.36 ) * ( uNight *
   mat.customProgramCacheKey = () => 'veg-hedge-v2';
   return mat;
 }
+
+/**
+ * 行道树树池材质（vegetation 模块的树池实例层）：aInfo.xy = 池面贴图格偏移（箅子 / 卵石 / 地被，只作用于 aPlate = 1 的池面顶点）；
+ * 远端按距离抖动淡出（与绿篱同一套 IGN 抖动）；夜间与人行道一样受路灯暖光（emissive 近似）。
+ */
+export function patchPitMaterial(mat, G, fade, lampK) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uCamPos = G.uCameraPos;
+    sh.uniforms.uNight = G.uNight;
+    sh.uniforms.uLampK = lampK || { value: 0.85 };
+    sh.uniforms.uFade = { value: fade };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uCamPos;\nuniform vec4 uFade;\nattribute vec4 aInfo;\nattribute float aPlate;\nvarying float vFadeOut;')
+      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvMapUv += aPlate * aInfo.xy;')
+      .replace(
+        '#include <fog_vertex>',
+        `#include <fog_vertex>
+#ifdef USE_INSTANCING
+vFadeOut = smoothstep( uFade.z, uFade.w, distance( instanceMatrix[3].xyz, uCamPos ) );
+#else
+vFadeOut = 0.0;
+#endif`,
+      );
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>\nuniform float uNight;\nuniform float uLampK;\nvarying float vFadeOut;\n${IGN}`)
+      .replace(
+        '#include <clipping_planes_fragment>',
+        `#include <clipping_planes_fragment>
+if ( vegIGN( gl_FragCoord.xy ) >= 1.0 - vFadeOut ) discard;`,
+      )
+      .replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+totalEmissiveRadiance += diffuseColor.rgb * vec3( 1.0, 0.7, 0.42 ) * ( uNight * uLampK * 0.3 );`,
+      );
+  };
+  mat.customProgramCacheKey = () => 'veg-pit-v1';
+  return mat;
+}

@@ -4,7 +4,7 @@
 // → 入口导览牌与花境 → 沿路庭院灯、座椅（背向草地、面向园路，每 25~40 m）、分类垃圾桶、健身步道标识、绿篱/花境 → 湖滨步道的
 // 灯与座椅（面向水面）→ 孤植树下的树池环凳 → “爱护花草”小牌。每放一件在掩膜里登记占用，后放的避让。
 import * as THREE from 'three';
-import { M_PARK, M_GRASS, M_WATER, M_BLD, M_ROAD, M_EXCL, M_SOFT, M_OCC, CELL, hash2, pip, segDist, polyline, SOFT_EXCL, greenGrid, lowAt, greenAt } from './park-index.js';
+import { M_PARK, M_GRASS, M_WATER, M_BLD, M_ROAD, M_EXCL, M_SOFT, M_OCC, CELL, hash2, pip, segDist, polyline, SOFT_EXCL, greenGrid, lowAt, greenAt, SITE_SOFT, SITE_HARD, SITE_PAVED } from './park-index.js';
 import { MeshBuf, lin, strip, resamplePts } from './park-geom.js';
 import { InstanceList } from './park-props.js';
 import { L, SIGN_BANDS } from './park-tex.js';
@@ -18,13 +18,17 @@ const C = {
   door: lin('#4a3324'), window: lin('#2c3236'), roof: lin('#ffffff', 0.95), ridge: lin('#55595d'), wood: lin('#ffffff', 0.95), concrete: lin('#ffffff', 0.92),
 };
 // 十月：西安各公园菊展（黄/橙/白/紫/红）、月季（红/粉）、一串红 + 万寿菊
+// 花色（十月：万寿菊、一串红、矮牵牛、鼠尾草……）略降饱和；花境里约四成花丛只有绿叶（GREEN_HEAD，花头染成叶色），
+// 以绿色为底、花色点缀——此前整片高饱和红黄紫小块密铺，像彩色碎屑（审查 g3 城西小区）
 const FLOWERS = [
-  ['#e8b923', '#f0a020', '#e07a1f', '#f4efe2', '#a05cc0', '#c63a2c', '#f3d36b', '#f4efe2'],
-  ['#b8233a', '#e46a8e', '#d14b6a', '#f1a7bd', '#c81d3a'],
-  ['#d7261e', '#d7261e', '#f39c12', '#f39c12'],
+  ['#d2a63a', '#d79a3a', '#c8783a', '#e6e0d0', '#8f6aa8', '#b44a3e', '#dcc372'],
+  ['#a83a48', '#cf7890', '#bb5a70', '#e0aabb'],
+  ['#c23a2e', '#c23a2e', '#d89a3a', '#d89a3a'],
 ];
+const GREEN_HEAD = '#2f4a22';
 const HEX = (h) => { const n = parseInt(h.slice(1), 16); const f = (v) => Math.pow(v / 255, 2.2); return [f((n >> 16) & 255), f((n >> 8) & 255), f(n & 255)]; };
 const FLOWER_LIN = FLOWERS.map((a) => a.map(HEX));
+const GREEN_LIN = HEX(GREEN_HEAD);
 const HEDGE = [HEX('#3c6a2c'), HEX('#7e2a22'), HEX('#4d7a34')]; // 大叶黄杨 / 红叶石楠（秋季红叶）/ 金森女贞
 
 // ───────────── 树木索引（读植被模块的种植结果，只读）─────────────
@@ -418,6 +422,51 @@ export function* buildChunk(env, gx, gz) {
   return { geo, inst: inst.freeze(), lamps, structs, mk, st, paved: out.paved, green };
 }
 
+// ───────────── 园桥判定 ─────────────
+const POOL_RE = /喷泉|泳|水景|水池/;
+/**
+ * 园路上哪些点是“跨水的园桥”。只认真正横跨水面的段：
+ *  · 水体是 water 模块按岸高重定过水位的湖/池/河/护城河（lvKind 有值）——喷泉池、广场水景（basin）、泳池不算；
+ *  · 不在精建场地里（site[i] ≥ SITE_HARD：地标模块自建水池与桥，如大雁塔北广场音乐喷泉）；曲江三园（SITE_SOFT）只认 OSM 标的桥；
+ *  · 一段连续的水上点两头都要回到岸上（园路尽头伸进水里的是栈道/码头，不是桥）；
+ *  · 横穿而不是贴岸走：水上段离岸最远 ≥ 1.2 m，且水上段长度 ≤ 6 × 离岸最远 + 6 m
+ *    （园路数据与水面多边形错位时，沿池边走的园路会有一长串点“落水”，但离岸始终只有 1 m 左右）。
+ * OSM 标了 bridge 的园路：放宽到离岸 ≥ 0.5 m、不看长度比例（仍要两头上岸、不在精建场地里）。
+ * 返回 {wet: Uint8Array（1 = 桥上水面点，pts[i].wy 为水面高度）, any}。
+ */
+export function bridgeSpans(idx, pts, Lx, site) {
+  const n = pts.length;
+  const wet = new Uint8Array(n);
+  const cand = new Uint8Array(n);
+  const wy = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    if (site && (site[i] >= SITE_HARD || (site[i] === SITE_SOFT && !Lx.b))) continue;
+    const w = idx.waterAt(pts[i].x, pts[i].z);
+    if (!w || !Number.isFinite(w.planeY)) continue;
+    // OSM 标了 bridge 的也可以跨没重定水位的水体（水库、远郊河），但喷泉池/广场水景/泳池一律不算
+    if (w.lvKind || (Lx.b && w.k !== 'basin' && !POOL_RE.test(w.n || ''))) { cand[i] = 1; wy[i] = w.planeY; }
+  }
+  let any = false;
+  for (let a = 0; a < n; a++) {
+    if (!cand[a]) continue;
+    let b = a;
+    while (b + 1 < n && cand[b + 1]) b++;
+    const ok0 = a > 0 && b < n - 1 && !(site && (site[a - 1] >= SITE_HARD || site[b + 1] >= SITE_HARD));
+    if (ok0) {
+      let far = 0, len = 0;
+      for (let i = a; i <= b; i++) far = Math.max(far, idx.shoreDist(pts[i].x, pts[i].z, 30));
+      for (let i = a; i <= b + 1; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
+      const ok = Lx.b ? far >= 0.5 : far >= 1.2 && len <= 6 * far + 6;
+      if (ok) {
+        for (let i = a; i <= b; i++) { wet[i] = 1; pts[i].wy = wy[i]; }
+        any = true;
+      }
+    }
+    a = b;
+  }
+  return { wet, any };
+}
+
 // ───────────── 园路 ─────────────
 function pathGeometry(E, Lx) {
   const { T, mk, buf, idx } = E;
@@ -426,19 +475,20 @@ function pathGeometry(E, Lx) {
   const n = pts.length;
   const own = Lx.own;
   const hw = Lx.w / 2;
-  // 每个点：是否在水面上（园桥）
-  const wet = new Uint8Array(n);
-  let anyWet = false;
-  for (let i = 0; i < n; i++) {
-    const w = idx.waterAt(pts[i].x, pts[i].z);
-    if (w) { wet[i] = 1; anyWet = true; pts[i].wy = w.planeY; }
-  }
-  const bridge = Lx.b || anyWet;
+  // 精建场地等级（见 ParkIndex.siteAt）：SITE_PAVED 里的段不画（场地铺装由地标模块自建，roads.json 园路也不补路缘石）
+  const site = new Uint8Array(n);
+  let nPaved = 0;
+  for (let i = 0; i < n; i++) if ((site[i] = idx.siteAt(pts[i].x, pts[i].z)) === SITE_PAVED) nPaved++;
+  if (nPaved === n) return;
+  // 每个点：是否是跨水园桥上的点
+  const { wet, any: anyWet } = bridgeSpans(idx, pts, Lx, site);
+  // OSM 标了 bridge 却没跨任何水面（小沟、干涸河道、数据里没有的水渠）：整条按桥面画（精建地标场地外）
+  const dryBridge = !!Lx.b && !anyWet;
   // 路面高度
   let ys;
   if (own) {
     ys = pts.map((p) => T.heightAt(p.x, p.z) + 0.07);
-    if (bridge) {
+    if (anyWet) {
       for (let i = 0; i < n; i++) if (wet[i]) ys[i] = Math.max(ys[i], pts[i].wy + 0.85);
       // 引坡：坡度 ≤ 8%
       for (let k = 0; k < 2; k++) {
@@ -458,17 +508,26 @@ function pathGeometry(E, Lx) {
       return y == null ? T.heightAt(p.x, p.z) + 0.25 : y;
     });
   }
-  // 本块负责的连续段（段中点在块内）
-  let run = [];
+  // 桥面点：跨水点 + 引坡（路面高出地面 0.15 m 以上）；OSM 旱桥整条
+  const isBr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (site[i] >= SITE_HARD) continue;
+    if (dryBridge || wet[i]) isBr[i] = 1;
+    else if (own && anyWet && ys[i] > T.heightAt(pts[i].x, pts[i].z) + 0.15) isBr[i] = 1;
+  }
+  // 本块负责的连续段（段中点在块内）；桥面段与普通园路段分开出（交界点共用）
+  let run = [], runBr = 0;
   const flush = () => {
-    if (run.length >= 2) emitPath(E, Lx, run, ys, bridge, wet);
+    if (run.length >= 2) emitPath(E, Lx, run, ys, runBr, wet);
     run = [];
   };
   for (let i = 0; i + 1 < n; i++) {
     const mx = (pts[i].x + pts[i + 1].x) / 2, mz = (pts[i].z + pts[i + 1].z) / 2;
     const inC = mx >= mk.x0 && mx < mk.x1 && mz >= mk.z0 && mz < mk.z1;
-    if (!inC) { flush(); continue; }
-    if (!run.length) run.push(i);
+    if (!inC || site[i] === SITE_PAVED || site[i + 1] === SITE_PAVED) { flush(); continue; }
+    const br = (isBr[i] && isBr[i + 1]) || wet[i] || wet[i + 1] ? 1 : 0;
+    if (run.length && br !== runBr) flush();
+    if (!run.length) { run.push(i); runBr = br; }
     run.push(i + 1);
   }
   flush();
@@ -662,6 +721,22 @@ function placeBin(E, x, z, yaw) {
   return true;
 }
 
+/** 主城门外 280 m 内（城外一侧）：南门外广场、环城公园门前段——入城式场地，夜间照明比普通公园密 */
+function nearGate(E, x, z) {
+  for (const [gx, gz, ux, uz] of E.gates || []) {
+    const dx = x - gx, dz = z - gz;
+    if (dx * dx + dz * dz < 280 * 280 && dx * ux + dz * uz > -20) return true;
+  }
+  return false;
+}
+/** 地埋灯：与地面齐平（白天看不见灯具），夜间只有 2.4 m 的暖光斑 */
+function groundLight(E, x, z) {
+  const v = E.mk.get(x, z);
+  if (v < 0 || v & (M_WATER | M_BLD)) return;
+  E.inst.add('glow', x, E.T.heightAt(x, z) + 0.07, z, 0, 2.4, 1, 2.4);
+  E.st.glows = (E.st.glows || 0) + 1;
+}
+
 function alongLine(E, Lx) {
   const { mk, idx } = E;
   if (Lx.len < 12) return;
@@ -672,15 +747,27 @@ function alongLine(E, Lx) {
   const bigPark = pk && pk.area > 50000;
   const lampSide = Lx.w >= 4 ? 0 : hash2(id, 1) < 0.5 ? 1 : -1;
   const q = {};
+  // 城门前：庭院灯 14 m 一盏，园路两侧每 5 m 一盏地埋灯（审查 g1：南门外广场夜里几百米见方只有两盏灯）
+  pl.at(Lx.len / 2, q);
+  const gate = nearGate(E, q.x, q.z);
+  const LS = gate ? 14 : 28;
   // 庭院灯：每 27 m（宽路两侧交替）
-  const ph = hash2(id, 2) * 28;
-  for (let s = ph, k = 0; Lx.len >= 18 && s < Lx.len; s += 28, k++) {
+  const ph = hash2(id, 2) * LS;
+  for (let s = ph, k = 0; Lx.len >= 18 && s < Lx.len; s += LS, k++) {
     pl.at(s, q);
     const side = lampSide || (k % 2 ? 1 : -1);
     const nx = -q.tz * side, nz = q.tx * side;
     const x = q.x + nx * (hw + 0.45), z = q.z + nz * (hw + 0.45);
     if (okSpot(E, x, z, 0.45)) placeLamp(E, x, z);
   }
+  if (gate && Lx.w >= 2)
+    for (let s = 2.5; s < Lx.len; s += 5) {
+      pl.at(s, q);
+      for (const side of [1, -1]) {
+        const x = q.x - q.tz * side * (hw - 0.25), z = q.z + q.tx * side * (hw - 0.25);
+        if (x >= mk.x0 && x < mk.x1 && z >= mk.z0 && z < mk.z1) groundLight(E, x, z);
+      }
+    }
   // 座椅（背向草地、面向园路）：每 25~40 m；隔一张配一组分类垃圾桶
   const bside = lampSide ? -lampSide : 1;
   let s = hash2(id, 3) * 24 + 10, k = 0;
@@ -714,7 +801,7 @@ function alongLine(E, Lx) {
     const side = hash2(id, Math.round(s3)) < 0.5 ? 1 : -1;
     const nx = -q.tz * side, nz = q.tx * side;
     const h = hash2(id, Math.round(s3) + 7);
-    if (h < 0.55) hedgeRun(E, pl, s3, Math.min(Lx.len - 2, s3 + 8 + h * 14), side, hw + 0.6, h);
+    if (h < 0.75) hedgeRun(E, pl, s3, Math.min(Lx.len - 2, s3 + 8 + h * 14), side, hw + 0.6, h);
     else {
       const x = q.x + nx * (hw + 1.0), z = q.z + nz * (hw + 1.0);
       flowerBed(E, x, z, q.tx, q.tz, 3 + h * 4, 0.95, h);
@@ -821,10 +908,11 @@ function flowerBed(E, x, z, tx, tz, len, wid, h) {
     for (let u = -len / 2 + 0.25; u <= len / 2 - 0.2; u += 0.4) {
       const jx = (hash2(k, Math.round(h * 1e4), 3) - 0.5) * 0.18, jz = (hash2(k, Math.round(h * 1e4), 5) - 0.5) * 0.18;
       const px = x + tx * (u + jx) + nx * (v + jz), pz = z + tz * (u + jx) + nz * (v + jz);
-      // 同色成片：沿长度分 3 段换色
+      // 同色成片：沿长度分 3 段换色；约 40% 只有绿叶（成团，不是零散），高低起伏 0.7~1.4
       const ci = (Math.floor(((u + len / 2) / len) * 3) + rr + Math.floor(h * 10)) % pal.length;
-      const s = 0.8 + 0.4 * hash2(k, 11, Math.round(h * 100));
-      E.inst.add('flower', px, E.T.heightAt(px, pz), pz, hash2(k, 13) * 6.28, s, s * (0.8 + 0.4 * hash2(k, 17)), s, pal[ci]);
+      const leafOnly = hash2(Math.floor((u + len / 2) / 1.2), rr, Math.round(h * 997)) < 0.4;
+      const s = 0.75 + 0.5 * hash2(k, 11, Math.round(h * 100));
+      E.inst.add('flower', px, E.T.heightAt(px, pz), pz, hash2(k, 13) * 6.28, s, s * (0.7 + 0.7 * hash2(k, 17)), s, leafOnly ? GREEN_LIN : pal[ci]);
       k++;
     }
   }
@@ -882,7 +970,9 @@ function treeRings(E) {
  */
 function plazaPass(E) {
   const { mk, green } = E;
-  const S = 22;
+  // 城门前的铺装广场：灯阵加密到 13 m，另在格点间放地埋灯
+  const gate = nearGate(E, (mk.x0 + mk.x1) / 2, (mk.z0 + mk.z1) / 2) || nearGate(E, mk.x0, mk.z0) || nearGate(E, mk.x1, mk.z1) || nearGate(E, mk.x0, mk.z1) || nearGate(E, mk.x1, mk.z0);
+  const S = gate ? 13 : 22;
   for (let gz = Math.ceil(mk.z0 / S); gz * S < mk.z1; gz++)
     for (let gx = Math.ceil(mk.x0 / S); gx * S < mk.x1; gx++) {
       const h = hash2(gx, gz, 71);
@@ -897,6 +987,13 @@ function plazaPass(E) {
         if (g < 0.45) paved++;
       }
       if (valid < 4 || paved < valid * 0.65 || greenAt(green, x, z) >= 0.45) continue;
+      if (gate && nearGate(E, x, z)) {
+        if (h < 0.6) { if (okSpot(E, x, z, 0.6)) placeLamp(E, x, z); }
+        else if (h < 0.75) placeBench(E, x, z, Math.floor(hash2(gx, gz, 83) * 4) * Math.PI / 2);
+        groundLight(E, x + S / 2, z);
+        groundLight(E, x, z + S / 2);
+        continue;
+      }
       if (h < 0.55) { if (okSpot(E, x, z, 0.6)) placeLamp(E, x, z); }
       else if (h < 0.8) placeBench(E, x, z, Math.floor(hash2(gx, gz, 83) * 4) * Math.PI / 2);
       else if (h < 0.88) placeBin(E, x, z, Math.floor(hash2(gx, gz, 89) * 4) * Math.PI / 2);

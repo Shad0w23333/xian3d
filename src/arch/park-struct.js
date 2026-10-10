@@ -6,9 +6,11 @@
 //   · 游廊：长 12 m、宽 2.8 m 的卷棚顶直廊，带坐凳栏杆（湖边、园路交汇处）；
 //   · 大门：三间四柱木牌楼（宽 12 m、明间净高 5.2 m，青灰瓦庑殿顶），园名牌由本模块的园名槽位另贴（不进构件库匾额图集，
 //     这样所有大门共用材质、能合批）。
-// 夜景：亭子檐口暖白轮廓灯（构件库 led 材质，夜间自动亮），只给亭子，不给游廊和大门（“少量”）。
+// 夜景：亭子檐口暖色轮廓灯（构件库 led 材质，夜间自动亮），只给亭子，不给游廊和大门（“少量”）；
+// 亭廊大门都有地埋投光（构件库 floodlit：均匀暖色泛光，朝天的屋面减弱）——此前夜里只剩一圈白色檐口灯线、
+// 亭身屋面全黑，像白色线框模型（审查 g1 南门外广场）。模板顶点已换到世界坐标，泛光取 baseY=0、height=1、top=1 即与高程无关。
 import * as THREE from 'three';
-import { buildArch, pavilion, paifang, corridor } from './chinese.js';
+import { buildArch, pavilion, paifang, corridor, floodlit } from './chinese.js';
 
 function extract(group) {
   group.updateMatrixWorld(true);
@@ -26,12 +28,27 @@ export function buildTemplates(ctx) {
   const t0 = performance.now();
   const opt = { detail: 1, style: 'ming', instancing: false };
   const T = {};
+  // 泛光材质：同一个构件库材质只克隆一份（各模板共用，合批的 draw call 数不变）；发光类（led/emit/glow/lattice）保持原样
+  const flooded = new Map();
+  const NOFLOOD = /^arch\.(led|emit|glow|lattice)$/;
+  const flood = (m) => {
+    if (!m || NOFLOOD.test(m.name || '')) return m;
+    let f = flooded.get(m);
+    if (!f) {
+      f = floodlit(m.clone(), { ctx, color: 0xffd2a0, strength: 0.5, baseY: 0, height: 1, top: 1, upDim: 0.55 });
+      flooded.set(m, f);
+    }
+    return f;
+  };
   const mk = (fn, r, name) => {
     const g = buildArch(ctx, fn, { ...opt, name });
-    T[name] = { parts: extract(g), r };
+    const parts = extract(g);
+    for (const p of parts) p.mat = flood(p.mat);
+    T[name] = { parts, r };
   };
-  mk((b) => pavilion(b, { style: 'ming', sides: 6, size: 4.6, roofColor: 'gray', platformH: 0.45, eaveLights: { color: 0xffe2b0, width: 0.05, columns: false } }), 3.4, 'pav6');
-  mk((b) => pavilion(b, { style: 'ming', sides: 4, size: 4.2, roofColor: 'gray', platformH: 0.4, eaveLights: { color: 0xffe2b0, width: 0.05, columns: false } }), 3.3, 'pav4');
+  const LED = { color: 0xc8a57a, width: 0.035, columns: false };
+  mk((b) => pavilion(b, { style: 'ming', sides: 6, size: 4.6, roofColor: 'gray', platformH: 0.45, eaveLights: LED }), 3.4, 'pav6');
+  mk((b) => pavilion(b, { style: 'ming', sides: 4, size: 4.2, roofColor: 'gray', platformH: 0.4, eaveLights: LED }), 3.3, 'pav4');
   mk((b) => corridor(b, [[-6, 0], [6, 0]], { style: 'ming', w: 2.8, colH: 2.8, bay: 3, roof: 'juanpeng', roofColor: 'gray', platformH: 0.3 }), 7.5, 'lang');
   mk((b) => paifang(b, { style: 'ming', bays: 3, width: 12, h: 5.2, roofColor: 'gray' }), 7.0, 'gate');
   T.ms = Math.round(performance.now() - t0);
