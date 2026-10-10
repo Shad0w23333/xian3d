@@ -942,7 +942,10 @@ export default {
           const x = W[i * 4], y0 = W[i * 4 + 1], spd = W[i * 4 + 2], w = W[i * 4 + 3];
           if (Math.abs(x - cp.x) > NEAR_R) continue;
           const z = C.z0 + (((y0 + spd * t) % C.len) + C.len) % C.len;
-          if (Math.hypot(x - cp.x, z - cp.z) >= NEAR_R) continue;
+          const dd = Math.hypot(x - cp.x, z - cp.z);
+          if (dd >= NEAR_R) continue;
+          // 镜头前 2.6 m 内不放人（原先人流穿过相机位置，1~2 m 处出现半个人身/后脑勺挡住画面，审查 g8 st_datang_n）
+          if (dd < 2.6) continue;
           const hi = Math.min(46.999, Math.max(0, (z - C.hz0) / C.hdz)), i0 = Math.floor(hi);
           const y = C.heights[i0] + (C.heights[i0 + 1] - C.heights[i0]) * (hi - i0);
           const moving = Math.abs(spd) > 0.001;
