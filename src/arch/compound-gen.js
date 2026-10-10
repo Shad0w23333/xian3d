@@ -365,7 +365,7 @@ function* genCompound(S, W, c, x0, z0, x1, z1) {
   for (let sx = x0; sx < x1; sx += SUB)
     for (let sz = z0; sz < z1; sz += SUB) {
       if (sx + SUB < c.bb[0] || sx > c.bb[2] || sz + SUB < c.bb[1] || sz > c.bb[3]) continue;
-      genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB, X, Z);
+      yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB, X, Z);
       yield 'lawns';
     }
   tally('lawns');
@@ -677,7 +677,8 @@ function triUp(Gt, a, b, c, col, ua, ub, uc) {
   else Gt.triW(a, c, b, col, ua, uc, ub);
 }
 
-function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
+/** 草坪（生成器：一个小方块分几步算完，中途让出，单步耗时更短；结果与一次算完相同） */
+function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
   const T = S.terrain;
   const TRI = W.stats.tri; // 分项三角形计数（离线检查用）
   const { cs, sn, ox, oz } = c;
@@ -876,6 +877,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
   // 7. 去掉细条（1 格宽）
   opening(g, src, nx, ny);
 
+  yield 'lawns';
   // —— 临街铺装：楼的临街外墙（与通用建筑模块“底商”同一判据：边中点外 2 m 处距街道路缘 < 18 m 且面朝街道）
   //    门前到人行道一律铺装（最深 14 m），不留草坪——店门口是草坪、顾客要踩草进店（审查 fs_唐延路） ——
   const fcs = []; // [局部环, u0,u1,v0,v1]
@@ -958,6 +960,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     return f;
   };
 
+  yield 'lawns';
   // —— 格点解析距离 F0（> 0 = 空地）：附近各障碍源的有符号距离取最小。
   //    只在草坪/障碍交界附近（离障碍 ≤ DEXACT 格、离草坪 ≤ 2 格）精确计算；远离障碍取倒角距离近似，障碍深处直接取负上限 ——
   const NX1 = nx + 1, NC = NX1 * (ny + 1);
@@ -1049,6 +1052,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
       }
     }
   }
+  yield 'lawns';
   // —— 草坪函数 FL：新小区 = F0；老小区 = 离障碍 1.6 m 起（中间是水泥地）；临街铺装处让出 ——
   const FL = new Float32Array(NC), CLc = new Uint8Array(NC);
   for (let j = 0; j <= ny; j++)
@@ -1103,6 +1107,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     }
   }
 
+  yield 'lawns';
   // —— 合并整格矩形 ——
   const used = new Uint8Array(nx * ny);
   const lawnBase = oldM ? C('#58683d') : C('#4c6b35');
@@ -1296,6 +1301,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     emitBoundary(cells, FL, LIFT.lawn, lawnCol, K.LAWN, segs, CLc);
   }
 
+  yield 'lawns';
   // —— 底层（草坪之下）：老小区整片水泥地；新小区只在临街铺装处铺地砖。
   //    边界只绕小区边界、市政道路、洞与运动场地（车行道、车位、园路、楼都压在它上面），整格并成大矩形，边界格出等值线多边形 ——
   if (oldM || fcs.length) {
@@ -1373,6 +1379,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     }
   }
 
+  yield 'lawns';
   // —— 路缘：等值线段按端点串成折线 → 按外侧代码分段 → 道格拉斯-普克化简（0.05 m）→ 每段 ≤ 12 m 画路缘石；绿篱沿车行道/车位一侧 ——
   // 老小区：绿地边只有一道矮立面（旧水泥/砖砌收边，不画白色路缘石顶面）
   const curbCol = oldM ? C('#8a857b') : C('#b9b4aa');
@@ -1504,6 +1511,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     }
   }
 
+  yield 'lawns';
   // —— 花坛花丛（近看实例）：0.75 m 格抖动铺满花坛，每丛半径 0.3~0.45 m ——
   for (const [ua, ub, va, vb, fc] of flowerRects) {
     const nu = Math.max(1, Math.round((ub - ua - 0.3) / 0.75)), nv = Math.max(1, Math.round((vb - va - 0.3) / 0.75));
