@@ -14,3 +14,4 @@ tiles/
 .claude/worktrees/
 tiles_next/
 tiles_prev/
+public/data/local/compounds_amap.json
