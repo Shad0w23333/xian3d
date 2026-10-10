@@ -11,6 +11,8 @@ export const M_PARK = 1, M_GRASS = 2, M_WATER = 4, M_BLD = 8, M_ROAD = 16, M_EXC
 // 曲江模块整园登记了“通用建筑让位”，但园内只精建了建筑、驳岸与宫灯：座椅、垃圾桶、草丛、花境照放（软排除），
 // 驳岸、亭子、大门、公厕不放（曲江已有）
 export const SOFT_EXCL = new Set(['大唐芙蓉园', '曲江池遗址公园', '曲江寒窑遗址公园']);
+// 精建场地等级（ParkIndex.siteAt）
+export const SITE_SOFT = 1, SITE_HARD = 2, SITE_PAVED = 3;
 
 export const hash2 = (a, b, s = 0) => {
   let h = Math.imul((a * 73856093) ^ (b * 19349663) ^ (s * 83492791), 0x9e3779b1);
@@ -182,8 +184,16 @@ export class ParkIndex {
     }
     // —— 排除区 ——
     this.exclGrid = new Grid();
+    // 精建场地分级（siteAt 返回最高一级）。场地里的水池、桥由该模块自建，园路不得再抬成园桥加栏杆
+    // （大雁塔北广场一条 4 m 园路压在音乐喷泉水池北沿，曾被判成园桥抬高 0.85 m 加汉白玉栏杆，把看塔的中轴视线拦腰截断）：
+    //   SITE_PAVED 3 = 登记了“道路不画”（roads: true）的场地：铺装由该模块整片自建，OSM 园路不画；
+    //   SITE_HARD  2 = 地标/档案建筑/下沉广场等整片“通用建筑让位”的场地：园路照画，不做园桥与栏杆；
+    //   SITE_SOFT  1 = 曲江三园：园路照画（曲江模块不建园路），只认 OSM 标了 bridge 的园桥（湖岛曲桥由曲江模块自建）
+    this.siteGrid = new Grid();
     for (const it of ctx.exclusions?.items || []) {
       const f = it.flags || {};
+      const site = f.roads ? SITE_PAVED : SOFT_EXCL.has(it.name) ? SITE_SOFT : f.buildings && f.maxHeight == null ? SITE_HARD : 0;
+      if (site) this.siteGrid.add({ p: it.p, bb: it.bb, name: it.name, site }, it.bb);
       let kind = 0;
       if (SOFT_EXCL.has(it.name)) kind = M_SOFT;
       else if (f.buildings && f.maxHeight == null) kind = M_EXCL;
@@ -316,6 +326,17 @@ export class ParkIndex {
       const b = e.bb;
       if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
       if (pip(x, z, e.p)) k |= e.kind;
+    }
+    return k;
+  }
+  /** 精建场地等级（0 = 不在场地里；见构造函数 siteGrid 与 SITE_* 常量） */
+  siteAt(x, z) {
+    let k = 0;
+    for (const e of this.siteGrid.at(Math.floor(x / CELL), Math.floor(z / CELL))) {
+      if (e.site <= k) continue;
+      const b = e.bb;
+      if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+      if (pip(x, z, e.p)) k = e.site;
     }
     return k;
   }
