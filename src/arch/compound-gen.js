@@ -365,7 +365,7 @@ function* genCompound(S, W, c, x0, z0, x1, z1) {
   for (let sx = x0; sx < x1; sx += SUB)
     for (let sz = z0; sz < z1; sz += SUB) {
       if (sx + SUB < c.bb[0] || sx > c.bb[2] || sz + SUB < c.bb[1] || sz > c.bb[3]) continue;
-      yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB, X, Z);
+      yield* genLawns(S, W, c, sx, sz, sx + SUB, sz + SUB);
       yield 'lawns';
     }
   tally('lawns');
@@ -677,10 +677,18 @@ function triUp(Gt, a, b, c, col, ua, ub, uc) {
   else Gt.triW(a, c, b, col, ua, uc, ub);
 }
 
-/** 草坪（生成器：一个小方块分几步算完，中途让出，单步耗时更短；结果与一次算完相同） */
-function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
-  const T = S.terrain;
-  const TRI = W.stats.tri; // 分项三角形计数（离线检查用）
+/**
+ * 草坪：纯计算（lawnOps，生成器：一个小方块分几步算完、中途让出）记成出图指令，再在主线程按原顺序回放（replayLawns）。
+ * 纯计算不碰地形高度与写入器，可整段放进 Worker（compound-pool.js）；回放与原来边算边出图的结果逐位相同。
+ */
+function* genLawns(S, W, c, x0, z0, x1, z1) {
+  const ops = yield* lawnOps(S, c, x0, z0, x1, z1);
+  if (ops) replayLawns(S, W, c, ops);
+}
+
+/** 草坪纯计算：返回出图指令（Float64Array，见 LawnOps），小方块与小区不相交时返回 undefined */
+export function* lawnOps(S, c, x0, z0, x1, z1) {
+  const E = new LawnOps();
   const { cs, sn, ox, oz } = c;
   const oldM = c.mode === 'old';
   const toU = (x, z) => (x - ox) * cs + (z - oz) * sn, toV = (x, z) => -(x - ox) * sn + (z - oz) * cs;
@@ -1131,9 +1139,6 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
       for (let jj = 0; jj < h; jj++) for (let q = 0; q < w; q++) used[(j + jj) * nx + i + q] = 1;
       rects.push([i, j, w, h]);
     }
-  const Gw = W.ground;
-  const H = (u, v) => T.heightAt(c.ox + u * cs - v * sn, c.oz + u * sn + v * cs);
-  const P = (u, v, lift) => [c.ox + u * cs - v * sn, H(u, v) + lift, c.oz + u * sn + v * cs];
   const flowerRects = [];
   for (const [i, j, w, h] of rects) {
     const ua = u0 + i, ub = ua + w, va = v0 + j, vb = va + h;
@@ -1154,10 +1159,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
         flowerRects.push([ua, ub, va, vb, fc]);
       }
     }
-    Gw.k = kind;
-    Gw.quadW(P(ua, vb, LIFT.lawn), P(ub, vb, LIFT.lawn), P(ub, va, LIFT.lawn), P(ua, va, LIFT.lawn), col, [[ua, vb], [ub, vb], [ub, va], [ua, va]]);
-    W.stats.lawn += w * h;
-    TRI.rect = (TRI.rect || 0) + 2;
+    E.quad(0, kind, ua, ub, va, vb, LIFT.lawn, col, w * h);
   }
 
   // —— 边界格：等值线多边形（草坪面）+ 等值线段（路缘） ——
@@ -1165,16 +1167,9 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
   const segs = []; // [ua, va, ub, vb, 外法线 nu, nv, 代码, 端点键 ka, kb]
   const ekey = (i, j, e) => (e === 0 ? (j * NX1 + i) * 2 : e === 2 ? ((j + 1) * NX1 + i) * 2 : e === 1 ? (j * NX1 + i + 1) * 2 + 1 : (j * NX1 + i) * 2 + 1);
   const poly = [];
-  const emitPoly = (Gt, pts, lift, col, kind) => {
+  const emitPoly = (pts, lift, col, kind) => {
     if (pts.length < 3) return;
-    TRI['poly' + lift] = (TRI['poly' + lift] || 0) + pts.length - 2;
-    // 面积太小（< 0.01 m²，等值线贴着格边）不出面
-    let A = 0;
-    for (let q = 0, p = pts.length - 1; q < pts.length; p = q++) A += pts[p][0] * pts[q][1] - pts[q][0] * pts[p][1];
-    if (Math.abs(A) < 0.02) return;
-    Gt.k = kind;
-    const w0 = P(pts[0][0], pts[0][1], lift);
-    for (let q = 1; q + 1 < pts.length; q++) triUp(Gt, w0, P(pts[q][0], pts[q][1], lift), P(pts[q + 1][0], pts[q + 1][1], lift), col, pts[0], pts[q], pts[q + 1]);
+    E.poly(kind, lift, col, pts);
   };
   // 一个格的等值线：返回草坪多边形（可能两块）与等值线段
   const cellIso = (i, j, Fa, polys, segOut, codeArr) => {
@@ -1248,7 +1243,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
       else if (f0 === f3 && f1 === f2 && f0 !== f1) t = f0 ? 3 : 4;
       cellIso(i, j, Fa, polysTmp, segOut, codeArr);
       if (t) typ[k] = t;
-      else for (const pts of polysTmp) emitPoly(Gw, pts, lift, col, kind);
+      else for (const pts of polysTmp) emitPoly(pts, lift, col, kind);
     }
     const cross = (i, j, e) => {
       // e：0 左边（u = i，沿 v） 1 右边 2 下边（v = j，沿 u） 3 上边
@@ -1289,7 +1284,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
             const lo = u0 + a, hi = u0 + a + 1;
             quad = t === 3 ? [[lo, ps[1]], ps, pe, [lo, pe[1]]] : [ps, [hi, ps[1]], [hi, pe[1]], pe];
           }
-          emitPoly(Gw, quad, lift, col, kind);
+          emitPoly(quad, lift, col, kind);
           b = e;
         }
       }
@@ -1371,9 +1366,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
           }
           for (let jj = 0; jj < h; jj++) for (let q = 0; q < w; q++) usedB[(j + jj) * nx + i + q] = 1;
           const ua = u0 + i, ub = ua + w, va = v0 + j, vb = va + h;
-          Gw.k = kind;
-          Gw.quadW(P(ua, vb, lift), P(ub, vb, lift), P(ub, va, lift), P(ua, va, lift), col, [[ua, vb], [ub, vb], [ub, va], [ua, va]]);
-          TRI.baseRect = (TRI.baseRect || 0) + 2;
+          E.quad(1, kind, ua, ub, va, vb, lift, col, 0);
         }
       if (cellsB.length) emitBoundary(cellsB, pav ? FP : FB, lift, col, kind, null, C0);
     }
@@ -1384,8 +1377,6 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
   // 老小区：绿地边只有一道矮立面（旧水泥/砖砌收边，不画白色路缘石顶面）
   const curbCol = oldM ? C('#8a857b') : C('#b9b4aa');
   const hedgeCol = oldM ? C('#3f5a2c') : C('#33582a');
-  const Gd = W.gdetail;
-  const F = W.fine;
   {
     const ends = new Map();
     segs.forEach((s, idx) => {
@@ -1455,8 +1446,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
             for (let r = 0; r < nPiece; r++) {
               const ta = r / nPiece, tb = (r + 1) / nPiece;
               const pa = [pa0[0] + (pb0[0] - pa0[0]) * ta, pa0[1] + (pb0[1] - pa0[1]) * ta], pb = [pa0[0] + (pb0[0] - pa0[0]) * tb, pa0[1] + (pb0[1] - pa0[1]) * tb];
-              curbPiece(Gd, P, pa, pb, nu, nv, curbCol, !oldM);
-              TRI.curb = (TRI.curb || 0) + (oldM ? 2 : 4);
+              E.curb(pa, pb, nu, nv, curbCol, !oldM, oldM ? 2 : 4);
             }
             // 绿篱：草坪临车行道/车位一侧（新小区多，老小区少）
             if ((code === CODE.LANE || code === CODE.PARK) && L >= 4 && hash01(Math.round(pa0[0]), Math.round(pa0[1]), c.pid + 3) < (oldM ? 0.3 : 0.75)) {
@@ -1468,12 +1458,10 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
                 const pa = [pa0[0] + (pb0[0] - pa0[0]) * ta + iu, pa0[1] + (pb0[1] - pa0[1]) * ta + iv], pb = [pa0[0] + (pb0[0] - pa0[0]) * tb + iu, pa0[1] + (pb0[1] - pa0[1]) * tb + iv];
                 const mu2 = (pa[0] + pb[0]) / 2, mv2 = (pa[1] + pb[1]) / 2;
                 const x = c.ox + mu2 * cs - mv2 * sn, z = c.oz + mu2 * sn + mv2 * cs;
-                const y = H(mu2, mv2) + LIFT.lawn;
                 const len = Math.hypot(pb[0] - pa[0], pb[1] - pa[1]);
                 const yawH = Math.atan2((pb[0] - pa[0]) * cs - (pb[1] - pa[1]) * sn, (pb[0] - pa[0]) * sn + (pb[1] - pa[1]) * cs) - Math.PI / 2;
-                F.setXf(x, y, z, yawH);
                 const k = 0.85 + hash01(r, Math.round(mu2), 5) * 0.3;
-                F.box(-len / 2, 0, -wd / 2, len / 2, hgt, wd / 2, scl(hedgeCol, k), { colTop: scl(hedgeCol, k * 1.15) });
+                E.hedge(x, z, mu2, mv2, yawH, len, hgt, wd, scl(hedgeCol, k), scl(hedgeCol, k * 1.15));
               }
             }
           }
@@ -1502,8 +1490,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
             if ((!ok || b - r0 >= 12) && r0 >= 0) {
               const line = a + (sd > 0 ? 1 : 0);
               const pa = horiz ? [u0 + r0, v0 + line] : [u0 + line, v0 + r0], pb = horiz ? [u0 + b, v0 + line] : [u0 + line, v0 + b];
-              curbPiece(Gd, P, pa, pb, horiz ? 0 : sd, horiz ? sd : 0, curbCol, false);
-              TRI.curb = (TRI.curb || 0) + 2;
+              E.curb(pa, pb, horiz ? 0 : sd, horiz ? sd : 0, curbCol, false, 2);
               r0 = ok ? b : -1;
             }
           }
@@ -1522,7 +1509,7 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
         const r = 0.3 + hash01(a + 7, b, c.pid + 63) * 0.15;
         const k = 0.85 + hash01(a, b + 5, 64) * 0.3;
         const x = c.ox + u * cs - v * sn, z = c.oz + u * sn + v * cs;
-        W.flowers.push(x, H(u, v) + LIFT.lawn + r * 0.56, z, r, fc[0] * k, fc[1] * k, fc[2] * k);
+        E.flower(u, v, x, z, r, fc[0] * k, fc[1] * k, fc[2] * k);
       }
   }
   // —— 灌木球：散布在大块草坪里（随机压扁与缩放） ——
@@ -1536,11 +1523,10 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     for (let q = 0; q < nn; q++) {
       const u = u0 + i + 1 + hash01(i + q, j, 7) * (w - 2), v = v0 + j + 1 + hash01(i, j + q, 8) * (h - 2);
       const x = c.ox + u * cs - v * sn, z = c.oz + u * sn + v * cs;
-      const y = H(u, v) + LIFT.lawn;
       const r = 0.45 + hash01(q, i + j, 9) * 0.65;
       const fl = 0.68 + hash01(q + 3, i + j, 19) * 0.27;
       const col = shrubCols[Math.floor(hash01(i, q, 10) * shrubCols.length)];
-      W.crowns.push(x, y + r * fl * 0.82, z, r * 1.1, col[0], col[1], col[2], fl);
+      E.shrub(u, v, x, z, r, fl, col);
     }
   }
   // —— 小乔木（桂花、石楠、紫叶李、海棠一类 3~5 m 观赏树）：根部外扩的锥台树干 + 两根分枝 + 主冠/侧冠；老小区以宅间大树为主，少种 ——
@@ -1554,12 +1540,130 @@ function* genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     for (let q = 0; q < nn; q++) {
       const u = u0 + i + 2 + hash01(i + q, j, 17) * (w - 4), v = v0 + j + 2 + hash01(i, j + q, 18) * (h - 4);
       const x = c.ox + u * cs - v * sn, z = c.oz + u * sn + v * cs;
-      const y = H(u, v) + LIFT.lawn;
       const s = 0.8 + hash01(q, i + j, 19) * 0.6;
       const col = treeCols[Math.floor(hash01(j, q, 20) * treeCols.length)];
       const yaw = hash01(q, j, 21) * 6.28;
-      smallTree(W, x, y, z, s, yaw, col, trunkCol);
+      E.tree(u, v, x, z, s, yaw, col, trunkCol);
     }
+  }
+  return E.out();
+}
+
+// —— 草坪出图指令：纯计算按顺序记下，回放时在主线程按同样顺序、同样参数调用原来的出图代码（结果逐位相同） ——
+const OP_QUAD = 1, OP_POLY = 2, OP_CURB = 3, OP_HEDGE = 4, OP_FLOWER = 5, OP_SHRUB = 6, OP_TREE = 7;
+class LawnOps {
+  constructor() {
+    this.a = new Float64Array(2048);
+    this.n = 0;
+  }
+  _need(k) {
+    if (this.n + k <= this.a.length) return;
+    let m = this.a.length * 2;
+    while (m < this.n + k) m *= 2;
+    const b = new Float64Array(m);
+    b.set(this.a.subarray(0, this.n));
+    this.a = b;
+  }
+  _p(v) { this.a[this.n++] = v; }
+  /** 整格矩形（tag 0 草坪：计面积与三角形；1 底层） */
+  quad(tag, kind, ua, ub, va, vb, lift, col, area) {
+    this._need(12);
+    this._p(OP_QUAD); this._p(tag); this._p(kind); this._p(ua); this._p(ub); this._p(va); this._p(vb); this._p(lift);
+    this._p(col[0]); this._p(col[1]); this._p(col[2]); this._p(area);
+  }
+  poly(kind, lift, col, pts) {
+    this._need(7 + pts.length * 2);
+    this._p(OP_POLY); this._p(kind); this._p(lift); this._p(col[0]); this._p(col[1]); this._p(col[2]); this._p(pts.length);
+    for (const q of pts) { this._p(q[0]); this._p(q[1]); }
+  }
+  curb(pa, pb, nu, nv, col, top, tri) {
+    this._need(12);
+    this._p(OP_CURB); this._p(pa[0]); this._p(pa[1]); this._p(pb[0]); this._p(pb[1]); this._p(nu); this._p(nv);
+    this._p(col[0]); this._p(col[1]); this._p(col[2]); this._p(top ? 1 : 0); this._p(tri);
+  }
+  hedge(x, z, mu, mv, yaw, len, hgt, wd, col, colTop) {
+    this._need(15);
+    this._p(OP_HEDGE); this._p(x); this._p(z); this._p(mu); this._p(mv); this._p(yaw); this._p(len); this._p(hgt); this._p(wd);
+    this._p(col[0]); this._p(col[1]); this._p(col[2]); this._p(colTop[0]); this._p(colTop[1]); this._p(colTop[2]);
+  }
+  flower(u, v, x, z, r, cr, cg, cb) {
+    this._need(9);
+    this._p(OP_FLOWER); this._p(u); this._p(v); this._p(x); this._p(z); this._p(r); this._p(cr); this._p(cg); this._p(cb);
+  }
+  shrub(u, v, x, z, r, fl, col) {
+    this._need(10);
+    this._p(OP_SHRUB); this._p(u); this._p(v); this._p(x); this._p(z); this._p(r); this._p(fl); this._p(col[0]); this._p(col[1]); this._p(col[2]);
+  }
+  tree(u, v, x, z, s, yaw, col, trunk) {
+    this._need(13);
+    this._p(OP_TREE); this._p(u); this._p(v); this._p(x); this._p(z); this._p(s); this._p(yaw);
+    this._p(col[0]); this._p(col[1]); this._p(col[2]); this._p(trunk[0]); this._p(trunk[1]); this._p(trunk[2]);
+  }
+  out() {
+    return this.a.slice(0, this.n);
+  }
+}
+
+/** 回放草坪出图指令（主线程）：与原来边算边出图的代码逐句相同 */
+export function replayLawns(S, W, c, a) {
+  const T = S.terrain, cs = c.cs, sn = c.sn;
+  const TRI = W.stats.tri; // 分项三角形计数（离线检查用）
+  const H = (u, v) => T.heightAt(c.ox + u * cs - v * sn, c.oz + u * sn + v * cs);
+  const P = (u, v, lift) => [c.ox + u * cs - v * sn, H(u, v) + lift, c.oz + u * sn + v * cs];
+  const Gw = W.ground, Gd = W.gdetail, F = W.fine;
+  for (let p = 0; p < a.length; ) {
+    const op = a[p];
+    if (op === OP_QUAD) {
+      const tag = a[p + 1], kind = a[p + 2], ua = a[p + 3], ub = a[p + 4], va = a[p + 5], vb = a[p + 6], lift = a[p + 7];
+      const col = [a[p + 8], a[p + 9], a[p + 10]], area = a[p + 11];
+      p += 12;
+      Gw.k = kind;
+      Gw.quadW(P(ua, vb, lift), P(ub, vb, lift), P(ub, va, lift), P(ua, va, lift), col, [[ua, vb], [ub, vb], [ub, va], [ua, va]]);
+      if (tag === 0) {
+        W.stats.lawn += area;
+        TRI.rect = (TRI.rect || 0) + 2;
+      } else TRI.baseRect = (TRI.baseRect || 0) + 2;
+    } else if (op === OP_POLY) {
+      const kind = a[p + 1], lift = a[p + 2], col = [a[p + 3], a[p + 4], a[p + 5]], n = a[p + 6];
+      const pts = new Array(n);
+      for (let q = 0; q < n; q++) pts[q] = [a[p + 7 + q * 2], a[p + 8 + q * 2]];
+      p += 7 + n * 2;
+      TRI['poly' + lift] = (TRI['poly' + lift] || 0) + pts.length - 2;
+      // 面积太小（< 0.01 m²，等值线贴着格边）不出面
+      let A = 0;
+      for (let q = 0, r = pts.length - 1; q < pts.length; r = q++) A += pts[r][0] * pts[q][1] - pts[q][0] * pts[r][1];
+      if (Math.abs(A) < 0.02) continue;
+      Gw.k = kind;
+      const w0 = P(pts[0][0], pts[0][1], lift);
+      for (let q = 1; q + 1 < pts.length; q++) triUp(Gw, w0, P(pts[q][0], pts[q][1], lift), P(pts[q + 1][0], pts[q + 1][1], lift), col, pts[0], pts[q], pts[q + 1]);
+    } else if (op === OP_CURB) {
+      const pa = [a[p + 1], a[p + 2]], pb = [a[p + 3], a[p + 4]], nu = a[p + 5], nv = a[p + 6], col = [a[p + 7], a[p + 8], a[p + 9]], top = a[p + 10] === 1, tri = a[p + 11];
+      p += 12;
+      curbPiece(Gd, P, pa, pb, nu, nv, col, top);
+      TRI.curb = (TRI.curb || 0) + tri;
+    } else if (op === OP_HEDGE) {
+      const x = a[p + 1], z = a[p + 2], mu2 = a[p + 3], mv2 = a[p + 4], yawH = a[p + 5], len = a[p + 6], hgt = a[p + 7], wd = a[p + 8];
+      const col = [a[p + 9], a[p + 10], a[p + 11]], colTop = [a[p + 12], a[p + 13], a[p + 14]];
+      p += 15;
+      const y = H(mu2, mv2) + LIFT.lawn;
+      F.setXf(x, y, z, yawH);
+      F.box(-len / 2, 0, -wd / 2, len / 2, hgt, wd / 2, col, { colTop });
+    } else if (op === OP_FLOWER) {
+      const u = a[p + 1], v = a[p + 2], x = a[p + 3], z = a[p + 4], r = a[p + 5];
+      W.flowers.push(x, H(u, v) + LIFT.lawn + r * 0.56, z, r, a[p + 6], a[p + 7], a[p + 8]);
+      p += 9;
+    } else if (op === OP_SHRUB) {
+      const u = a[p + 1], v = a[p + 2], x = a[p + 3], z = a[p + 4], r = a[p + 5], fl = a[p + 6];
+      const y = H(u, v) + LIFT.lawn;
+      W.crowns.push(x, y + r * fl * 0.82, z, r * 1.1, a[p + 7], a[p + 8], a[p + 9], fl);
+      p += 10;
+    } else if (op === OP_TREE) {
+      const u = a[p + 1], v = a[p + 2], x = a[p + 3], z = a[p + 4], s = a[p + 5], yaw = a[p + 6];
+      const col = [a[p + 7], a[p + 8], a[p + 9]], trunkCol = [a[p + 10], a[p + 11], a[p + 12]];
+      p += 13;
+      const y = H(u, v) + LIFT.lawn;
+      smallTree(W, x, y, z, s, yaw, col, trunkCol);
+    } else throw new Error('草坪出图指令损坏：' + op);
   }
 }
 
