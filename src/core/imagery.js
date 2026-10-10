@@ -244,7 +244,10 @@ export class Imagery {
   async _fetch(k, p) {
     const ctrl = new AbortController();
     this.inflight.set(k, ctrl);
-    const timer = setTimeout(() => ctrl.abort(), 15000);
+    // 本地包是本机 HTTP Range 读取，只会慢、不会“没有”：机器很忙（多个实例同时渲染）时 15 s 内读不完很常见。
+    // 原先 15 s 超时 × 4 次就永久记失败，地形退回内置 Esri 冬季底图（满地雪斑，审查 P0 浐灞“积雪”的来源之一）
+    const local = !!this.provider.local;
+    const timer = setTimeout(() => ctrl.abort(), local ? 60000 : 15000);
     const gen = this.generation || 0;
     try {
       let bmp;
@@ -286,8 +289,9 @@ export class Imagery {
       else {
         const r = (this.retries.get(k) || 0) + 1;
         this.retries.set(k, r);
-        if (r >= 4) this.failed.add(k);
-        else this.backoff.set(k, performance.now() + 1500 * r * r);
+        // 本地包：读超时/中断只退避重试（最长 30 s 一次），12 次后才放弃
+        if (r >= (local ? 12 : 4)) this.failed.add(k);
+        else this.backoff.set(k, performance.now() + Math.min(30000, 1500 * r * r));
         this.online.fail++;
         this.consecutiveFail++;
         if (this.online.ok === 0 && this.consecutiveFail >= 16) {

@@ -142,15 +142,43 @@ bool terrInHole(vec2 p) {
 }
 `;
 
-// ---------- 地面语义图：用地（绿地/广场）+ 路网（路面、夜间城市光）栅格化成贴图，供地形着色器使用 ----------
+// ---------- 地面语义图：用地（绿地/广场）+ 路网（路面、夜间城市光）+ 建筑轮廓栅格化成贴图，供地形着色器使用 ----------
 // 通道：R = 绿地（公园/草地/林地/果园）1.0 / 城市建设用地 0.25，G = 夜间城市漫射光（按路网等级与周边路网密度，路灯与店铺溢光的近似），
-//       B = 路面（1，地面层道路）/ 广场（0.5）。
+//       B = 路面（1，地面层道路）/ 广场（0.5）/ 工地（0.2），
+//       A = 离建筑/路面远近（近图：1 = 距最近建筑轮廓 BLD_NEAR_R 米以内，0.5 = 只在地面层道路边 ROAD_NEAR_R 米以内，
+//           0 = 远离两者的空地；远图恒为 1）。
 // 两张：远图覆盖主城 36 km（17.6 m/像素，供俯视夜景与中远景）；近图跟随相机 1.6 km（1.6 m/像素，人眼高度的绿地边界与灯光衰减）。
 const GND_FAR = { x0: -18000, z0: -18000, size: 36000, px: 2048 };
 const GND_NEAR = { size: 1600, px: 1024, move: 320, maxAgl: 700 };
 const VEG_KINDS = new Set(['park', 'grass', 'forest', 'orchard']);
-// 城市建设用地：近景程序化地面只在这些用地里（或路网附近）画铺装，其余非绿地按影像色调画成泥土（农田、空地、工地）
+// 城市建设用地：近景程序化地面只在这些用地里（或路网、建筑附近）画铺装，其余非绿地按影像色调画成泥土（农田、空地、工地）
 const URBAN_KINDS = new Set(['residential', 'commercial', 'industrial', 'university', 'military']);
+// 楼间地块与“空地”的分界：离最近建筑轮廓 BLD_NEAR_R 米以内算楼前/楼间（铺装、草坪），更远且不在广场/绿地/路面上的城建用地
+// 是空地或工地（审查：未央路东、北池头一路北、高新路边的大片空地被画成无边的方砖广场；楼间空地反被画成郊野泥土）
+const BLD_NEAR_R = 20;
+const ROAD_NEAR_R = 12;
+
+/** buildings.bin（docs/CONTRACT.md 3.4）最小解析：只取轮廓（锚点 + 分米偏移），跳过 flags bit7（数据层让位、不渲染） */
+function parseFootprints(buffer) {
+  if (!buffer || !(buffer.byteLength >= 16)) return null;
+  const dv = new DataView(buffer);
+  if (dv.getUint8(0) !== 88 || dv.getUint8(1) !== 66 || dv.getUint8(2) !== 76 || dv.getUint8(3) !== 68) return null; // "XBLD"
+  const version = dv.getUint32(4, true), count = dv.getUint32(8, true), totalVerts = dv.getUint32(12, true);
+  if (version < 1 || version > 2 || count > 4e6 || totalVerts > 8e7) return null;
+  let o = 16;
+  const ax = new Float32Array(buffer, o, count); o += count * 4;
+  const az = new Float32Array(buffer, o, count); o += count * 4;
+  const vs = new Uint32Array(buffer, o, count); o += count * 4;
+  const vc = new Uint16Array(buffer, o, count); o += count * 2;
+  o += count * 4; // heightDm、minHeightDm
+  o += count; // kind
+  const flags = new Uint8Array(buffer, o, count); o += count;
+  if (version >= 2) o += count; // style
+  o = (o + 3) & ~3;
+  if (o + totalVerts * 4 > buffer.byteLength) return null;
+  const offs = new Int16Array(buffer, o, totalVerts * 2);
+  return { count, ax, az, vs, vc, flags, offs };
+}
 // 类别 → [夜间光强 0..1, 光晕外扩（米，单侧）]
 const ROAD_GLOW = {
   motorway: [0.8, 20], trunk: [1, 22], primary: [1, 20], secondary: [0.9, 16], tertiary: [0.75, 13], residential: [0.5, 10],
@@ -179,7 +207,7 @@ class GroundMaps {
     }
     this.areas = [];
     for (const f of (data && data.landuse && data.landuse.polys) || []) {
-      const kind = VEG_KINDS.has(f.k) ? 1 : f.k === 'square' ? 2 : URBAN_KINDS.has(f.k) ? 3 : 0;
+      const kind = VEG_KINDS.has(f.k) ? 1 : f.k === 'square' ? 2 : URBAN_KINDS.has(f.k) ? 3 : f.k === 'construction' ? 4 : 0;
       if (!kind || !f.outer || f.outer.length < 6) continue;
       const o = f.outer;
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -205,6 +233,28 @@ class GroundMaps {
     });
     reg(this.roads, 0);
     reg(this.areas, 1 << 24);
+    // 建筑轮廓（只进近图格网）：按锚点所在格登记（单栋最大不过几百米，近图取格时外扩一圈即可）
+    this.fp = null;
+    try {
+      const P = parseFootprints(data && data.buildings);
+      if (P) {
+        this.fp = P;
+        const c = this.cell;
+        let n = 0;
+        for (let i = 0; i < P.count; i++) {
+          if (P.flags[i] & 128 || P.vc[i] < 3) continue;
+          const k = Math.floor(P.ax[i] / c) * 100003 + Math.floor(P.az[i] / c);
+          let l = this.grid.get(k);
+          if (!l) this.grid.set(k, (l = []));
+          l.push((2 << 24) + i);
+          n++;
+        }
+        this.fpCount = n;
+      }
+    } catch (e) {
+      console.warn('[terrain] 建筑轮廓解析失败', e);
+      this.fp = null;
+    }
     this.dens = null; // 周边路网灯光密度（256² 网格，覆盖远图范围）
   }
 
@@ -213,8 +263,8 @@ class GroundMaps {
     return c;
   }
 
-  /** 把 [x0,z0]-[x0+size] 范围画进 px² 的 RGBA 字节数组（R 绿地 / G 灯光（未乘密度）/ B 路面） */
-  _raster(x0, z0, size, px, roads, areas) {
+  /** 把 [x0,z0]-[x0+size] 范围画进 px² 的 RGBA 字节数组（R 绿地 / G 灯光（未乘密度）/ B 路面 / A 离建筑远近，blds 为空时恒 255） */
+  _raster(x0, z0, size, px, roads, areas, blds = null) {
     if (!this._cv || this._cv.width !== px) {
       this._cv = this._canvas(px);
       this._cg = this._canvas(px);
@@ -234,22 +284,37 @@ class GroundMaps {
       k.lineJoin = 'round';
     }
     const inView = (b, m) => b[2] >= x0 - m && b[0] <= x0 + size + m && b[3] >= z0 - m && b[1] <= z0 + size + m;
-    // 绿地、广场
-    const ring = (r) => {
-      c.moveTo(r[0], r[1]);
-      for (let i = 2; i < r.length; i += 2) c.lineTo(r[i], r[i + 1]);
-      c.closePath();
+    // 绿地、建设用地、广场、工地
+    // 同类用地先各自填进临时画布（每个多边形单独按 evenodd 挖自己的洞，同类重叠不累加），再整层叠加进主图。
+    // 原先同类所有多边形放进一条路径按 evenodd 填，公园里套着的草地/林地多边形互相抵消成“洞”（审查：小雁塔园区
+    // 草坪被当成空地）；也不能每个多边形直接叠加，否则两块广场重叠处会累加成路面
+    const kc = this._ck && this._ck.width === px ? this._ck : (this._ck = this._canvas(px));
+    const k = kc.getContext('2d');
+    const ringK = (r) => {
+      k.moveTo(r[0], r[1]);
+      for (let i = 2; i < r.length; i += 2) k.lineTo(r[i], r[i + 1]);
+      k.closePath();
     };
-    for (const kind of [3, 1, 2]) {
-      c.beginPath();
+    for (const kind of [3, 1, 2, 4]) {
+      k.setTransform(1, 0, 0, 1, 0, 0);
+      k.globalCompositeOperation = 'source-over';
+      k.clearRect(0, 0, px, px);
+      k.setTransform(s, 0, 0, s, -x0 * s, -z0 * s);
+      // R：绿地 1.0、建设用地 0.25（叠加时绿地优先，'lighter' 相加后夹到 1）；B：广场 0.5、工地 0.2
+      k.fillStyle = kind === 1 ? '#ff0000' : kind === 3 ? '#400000' : kind === 4 ? '#000033' : '#000080';
+      let any = false;
       for (const a of areas) {
         if (a.kind !== kind || !inView(a.bb, 0)) continue;
-        ring(a.outer);
-        for (const h of a.holes) if (h && h.length >= 6) ring(h);
+        k.beginPath();
+        ringK(a.outer);
+        for (const h of a.holes) if (h && h.length >= 6) ringK(h);
+        k.fill('evenodd');
+        any = true;
       }
-      // R：绿地 1.0、建设用地 0.25（叠加时绿地优先，'lighter' 相加后夹到 1）；B：广场 0.5
-      c.fillStyle = kind === 1 ? '#ff0000' : kind === 3 ? '#400000' : '#000080';
-      c.fill('evenodd');
+      if (!any) continue;
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.drawImage(kc, 0, 0);
+      c.setTransform(s, 0, 0, s, -x0 * s, -z0 * s);
     }
     // 路面（只画地面层道路；同宽度一批，单条路径内重叠不叠加）
     const byW = new Map();
@@ -295,7 +360,59 @@ class GroundMaps {
     c.filter = `blur(${Math.max(1, 8 * s).toFixed(1)}px)`;
     c.drawImage(this._cg, 0, 0);
     c.filter = 'none';
-    return c.getImageData(0, 0, px, px).data;
+    const d = c.getImageData(0, 0, px, px).data;
+    if (blds && this.fp && blds.length) {
+      // 离建筑/路面远近：轮廓填充 + 2R 宽描边（= 离轮廓 R 米以内）、路面加宽描边，羽化约 6 m 后写进 A 通道
+      const P = this.fp;
+      const bc = this._cb || (this._cb = this._canvas(px));
+      if (bc.width !== px) { bc.width = px; bc.height = px; }
+      const b = bc.getContext('2d');
+      b.setTransform(1, 0, 0, 1, 0, 0);
+      b.globalCompositeOperation = 'source-over';
+      b.filter = 'none';
+      b.fillStyle = '#000';
+      b.fillRect(0, 0, px, px);
+      b.setTransform(s, 0, 0, s, -x0 * s, -z0 * s);
+      // 先画地面层道路两侧 ROAD_NEAR_R 米（人行道外沿、分隔带开口、路口转角）为 0.5：只表示“不是空地”，
+      // 不算楼旁（郊野道路两侧仍画泥土）；再画建筑缓冲区为 1 盖在上面
+      b.strokeStyle = '#808080';
+      b.lineJoin = 'round';
+      for (const [w, list] of byW) {
+        b.lineWidth = w + ROAD_NEAR_R * 2;
+        b.beginPath();
+        for (const r of list) {
+          const p = r.p;
+          b.moveTo(p[0], p[1]);
+          for (let i = 2; i < p.length; i += 2) b.lineTo(p[i], p[i + 1]);
+        }
+        b.stroke();
+      }
+      b.beginPath();
+      for (const i of blds) {
+        const ax = P.ax[i], az = P.az[i], st = P.vs[i] * 2, n = P.vc[i], o = P.offs;
+        b.moveTo(ax + o[st] * 0.1, az + o[st + 1] * 0.1);
+        for (let j = 1; j < n; j++) b.lineTo(ax + o[st + j * 2] * 0.1, az + o[st + j * 2 + 1] * 0.1);
+        b.closePath();
+      }
+      b.fillStyle = b.strokeStyle = '#fff';
+      b.lineWidth = BLD_NEAR_R * 2;
+      b.fill('nonzero');
+      b.stroke();
+      // 羽化：借用灯光画布（其内容已叠进主图）
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over';
+      g.filter = 'none';
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, px, px);
+      g.filter = `blur(${Math.max(1, 6 * s).toFixed(1)}px)`;
+      g.drawImage(bc, 0, 0);
+      g.filter = 'none';
+      const a = g.getImageData(0, 0, px, px).data;
+      for (let k = 3; k < d.length; k += 4) d[k] = a[k - 3];
+    } else {
+      for (let k = 3; k < d.length; k += 4) d[k] = 255;
+    }
+    return d;
   }
 
   /** 周边路网灯光密度 0..1（双线性） */
@@ -320,7 +437,6 @@ class GroundMaps {
         const t = Math.min(1, Math.max(0, (u - 0.05) / 0.22));
         const urb = t * t * (3 - 2 * t);
         d[k + 1] = Math.min(255, d[k + 1] * urb + 34 * urb);
-        d[k + 3] = 255;
       }
     }
   }
@@ -357,13 +473,15 @@ class GroundMaps {
   buildNear(x0, z0) {
     const N = GND_NEAR, c = this.cell;
     const seenR = new Set(), seenA = new Set();
-    const roads = [], areas = [];
-    for (let cx = Math.floor(x0 / c); cx <= Math.floor((x0 + N.size) / c); cx++)
-      for (let cz = Math.floor(z0 / c); cz <= Math.floor((z0 + N.size) / c); cz++) {
+    const roads = [], areas = [], blds = [];
+    // 外扩一格：建筑按锚点登记，锚点在范围外一点的楼，轮廓与 R 米缓冲区仍可能伸进来
+    for (let cx = Math.floor(x0 / c) - 1; cx <= Math.floor((x0 + N.size) / c) + 1; cx++)
+      for (let cz = Math.floor(z0 / c) - 1; cz <= Math.floor((z0 + N.size) / c) + 1; cz++) {
         const l = this.grid.get(cx * 100003 + cz);
         if (!l) continue;
         for (const t of l) {
-          if (t >= 1 << 24) { const i = t - (1 << 24); if (!seenA.has(i)) { seenA.add(i); areas.push(this.areas[i]); } }
+          if (t >= 2 << 24) blds.push(t - (2 << 24)); // 建筑只登记在锚点所在的一个格里，不会重复
+          else if (t >= 1 << 24) { const i = t - (1 << 24); if (!seenA.has(i)) { seenA.add(i); areas.push(this.areas[i]); } }
           else if (!seenR.has(t)) { seenR.add(t); roads.push(this.roads[t]); }
         }
       }
@@ -372,7 +490,7 @@ class GroundMaps {
       const b = a.bb;
       if ((b[2] - b[0] > 30000 || b[3] - b[1] > 30000) && b[2] >= x0 && b[0] <= x0 + N.size && b[3] >= z0 && b[1] <= z0 + N.size) areas.push(a);
     }
-    const d = this._raster(x0, z0, N.size, N.px, roads, areas);
+    const d = this._raster(x0, z0, N.size, N.px, roads, areas, this.fp ? blds : null);
     this._urbanize(d, x0, z0, N.size, N.px);
     return new Uint8Array(d.buffer, d.byteOffset, d.byteLength);
   }
@@ -390,9 +508,11 @@ function makeGroundTexture(data, px) {
 }
 
 // ---------- 地形瓦片着色器补丁：自定义 UV 变换 + 影像调色 + 近处程序化地面 + 夜间压暗与城市光 + 挖洞 ----------
-function patchTileMaterial(mat, uvXform, holes, gnd, texM) {
+function patchTileMaterial(mat, uvXform, holes, gnd, texM, snowSrc) {
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uUvXform = uvXform;
+    shader.uniforms.uGrade = gnd.grade;
+    shader.uniforms.uSnowSrc = snowSrc;
     shader.uniforms.uHoleTex = holes.tex;
     shader.uniforms.uHoleN = holes.n;
     shader.uniforms.uTexM = texM;
@@ -404,6 +524,7 @@ function patchTileMaterial(mat, uvXform, holes, gnd, texM) {
     shader.uniforms.uTNight = gnd.night;
     shader.uniforms.uCamAgl = gnd.camAgl;
     shader.uniforms.uGlowGain = gnd.glowGain;
+    shader.uniforms.uTerrDbg = gnd.dbg;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nuniform vec4 uUvXform;\nvarying vec3 vTerrWorld;')
       .replace(
@@ -417,7 +538,7 @@ function patchTileMaterial(mat, uvXform, holes, gnd, texM) {
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + TERRAIN_SURFACE_GLSL)
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += terrGlow;');
   };
-  mat.customProgramCacheKey = () => 'xian-terrain-v7';
+  mat.customProgramCacheKey = () => 'xian-terrain-v9';
 }
 
 const NOISE_GLSL = `
@@ -438,12 +559,16 @@ const GROUND_GLSL = /* glsl */ `
 uniform float uTexM;
 uniform sampler2D uGndFar; uniform vec4 uGndFarBox;
 uniform sampler2D uGndNear; uniform vec4 uGndNearBox; uniform float uGndNearOn;
-uniform float uTNight; uniform float uCamAgl; uniform float uGlowGain;
+uniform float uTNight; uniform float uCamAgl; uniform float uGlowGain; uniform float uTerrDbg;
+uniform vec4 uGrade;      // x 高光软肩起点（线性亮度） y 软肩压缩斜率 z 近处“去白”强度 w 青绿去色强度
+uniform float uSnowSrc;   // 本块影像来自内置 Esri 冬季底图（满地雪斑）：去白加强
 float tLuma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 // 卫星影像调色。原先的“饱和度 ×1.3、pow 1.12 ×1.1”是给 Esri 冬季灰图准备的；现在的 Google 影像本身饱和度正常，
 // 再加强会把土黄推成紫红、把浅色铺装与残雪推成纯白（审查：农田发紫、楼间地面像积雪）。现在只做轻度对比，并且：
-//  · 压冷色偏色（蓝、品红、紫：阴影、彩钢瓦、残雪、偏色瓦片）；
-//  · 高光软肩（白屋顶、过曝铺装、雪斑不再刺白）；远处的高亮低饱和（远山积雪、冬季白斑）压成灰褐（far）；
+//  · 压冷色偏色（蓝、品红、紫：阴影、彩钢瓦、残雪、偏色瓦片）；青绿（工地防尘网、偏色瓦片）压成暗橄榄绿；
+//  · 高亮低饱和（影像里的白屋顶、水泥坪、浅色裸土、过曝铺装、残雪）近处也压成中灰——影像本身已经带着日照，
+//    再按 15 点的太阳打一遍光、经 ACES 后成了近白的“雪斑”（审查 P0 浐灞：楼间空地一片白，实为工地与白屋顶）；
+//  · 高光软肩（线性亮度 uGrade.x 起压缩），远处（far）与冬季底图（uSnowSrc）去白更强；
 //  · 提亮影像自带的楼影（lift）。
 vec3 tGrade(vec3 c, float lift, float far) {
   c = pow(max(c, 0.0), vec3(1.06)) * 1.03;
@@ -455,21 +580,52 @@ vec3 tGrade(vec3 c, float lift, float far) {
   c = mix(c, vec3(l) * vec3(1.03, 1.0, 0.95), smoothstep(0.025, 0.2, cool) * 0.92);
   // 粉紫褐（红最高、蓝高于绿）：冬季影像的荒草地、农田、土路常呈这种色，加上天光就成了“紫色地毯”。把蓝压到绿的水平 → 土黄褐
   c.b -= max(0.0, c.b - c.g) * step(c.b, c.r) * 0.75;
-  // 高光软肩（线性亮度 0.42 ≈ sRGB 0.68 以上压缩）
+  // 粉灰（红最高、绿蓝接近）：Google 瓦片的裸土、土路、农田、河滩、飞行区土面常呈“品红灰”（如 99,90,90），
+  // 经天光与 ACES 后像粉色地毯（审查：渭河滩/飞行区/少陵塬/浐灞土路发粉）。蓝压到绿的 0.85 以下、绿略提 → 土黄褐
+  // 只对轻度偏粉（土色）起作用，红砖、红屋顶（红明显高于绿）不动
+  mx = max(c.r, max(c.g, c.b));
+  float pr = (c.r - c.g) / max(mx, 1e-3);
+  float pinkW = smoothstep(0.02, 0.09, pr) * (1.0 - smoothstep(0.22, 0.38, pr));
+  c.b -= max(0.0, c.b - 0.82 * c.g) * pinkW * 0.85;
+  c.g += max(0.0, c.r - c.g) * pinkW * 0.3;
+  // 青绿（绿、蓝都明显高于红，且蓝接近绿）：工地防尘网、偏色瓦片、浅水塘反光。树冠草地是“绿 ≫ 蓝”，不受影响
+  mx = max(c.r, max(c.g, c.b));
+  float cyan = smoothstep(0.03, 0.14, (min(c.g, c.b) - c.r) / max(mx, 1e-3)) * smoothstep(0.72, 0.92, c.b / max(c.g, 1e-3));
   l = tLuma(c);
-  float over = max(l - 0.42, 0.0);
-  float lc = l - over + over / (1.0 + over * 2.5);
+  c = mix(c, vec3(l * 0.78) * vec3(0.95, 1.06, 0.84), cyan * uGrade.w);
+  // 高亮低饱和 → 中灰（暖），近处 uGrade.z、远处与冬季底图更强
+  l = tLuma(c);
+  mx = max(c.r, max(c.g, c.b));
+  float sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
+  float whiteK = max(mix(uGrade.z, 0.9, far), uSnowSrc);
+  float white = smoothstep(uGrade.x * 0.75, uGrade.x * 1.7, l) * (1.0 - smoothstep(0.1 + 0.08 * uSnowSrc, 0.26 + 0.1 * uSnowSrc, sat));
+  c = mix(c, vec3(l * 0.6) * vec3(1.05, 1.0, 0.9), white * whiteK);
+  // 高光软肩
+  l = tLuma(c);
+  float over = max(l - uGrade.x, 0.0);
+  float lc = l - over + over / (1.0 + over * uGrade.y);
   c *= lc / max(l, 1e-4);
   l = lc;
   mx = max(c.r, max(c.g, c.b));
-  float sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 1e-3);
-  float snow = smoothstep(0.2, 0.38, l) * (1.0 - smoothstep(0.08, 0.22, sat)) * far;
-  c = mix(c, vec3(l * 0.55) * vec3(1.05, 1.0, 0.9), snow * 0.8);
   // 影像里的楼影：暗且不偏绿（树冠是暗绿，保留）。3D 楼会投下自己的阴影，影像阴影是重复的，还常与太阳方向相反
   float grn = clamp((c.g - max(c.r, c.b)) / max(mx, 1e-3) * 6.0, 0.0, 1.0);
   float sh = smoothstep(0.05, 0.012, l) * (1.0 - grn) * lift;
   c = mix(c, vec3(1.03, 1.0, 0.96) * min(max(l, 0.004) * 3.5, 0.055), sh);
   return c;
+}
+// 影像阴影提亮：c 比邻域 nb（约 40 m 均值）明显暗，或暗且偏蓝（冬季影像的阴影由天光照亮、偏蓝；整片楼影里邻域本身也暗，
+// 只比亮度提不起来），且不偏绿（树冠保留）时，换成邻域色调（去蓝）、亮度取邻域与本像素 ×2 的较大者。k 为强度
+vec3 tDeshadow(vec3 c, vec3 nb, float k) {
+  float lc = tLuma(c), ln = max(tLuma(nb), 1e-4);
+  float mx = max(c.r, max(c.g, c.b));
+  float grn = clamp((c.g - max(c.r, c.b)) / max(mx, 1e-3) * 5.0, 0.0, 1.0);
+  float r = lc / ln;
+  float blue = (c.b - max(c.r, c.g * 0.96)) / max(mx, 1e-3);
+  float sh = max(smoothstep(0.72, 0.36, r), smoothstep(0.03, 0.11, blue) * smoothstep(0.16, 0.08, lc)) * (1.0 - grn) * k;
+  float mn = max(nb.r, max(nb.g, nb.b));
+  vec3 hue = mix(nb / ln, vec3(1.05, 1.0, 0.9), smoothstep(0.0, 0.1, (nb.b - nb.r) / max(mn, 1e-3)));
+  float tl = min(max(ln, lc * 2.0), 0.3) * (0.9 + 0.25 * clamp(r, 0.0, 1.0));
+  return mix(c, hue * tl, sh);
 }
 // 程序化铺装：返回反照率（线性）。pxw = 每像素米数（缝线抗锯齿）
 vec3 tPavers(vec2 w, vec2 sz, float rowShift, vec3 base, float var, float jw, float pxw) {
@@ -492,18 +648,47 @@ const TERRAIN_SURFACE_GLSL = /* glsl */ `
     vec2 w = vTerrWorld.xz;
     float dcam = length(vTerrWorld - cameraPosition);
     float pxw = length(fwidth(w));                    // 每像素覆盖的地面米数（放在分支外求导）
-    // 地面语义图（远图 + 跟随相机的近图）：只有夜间（城市光）和近景程序化地面用得到，白天远处不取样（全城俯视时省两次取样）。
+    // 地面语义图：远图全程取样（绿地用地调色、夜间城市光），近图（跟随相机）在其覆盖范围内。
     // 分支里不能用隐式导数，按每像素米数手算 mip 级别
-    vec3 gnd = vec3(0.0);
-    if (uTNight > 0.001 || dcam < 320.0) {
-      vec2 uf = (w - uGndFarBox.xy) * uGndFarBox.zw;
+    vec2 uf = (w - uGndFarBox.xy) * uGndFarBox.zw;
+    vec4 gnd = textureLod(uGndFar, uf, log2(max(pxw / ${(GND_FAR.size / GND_FAR.px).toFixed(4)}, 1.0)));
+    vec2 ef = min(uf, 1.0 - uf);
+    gnd.rgb *= smoothstep(0.0, 0.02, min(ef.x, ef.y));
+    float bldNear = 0.0, lotOpen = 0.0;               // 近图才有：离建筑 R 米内 / 远离建筑与路面
+    if (uGndNearOn > 0.5) {
       vec2 un = (w - uGndNearBox.xy) * uGndNearBox.zw;
-      vec3 gF = textureLod(uGndFar, uf, log2(max(pxw / ${(GND_FAR.size / GND_FAR.px).toFixed(4)}, 1.0))).rgb;
-      vec3 gN = textureLod(uGndNear, un, log2(max(pxw / ${(GND_NEAR.size / GND_NEAR.px).toFixed(4)}, 1.0))).rgb;
-      vec2 ef = min(uf, 1.0 - uf), en = min(un, 1.0 - un);
-      gF *= smoothstep(0.0, 0.02, min(ef.x, ef.y));
-      gnd = mix(gF, gN, uGndNearOn * smoothstep(0.0, 0.1, min(en.x, en.y)));
+      vec2 en = min(un, 1.0 - un);
+      float kn = smoothstep(0.0, 0.1, min(en.x, en.y));
+      if (kn > 0.0) {
+        vec4 gN = textureLod(uGndNear, un, log2(max(pxw / ${(GND_NEAR.size / GND_NEAR.px).toFixed(4)}, 1.0)));
+        gnd.rgb = mix(gnd.rgb, gN.rgb, kn);
+        bldNear = kn * smoothstep(0.62, 0.92, gN.a);          // A：1 = 楼旁，0.5 = 只是路边，0 = 远离两者
+        lotOpen = kn * (1.0 - smoothstep(0.12, 0.4, gN.a));
+      }
     }
+    float vegLU = smoothstep(0.45, 0.9, gnd.r);                                  // 绿地（R=1）；建设用地（R≈0.25）不算
+    float urbanLU = smoothstep(0.12, 0.2, gnd.r) * (1.0 - vegLU);
+    float asphalt = smoothstep(0.7, 0.9, gnd.b);
+    float plaza = smoothstep(0.3, 0.45, gnd.b) * (1.0 - asphalt);
+    float constr = smoothstep(0.1, 0.17, gnd.b) * (1.0 - smoothstep(0.26, 0.34, gnd.b));   // 工地（B=0.2）
+    float urbanish = max(urbanLU, smoothstep(0.03, 0.12, gnd.g));                 // 城建用地或路网附近
+    // 远离建筑、不在绿地/广场/路面上的城建空地，以及工地：拆迁地、施工期影像（碎屋顶、砖基础、防尘网、楼影）
+    // （只认城建用地或路网附近：郊野农田本来就画泥土，且中景要保留田块影像）
+    // （路面两侧 12 m 内已在近图 A 通道里算作“近”，不会落进空地）
+    float lot = max(lotOpen * urbanish * (1.0 - vegLU) * (1.0 - plaza) * (1.0 - asphalt), constr);
+
+    #ifdef USE_MAP
+      vec3 i8 = textureLod(map, vMapUv, log2(max(8.0 / uTexM, 1.0))).rgb;
+      vec3 i40 = textureLod(map, vMapUv, log2(max(40.0 / uTexM, 1.0))).rgb;
+    #else
+      vec3 i8 = diffuseColor.rgb;
+      vec3 i40 = diffuseColor.rgb;
+    #endif
+    // 影像自带的阴影（冬季影像的长楼影、树影，方向与实时太阳不一致，和三维楼的实时阴影叠成两套）：
+    // 比约 40 m 邻域明显暗、且不偏绿（树冠保留）的地方提到邻域色调。邻域本身含部分阴影，楼影越宽提得越少
+    float shK = 1.0 - 0.5 * smoothstep(1500.0, 8000.0, dcam);
+    vec3 raw = tDeshadow(diffuseColor.rgb, i40, shK);
+    i8 = tDeshadow(i8, i40, shK);
 
     // 高频噪声按像素尺度淡出（否则远处摩尔纹/斜条纹）
     float aaA = 1.0 - smoothstep(0.06, 0.25, pxw);   // 约 4/m
@@ -512,41 +697,56 @@ const TERRAIN_SURFACE_GLSL = /* glsl */ `
     float fade = 1.0 - smoothstep(60.0, 900.0, dcam);
     if (fade > 0.0) {
       float n = tnoise(w * 0.9) * 0.5 + mix(0.5, tnoise(w * 3.7), aaA) * 0.3 + mix(0.5, tnoise(w * 11.0), aaB) * 0.2;
-      diffuseColor.rgb *= 1.0 + (n - 0.5) * 0.22 * fade;
+      raw *= 1.0 + (n - 0.5) * 0.22 * fade;
     }
-    vec3 tc = tGrade(diffuseColor.rgb, 1.0 - 0.5 * smoothstep(1500.0, 8000.0, dcam), smoothstep(5000.0, 14000.0, dcam));
+    float farK = smoothstep(5000.0, 14000.0, dcam);
+    vec3 tc = tGrade(raw, shK, farK);
+    vec3 low = tGrade(i8, 1.0, farK);
+    // 影像低频（8 m）分类量：亮度、饱和度、绿度；亮灰低饱和 = 铺装（园路、广场、停车场）
+    float lumL = max(tLuma(low), 1e-3);
+    float mxL = max(low.r, max(low.g, low.b));
+    float satL = (mxL - min(low.r, min(low.g, low.b))) / max(mxL, 1e-3);
+    float imgVeg = smoothstep(0.03, 0.12, (low.g - max(low.r, low.b)) / max(mxL, 0.02));
+    // 冬季草坪是偏蓝的暗灰（亮度 0.07~0.1），广场石材、园路在 0.2 上下
+    float bright = smoothstep(0.12, 0.2, lumL) * (1.0 - smoothstep(0.25, 0.45, satL)) * (1.0 - imgVeg);
+    // 绿地用地（公园、草地、林地、果园）：冬季影像里是枯黄、灰褐、偏蓝的暗灰，十月应是黄绿、灰绿。
+    // 按用地把不够绿、也不像铺装的像素推向橄榄绿（保持亮度），各距离一致（审查：渭河滩近处灰绿、远处品红灰，视角一动就变色；园区草坪灰粉）
+    {
+      float gk = vegLU * (1.0 - bright) * 0.55;
+      float tl = tLuma(tc), tm = max(tc.r, max(tc.g, tc.b));
+      float tg = (tc.g - max(tc.r, tc.b)) / max(tm, 1e-3);
+      tc = mix(tc, vec3(0.80, 1.0, 0.52) * tl * 1.04, gk * (1.0 - smoothstep(0.02, 0.12, tg)));
+      float lg = (low.g - max(low.r, low.b)) / max(mxL, 1e-3);
+      low = mix(low, vec3(0.80, 1.0, 0.52) * lumL * 1.04, gk * (1.0 - smoothstep(0.02, 0.12, lg)));
+    }
+    // 空地/工地的土面（中景：影像 8 m 低频色调；近景在下面的程序化地面里加杂草与碎石）
+    // 影像色度只留一部分（拆迁地的砖基础、彩钢、防尘网的颜色会糊成一片橙粉/青灰），色相统一到黄土
+    vec3 dirtLow = mix(mix(low, vec3(tLuma(low)) * vec3(1.14, 1.0, 0.76), 0.6) * 0.9, vec3(0.19, 0.15, 0.105), 0.5);
+    tc = mix(tc, dirtLow * (0.94 + 0.12 * tnoise(w * 0.05)), lot * 0.85);
     diffuseColor.rgb = tc;
 
     // —— 近景地面（人眼高度/低空）：卫星图放大后是糊掉的屋顶、车影和偏蓝的阴影，看着像一滩水。
-    //    近处改为程序化地面：用地图（绿地/广场/路面）+ 卫星图低频色调分类，铺装按地块（正南正北的矩形）换材质，
-    //    地块边有路缘石，偶见井盖；远处与较高机位保持卫星图。——
-    float procW = (1.0 - smoothstep(30.0, 300.0, dcam)) * mix(1.0, 0.35, smoothstep(14.0, 90.0, uCamAgl));
+    //    近处改为程序化地面：用地图（绿地/广场/路面/工地）+ 离建筑远近 + 卫星图低频色调分类，铺装按地块（正南正北的矩形）换材质，
+    //    地块边有路缘石，偶见井盖；远处与较高机位保持卫星图。
+    //    40~160 m 低空也以程序化地面为主（原先 60 m 高只占约三成，影像里的车、屋顶、楼影透出来：审查 永宁门东、陕博、鼓楼西）——
+    float procW = (1.0 - smoothstep(30.0, 300.0, dcam)) * mix(1.0, 0.55, smoothstep(20.0, 160.0, uCamAgl));
     if (procW > 0.002) {
       #ifdef USE_MAP
-        // 低频取样按影像实际分辨率换算成固定的地面尺度（约 8 m / 1.5 m），相邻瓦片影像级别不同也一致（消除 LOD 接缝）
-        vec3 low = textureLod(map, vMapUv, log2(max(8.0 / uTexM, 1.0))).rgb;
         vec3 mid = textureLod(map, vMapUv, log2(max(1.5 / uTexM, 1.0))).rgb;
-        low = tGrade(low, 1.0, 0.0);
-        mid = tGrade(mid, 1.0, 0.0);
+        mid = tGrade(tDeshadow(mid, i40, 1.0), 1.0, 0.0);
       #else
-        vec3 low = tc;
         vec3 mid = tc;
       #endif
-      float lumL = max(tLuma(low), 1e-3), lumM = tLuma(mid);
-      float mxL = max(low.r, max(low.g, low.b));
+      lumL = max(tLuma(low), 1e-3);
+      float lumM = tLuma(mid);
       float n1 = tnoise(w * 0.35), n2 = mix(0.5, tnoise(w * 2.3), aaA), n3 = mix(0.5, tnoise(w * 9.0), aaB), nl = tnoise(w * 0.06);
-      // 分类
-      float imgVeg = smoothstep(0.03, 0.12, (low.g - max(low.r, low.b)) / max(mxL, 0.02));
-      float bright = smoothstep(0.09, 0.2, lumL) * (1.0 - imgVeg);          // 绿地里的亮灰：园路、小广场
-      float vegR = smoothstep(0.45, 0.9, gnd.r);                                    // 绿地（R=1）；建设用地（R≈0.25）不算
-      float urbanLU = smoothstep(0.12, 0.2, gnd.r) * (1.0 - vegR);
-      float veg = max(imgVeg * (0.5 + 0.5 * vegR), vegR * (1.0 - bright));
+      // 分类。绿地里的亮灰（园路、小广场）按上面的 bright：原阈值（亮度 0.09 起）把整片冬季草坪判成铺装，
+      // 再被公园色调层染成青绿方砖（审查：小雁塔园区）
+      float veg = max(imgVeg * (0.5 + 0.5 * vegLU), vegLU * (1.0 - bright));
       veg = smoothstep(0.42, 0.58, veg + (n1 - 0.5) * 0.3 + (n3 - 0.5) * 0.08);
-      float asphalt = smoothstep(0.7, 0.9, gnd.b);
-      float plaza = smoothstep(0.3, 0.45, gnd.b) * (1.0 - asphalt);
-      // 泥土：影像偏红褐，或既不在建设用地里也不靠近路网（郊野空地、农田、工地——此前一律画成了灰色铺装）
-      float built = max(urbanLU, smoothstep(0.03, 0.12, gnd.g));
-      float soil = max(smoothstep(0.12, 0.3, (low.r - low.b) / max(mxL, 0.02)), 1.0 - built) * (1.0 - veg) * (1.0 - asphalt) * (1.0 - plaza);
+      // 泥土：郊野（既不在城建用地里、不靠近路网、也不在楼旁）、城建空地、工地。楼间地块不画泥土（审查：城西楼间空地成了郊外荒地）
+      float built = max(urbanish, bldNear);
+      float soil = max(1.0 - built, lot) * (1.0 - veg) * (1.0 - asphalt) * (1.0 - plaza);
 
       // 地块：48 m 方格，每格在随机位置按东西或南北一分为二
       vec2 cell = floor(w / 48.0);
@@ -590,16 +790,27 @@ const TERRAIN_SURFACE_GLSL = /* glsl */ `
       pav = mix(pav, asph, asphalt);
       // 草地：保留一点低频色相，近处加细碎的叶片噪声；偶有黄斑与裸土
       float gfine = tnoise(w * 31.0) * (1.0 - smoothstep(0.02, 0.08, pxw));
-      vec3 grass = mix(vec3(0.052, 0.082, 0.032), vec3(0.105, 0.135, 0.055), n1) * (0.8 + 0.3 * n3 + 0.25 * gfine);
+      float gblade = tnoise(w * vec2(83.0, 61.0)) * (1.0 - smoothstep(0.008, 0.03, pxw));        // 草叶（约 1.5 cm，贴近相机才有）
+      vec3 grass = mix(vec3(0.052, 0.082, 0.032), vec3(0.105, 0.135, 0.055), n1) * (0.8 + 0.3 * n3 + 0.25 * gfine + 0.2 * (gblade - 0.5));
       grass *= 0.85 + 0.3 * tnoise(w * 0.13 + 7.0);                                   // 大块深浅（修剪、湿度）
       grass = mix(grass, vec3(0.14, 0.13, 0.08), smoothstep(0.6, 0.8, nl) * 0.55);      // 枯黄斑
       grass = mix(grass, vec3(0.13, 0.105, 0.075), smoothstep(0.7, 0.9, tnoise(w * 0.5 + 3.0)) * 0.35 * (1.0 - imgVeg)); // 裸土斑
       grass *= mix(vec3(1.0), clamp(low / lumL, vec3(0.85), vec3(1.2)), 0.25);
-      vec3 dirt = mix(low * 0.9, vec3(0.19, 0.15, 0.105), 0.55) * (0.85 + 0.25 * n2);
+      // 泥土（郊野、空地、工地）：影像色调的土面 + 碎石 + 成片杂草（干黄与暗绿）
+      vec3 dirt = dirtLow * (0.85 + 0.25 * n2) * (0.92 + 0.16 * n3);
+      // 郊野（非城建）荒地十月多是杂草，城建空地与工地以土面为主
+      float wild = (1.0 - built) * (1.0 - constr);
+      float wd = smoothstep(mix(0.42, 0.22, wild), mix(0.72, 0.6, wild), tnoise(w * 0.19 + 11.0) * 0.75 + n3 * 0.25);
+      vec3 weed = mix(vec3(0.105, 0.098, 0.052), vec3(0.058, 0.078, 0.032), tnoise(w * 0.07 + 5.0)) * (0.8 + 0.3 * n3 + 0.3 * gfine);
+      dirt = mix(dirt, weed, wd * mix(0.8, 0.45, constr));
       vec3 ground = mix(mix(pav, dirt, soil), grass, veg);
-      // 影像中频（约 1.5 m）明暗：保留地面上的大致图形，但不带卫星图的锐利杂物与接缝
-      ground *= mix(1.0, clamp(lumM / lumL, 0.8, 1.25), 0.3);
+      // 影像中频（约 1.5 m）明暗：保留地面上的大致图形，但不带卫星图的锐利杂物与接缝；绿地与空地里更弱（停在草地上的车、碎屋顶不透出来）
+      ground *= mix(1.0, clamp(lumM / lumL, 0.8, 1.25), 0.3 * (1.0 - 0.7 * max(veg, soil)));
       diffuseColor.rgb = mix(tc, ground, procW);
+      if (uTerrDbg > 0.5) diffuseColor.rgb = vec3(soil, veg, bldNear) * 0.5;            // 调试：土 / 草 / 楼旁
+    }
+    if (uTerrDbg > 1.5) {
+      diffuseColor.rgb = vec3(lot, vegLU, max(asphalt, plaza)) * 0.5;                    // 调试：空地 / 绿地用地 / 路面广场
     }
 
     // —— 夜间：月光下的地面不该像白天一样清楚（白屋顶、田块）；城市里按路网叠加暖色漫射光（路灯、店铺溢光），郊野保持暗 ——
@@ -840,6 +1051,9 @@ export class Terrain {
       night: (ctx && ctx.uniforms && ctx.uniforms.uNight) || { value: 0 },
       camAgl: { value: 100 },
       glowGain: { value: 0.75 },
+      dbg: { value: 0 }, // 调试假彩色（1 近景分类、2 用地分类），控制台 xian.terrain.gndU.dbg.value = 1
+      // 影像调色参数（见 tGrade）：高光软肩起点、压缩斜率、近处去白强度、青绿去色强度
+      grade: { value: new THREE.Vector4(0.14, 7.0, 0.95, 0.9) },
     };
     this.gmaps = null;
     if (ctx && ctx.data) {
@@ -1140,10 +1354,12 @@ export class Terrain {
 
     const uvXform = { value: new THREE.Vector4(0, 0, 1, 1) };
     const texM = { value: 1 }; // 当前影像每像素米数（近景低频取样按地面尺度换算 mip 级别）
+    const snowSrc = { value: 0 }; // 当前影像来自内置 Esri 冬季底图时为 1
     const mat = new THREE.MeshStandardMaterial({ roughness: 0.93, metalness: 0.0, color: 0xffffff });
     mat.userData.uvXform = uvXform;
     mat.userData.texM = texM;
-    patchTileMaterial(mat, uvXform, this.holeU, this.gndU, texM);
+    mat.userData.snowSrc = snowSrc;
+    patchTileMaterial(mat, uvXform, this.holeU, this.gndU, texM, snowSrc);
     const mesh = new THREE.Mesh(g, mat);
     mesh.position.set(n.cx, 0, n.cz);
     mesh.receiveShadow = true;
@@ -1206,6 +1422,8 @@ export class Terrain {
     const W = A.x1 - A.x0, H = A.z1 - A.z0;
     mat.userData.uvXform.value.set((b.x0 - A.x0) / W, 1 - (b.z1 - A.z0) / H, (b.x1 - b.x0) / W, (b.z1 - b.z0) / H);
     mat.userData.texM.value = best.mpp;
+    // 内置底图（img_*.jpg）是 Esri 冬季旧图，远山与空地有积雪：本地离线包缺图/还没读到时才会用到
+    mat.userData.snowSrc.value = best.key.startsWith('m:') ? 1 : 0;
     if (!hadMap) mat.needsUpdate = true;
     n.srcKey = best.key;
     n.texLevel = -best.mpp;
