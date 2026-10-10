@@ -22,6 +22,7 @@
 //   门头名称牌 1 个网格（8 个槽位的文字图集）。
 import * as THREE from 'three';
 import { loadJSON } from '../core/data.js';
+import { pointInPoly } from '../core/util.js';
 import { parseBld, planIter, exclusionRings, chunkIndex, prepSports, rectWorld, CHUNK } from '../arch/compound-plan.js';
 import { genChunk, K } from '../arch/compound-gen.js';
 import { carNear, carFar, leafTexture, flowerTexture } from '../arch/compound-props.js';
@@ -316,6 +317,32 @@ export default {
       index: this.plan.index,
       terrain: T,
       excluded: (x, z) => ctx.exclusions.test(x, z, 'buildings'),
+      // 外接框 [x0,x1]×[z0,z1] 内的 excluded 判定：先挑出外接框与之相交的让建筑排除区，框内没有时返回 null（框内任一点 excluded 都为假），
+      // 否则返回只查这几片的判定函数——对框内的点与 excluded 结果相同（排除区按外接框登记进所有相交的格，点所在格必含它）
+      excludedIn: (x0, z0, x1, z1) => {
+        const EX = ctx.exclusions;
+        if (!EX || !EX.grid || !EX.cell) return S.excluded;
+        const cell = EX.cell, cand = [];
+        for (let cx = Math.floor(x0 / cell); cx <= Math.floor(x1 / cell); cx++)
+          for (let cz = Math.floor(z0 / cell); cz <= Math.floor(z1 / cell); cz++) {
+            const list = EX.grid.get(cx * 100003 + cz);
+            if (!list) continue;
+            for (const it of list) {
+              if (!it.flags.buildings || (it.flags.maxHeight != null && 0 > it.flags.maxHeight)) continue;
+              const b = it.bb;
+              if (b.x1 >= x0 && b.x0 <= x1 && b.z1 >= z0 && b.z0 <= z1 && !cand.includes(it)) cand.push(it);
+            }
+          }
+        if (!cand.length) return null;
+        return (x, z) => {
+          for (const it of cand) {
+            const b = it.bb;
+            if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;
+            if (pointInPoly(x, z, it.p)) return true;
+          }
+          return false;
+        };
+      },
     };
     let level = Math.max(0, Math.min(3, ctx.quality.level ?? 2));
 

@@ -590,29 +590,85 @@ function phiPoly(o, u, v) {
   const d = Math.sqrt(d2);
   return (ins ? -d : d) - o.off;
 }
-/** 倒角距离（格）：每格到最近的 m[k] === target 格的距离（两遍扫描，8 邻域） */
+/**
+ * 倒角距离（格）：每格到最近的 m[k] === target 格的距离（两遍扫描，8 邻域）。
+ * 行首/行尾、首行/末行单独展开，内层不再逐格判边界（每格的候选与取最小、写回 Float32 的时机与逐格判边界的写法完全一致）
+ */
 function chamfer(m, target, nx, ny) {
-  const dist = new Float32Array(nx * ny);
-  for (let k = 0; k < nx * ny; k++) dist[k] = m[k] === target ? 0 : 1e6;
-  for (let j = 0; j < ny; j++)
-    for (let i = 0; i < nx; i++) {
-      const k = j * nx + i;
-      let d = dist[k];
-      if (!d) continue;
-      if (i > 0) d = Math.min(d, dist[k - 1] + 1);
-      if (j > 0) { d = Math.min(d, dist[k - nx] + 1); if (i > 0) d = Math.min(d, dist[k - nx - 1] + 1.414); if (i + 1 < nx) d = Math.min(d, dist[k - nx + 1] + 1.414); }
-      dist[k] = d;
+  const N = nx * ny;
+  const D = new Float32Array(N);
+  for (let k = 0; k < N; k++) D[k] = m[k] === target ? 0 : 1e6;
+  if (!N) return D;
+  const L = nx - 1;
+  // 正向：左、上、左上、右上
+  for (let i = 1; i < nx; i++) { const d = D[i]; if (!d) continue; const t = D[i - 1] + 1; if (t < d) D[i] = t; }
+  for (let j = 1; j < ny; j++) {
+    const r = j * nx;
+    {
+      let d = D[r];
+      if (d) {
+        let t = D[r - nx] + 1; if (t < d) d = t;
+        if (L > 0) { t = D[r - nx + 1] + 1.414; if (t < d) d = t; }
+        D[r] = d;
+      }
     }
-  for (let j = ny - 1; j >= 0; j--)
-    for (let i = nx - 1; i >= 0; i--) {
-      const k = j * nx + i;
-      let d = dist[k];
+    for (let k = r + 1, e = r + L; k < e; k++) {
+      let d = D[k];
       if (!d) continue;
-      if (i + 1 < nx) d = Math.min(d, dist[k + 1] + 1);
-      if (j + 1 < ny) { d = Math.min(d, dist[k + nx] + 1); if (i + 1 < nx) d = Math.min(d, dist[k + nx + 1] + 1.414); if (i > 0) d = Math.min(d, dist[k + nx - 1] + 1.414); }
-      dist[k] = d;
+      let t = D[k - 1] + 1; if (t < d) d = t;
+      t = D[k - nx] + 1; if (t < d) d = t;
+      t = D[k - nx - 1] + 1.414; if (t < d) d = t;
+      t = D[k - nx + 1] + 1.414; if (t < d) d = t;
+      D[k] = d;
     }
-  return dist;
+    if (L > 0) {
+      const k = r + L;
+      let d = D[k];
+      if (d) {
+        let t = D[k - 1] + 1; if (t < d) d = t;
+        t = D[k - nx] + 1; if (t < d) d = t;
+        t = D[k - nx - 1] + 1.414; if (t < d) d = t;
+        D[k] = d;
+      }
+    }
+  }
+  // 反向：右、下、右下、左下
+  {
+    const r = (ny - 1) * nx;
+    for (let i = L - 1; i >= 0; i--) { const k = r + i, d = D[k]; if (!d) continue; const t = D[k + 1] + 1; if (t < d) D[k] = t; }
+  }
+  for (let j = ny - 2; j >= 0; j--) {
+    const r = j * nx;
+    {
+      const k = r + L;
+      let d = D[k];
+      if (d) {
+        let t = D[k + nx] + 1; if (t < d) d = t;
+        if (L > 0) { t = D[k + nx - 1] + 1.414; if (t < d) d = t; }
+        D[k] = d;
+      }
+    }
+    for (let k = r + L - 1; k > r; k--) {
+      let d = D[k];
+      if (!d) continue;
+      let t = D[k + 1] + 1; if (t < d) d = t;
+      t = D[k + nx] + 1; if (t < d) d = t;
+      t = D[k + nx + 1] + 1.414; if (t < d) d = t;
+      t = D[k + nx - 1] + 1.414; if (t < d) d = t;
+      D[k] = d;
+    }
+    if (L > 0) {
+      const k = r;
+      let d = D[k];
+      if (d) {
+        let t = D[k + 1] + 1; if (t < d) d = t;
+        t = D[k + nx] + 1; if (t < d) d = t;
+        t = D[k + nx + 1] + 1.414; if (t < d) d = t;
+        D[k] = d;
+      }
+    }
+  }
+  return D;
 }
 /** 世界坐标三角形贴地：保证法线朝上 */
 function triUp(Gt, a, b, c, col, ua, ub, uc) {
@@ -659,7 +715,16 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
   // 1. 多边形内部（扫描线）
   const fillRing = (rf, val, onlyIf = -1, s = -1) => {
     const nE = rf.length / 2;
-    for (let j = 0; j < ny; j++) {
+    // 只扫环的纵向范围内的行：格心 vc 不在 [环最低, 环最高) 内的行没有交点（结果与逐行全扫相同；环含 NaN 时退回全扫）
+    let vmn = Infinity, vmx = -Infinity, bad = false;
+    for (let q = 1; q < rf.length; q += 2) {
+      const v = rf[q];
+      if (v < vmn) vmn = v;
+      if (v > vmx) vmx = v;
+      if (v !== v) bad = true;
+    }
+    const ja = bad ? 0 : Math.max(0, Math.floor(vmn - v0 - 0.5)), jb = bad ? ny - 1 : Math.min(ny - 1, Math.ceil(vmx - v0));
+    for (let j = ja; j <= jb; j++) {
       const vc = v0 + j + 0.5;
       const xs = [];
       for (let i = 0, k = nE - 1; i < nE; k = i++) {
@@ -776,8 +841,18 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     }
   }
   // 精建排除区：2×2 格抽样（草坪格与底层可铺格）；与排除块相邻的格再逐格复核（排除区边缘不留整块草皮，审查 st_sajinqiao）
-  {
-    const exc = (i, j) => S.excluded(c.ox + (u0 + i) * cs - (v0 + j) * sn, c.oz + (u0 + i) * sn + (v0 + j) * cs);
+  // 抽样点都在局部矩形 [u0, u0+nx] × [v0, v0+ny] 内：按它的世界外接框（外扩 1 m）先挑出附近的排除区，没有就整段跳过（结果相同）
+  let excF = S.excluded;
+  if (S.excludedIn) {
+    let ex0 = Infinity, ex1 = -Infinity, ez0 = Infinity, ez1 = -Infinity;
+    for (const [uu, vv] of [[u0, v0], [u0 + nx, v0], [u0 + nx, v0 + ny], [u0, v0 + ny]]) {
+      const x = c.ox + uu * cs - vv * sn, z = c.oz + uu * sn + vv * cs;
+      if (x < ex0) ex0 = x; if (x > ex1) ex1 = x; if (z < ez0) ez0 = z; if (z > ez1) ez1 = z;
+    }
+    excF = S.excludedIn(ex0 - 1, ez0 - 1, ex1 + 1, ez1 + 1);
+  }
+  if (excF) {
+    const exc = (i, j) => excF(c.ox + (u0 + i) * cs - (v0 + j) * sn, c.oz + (u0 + i) * sn + (v0 + j) * cs);
     const cand = (k) => own[k] && !bk[k];
     const mark = (q) => { if (bk[q]) return; bk[q] = 1; bsel[q] = -1; if (g[q] === CODE.LAWN) { g[q] = CODE.HOLE; src[q] = -1; } };
     const hitB = [];
@@ -862,6 +937,14 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
         if (a) a.push(idx); else fcGrid.set(k, [idx]);
       }
   });
+  // 全部铺装四边形外接框的并（外扩 FCAP）：框外 phiFc 恒为 Infinity，调用方可直接跳过
+  let fcU0 = Infinity, fcU1 = -Infinity, fcV0 = Infinity, fcV1 = -Infinity;
+  for (const [, qu0, qu1, qv0, qv1] of fcs) {
+    if (qu0 - FCAP < fcU0) fcU0 = qu0 - FCAP;
+    if (qu1 + FCAP > fcU1) fcU1 = qu1 + FCAP;
+    if (qv0 - FCAP < fcV0) fcV0 = qv0 - FCAP;
+    if (qv1 + FCAP > fcV1) fcV1 = qv1 + FCAP;
+  }
   const phiFc = (u, v) => {
     const a = fcGrid.get(Math.floor(u / 8) * 100003 + Math.floor(v / 8));
     if (!a) return Infinity;
@@ -912,8 +995,11 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
     const dist = chamfer(isL, 0, nx, ny); // 到最近非草坪格
     const dl = chamfer(isL, 1, nx, ny); // 到最近草坪格
     const DEXACT = oldM ? 3.6 : 2.2;
-    const need = new Uint8Array(NC);
-    for (let j = 0; j <= ny; j++)
+    // 需要精确距离的格点按行登记（行内列号递增），下面各源只遍历外接框里的这些格点（与逐点扫外接框、按源顺序更新等价）
+    const rowA = new Int32Array(ny + 2), needI = new Int32Array(NC);
+    let nNeed = 0;
+    for (let j = 0; j <= ny; j++) {
+      rowA[j] = nNeed;
       for (let i = 0; i <= nx; i++) {
         const key = j * NX1 + i;
         let dmin = 1e6, lmin = 1e6, f = FCAP, code = CODE.LAWN, nonL = -1;
@@ -932,18 +1018,25 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
         if (lmin > 2) { F0[key] = -FCAP; C0[key] = nonL >= 0 ? g[nonL] : CODE.OUT; continue; }
         F0[key] = f;
         C0[key] = code;
-        need[key] = 1;
+        needI[nNeed++] = i;
       }
+    }
+    rowA[ny + 1] = nNeed;
     // 精确距离：按源遍历它外接框（外扩 FCAP）里需要的格点
     const M = FCAP + 0.5;
     for (const o of SR) {
       if (o.t === 3) continue;
       const ia = Math.max(0, Math.ceil(o.bb[0] - M - u0)), ib = Math.min(nx, Math.floor(o.bb[1] + M - u0));
       const ja = Math.max(0, Math.ceil(o.bb[2] - M - v0)), jb = Math.min(ny, Math.floor(o.bb[3] + M - v0));
-      for (let j = ja; j <= jb; j++)
-        for (let i = ia; i <= ib; i++) {
+      if (!(ia <= ib)) continue;
+      for (let j = ja; j <= jb; j++) {
+        let qa = rowA[j], qb = rowA[j + 1];
+        if (qa === qb) continue;
+        while (qa < qb) { const m = (qa + qb) >> 1; if (needI[m] < ia) qa = m + 1; else qb = m; }
+        for (let qn = qa, qe = rowA[j + 1]; qn < qe; qn++) {
+          const i = needI[qn];
+          if (i > ib) break;
           const key = j * NX1 + i;
-          if (!need[key]) continue;
           const u = u0 + i, v = v0 + j;
           let p;
           if (o.t === 0) {
@@ -953,6 +1046,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
           else p = phiPoly(o, u, v);
           if (p < F0[key]) { F0[key] = p; C0[key] = o.code; }
         }
+      }
     }
   }
   // —— 草坪函数 FL：新小区 = F0；老小区 = 离障碍 1.6 m 起（中间是水泥地）；临街铺装处让出 ——
@@ -963,7 +1057,7 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
       let f = F0[key], code = C0[key];
       const u = u0 + i, v = v0 + j;
       if (oldM) { f -= 1.6; code = CODE.BASE; }
-      if (fcs.length && f > -FCAP) {
+      if (fcs.length && f > -FCAP && u >= fcU0 && u <= fcU1 && v >= fcV0 && v <= fcV1) {
         const p = phiFc(u, v);
         if (p < f) { f = p; code = CODE.FC; }
       }
@@ -1236,8 +1330,14 @@ function genLawns(S, W, c, x0, z0, x1, z1, X, Z) {
       if (pav && !fcs.length) continue;
       const lift = pav ? LIFT_BASE + 0.006 : LIFT_BASE, col = pav ? pavCol : concCol, kind = pav ? K.PAVER : K.CONCRETE;
       const bst = new Uint8Array(nx * ny); // 1 整格 2 边界格
-      for (let j = 0; j < ny; j++)
-        for (let i = 0; i < nx; i++) {
+      // 临街铺装层只看铺装四边形总外接框（外扩 FCAP ≥ 0.75）里的格：框外格心的 phiFc 为 Infinity，本来就会跳过
+      let jA = 0, jB = ny - 1, iA = 0, iB = nx - 1;
+      if (pav) {
+        jA = Math.max(0, Math.floor(fcV0 - v0 - 0.5)); jB = Math.min(ny - 1, Math.ceil(fcV1 - v0));
+        iA = Math.max(0, Math.floor(fcU0 - u0 - 0.5)); iB = Math.min(nx - 1, Math.ceil(fcU1 - u0));
+      }
+      for (let j = jA; j <= jB; j++)
+        for (let i = iA; i <= iB; i++) {
           const k = j * nx + i;
           if (!own[k] || (bk[k] && dbIn[k] > 1.5)) continue;
           let a, b2, d, e;
@@ -1525,13 +1625,15 @@ function bigTree(W, x, y, z, h, rr) {
   }
 }
 
+// 8 邻域偏移（dilate 按此顺序登记，顺序决定同一格被多次登记时最后写入的来源）
+const DIL8 = [1, 0, -1, 0, 0, 1, 0, -1, 1, 1, -1, -1, 1, -1, -1, 1];
 function dilate(g, src, nx, ny, from, to, onlyIf) {
   const add = [];
   for (let j = 0; j < ny; j++)
     for (let i = 0; i < nx; i++) {
       if (g[j * nx + i] !== from) continue;
-      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
-        const a = i + di, b = j + dj;
+      for (let q = 0; q < 16; q += 2) {
+        const a = i + DIL8[q], b = j + DIL8[q + 1];
         if (a < 0 || b < 0 || a >= nx || b >= ny) continue;
         if (g[b * nx + a] === onlyIf) add.push(b * nx + a, src[j * nx + i]);
       }
