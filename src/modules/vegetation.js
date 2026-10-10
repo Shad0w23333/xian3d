@@ -459,6 +459,7 @@ export default {
     const lastPos = new THREE.Vector3(1e9, 0, 0);
     const lastQuat = new THREE.Quaternion();
     let frame = 0;
+    let assignKey = ''; // 上次分配实例时的相机位置/朝向/投影
 
     const writeTree = (s, i) => {
       if (s.n >= s.cap) growSlot(s);
@@ -631,10 +632,18 @@ export default {
         const moved = cam.position.distanceToSquared(lastPos) > 2.25;
         const turned = 1 - Math.abs(cam.quaternion.dot(lastQuat)) > 2e-5;
         if (dirty || moved || turned || frame % 30 === 0) {
+          // 例行刷新（每 30 帧）时相机位置、朝向、投影都没变、数据与档位也没变（dirty 为假）：分配结果与上次相同，
+          // 不再重写、重新上传全部近/中景实例（相机静止时的周期性上传）
+          const q = cam.quaternion, pe = cam.projectionMatrix.elements, cp = cam.position;
+          const key = cp.x + ',' + cp.y + ',' + cp.z + ',' + q.x + ',' + q.y + ',' + q.z + ',' + q.w + ',' + pe.join(',');
+          const same = !dirty && key === assignKey;
           lastPos.copy(cam.position);
           lastQuat.copy(cam.quaternion);
           dirty = false;
-          assign();
+          if (!same) {
+            assignKey = key;
+            assign();
+          }
         }
       },
       setQuality(q) {
