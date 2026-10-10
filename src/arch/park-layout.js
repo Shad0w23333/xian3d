@@ -18,13 +18,17 @@ const C = {
   door: lin('#4a3324'), window: lin('#2c3236'), roof: lin('#ffffff', 0.95), ridge: lin('#55595d'), wood: lin('#ffffff', 0.95), concrete: lin('#ffffff', 0.92),
 };
 // 十月：西安各公园菊展（黄/橙/白/紫/红）、月季（红/粉）、一串红 + 万寿菊
+// 花色（十月：万寿菊、一串红、矮牵牛、鼠尾草……）略降饱和；花境里约四成花丛只有绿叶（GREEN_HEAD，花头染成叶色），
+// 以绿色为底、花色点缀——此前整片高饱和红黄紫小块密铺，像彩色碎屑（审查 g3 城西小区）
 const FLOWERS = [
-  ['#e8b923', '#f0a020', '#e07a1f', '#f4efe2', '#a05cc0', '#c63a2c', '#f3d36b', '#f4efe2'],
-  ['#b8233a', '#e46a8e', '#d14b6a', '#f1a7bd', '#c81d3a'],
-  ['#d7261e', '#d7261e', '#f39c12', '#f39c12'],
+  ['#d2a63a', '#d79a3a', '#c8783a', '#e6e0d0', '#8f6aa8', '#b44a3e', '#dcc372'],
+  ['#a83a48', '#cf7890', '#bb5a70', '#e0aabb'],
+  ['#c23a2e', '#c23a2e', '#d89a3a', '#d89a3a'],
 ];
+const GREEN_HEAD = '#2f4a22';
 const HEX = (h) => { const n = parseInt(h.slice(1), 16); const f = (v) => Math.pow(v / 255, 2.2); return [f((n >> 16) & 255), f((n >> 8) & 255), f(n & 255)]; };
 const FLOWER_LIN = FLOWERS.map((a) => a.map(HEX));
+const GREEN_LIN = HEX(GREEN_HEAD);
 const HEDGE = [HEX('#3c6a2c'), HEX('#7e2a22'), HEX('#4d7a34')]; // 大叶黄杨 / 红叶石楠（秋季红叶）/ 金森女贞
 
 // ───────────── 树木索引（读植被模块的种植结果，只读）─────────────
@@ -717,6 +721,22 @@ function placeBin(E, x, z, yaw) {
   return true;
 }
 
+/** 主城门外 280 m 内（城外一侧）：南门外广场、环城公园门前段——入城式场地，夜间照明比普通公园密 */
+function nearGate(E, x, z) {
+  for (const [gx, gz, ux, uz] of E.gates || []) {
+    const dx = x - gx, dz = z - gz;
+    if (dx * dx + dz * dz < 280 * 280 && dx * ux + dz * uz > -20) return true;
+  }
+  return false;
+}
+/** 地埋灯：与地面齐平（白天看不见灯具），夜间只有 2.4 m 的暖光斑 */
+function groundLight(E, x, z) {
+  const v = E.mk.get(x, z);
+  if (v < 0 || v & (M_WATER | M_BLD)) return;
+  E.inst.add('glow', x, E.T.heightAt(x, z) + 0.07, z, 0, 2.4, 1, 2.4);
+  E.st.glows = (E.st.glows || 0) + 1;
+}
+
 function alongLine(E, Lx) {
   const { mk, idx } = E;
   if (Lx.len < 12) return;
@@ -727,15 +747,27 @@ function alongLine(E, Lx) {
   const bigPark = pk && pk.area > 50000;
   const lampSide = Lx.w >= 4 ? 0 : hash2(id, 1) < 0.5 ? 1 : -1;
   const q = {};
+  // 城门前：庭院灯 14 m 一盏，园路两侧每 5 m 一盏地埋灯（审查 g1：南门外广场夜里几百米见方只有两盏灯）
+  pl.at(Lx.len / 2, q);
+  const gate = nearGate(E, q.x, q.z);
+  const LS = gate ? 14 : 28;
   // 庭院灯：每 27 m（宽路两侧交替）
-  const ph = hash2(id, 2) * 28;
-  for (let s = ph, k = 0; Lx.len >= 18 && s < Lx.len; s += 28, k++) {
+  const ph = hash2(id, 2) * LS;
+  for (let s = ph, k = 0; Lx.len >= 18 && s < Lx.len; s += LS, k++) {
     pl.at(s, q);
     const side = lampSide || (k % 2 ? 1 : -1);
     const nx = -q.tz * side, nz = q.tx * side;
     const x = q.x + nx * (hw + 0.45), z = q.z + nz * (hw + 0.45);
     if (okSpot(E, x, z, 0.45)) placeLamp(E, x, z);
   }
+  if (gate && Lx.w >= 2)
+    for (let s = 2.5; s < Lx.len; s += 5) {
+      pl.at(s, q);
+      for (const side of [1, -1]) {
+        const x = q.x - q.tz * side * (hw - 0.25), z = q.z + q.tx * side * (hw - 0.25);
+        if (x >= mk.x0 && x < mk.x1 && z >= mk.z0 && z < mk.z1) groundLight(E, x, z);
+      }
+    }
   // 座椅（背向草地、面向园路）：每 25~40 m；隔一张配一组分类垃圾桶
   const bside = lampSide ? -lampSide : 1;
   let s = hash2(id, 3) * 24 + 10, k = 0;
@@ -769,7 +801,7 @@ function alongLine(E, Lx) {
     const side = hash2(id, Math.round(s3)) < 0.5 ? 1 : -1;
     const nx = -q.tz * side, nz = q.tx * side;
     const h = hash2(id, Math.round(s3) + 7);
-    if (h < 0.55) hedgeRun(E, pl, s3, Math.min(Lx.len - 2, s3 + 8 + h * 14), side, hw + 0.6, h);
+    if (h < 0.75) hedgeRun(E, pl, s3, Math.min(Lx.len - 2, s3 + 8 + h * 14), side, hw + 0.6, h);
     else {
       const x = q.x + nx * (hw + 1.0), z = q.z + nz * (hw + 1.0);
       flowerBed(E, x, z, q.tx, q.tz, 3 + h * 4, 0.95, h);
@@ -876,10 +908,11 @@ function flowerBed(E, x, z, tx, tz, len, wid, h) {
     for (let u = -len / 2 + 0.25; u <= len / 2 - 0.2; u += 0.4) {
       const jx = (hash2(k, Math.round(h * 1e4), 3) - 0.5) * 0.18, jz = (hash2(k, Math.round(h * 1e4), 5) - 0.5) * 0.18;
       const px = x + tx * (u + jx) + nx * (v + jz), pz = z + tz * (u + jx) + nz * (v + jz);
-      // 同色成片：沿长度分 3 段换色
+      // 同色成片：沿长度分 3 段换色；约 40% 只有绿叶（成团，不是零散），高低起伏 0.7~1.4
       const ci = (Math.floor(((u + len / 2) / len) * 3) + rr + Math.floor(h * 10)) % pal.length;
-      const s = 0.8 + 0.4 * hash2(k, 11, Math.round(h * 100));
-      E.inst.add('flower', px, E.T.heightAt(px, pz), pz, hash2(k, 13) * 6.28, s, s * (0.8 + 0.4 * hash2(k, 17)), s, pal[ci]);
+      const leafOnly = hash2(Math.floor((u + len / 2) / 1.2), rr, Math.round(h * 997)) < 0.4;
+      const s = 0.75 + 0.5 * hash2(k, 11, Math.round(h * 100));
+      E.inst.add('flower', px, E.T.heightAt(px, pz), pz, hash2(k, 13) * 6.28, s, s * (0.7 + 0.7 * hash2(k, 17)), s, leafOnly ? GREEN_LIN : pal[ci]);
       k++;
     }
   }
@@ -937,7 +970,9 @@ function treeRings(E) {
  */
 function plazaPass(E) {
   const { mk, green } = E;
-  const S = 22;
+  // 城门前的铺装广场：灯阵加密到 13 m，另在格点间放地埋灯
+  const gate = nearGate(E, (mk.x0 + mk.x1) / 2, (mk.z0 + mk.z1) / 2) || nearGate(E, mk.x0, mk.z0) || nearGate(E, mk.x1, mk.z1) || nearGate(E, mk.x0, mk.z1) || nearGate(E, mk.x1, mk.z0);
+  const S = gate ? 13 : 22;
   for (let gz = Math.ceil(mk.z0 / S); gz * S < mk.z1; gz++)
     for (let gx = Math.ceil(mk.x0 / S); gx * S < mk.x1; gx++) {
       const h = hash2(gx, gz, 71);
@@ -952,6 +987,13 @@ function plazaPass(E) {
         if (g < 0.45) paved++;
       }
       if (valid < 4 || paved < valid * 0.65 || greenAt(green, x, z) >= 0.45) continue;
+      if (gate && nearGate(E, x, z)) {
+        if (h < 0.6) { if (okSpot(E, x, z, 0.6)) placeLamp(E, x, z); }
+        else if (h < 0.75) placeBench(E, x, z, Math.floor(hash2(gx, gz, 83) * 4) * Math.PI / 2);
+        groundLight(E, x + S / 2, z);
+        groundLight(E, x, z + S / 2);
+        continue;
+      }
       if (h < 0.55) { if (okSpot(E, x, z, 0.6)) placeLamp(E, x, z); }
       else if (h < 0.8) placeBench(E, x, z, Math.floor(hash2(gx, gz, 83) * 4) * Math.PI / 2);
       else if (h < 0.88) placeBin(E, x, z, Math.floor(hash2(gx, gz, 89) * 4) * Math.PI / 2);

@@ -104,7 +104,14 @@ export default {
     let pending = [];
     let job = null; // {key, gen}
     let dirty = false;
-    const env = { ctx, T, idx, tex, trees, plan };
+    // 四座主城门（瓮城宽的那四座）：门外 280 m 内的公园（南门外广场、环城公园）夜间照明加密
+    const gates = [];
+    for (const g of ctx.data.landmarks?.gates || []) {
+      if (!(g.check_half >= 100) || !g.world) continue;
+      const L = Math.hypot(g.world.x, g.world.z) || 1;
+      gates.push([g.world.x, g.world.z, g.world.x / L, g.world.z / L]);
+    }
+    const env = { ctx, T, idx, tex, trees, plan, gates };
     const keyOf = (gx, gz) => gx + ',' + gz;
     const finish = (key, res) => {
       const [gx, gz] = key.split(',').map(Number);
