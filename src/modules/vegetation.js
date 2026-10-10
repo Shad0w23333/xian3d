@@ -59,6 +59,53 @@ function toBuffer(b) {
   return null;
 }
 
+/**
+ * 影像树冠栅格（交给种植 worker）：核心区底图（夏季影像，5.2 m/像素）按 8 m 重采样、外围底图（18.8×21.7 m）按原分辨率，
+ * 每像素 0..255 = “偏暗且偏绿”的程度（树冠；亮绿草坪、灰色铺装/屋顶、偏蓝的楼影都不算）。
+ * 公园/林地/小区等用地撒点按它决定疏密：影像上成片树冠处密种、开阔草坪/裸地/广场处稀疏（审查：大明宫被画成整片密林、
+ * 博物院古树成林处只有零星几棵、机场周边规划公园的裸地里均匀撒树）。数据只在本地底图存在时生成，取不到时返回空表。
+ */
+function canopyRasters(ctx) {
+  const out = [];
+  const OC = typeof OffscreenCanvas !== 'undefined' ? OffscreenCanvas : null;
+  if (!OC) return out;
+  const R = { x0: -22000, x1: 20000, z0: -24000, z1: 22000 }; // 与 vegPlant VEG_OUTER 一致
+  const LUT = new Float32Array(256);
+  for (let i = 0; i < 256; i++) LUT[i] = Math.pow(i / 255, 2.2);
+  for (const [re, step] of [[/img_core\.jpg$/, 8], [/img_main\.jpg$/, 0]]) {
+    const m = (ctx.imagery?.mosaics || []).find((q) => re.test(q.file || '') && q.texture?.image);
+    if (!m) continue;
+    try {
+      const b = m.bounds, img = m.texture.image;
+      const mpx = (b.x1 - b.x0) / img.width, mpz = (b.z1 - b.z0) / img.height;
+      const x0 = Math.max(b.x0, R.x0), x1 = Math.min(b.x1, R.x1), z0 = Math.max(b.z0, R.z0), z1 = Math.min(b.z1, R.z1);
+      if (x1 <= x0 || z1 <= z0) continue;
+      const sx = step || mpx, sz = step || mpz;
+      const w = Math.round((x1 - x0) / sx), h = Math.round((z1 - z0) / sz);
+      const cv = new OC(w, h);
+      const g = cv.getContext('2d', { willReadFrequently: true });
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = 'medium';
+      // 位图第 0 行 = 南（z1），栅格同样第 0 行 = z1、往北递增
+      g.drawImage(img, (x0 - b.x0) / mpx, (b.z1 - z1) / mpz, (x1 - x0) / mpx, (z1 - z0) / mpz, 0, 0, w, h);
+      const px = g.getImageData(0, 0, w, h).data;
+      const data = new Uint8Array(w * h);
+      for (let i = 0; i < w * h; i++) {
+        const r = LUT[px[i * 4]], gg = LUT[px[i * 4 + 1]], bb = LUT[px[i * 4 + 2]];
+        const mx = Math.max(r, gg, bb, 0.02);
+        const lum = 0.2126 * r + 0.7152 * gg + 0.0722 * bb;
+        const grn = Math.min(1, Math.max(0, ((gg - Math.max(r, bb)) / mx - 0.02) / 0.12));
+        const dark = Math.min(1, Math.max(0, (0.1 - lum) / 0.06));
+        data[i] = Math.round(grn * dark * 255);
+      }
+      out.push({ x0, z1, sx, sz, w, h, data });
+    } catch (e) {
+      console.warn('[vegetation] 影像树冠栅格生成失败', e && e.message);
+    }
+  }
+  return out;
+}
+
 function startPlanting(ctx) {
   const items = [];
   for (const it of ctx.exclusions?.items || []) if (it.flags?.trees) items.push({ p: Array.from(it.p) });
@@ -74,6 +121,7 @@ function startPlanting(ctx) {
     wall: lm.wall || [],
     mamian: lm.mamian || [],
     gates: lm.gates || [],
+    canopy: canopyRasters(ctx),
   };
   return new Promise((resolve, reject) => {
     let worker = null;
@@ -103,7 +151,7 @@ function startPlanting(ctx) {
       console.warn('[vegetation] worker 错误，改用主线程', e.message);
       fallback().catch(reject);
     };
-    worker.postMessage(msg, msg.buildings ? [msg.buildings] : []);
+    worker.postMessage(msg, [...(msg.buildings ? [msg.buildings] : []), ...msg.canopy.map((c) => c.data.buffer)]);
   });
 }
 

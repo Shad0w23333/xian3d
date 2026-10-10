@@ -35,8 +35,8 @@ export const VEG_OUTER = { x0: -22000, x1: 20000, z0: -24000, z1: 22000 };
 export const VEG_CHUNK = 200;
 const CELL = 3;
 const CENTER_X = 300, CENTER_Z = 900;
-const MAX_TREES = 650000; // 主种植区上限
-const MAX_OUTER = 180000; // 外圈上限
+const MAX_TREES = 760000; // 主种植区上限（行道树连续成排后约 78 万候选；超出先剔用地撒点）
+const MAX_OUTER = 480000; // 外圈上限（林地成片、河岸林带、高速防护林带）
 
 // 地标正面对景条带与禁种圆区（世界坐标 [x0, z0, x1, z1, 半宽]，起止点相同即圆）：区内不种树（钟楼四街/城门/雁塔北路另按道路生成）
 export const LANDMARK_SIGHTLINES = [
@@ -274,6 +274,9 @@ export function plantVegetation(input) {
   // —— 1. 建筑 ——
   const bd = parseBuildings(input.buildings);
   let nb = 0;
+  // 20 m 粗栅格：格内建筑最高高度（米，255 封顶；0 = 无楼）——识别多层老住区（八九十年代单位家属院、6~7 层板楼）
+  const HGC = 20, HGW = Math.ceil((R.x1 - R.x0) / HGC), HGH = Math.ceil((R.z1 - R.z0) / HGC);
+  const HG = new Uint8Array(HGW * HGH);
   if (bd) {
     const ring = [];
     for (let b = 0; b < bd.n; b++) {
@@ -286,6 +289,8 @@ export function plantVegetation(input) {
       for (let k = 0; k < c; k++) ring.push(ax + bd.offs[(s + k) * 2] * 0.1, az + bd.offs[(s + k) * 2 + 1] * 0.1);
       fillRings(B, [ring], true);
       nb++;
+      const hi = Math.floor((ax - R.x0) / HGC), hj = Math.floor((az - R.z0) / HGC);
+      if (hi >= 0 && hj >= 0 && hi < HGW && hj < HGH) HG[hj * HGW + hi] = Math.max(HG[hj * HGW + hi], Math.min(255, Math.max(1, bd.hd[b] / 10)));
     }
   }
 
@@ -437,8 +442,9 @@ export function plantVegetation(input) {
   };
   for (const w of water.polys || []) {
     if (!w.outer || w.outer.length < 6) continue;
-    // 小岛（< 400 m²）按水面处理：曲江/芙蓉园这类小岛只有一圈驳岸、岛内就是水面高度，种上树像从水里长出来
-    const holes = (w.holes || []).filter((h) => h.length >= 6 && ringArea(h) >= 400);
+    // 小岛（< 400 m²）按水面处理：曲江/芙蓉园这类小岛只有一圈驳岸、岛内就是水面高度，种上树像从水里长出来。
+    // 河道里的岛洞是沙洲（渭河/浐河/灞河主槽里的白色沙滩），一律按水面处理：不种树、岛岸不种柳（审查 g1 渭河沙洲上种着十几棵乔木）
+    const holes = w.k === 'river' ? [] : (w.holes || []).filter((h) => h.length >= 6 && ringArea(h) >= 400);
     fillRings(W, [w.outer, ...holes], false);
     addWaterEdge(w.outer);
     for (const h of holes) addWaterEdge(h);
@@ -449,6 +455,44 @@ export function plantVegetation(input) {
     const hw = Math.max(2, (l.w || 8) / 2);
     for (let i = 0; i + 3 < p.length; i += 2) stampCapsule(W, p[i], p[i + 1], p[i + 2], p[i + 3], hw);
   }
+
+  // —— 河床：夹在河道多边形之间的陆地（主槽里的沙洲、心滩）——
+  // OSM 把渭河、灞河主槽拆成好几块河道多边形，沙洲夹在块与块之间：既不在任何水面里，也不是多边形的洞，
+  // 此前岸线林带沿沙洲边种了一圈、用地撒点也撒到沙滩上（审查 g1 渭河沙洲上立着十几棵乔木）。
+  // 判据：0°/45°/90°/135° 四条轴里至少两条在两侧 RB_D 内都碰到河道 → 在河床里，不种乔木。
+  const RB_D = 400; // 渭河心滩宽 200~300 m：对角线方向要能够到对岸河道
+  const RV = new Grid(VEG_OUTER, 8), RVN = new Grid(VEG_OUTER, 120);
+  for (const w of water.polys || []) {
+    if (w.k !== 'river' || !w.outer || w.outer.length < 6) continue;
+    fillRings(RV, [w.outer], false);
+    const o = w.outer;
+    for (let i = 0, n = o.length / 2; i < n; i++) {
+      const j = (i + 1) % n;
+      stampCapsule(RVN, o[i * 2], o[i * 2 + 1], o[j * 2], o[j * 2 + 1], RB_D + 130);
+    }
+  }
+  const rvAt = (x, z) => {
+    const i = RV.ci(x), j = RV.cj(z);
+    return i >= 0 && j >= 0 && i < RV.w && j < RV.h && RV.get(i, j) === 1;
+  };
+  const RB_AX = [[1, 0], [0.7071, 0.7071], [0, 1], [-0.7071, 0.7071]];
+  const inRiverBed = (x, z) => {
+    const i = RVN.ci(x), j = RVN.cj(z);
+    if (i < 0 || j < 0 || i >= RVN.w || j >= RVN.h || !RVN.get(i, j)) return false;
+    if (rvAt(x, z)) return true;
+    let axes = 0;
+    for (let k = 0; k < 4; k++) {
+      const [dx, dz] = RB_AX[k];
+      let a = false, b = false;
+      for (let d = 10; d <= RB_D && !(a && b); d += 10) {
+        if (!a && rvAt(x + dx * d, z + dz * d)) a = true;
+        if (!b && rvAt(x - dx * d, z - dz * d)) b = true;
+      }
+      if (a && b && ++axes >= 2) return true;
+      if (k - axes >= 2) return false; // 剩下的轴全中也不够两条
+    }
+    return false;
+  };
 
   // —— 3. 排除区（树木） ——
   const EXC = 500;
@@ -571,6 +615,56 @@ export function plantVegetation(input) {
   const NT = new Grid(R, 6);
   for (const f of input.landuse?.polys || []) if (NO_TREE_KINDS.has(f.k) && f.outer && f.outer.length >= 6) fillRings(NT, [f.outer, ...(f.holes || [])], false);
   const noTree = (x, z) => NT.at(x, z) === 1;
+  // 四座主城门外的对景限高（审查 g5：从南关正街北口看永宁门夜景，10~18 m 的大树把城墙轮廓灯带整条挡住，只剩箭楼一小块亮）：
+  //  · 门外 8~200 m、轴线左右 220 m（环城公园、护城河两岸、环城路两侧）：乔木不高于 7.5 m；
+  //  · 对景视线锥：从门外 410 m 的城门大街路口（人眼 1.7 m）看城墙顶（13 m），视线锥（半角约 29°）内门外 8~345 m 的树
+  //    压到视线以下（最低 3 m）——门前广场、大街分隔带与人行道近城门一段是小国槐、石榴、灌木球，城墙与灯带露在树冠上方；
+  //    路口脚下 65 m 内的取景树不动。
+  const GATE_BANDS = [];
+  for (const g of input.gates || []) {
+    if (!(g.check_half >= 100) || !g.world) continue;
+    const gx = g.world.x, gz = g.world.z, L = Math.hypot(gx, gz) || 1;
+    GATE_BANDS.push([gx, gz, gx / L, gz / L]);
+  }
+  // 返回 2 = 限高区（门外 8~200 m、左右 220 m）；1 = 门外 200~420 m、左右 260 m 的门前广场与环城路两侧（不限高，只加夜间上照灯——
+  // 南门外广场夜里树木此前全是纯黑剪影，审查 g1）；0 = 都不是
+  const gateZone = (x, z) => {
+    let r = 0;
+    for (const [gx, gz, ux, uz] of GATE_BANDS) {
+      const dx = x - gx, dz = z - gz;
+      const along = dx * ux + dz * uz, lat = Math.abs(dx * uz - dz * ux);
+      if (along > 8 && along < 420 && lat < 260) {
+        if (along < 200 && lat < 220) return 2;
+        r = 1;
+      }
+    }
+    return r;
+  };
+  /** 多层老住区：±50 m 内至少 3 个 20 m 格有楼、最高不超过 28 m（无高层） */
+  const lowRise = (x, z) => {
+    const i0 = Math.floor((x - R.x0) / HGC), j0 = Math.floor((z - R.z0) / HGC);
+    let nb2 = 0;
+    for (let j = j0 - 2; j <= j0 + 2; j++)
+      for (let i = i0 - 2; i <= i0 + 2; i++) {
+        if (i < 0 || j < 0 || i >= HGW || j >= HGH) continue;
+        const h = HG[j * HGW + i];
+        if (h > 28) return false;
+        if (h) nb2++;
+      }
+    return nb2 >= 3;
+  };
+  /** 城门对景限高（米），不受限返回 Infinity */
+  const gateCap = (x, z) => {
+    let cap = Infinity;
+    for (const [gx, gz, ux, uz] of GATE_BANDS) {
+      const dx = x - gx, dz = z - gz;
+      const along = dx * ux + dz * uz, lat = Math.abs(dx * uz - dz * ux);
+      if (along <= 8 || along >= 345) continue;
+      if (along < 200 && lat < 220) cap = Math.min(cap, 7.5);
+      if (lat < 0.56 * (410 - along) + 10) cap = Math.min(cap, Math.max(3, 13 - (11.3 * along) / 410 - 0.3));
+    }
+    return cap;
+  };
   /** 视廊内不种树；只有中央分隔带的灌木球（shrubOk）可以 */
   const axisBlocked = (x, z, sp, shrubOk = false) => !(shrubOk && sp === GUANMU) && AX.at(x, z) === 1;
 
@@ -597,6 +691,7 @@ export function plantVegetation(input) {
   let X = new Float32Array(cap), Z = new Float32Array(cap);
   let SPC = new Uint8Array(cap), SC = new Uint8Array(cap), ROT = new Uint8Array(cap), RK = new Uint8Array(cap), LAMP = new Uint8Array(cap), YEL = new Uint8Array(cap), BR = new Uint8Array(cap);
   let SRCA = new Uint8Array(cap); // 种植来源（诊断用：1 行道 2 分隔带 3 环城外 4 环城内 5 岸环 6 岸线 7 用地 8 院落 9 外圈）
+  let LUO = new Uint8Array(cap); // 外圈里的用地撒点（数量上限先剔这类）
   // 行道树树池：PIT 0 无；低 7 位 = 1 + 方池朝向（模 90°，量化 127 级），0x80 = 小号树池（1.0 m，窄隔离带）；
   // PF/PS = 所在道路要素序号与里程（主线程按道路纵断面求人行道面高）
   let PIT = new Uint8Array(cap), PF = new Int32Array(cap), PS = new Float32Array(cap);
@@ -605,7 +700,7 @@ export function plantVegetation(input) {
     const g = (A, C) => { const b = new C(cap); b.set(A); return b; };
     X = g(X, Float32Array); Z = g(Z, Float32Array);
     SPC = g(SPC, Uint8Array); SC = g(SC, Uint8Array); ROT = g(ROT, Uint8Array); RK = g(RK, Uint8Array);
-    LAMP = g(LAMP, Uint8Array); YEL = g(YEL, Uint8Array); BR = g(BR, Uint8Array); SRCA = g(SRCA, Uint8Array); PIT = g(PIT, Uint8Array); PF = g(PF, Int32Array); PS = g(PS, Float32Array);
+    LAMP = g(LAMP, Uint8Array); YEL = g(YEL, Uint8Array); BR = g(BR, Uint8Array); SRCA = g(SRCA, Uint8Array); LUO = g(LUO, Uint8Array); PIT = g(PIT, Uint8Array); PF = g(PF, Int32Array); PS = g(PS, Float32Array);
   };
   const rnd = mulberry(20260925);
   const stats = { street: 0, median: 0, wallpark: 0, bank: 0, landuse: 0, court: 0, outer: 0, hedge: 0, shrunk: 0, axis: 0 };
@@ -644,6 +739,7 @@ export function plantVegetation(input) {
     return best;
   }
   // 树种高度随机范围（相对 vegSpecies 基准几何）
+  const H1 = [11, 16.7, 14.6, 9.8, 12.8, 4.87, 1.8, 11.1]; // 各树种缩放 1 时的树高（米）
   const SCALE = [
     [0.72, 1.12], // 国槐 7.9~12.3 m
     [0.72, 1.08], // 法桐 12~18 m
@@ -680,10 +776,16 @@ export function plantVegetation(input) {
    * 放置一棵树（已通过路面/水面检查）。rankMul：rank 偏置（行道树更靠前保留）；exb=false 不按排除区收冠；
    * room(x,z)：额外的冠幅上限（院落里离殿堂/院墙的距离）
    */
-  function addTree(x, z, sp, { lamp = 0, sMul = 1, rankMul = 1, src = 0, exb = true, room = null, face = null, bg = B, pit = null } = {}) {
+  function addTree(x, z, sp, { lamp = 0, sMul = 1, rankMul = 1, src = 0, exb = true, room = null, face = null, bg = B, pit = null, lu = 0 } = {}) {
     if (n >= cap) grow();
+    // 城门对景限高区：高于 7.5 m 的树种换成小国槐（≤ 7.4 m）或石榴；区内树木夜间有上照灯（入城式广场）
+    const gz = GATE_BANDS.length > 0 ? gateZone(x, z) : 0;
+    const hCap = gz ? gateCap(x, z) : Infinity;
+    if (hCap < Infinity && sp !== GUANMU && SCALE[sp][0] * H1[sp] * 0.85 > hCap) sp = hCap >= 5.5 ? (rnd() < 0.7 ? HUAI : SHILIU) : hCap >= 3 ? SHILIU : GUANMU;
+    if (gz) lamp = Math.max(lamp, 0.8);
     const [s0, s1] = SCALE[sp];
     let s = (s0 + (s1 - s0) * rnd()) * sMul;
+    if (hCap < Infinity && sp !== GUANMU) s = Math.min(s, hCap / H1[sp]);
     // 树冠不插进楼：按离最近建筑（通用建筑栅格 / 精建排除区）的距离收小整棵树（最小到本树种下限的 60%）
     let d = crownRoom(x, z, CROWN_R[sp] * s + 0.5, exb, bg);
     if (room) d = Math.min(d, room(x, z));
@@ -705,6 +807,7 @@ export function plantVegetation(input) {
     YEL[n] = Math.round((y0 + (y1 - y0) * rnd() * rnd() * 1.6) * 255) & 255;
     BR[n] = (rnd() * 256) | 0;
     SRCA[n] = src;
+    LUO[n] = lu;
     if (pit) {
       const Q = Math.PI / 2;
       const q = (((pit.a % Q) + Q) % Q) / Q;
@@ -1094,7 +1197,7 @@ export function plantVegetation(input) {
           for (const d of [3.5, 9.5]) {
             if (d > 5 && rnd() < 0.55) continue;
             const x = mx + nx * (d + (rnd() - 0.5) * 1.5), z = mz + nz * (d + (rnd() - 0.5) * 1.5);
-            if (nearAny(W, x, z, 1.5) || nearAny(RD, x, z, 1.4)) continue;
+            if (nearAny(W, x, z, 1.5) || nearAny(RD, x, z, 1.4) || inRiverBed(x, z)) continue;
             if (excluded(x, z) || wallBlocked(x, z) || noTree(x, z)) continue;
             const sp = d < 5 ? (rnd() < 0.85 ? LIU : pick(BANKMIX, rnd())) : pick(BANKMIX, rnd());
             if (axisBlocked(x, z, sp) || !treeFree(x, z, sp)) continue;
@@ -1131,7 +1234,7 @@ export function plantVegetation(input) {
           const d = hw + 3 + rnd() * 2;
           const x = ax + tx * s - tz * side * d, z = az + tz * s + tx * side * d;
           if (!inRegion(x, z) || rnd() > 0.8 * falloff(x, z)) continue;
-          if (nearAny(W, x, z, 1.5) || nearAny(RD, x, z, 1.4) || excluded(x, z) || noTree(x, z)) continue;
+          if (nearAny(W, x, z, 1.5) || nearAny(RD, x, z, 1.4) || excluded(x, z) || noTree(x, z) || inRiverBed(x, z)) continue;
           const sp = rnd() < 0.8 ? LIU : pick(BANKMIX, rnd());
           if (axisBlocked(x, z, sp) || !treeFree(x, z, sp)) continue;
           addTree(x, z, sp, { lamp: 0.1, rankMul: 0.9, src: 6 });
@@ -1141,6 +1244,30 @@ export function plantVegetation(input) {
       s -= L;
     }
   }
+
+  // —— 影像树冠（vegetation.js canopyRasters：核心区 8 m、外围约 20 m 栅格，0..255 = 树冠程度）——
+  const CAN = (input.canopy || []).filter((c) => c && c.data && c.data.length === c.w * c.h);
+  /** (x, z) 一带的树冠比例 0..1（中心 + 四邻 5 点平均，约 1.5 像素半径）；无影像返回 -1 */
+  const canopyAt = (x, z) => {
+    for (const c of CAN) {
+      const fi = (x - c.x0) / c.sx, fj = (c.z1 - z) / c.sz;
+      if (fi < 1 || fj < 1 || fi >= c.w - 1 || fj >= c.h - 1) continue;
+      const i = fi | 0, j = fj | 0, w = c.w, d = c.data;
+      return (d[j * w + i] * 2 + d[j * w + i - 1] + d[j * w + i + 1] + d[(j - 1) * w + i] + d[(j + 1) * w + i]) / (6 * 255);
+    }
+    return -1;
+  };
+  // 参照树冠的用地：[最密时每棵用地 m²（影像整片树冠处），开阔处相对基准密度]
+  // 撒点候选格按“最密”取，接受概率 = 基准密度 × (开阔系数 + (1/基准比 − 开阔系数) × 树冠)；无影像时 = 基准密度（与此前相同）
+  const CANOPY_LU = { park: [95, 0.45], forest: [150, 0.4], grass: [260, 0.4], university: [150, 0.5], residential: [300, 0.45], cemetery: [100, 0.6], military: [300, 0.5] };
+  const canopyGain = (k, area, c) => {
+    const cfg = CANOPY_LU[k];
+    if (!cfg) return 1;
+    const kd = Math.min(1, cfg[0] / area); // 基准密度相对最密的比例
+    if (c < 0) return kd;
+    const t = Math.min(1, c * 1.6); // 局部 60% 树冠即算成林
+    return kd * cfg[1] + (1 - kd * cfg[1]) * t;
+  };
 
   // —— 7. 用地撒点 ——
   // 类别 → [每棵树的平均用地面积 m²，树种组合，团簇强度 0..1]
@@ -1153,6 +1280,7 @@ export function plantVegetation(input) {
   const MIX_CEM = [[BAI, 0.55], [XUESONG, 0.15], [HUAI, 0.2], [GUANMU, 0.1]];
   const MIX_ORCH = [[SHILIU, 0.85], [GUANMU, 0.15]];
   const MIX_WORK = [[HUAI, 0.46], [WUTONG, 0.18], [YINXING, 0.08], [XUESONG, 0.04], [GUANMU, 0.24]];
+  const MIX_MATURE = [[WUTONG, 0.38], [HUAI, 0.42], [YINXING, 0.12], [LIU, 0.08]];
   const LU = {
     park: [190, MIX_PARK, 0.75],
     forest: [420, MIX_FOREST, 0.45],
@@ -1182,7 +1310,14 @@ export function plantVegetation(input) {
     // boost：用地多边形可带的密度加成（如未央城市广场的集中绿地，离市中心远但是精建广场）
     const fo = Math.min(1, falloff((x0 + x1) / 2, (z0 + z1) / 2) * (f.boost || 1));
     if (fo <= 0.01) continue;
-    const step = Math.sqrt(area * 0.55); // 候选格：约 0.55 倍面积一个候选，再按噪声接受
+    // 候选格：约 0.55 倍面积一个候选，再按噪声（与影像树冠）接受；参照树冠的用地按“最密”面积取格。
+    // 居住/校园用地另按“多层老住区”（周边无高层）加密到最密 100 m² 一个候选格：八九十年代单位家属院、老校园楼间是
+    // 几十年的法桐、国槐、杨树，树冠和楼一样高、从低空看连成片（审查 g5 土门老小区、g8 西工大老小区：楼间只有两三棵小树）
+    const canCfg = CANOPY_LU[f.k], useCan = !!(canCfg && CAN.length);
+    const resLike = f.k === 'residential' || f.k === 'university';
+    const stepA = useCan ? Math.min(area, canCfg[0]) : area, stepA2 = resLike ? Math.min(stepA, 100) : stepA;
+    const thin = stepA2 / stepA; // 非老住区的点按原密度接受
+    const step = Math.sqrt(stepA2 * 0.55);
     const rings = [o, ...(f.holes || [])];
     const seedN = (strHash(f.n || '') * 1000) | 0;
     for (let zr = Math.max(z0, R.z0) + step * 0.5; zr < Math.min(z1, R.z1); zr += step) {
@@ -1203,17 +1338,33 @@ export function plantVegetation(input) {
           const x = xr + (rnd() - 0.5) * step * 0.9, z = zr + (rnd() - 0.5) * step * 0.9;
           // 团簇噪声：林团 + 草坪空地
           const nz = vnoise(x / 55, z / 55, 11 + seedN) * 0.7 + vnoise(x / 17, z / 17, 23) * 0.3;
-          const dens = (1 - clump) + clump * Math.max(0, Math.min(1, (nz - 0.3) * 2.6));
-          if (rnd() > dens * fo * 1.0) continue;
+          // 有影像树冠时噪声团簇减半（树团位置以影像为准）
+          const cl = useCan ? clump * 0.5 : clump;
+          const dens = (1 - cl) + cl * Math.max(0, Math.min(1, (nz - 0.3) * 2.6));
+          const can = useCan ? canopyAt(x, z) : -1;
+          const old = resLike && lowRise(x, z);
+          if (old) {
+            // 老住区：影像树冠处最密，影像上看不出树冠（楼影、屋顶遮挡）也保留约三成
+            const t = can < 0 ? 0.45 : Math.min(1, can * 1.6);
+            if (rnd() > (0.8 + 0.2 * dens) * Math.max(fo, 0.75) * (0.3 + 0.6 * t)) continue;
+          } else if (rnd() > dens * fo * (useCan ? canopyGain(f.k, area, can) : 1) * thin) continue;
           if (!inRegion(x, z)) continue;
-          if (nearAny(RD, x, z, 1.8) || nearAny(W, x, z, 1.6)) continue;
+          if (nearAny(RD, x, z, 1.8) || nearAny(W, x, z, 1.6) || inRiverBed(x, z)) continue;
           if (excluded(x, z) || wallBlocked(x, z) || noTree(x, z)) continue;
           // 树种：40 m 尺度的同种林团
           let sp = hashI(Math.floor(x / 38), Math.floor(z / 38), 91 + seedN) < 0.6 ? pick(mix, hashI(Math.floor(x / 38), Math.floor(z / 38), 5 + seedN)) : pick(mix, rnd());
           if (sp !== GUANMU && nearWater(x, z, 8) && rnd() < 0.7) sp = LIU;
+          // 小区/校园里影像树冠浓密处是几十年的老树（八九十年代单位家属区楼间的法桐、国槐长得和楼一样高）：换成年大乔木
+          let sMulLU = 1;
+          if (resLike && (can > 0.45 || (old && (can > 0.2 || rnd() < 0.55)))) {
+            sp = pick(MIX_MATURE, rnd());
+            sMulLU = 1.06 + 0.22 * rnd();
+            if (diskHit(T, x, z, 4.5)) continue; // 成年大树之间至少 4.5 m（树冠相接而不重叠成一团）
+          }
           if (axisBlocked(x, z, sp)) { stats.axis++; continue; }
           if (!treeFree(x, z, sp)) continue;
-          addTree(x, z, sp, { lamp: rnd() < 0.25 ? 0.25 : 0, rankMul: 1, src: 7 });
+          if (old) stats.luOld = (stats.luOld || 0) + 1;
+          addTree(x, z, sp, { lamp: rnd() < 0.25 ? 0.25 : 0, rankMul: 1, src: 7, sMul: sMulLU });
           stats.landuse++;
           stats['lu_' + f.k] = (stats['lu_' + f.k] || 0) + 1;
         }
@@ -1266,7 +1417,7 @@ export function plantVegetation(input) {
     }
     for (const w of water.polys || []) {
       if (!w.outer || w.outer.length < 6) continue;
-      fillRings(W2, [w.outer, ...(w.holes || []).filter((h) => h.length >= 6 && ringArea(h) >= 400)], false);
+      fillRings(W2, [w.outer, ...(w.k === 'river' ? [] : (w.holes || []).filter((h) => h.length >= 6 && ringArea(h) >= 400))], false); // 河道沙洲按水面
     }
     for (const l of water.lines || []) {
       const p = l.p;
@@ -1327,15 +1478,73 @@ export function plantVegetation(input) {
         }
       }
     }
-    // 河岸垂柳（线状河道两岸、湖/河/水库岸线外侧）
-    const bank2 = (x, z) => {
+    // 高速公路、快速路两侧防护林带：关中平原的高速路基外 6~15 m 是两三排杨树（这里用银杏代杨、配柳、槐），按 400 m 尺度噪声
+    // 断续（约四分之三路段有林）；高速两排、快速路一排。此前郊外高速两侧只有零星几棵点状树（审查 g8 机场专用高速、g6 长安）
+    const HWBELT = [[YINXING, 0.5], [LIU, 0.2], [HUAI, 0.22], [GUANMU, 0.08]];
+    for (let fi = 0; fi < feats.length; fi++) {
+      const f = feats[fi];
+      const c = f.c | 0;
+      if (c > 1 || f.b || f.t) continue;
+      const p = f.p;
+      if (!p || p.length < 4) continue;
+      const hw = roadW(f) / 2;
+      const rows = c === 0 ? [7, 12.5] : [6.5];
+      let s = rnd() * 8;
+      for (let k = 0; k + 3 < p.length; k += 2) {
+        const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3];
+        const L = Math.hypot(bx - ax, bz - az);
+        if (L < 0.1) continue;
+        if (!ringW(ax, az) && !ringW(bx, bz)) { s = 0; continue; }
+        const tx = (bx - ax) / L, tz = (bz - az) / L;
+        for (; s < L; s += 7 + rnd() * 2) {
+          const cx = ax + tx * s, cz = az + tz * s;
+          if (vnoise(cx / 400, cz / 400, 77) < 0.3) continue;
+          for (const side of [1, -1]) {
+            if (f.o && side === -1) continue; // 分幅单向：只种外侧（右侧）
+            for (let r = 0; r < rows.length; r++) {
+              const d = hw + rows[r] + (rnd() - 0.5) * 1.2, ds = r ? 3.5 : 0;
+              const x = cx + tx * ds - tz * side * d, z = cz + tz * ds + tx * side * d;
+              const w = ringW(x, z);
+              if (!w || rnd() > 0.9 * w) continue;
+              if (W2.at(x, z) || nearAny(RD2, x, z, 1.5) || inRiverBed(x, z)) continue;
+              const sp = pick(HWBELT, rnd());
+              if (!free2(x, z, sp, 3)) continue;
+              add2(x, z, sp, { lamp: 0, rankMul: 0.85, src: 9 });
+              stats.outerHwBelt = (stats.outerHwBelt || 0) + 1;
+            }
+          }
+        }
+        s -= L;
+      }
+    }
+    // 河岸：湖/塘/水库岸线外侧单排垂柳（9~13 m）；大河（河道多边形、宽 > 6 m 的线状河）两岸是成段连续的护岸林带——
+    // 两排、6~8 m 间距，按 300 m 尺度噪声断续（约三分之二岸段有林），树种以柳、杨（银杏代）、槐为主。
+    // 此前大河两岸也是 10~14 m 一棵的单排，远看像沿河岸画的虚线点阵（审查 g6 潏河、g8 机场周边）
+    const BELT = [[LIU, 0.36], [YINXING, 0.32], [HUAI, 0.22], [GUANMU, 0.1]];
+    const bank2 = (x, z, belt) => {
       const w = ringW(x, z);
-      if (!w || rnd() > 0.5 * w) return;
-      if (W2.at(x, z) || nearAny(RD2, x, z, 1)) return;
-      const sp = rnd() < 0.8 ? LIU : pick(BANKMIX, rnd());
+      if (!w || rnd() > (belt ? 0.85 : 0.5) * w) return;
+      if (W2.at(x, z) || nearAny(RD2, x, z, 1) || inRiverBed(x, z)) return;
+      const sp = belt ? pick(BELT, rnd()) : rnd() < 0.8 ? LIU : pick(BANKMIX, rnd());
       if (!free2(x, z, sp, 2)) return;
       add2(x, z, sp, { lamp: 0, rankMul: 0.9, src: 9 });
       stats.outerBank = (stats.outerBank || 0) + 1;
+    };
+    const beltOn = (x, z) => vnoise(x / 300, z / 300, 57) > 0.36;
+    const plantEdge = (ax, az, bx, bz, s, off, belt) => {
+      const L = Math.hypot(bx - ax, bz - az);
+      const tx = (bx - ax) / L, tz = (bz - az) / L;
+      const stp = belt ? () => 6 + rnd() * 2 : () => 9 + rnd() * 4;
+      for (; s < L; s += stp()) {
+        const cx = ax + tx * s, cz = az + tz * s;
+        if (belt && !beltOn(cx, cz)) continue;
+        for (const side of [1, -1]) {
+          const d = off + rnd() * 1.5;
+          bank2(cx - tz * side * d, cz + tx * side * d, belt);
+          if (belt) bank2(cx + tx * 3.2 - tz * side * (d + 4.5), cz + tz * 3.2 + tx * side * (d + 4.5), belt);
+        }
+      }
+      return s - L;
     };
     for (const l of water.lines || []) {
       const p = l.p;
@@ -1344,46 +1553,56 @@ export function plantVegetation(input) {
       let s = 0;
       for (let k = 0; k + 3 < p.length; k += 2) {
         const ax = p[k], az = p[k + 1], bx = p[k + 2], bz = p[k + 3];
-        const L = Math.hypot(bx - ax, bz - az);
-        if (L < 0.1) continue;
+        if (Math.hypot(bx - ax, bz - az) < 0.1) continue;
         if (!ringW(ax, az) && !ringW(bx, bz)) { s = 0; continue; }
-        const tx = (bx - ax) / L, tz = (bz - az) / L;
-        for (; s < L; s += 10 + rnd() * 4)
-          for (const side of [1, -1]) {
-            const d = hw + 4 + rnd() * 3;
-            bank2(ax + tx * s - tz * side * d, az + tz * s + tx * side * d);
-          }
-        s -= L;
+        s = plantEdge(ax, az, bx, bz, s, hw + 4, true);
       }
     }
     for (const w of water.polys || []) {
       if (!w.outer || w.outer.length < 6 || !['lake', 'pond', 'river', 'canal', 'reservoir'].includes(w.k)) continue;
       const p = w.outer;
+      const belt = w.k === 'river';
       let s = rnd() * 10;
       for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) {
         const ax = p[j], az = p[j + 1], bx = p[i], bz = p[i + 1];
-        const L = Math.hypot(bx - ax, bz - az);
-        if (L < 0.1) continue;
+        if (Math.hypot(bx - ax, bz - az) < 0.1) continue;
         if (!ringW(ax, az) && !ringW(bx, bz)) { s = 0; continue; }
-        const tx = (bx - ax) / L, tz = (bz - az) / L;
-        for (; s < L; s += 10 + rnd() * 4)
-          for (const side of [1, -1]) bank2(ax + tx * s - tz * side * 5, az + tz * s + tx * side * 5);
-        s -= L;
+        s = plantEdge(ax, az, bx, bz, s, 5, belt);
       }
     }
-    // 用地撒点（林地/公园保持成林的观感，村镇居住区很稀）
-    const LU2 = { park: 1500, forest: 1200, grass: 5000, university: 2500, residential: 9000, cemetery: 800, military: 5000 };
+    // 用地撒点（林地/公园保持成林的观感，村镇居住区很稀）。
+    // 林地成团加密（480 m²/棵、成团 0.7：远看是一片片林子而不是荒地上插的孤树）；大河 1 km 内的河滩林再密到 300 m²/棵、
+    // 以柳/杨（银杏代）/槐为主——渭河两岸 OSM 林地此前 1200 m² 才一棵，影像上成片林带、三维几乎空白（审查 g2 渭河桥）
+    const LU2 = { park: 1500, forest: 480, grass: 5000, university: 2500, residential: 9000, cemetery: 800, military: 5000 };
+    const MIX_RIPARIAN = [[LIU, 0.3], [YINXING, 0.3], [HUAI, 0.25], [WUTONG, 0.05], [GUANMU, 0.1]];
+    const riverBB = [];
+    for (const w of water.polys || []) {
+      if (w.k !== 'river' || !w.outer || w.outer.length < 6) continue;
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (let i = 0; i < w.outer.length; i += 2) {
+        a0 = Math.min(a0, w.outer[i]); a1 = Math.max(a1, w.outer[i]); b0 = Math.min(b0, w.outer[i + 1]); b1 = Math.max(b1, w.outer[i + 1]);
+      }
+      riverBB.push([a0, b0, a1, b1]);
+    }
+    const nearRiver = (x0, z0, x1, z1, m) => riverBB.some((b) => b[0] < x1 + m && b[2] > x0 - m && b[1] < z1 + m && b[3] > z0 - m);
     for (const f of polys) {
-      const area = LU2[f.k];
+      let area = LU2[f.k];
       if (!area || !f.outer || f.outer.length < 6) continue;
-      const [, mix, clump] = LU[f.k];
+      let [, mix, clump] = LU[f.k];
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
       const o = f.outer;
       for (let i = 0; i < o.length; i += 2) {
         if (o[i] < x0) x0 = o[i]; if (o[i] > x1) x1 = o[i]; if (o[i + 1] < z0) z0 = o[i + 1]; if (o[i + 1] > z1) z1 = o[i + 1];
       }
       if (!bbRing(x0, z0, x1, z1)) continue;
-      const step = Math.sqrt(area * 0.55);
+      if (f.k === 'forest') {
+        clump = 0.7;
+        if (nearRiver(x0, z0, x1, z1, 1000)) { area = 200; mix = MIX_RIPARIAN; }
+      }
+      // 外圈也参照影像树冠（外围底图约 20 m/像素）：最密处按主区的 2.5 倍面积，裸地/农田里的规划公园、村镇只零星几棵
+      const cz2 = CANOPY_LU[f.k], useCan2 = !!(cz2 && CAN.length);
+      const dense2 = useCan2 ? Math.min(area, cz2[0] * 2.5) : area;
+      const step = Math.sqrt(dense2 * 0.55);
       const rings = [o, ...(f.holes || [])];
       const seedN = (strHash(f.n || '') * 1000) | 0;
       for (let zr = Math.max(z0, OUT.z0) + step * 0.5; zr < Math.min(z1, OUT.z1); zr += step) {
@@ -1404,26 +1623,54 @@ export function plantVegetation(input) {
             const w = ringW(x, z);
             if (!w) continue;
             const nz = vnoise(x / 55, z / 55, 11 + seedN) * 0.7 + vnoise(x / 17, z / 17, 23) * 0.3;
-            const dens = 1 - clump + clump * Math.max(0, Math.min(1, (nz - 0.3) * 2.6));
-            if (rnd() > dens * w) continue;
-            if (nearAny(RD2, x, z, 1)) continue;
+            const cl = useCan2 ? clump * 0.6 : clump;
+            const dens = 1 - cl + cl * Math.max(0, Math.min(1, (nz - 0.3) * 2.6));
+            let g2 = 1;
+            if (useCan2) {
+              const kd = dense2 / area, c = canopyAt(x, z);
+              // 林地：影像暗处也保留三成基准密度（OSM 林地本身就是成林的）；其余用地（郊区新城的规划公园、学校、村镇）
+              // 只在影像树冠处成团种，裸地/农田里几乎不种——此前裸地上 20~30 m 一棵孤树，俯看像撒在影像上的绿点（审查 g8 机场周边）
+              if (c < 0) g2 = kd;
+              else if (f.k === 'forest') g2 = kd * 0.45 + (1 - kd * 0.45) * Math.min(1, c * 1.6);
+              else {
+                const t = Math.min(1, Math.max(0, (c - 0.3) / 0.3));
+                g2 = kd * 0.05 + (1 - kd * 0.05) * t * t * (3 - 2 * t);
+              }
+            }
+            if (rnd() > dens * w * g2) continue;
+            if (nearAny(RD2, x, z, 1) || inRiverBed(x, z)) continue;
             let sp = hashI(Math.floor(x / 38), Math.floor(z / 38), 91 + seedN) < 0.6 ? pick(mix, hashI(Math.floor(x / 38), Math.floor(z / 38), 5 + seedN)) : pick(mix, rnd());
             if (sp !== GUANMU && nearAny(W2, x, z, 8) && rnd() < 0.7) sp = LIU;
             if (!free2(x, z, sp)) continue;
-            add2(x, z, sp, { lamp: 0, rankMul: 1, src: 9 });
+            add2(x, z, sp, { lamp: 0, rankMul: 1, src: 9, lu: 1 });
             stats['outer_' + f.k] = (stats['outer_' + f.k] || 0) + 1;
           }
       }
     }
   }
 
-  // —— 8. 数量上限：超出时随机剔除（保持分布均匀；主区与外圈分别计） ——
+  // —— 8. 数量上限：超出时随机剔除（主区与外圈分别计）。先剔用地撒点（公园/林地/小区里的散树，抽稀后观感变化小），
+  // 行道树、分隔带、环城公园、水岸、院落这些成行成列的只在用地撒点剔光还不够时才按比例剔——
+  // 此前全城一律按比例随机剔除（主区 78 万 → 65 万），行道树一排里随机缺 1/6，街景上看是一个个缺口
   let keep = null;
   const nOuter = n - nInner;
   if (nInner > MAX_TREES || nOuter > MAX_OUTER) {
     keep = new Uint8Array(n);
-    const pi = Math.min(1, MAX_TREES / nInner), po = Math.min(1, MAX_OUTER / Math.max(1, nOuter));
-    for (let i = 0; i < n; i++) keep[i] = rnd() < (i < nInner ? pi : po) ? 1 : 0;
+    const isLU = (i) => SRCA[i] === 7 || (i >= nInner && SRCA[i] === 9 && LUO[i]);
+    const ratio = (a, b, cap) => {
+      // [a, b) 段：用地撒点 nl 棵、其余 nr 棵，返回两类的保留概率
+      let nl = 0;
+      for (let i = a; i < b; i++) if (isLU(i)) nl++;
+      const nr = b - a - nl, over = b - a - cap;
+      if (over <= 0) return [1, 1];
+      if (over <= nl) return [(nl - over) / Math.max(1, nl), 1];
+      return [0, Math.max(0, cap / Math.max(1, nr))];
+    };
+    const [li, ri] = ratio(0, nInner, MAX_TREES), [lo, ro] = ratio(nInner, n, MAX_OUTER);
+    for (let i = 0; i < n; i++) {
+      const inner = i < nInner, lu = isLU(i);
+      keep[i] = rnd() < (inner ? (lu ? li : ri) : lu ? lo : ro) ? 1 : 0;
+    }
   }
 
   // —— 9. 按渲染块排序（输出区域 = 外圈范围） ——
